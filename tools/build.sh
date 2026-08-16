@@ -9,9 +9,6 @@ OUT=${2:-docs/data}
 echo "==> parsing $SRC"
 python3 tools/parse_book.py "$SRC" "$OUT"
 
-echo "==> extra corpora"
-python3 tools/build_extras.py "$OUT" source/extra
-
 echo "==> repairs"
 python3 tools/build_repairs.py "$OUT" source/extra
 

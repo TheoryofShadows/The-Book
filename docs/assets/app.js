@@ -529,19 +529,24 @@
       el("div", { class: "stance" }, [
         el("h4", { text: "Traditional view" }),
         el("p", { class: "claim", text: p.trad }),
-        el("p", { class: "why", text: p.tradWhy })
+        el("p", { class: "why", text: p.tradWhy }),
+        el("p", { class: "cite", text: p.tradSource })
       ]),
       el("div", { class: "stance" }, [
         el("h4", { text: "Critical view" }),
         el("p", { class: "claim", text: p.crit }),
-        el("p", { class: "why", text: p.critWhy })
+        el("p", { class: "why", text: p.critWhy }),
+        el("p", { class: "cite", text: p.critSource })
       ])
     ]);
 
     grid.appendChild(el("p", { class: "positions-foot", html:
-      "This volume is <em>arranged</em> by the critical dating, which is an " +
-      "editorial decision about order, not a verdict on which column is right. " +
-      "Both positions are held by serious people for the reasons given." }));
+      "<strong>Written for this volume, not quoted from a source.</strong> " +
+      "The two summaries above are editorial: every claim is referenced so you " +
+      "can check it, but the wording is ours, unlike the texts themselves, " +
+      "which are reproduced verbatim. This volume is <em>arranged</em> by the " +
+      "critical dating, which is a decision about order, not a verdict on " +
+      "which column is right." }));
 
     wrap.appendChild(head);
     wrap.appendChild(grid);

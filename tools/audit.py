@@ -128,10 +128,32 @@ def main() -> int:
         if empty:
             problems.append(("EMPTY", wid, "chapters with no text", str(empty[:6])))
 
+    # The interpretive layer is held to the same standard as the text. A
+    # position a reader cannot check does not belong beside verse counts that
+    # were audited against independent references, so a missing citation is a
+    # build failure, not a warning.
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    try:
+        from positions import POSITIONS
+    except ImportError:
+        POSITIONS = {}
+
+    uncited = 0
+    for wid, rec in sorted(POSITIONS.items()):
+        for field in ("trad", "tradWhy", "tradSource",
+                      "crit", "critWhy", "critSource", "gap"):
+            if not str(rec.get(field, "")).strip():
+                print(f"{'UNCITED':9s} {wid:62s} missing {field}")
+                uncited += 1
+        if wid not in works:
+            print(f"{'ORPHAN':9s} {wid:62s} position for a work not in the volume")
+            uncited += 1
+
     for kind, wid, a, b in problems:
         print(f"{kind:9s} {wid:62s} {a}  {b}")
     print(f"\n{checked} works checked against reference counts; {len(problems)} findings")
-    return 0
+    print(f"{len(POSITIONS)} position records checked for citations; {uncited} uncited")
+    return 1 if uncited else 0
 
 
 if __name__ == "__main__":
