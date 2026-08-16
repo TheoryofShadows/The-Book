@@ -57,6 +57,11 @@
           "status": "fixed"
         },
         {
+          "claim": "Three gaps closed by consulting a second edition",
+          "detail": "The Apostolic Fathers holes were not inherent to the public domain at all. They were artifacts of which printing the source compilation happened to scrape. The 1870 Ante-Nicene Christian Library carries the same Roberts-Donaldson translation and supplied the Shepherd of Hermas Similitudes 1 and 10, absent entirely, and the full text of Polycarp to the Philippians 14, which had broken off mid-sentence at 'whom up to the present'. The Fragments of Papias, missing from the compilation altogether, were added from the same source.",
+          "status": "fixed"
+        },
+        {
           "claim": "Verse boundaries lost at line wraps",
           "detail": "Where a verse number fell at the end of a wrapped line, the boundary marker was ambiguous. Roughly 1,900 verses across the volume were affected. Verse numbers are now accepted only when they continue the running sequence, which also stops the footnote digits in the Charles translations from being read as verse numbers.",
           "status": "fixed"
@@ -94,17 +99,7 @@
         },
         {
           "claim": "Ignatius to the Smyrnaeans lacks chapter 13",
-          "detail": "The closing salutation, 'I salute the households of my brethren, with their wives and children', is absent. The letter ends at chapter 12.",
-          "status": "gap"
-        },
-        {
-          "claim": "Polycarp to the Philippians breaks off mid-sentence",
-          "detail": "Chapter 14 stops at 'These things I have written to you by Crescens, whom up to the present' where the scraped page gave way to editorial matter.",
-          "status": "gap"
-        },
-        {
-          "claim": "The Shepherd of Hermas is missing two similitudes",
-          "detail": "Similitude 1 and Similitude 10 are absent. Visions 1 to 5, all twelve Commandments, and Similitudes 2 to 9 are present.",
+          "detail": "The closing salutation is absent from both editions consulted. Lightfoot's edition of 1890-91 would be the place to look next.",
           "status": "gap"
         },
         {

@@ -359,6 +359,53 @@ table.grid tbody tr:hover { background: var(--paper-2); }
 .note-block p:first-child { margin-top: 0; }
 .note-block p:last-child { margin-bottom: 0; }
 
+/* ---------- who wrote this, and when ----------
+   Two columns, deliberately identical in weight. Neither tradition is
+   styled as the default reading; the reader compares and decides. */
+
+.positions { margin: 0 auto 1.6rem; max-width: calc(var(--measure) + 2.2rem); }
+
+.positions-head {
+  width: 100%; text-align: left; cursor: pointer; font: inherit; color: inherit;
+  background: transparent; border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: .6rem .85rem; display: flex; align-items: center; gap: .6rem;
+  font-size: .9rem;
+}
+.positions-head:hover { background: var(--paper-2); }
+.positions-head .caret { color: var(--ink-faint); font-size: .75rem; margin-left: auto; }
+
+.gap-tag {
+  font-size: .68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .05em; padding: .1rem .45rem; border-radius: 4px;
+}
+.gap-tag.none   { background: var(--good-bg); color: var(--good); }
+.gap-tag.narrow { background: var(--fix-bg);  color: var(--fix); }
+.gap-tag.wide   { background: var(--warn-bg); color: var(--warn); }
+
+.positions-body {
+  display: none; gap: .7rem; margin-top: .6rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+.positions.open .positions-body { display: grid; }
+
+.stance {
+  background: var(--raised); border: 1px solid var(--rule-soft);
+  border-radius: var(--radius); padding: .8rem .9rem;
+}
+.stance h4 {
+  margin: 0 0 .3rem; font-family: var(--sans); font-size: .7rem;
+  text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint);
+  font-weight: 700;
+}
+.stance .claim { font-family: var(--serif); font-size: 1rem; margin: 0 0 .4rem; }
+.stance .why { font-size: .84rem; color: var(--ink-soft); margin: 0; }
+
+/* spans both stance columns rather than becoming a third one */
+.positions-foot {
+  grid-column: 1 / -1;
+  font-size: .78rem; color: var(--ink-faint); margin: 0;
+}
+
 .apparatus {
   font-family: var(--sans); font-size: .8rem; color: var(--ink-faint);
   border-top: 1px solid var(--rule-soft); padding-top: .8rem;

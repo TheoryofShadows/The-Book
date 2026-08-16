@@ -29,6 +29,9 @@ import sys
 import unicodedata
 from collections import OrderedDict
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from positions import POSITIONS  # noqa: E402
+
 SRC = sys.argv[1] if len(sys.argv) > 1 else "THE_BOOK_COMPLETE.txt"
 OUT = sys.argv[2] if len(sys.argv) > 2 else "docs/data"
 
@@ -395,6 +398,9 @@ def main() -> None:
             total_words += words
             src = source_for(work["id"], section["id"], nch > 0)
             work["source"] = src
+            stance = POSITIONS.get(work["id"])
+            if stance:
+                work["positions"] = stance
             entry["works"].append({
                 "id": work["id"],
                 "title": work["title"],
@@ -404,6 +410,7 @@ def main() -> None:
                 "words": words,
                 "versified": nv > 0,
                 "source": src,
+                "positions": stance,
                 "chapterLabels": [c["label"] for c in work["chapters"]],
             })
             with open(os.path.join(OUT, "works", work["id"] + ".json"), "w",

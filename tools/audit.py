@@ -113,6 +113,10 @@ def main() -> int:
             vs = [v["v"] for v in chap.get("verses", [])]
             if not vs:
                 continue
+            if chap.get("chunked"):
+                # A deliberate slice of a continuous section run; it starts
+                # where the slice starts, by design.
+                continue
             if vs[0] != 1:
                 problems.append(("V-START", wid, chap["label"], f"starts at verse {vs[0]}"))
             missing = sorted(set(range(1, vs[-1] + 1)) - set(vs))
