@@ -1,0 +1,52 @@
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - claude/biblical-texts-chronological-4267vq
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Rebuild every data file from the source text and fail if the parse
+      # stops matching the reference chapter and verse counts.
+      - name: Rebuild data from source
+        run: ./tools/build.sh
+      - name: Check nothing drifted
+        run: |
+          if ! git diff --quiet -- docs/data; then
+            echo "::error::docs/data is out of date with source/. Run ./tools/build.sh and commit."
+            git diff --stat -- docs/data
+            exit 1
+          fi
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: deploy
+        uses: actions/deploy-pages@v4
