@@ -346,6 +346,10 @@
         body.appendChild(nb);
       }
 
+      if (meta.positions) {
+        body.appendChild(positionsPanel(meta.positions));
+      }
+
       if (!work.chapters.length) {
         body.appendChild(el("p", {
           class: "empty",
@@ -486,6 +490,61 @@
       body.appendChild(el("p", { class: "empty", text: "Could not load this work: " + e.message }));
     });
 
+    return wrap;
+  }
+
+  /* ---------------- who wrote this, and when ----------------
+     Both traditions get the same heading style, the same box, the same
+     space. The volume is *arranged* by the critical dating, so this panel
+     is where the other reading gets stated in full rather than implied by
+     its absence. */
+
+  var GAP_TEXT = {
+    none:   "broadly agreed",
+    narrow: "they differ",
+    wide:   "sharply divided"
+  };
+
+  function positionsPanel(p) {
+    var open = store.get("positions-open", false);
+    var wrap = el("div", { class: "positions" + (open ? " open" : "") });
+
+    var head = el("button", {
+      class: "positions-head",
+      "aria-expanded": open ? "true" : "false",
+      onclick: function () {
+        var now = !wrap.classList.contains("open");
+        wrap.classList.toggle("open", now);
+        head.setAttribute("aria-expanded", now ? "true" : "false");
+        head.querySelector(".caret").textContent = now ? "▲" : "▼";
+        store.set("positions-open", now);
+      }
+    }, [
+      el("span", { text: "Who wrote this, and when?" }),
+      el("span", { class: "gap-tag " + p.gap, text: GAP_TEXT[p.gap] || p.gap }),
+      el("span", { class: "caret", text: open ? "▲" : "▼" })
+    ]);
+
+    var grid = el("div", { class: "positions-body" }, [
+      el("div", { class: "stance" }, [
+        el("h4", { text: "Traditional view" }),
+        el("p", { class: "claim", text: p.trad }),
+        el("p", { class: "why", text: p.tradWhy })
+      ]),
+      el("div", { class: "stance" }, [
+        el("h4", { text: "Critical view" }),
+        el("p", { class: "claim", text: p.crit }),
+        el("p", { class: "why", text: p.critWhy })
+      ])
+    ]);
+
+    grid.appendChild(el("p", { class: "positions-foot", html:
+      "This volume is <em>arranged</em> by the critical dating, which is an " +
+      "editorial decision about order, not a verdict on which column is right. " +
+      "Both positions are held by serious people for the reasons given." }));
+
+    wrap.appendChild(head);
+    wrap.appendChild(grid);
     return wrap;
   }
 
