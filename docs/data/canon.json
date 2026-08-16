@@ -1,0 +1,1416 @@
+{
+ "canons": [
+  "tanakh",
+  "protestant",
+  "catholic",
+  "orthodox",
+  "ethiopian"
+ ],
+ "books": [
+  {
+   "name": "Genesis",
+   "division": "Torah",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "genesis"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Exodus",
+   "division": "Torah",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "exodus"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Leviticus",
+   "division": "Torah",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "leviticus"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Numbers",
+   "division": "Torah",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "numbers"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Deuteronomy",
+   "division": "Torah",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "deuteronomy"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Joshua",
+   "division": "Former Prophets",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "joshua"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Judges",
+   "division": "Former Prophets",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "judges"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Ruth",
+   "division": "Writings",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "ruth"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "1 Samuel",
+   "division": "Former Prophets",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "1-samuel"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "2 Samuel",
+   "division": "Former Prophets",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "2-samuel"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "1 Kings",
+   "division": "Former Prophets",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "1-kings"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "2 Kings",
+   "division": "Former Prophets",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "2-kings"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "1 Chronicles",
+   "division": "Writings",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "1-chronicles"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "2 Chronicles",
+   "division": "Writings",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "2-chronicles"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Ezra",
+   "division": "Writings",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "ezra"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Nehemiah",
+   "division": "Writings",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "nehemiah"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Esther",
+   "division": "Writings",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "esther-hebrew"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Job",
+   "division": "Writings",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "job"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Psalms",
+   "division": "Writings",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "psalms"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Proverbs",
+   "division": "Writings",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "proverbs"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Ecclesiastes",
+   "division": "Writings",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "ecclesiastes"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Song of Songs",
+   "division": "Writings",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "song-of-songs"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Isaiah",
+   "division": "Latter Prophets",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "isaiah-1-39-first-isaiah",
+    "isaiah-40-55-second-isaiah",
+    "isaiah-56-66-third-isaiah"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Jeremiah",
+   "division": "Latter Prophets",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "jeremiah"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Lamentations",
+   "division": "Writings",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "lamentations"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Ezekiel",
+   "division": "Latter Prophets",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "ezekiel"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Daniel",
+   "division": "Writings",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "daniel"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Hosea",
+   "division": "The Twelve",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "hosea"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Joel",
+   "division": "The Twelve",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "joel"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Amos",
+   "division": "The Twelve",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "amos"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Obadiah",
+   "division": "The Twelve",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "obadiah"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Jonah",
+   "division": "The Twelve",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "jonah"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Micah",
+   "division": "The Twelve",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "micah"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Nahum",
+   "division": "The Twelve",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "nahum"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Habakkuk",
+   "division": "The Twelve",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "habakkuk"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Zephaniah",
+   "division": "The Twelve",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "zephaniah"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Haggai",
+   "division": "The Twelve",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "haggai"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Malachi",
+   "division": "The Twelve",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "malachi"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Zechariah",
+   "division": "The Twelve",
+   "canons": {
+    "tanakh": "canon",
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "zechariah-1-8",
+    "zechariah-9-14"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Tobit",
+   "division": "Deuterocanon",
+   "canons": {
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "tobit"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Judith",
+   "division": "Deuterocanon",
+   "canons": {
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "judith"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Wisdom of Solomon",
+   "division": "Deuterocanon",
+   "canons": {
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "the-wisdom-of-solomon"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Sirach (Ecclesiasticus)",
+   "division": "Deuterocanon",
+   "canons": {
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "sirach-ecclesiasticus"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Baruch",
+   "division": "Deuterocanon",
+   "canons": {
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "baruch"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Letter of Jeremiah",
+   "division": "Deuterocanon",
+   "canons": {
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "the-letter-of-jeremiah-baruch-6"
+   ],
+   "present": true,
+   "foldedInto": "Baruch"
+  },
+  {
+   "name": "1 Maccabees",
+   "division": "Deuterocanon",
+   "canons": {
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "1-maccabees"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "2 Maccabees",
+   "division": "Deuterocanon",
+   "canons": {
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "2-maccabees"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Greek Esther (additions)",
+   "division": "Deuterocanon",
+   "canons": {
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "esther-greek-version"
+   ],
+   "present": true,
+   "foldedInto": "Esther"
+  },
+  {
+   "name": "Prayer of Azariah / Song of the Three",
+   "division": "Deuterocanon",
+   "canons": {
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "the-prayer-of-azariah-and-the-song-of-the-three-greek-daniel-3-24-90"
+   ],
+   "present": true,
+   "foldedInto": "Daniel"
+  },
+  {
+   "name": "Susanna",
+   "division": "Deuterocanon",
+   "canons": {
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "susanna-greek-daniel-13"
+   ],
+   "present": true,
+   "foldedInto": "Daniel"
+  },
+  {
+   "name": "Bel and the Dragon",
+   "division": "Deuterocanon",
+   "canons": {
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "bel-and-the-dragon-greek-daniel-14"
+   ],
+   "present": true,
+   "foldedInto": "Daniel"
+  },
+  {
+   "name": "1 Esdras",
+   "division": "Orthodox canon",
+   "canons": {
+    "catholic": "appendix",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "1-esdras"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "2 Esdras (4 Ezra)",
+   "division": "Orthodox canon",
+   "canons": {
+    "catholic": "appendix",
+    "orthodox": "varies",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "2-esdras-4-ezra"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Prayer of Manasseh",
+   "division": "Orthodox canon",
+   "canons": {
+    "catholic": "appendix",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "the-prayer-of-manasseh"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "3 Maccabees",
+   "division": "Orthodox canon",
+   "canons": {
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "3-maccabees"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "4 Maccabees",
+   "division": "Orthodox canon",
+   "canons": {
+    "orthodox": "appendix"
+   },
+   "works": [
+    "4-maccabees"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Psalm 151",
+   "division": "Orthodox canon",
+   "canons": {
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "psalm-151"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "1 Enoch",
+   "division": "Ethiopian canon",
+   "canons": {
+    "ethiopian": "canon"
+   },
+   "works": [
+    "1-enoch-the-book-of-the-watchers-chapters-1-36",
+    "1-enoch-the-book-of-parables-chapters-37-71",
+    "1-enoch-the-astronomical-book-chapters-72-82",
+    "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Jubilees",
+   "division": "Ethiopian canon",
+   "canons": {
+    "ethiopian": "canon"
+   },
+   "works": [
+    "jubilees"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "4 Baruch (Paraleipomena Jeremiou)",
+   "division": "Ethiopian canon",
+   "canons": {
+    "ethiopian": "canon"
+   },
+   "works": [],
+   "present": false,
+   "foldedInto": null
+  },
+  {
+   "name": "Ethiopic Clement (Qalementos)",
+   "division": "Ethiopian canon",
+   "canons": {
+    "ethiopian": "canon"
+   },
+   "works": [],
+   "present": false,
+   "foldedInto": null
+  },
+  {
+   "name": "Ethiopic Didascalia",
+   "division": "Ethiopian canon",
+   "canons": {
+    "ethiopian": "canon"
+   },
+   "works": [],
+   "present": false,
+   "foldedInto": null
+  },
+  {
+   "name": "Sinodos",
+   "division": "Ethiopian canon",
+   "canons": {
+    "ethiopian": "canon"
+   },
+   "works": [],
+   "present": false,
+   "foldedInto": null
+  },
+  {
+   "name": "Book of the Covenant (Mets'hafe Kidan)",
+   "division": "Ethiopian canon",
+   "canons": {
+    "ethiopian": "canon"
+   },
+   "works": [],
+   "present": false,
+   "foldedInto": null
+  },
+  {
+   "name": "Matthew",
+   "division": "Gospels",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "matthew"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Mark",
+   "division": "Gospels",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "mark"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Luke",
+   "division": "Gospels",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "luke"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "John",
+   "division": "Gospels",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "john"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Acts",
+   "division": "Acts",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "acts"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Romans",
+   "division": "Pauline epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "romans"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "1 Corinthians",
+   "division": "Pauline epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "1-corinthians"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "2 Corinthians",
+   "division": "Pauline epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "2-corinthians"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Galatians",
+   "division": "Pauline epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "galatians"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Ephesians",
+   "division": "Pauline epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "ephesians"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Philippians",
+   "division": "Pauline epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "philippians"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Colossians",
+   "division": "Pauline epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "colossians"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "1 Thessalonians",
+   "division": "Pauline epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "1-thessalonians"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "2 Thessalonians",
+   "division": "Pauline epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "2-thessalonians"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "1 Timothy",
+   "division": "Pauline epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "1-timothy"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "2 Timothy",
+   "division": "Pauline epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "2-timothy"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Titus",
+   "division": "Pauline epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "titus"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Philemon",
+   "division": "Pauline epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "philemon"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Hebrews",
+   "division": "Pauline epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "hebrews"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "James",
+   "division": "General epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "james"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "1 Peter",
+   "division": "General epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "1-peter"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "2 Peter",
+   "division": "General epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "2-peter"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "1 John",
+   "division": "General epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "1-john"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "2 John",
+   "division": "General epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "2-john"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "3 John",
+   "division": "General epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "3-john"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Jude",
+   "division": "General epistles",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "jude"
+   ],
+   "present": true,
+   "foldedInto": null
+  },
+  {
+   "name": "Revelation",
+   "division": "Apocalypse",
+   "canons": {
+    "protestant": "canon",
+    "catholic": "canon",
+    "orthodox": "canon",
+    "ethiopian": "canon"
+   },
+   "works": [
+    "revelation"
+   ],
+   "present": true,
+   "foldedInto": null
+  }
+ ],
+ "coverage": {
+  "tanakh": {
+   "units": 39,
+   "distinctBooks": 39,
+   "traditionalCount": 24,
+   "caveat": "24 books. Samuel, Kings, Chronicles and Ezra-Nehemiah are one book each, and the twelve minor prophets are counted as a single book, The Twelve.",
+   "presentInVolume": 39,
+   "absent": []
+  },
+  "protestant": {
+   "units": 66,
+   "distinctBooks": 66,
+   "traditionalCount": 66,
+   "caveat": "66 books: the same content as the Tanakh, divided into 39, plus the 27 of the New Testament.",
+   "presentInVolume": 66,
+   "absent": []
+  },
+  "catholic": {
+   "units": 78,
+   "distinctBooks": 73,
+   "traditionalCount": 73,
+   "caveat": "73 books, fixed at the Council of Trent in 1546. The Letter of Jeremiah is counted inside Baruch, and the Greek additions inside Esther and Daniel.",
+   "presentInVolume": 78,
+   "absent": []
+  },
+  "orthodox": {
+   "units": 82,
+   "distinctBooks": 77,
+   "traditionalCount": null,
+   "caveat": "No single fixed number. Eastern Orthodoxy receives the Catholic list plus 1 Esdras, 3 Maccabees, the Prayer of Manasseh and Psalm 151, and speaks of anagignoskomena, books that are read, rather than a sharp boundary.",
+   "presentInVolume": 82,
+   "absent": []
+  },
+  "ethiopian": {
+   "units": 90,
+   "distinctBooks": 85,
+   "traditionalCount": 81,
+   "caveat": "Usually given as 81 books, though the enumeration differs between lists. The only canon that receives 1 Enoch and Jubilees as scripture.",
+   "presentInVolume": 85,
+   "absent": [
+    "4 Baruch (Paraleipomena Jeremiou)",
+    "Ethiopic Clement (Qalementos)",
+    "Ethiopic Didascalia",
+    "Sinodos",
+    "Book of the Covenant (Mets'hafe Kidan)"
+   ]
+  }
+ }
+}

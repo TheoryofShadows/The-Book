@@ -1,0 +1,184 @@
+{
+  "generated": "2026-08-16",
+  "summary": "Every book of the Protestant, Catholic and Orthodox canons is present with the correct number of chapters, and every one of the 66 Protestant books matches the World English Bible verse for verse. The gaps that remain are all inherited from the public-domain source editions, and each one is listed below.",
+  "groups": [
+    {
+      "id": "verified",
+      "title": "Verified correct",
+      "tone": "good",
+      "blurb": "Checks that passed against independent reference counts.",
+      "items": [
+        {
+          "claim": "All 66 Protestant books present with correct chapter counts",
+          "detail": "Genesis 50, Psalms 150, Isaiah 66 across its three parts, Revelation 22, and every book between. Checked against the settled chapter counts for the Masoretic and Greek books.",
+          "status": "pass"
+        },
+        {
+          "claim": "Verse counts match the World English Bible exactly",
+          "detail": "All 66 books agree verse for verse. Psalms 2461, Genesis 1533, Matthew 1071, Jeremiah 1364, and so on.",
+          "status": "pass"
+        },
+        {
+          "claim": "The WEB's deliberate omissions are reproduced faithfully",
+          "detail": "Acts 8:37, Acts 15:34, Acts 24:7 and Luke 17:36 are absent because the World English Bible follows a critical text that does not carry them. These are gaps in the numbering, not gaps in this volume. Revelation 12 ends at verse 17 and Revelation 13 has 18 verses for the same reason.",
+          "status": "pass"
+        },
+        {
+          "claim": "Catholic canon complete",
+          "detail": "All 73 books of the canon fixed at Trent in 1546 are present, including Tobit, Judith, Wisdom, Sirach, Baruch with the Letter of Jeremiah, 1 and 2 Maccabees, and the Greek additions to Esther and Daniel.",
+          "status": "pass"
+        },
+        {
+          "claim": "Eastern Orthodox additions complete",
+          "detail": "1 Esdras, 2 Esdras, 3 Maccabees, 4 Maccabees, the Prayer of Manasseh and Psalm 151 are all present in full.",
+          "status": "pass"
+        },
+        {
+          "claim": "Structural integrity",
+          "detail": "No duplicated chapter numbers, no empty chapters, and no verse numbering that starts anywhere but verse 1, across all 2,231 chapters.",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "id": "corrected",
+      "title": "Errors found and corrected",
+      "tone": "fixed",
+      "blurb": "Problems in the source file that this edition repairs. Every removal is logged.",
+      "items": [
+        {
+          "claim": "About 31,000 characters of website furniture were embedded in the text",
+          "detail": "The Apostolic Fathers and Ignatius texts had been harvested from web editions, and the surrounding page material came with them. Ante-Nicene Fathers editorial introductions had run on into the end of 1 Clement, Diognetus, Polycarp, the Martyrdom of Polycarp and Barnabas; a Roberts-Donaldson 'Elucidation' sat at the end of the Didache; and an advertisement reading 'Please buy the CD to support the site' closed all seven letters of Ignatius. All of it has been removed and itemised.",
+          "status": "fixed"
+        },
+        {
+          "claim": "A false chapter heading in 1 Enoch",
+          "detail": "An OCR artifact in the Charles translation, reading '[[[is beautiful, and its fruit]]]]', had the shape of a chapter marker and was splitting 1 Enoch 24 in two. The text has been folded back into 1 Enoch 24, restoring the Book of the Watchers to its correct 36 chapters.",
+          "status": "fixed"
+        },
+        {
+          "claim": "Verse boundaries lost at line wraps",
+          "detail": "Where a verse number fell at the end of a wrapped line, the boundary marker was ambiguous. Roughly 1,900 verses across the volume were affected. Verse numbers are now accepted only when they continue the running sequence, which also stops the footnote digits in the Charles translations from being read as verse numbers.",
+          "status": "fixed"
+        }
+      ]
+    },
+    {
+      "id": "claims",
+      "title": "Claims in the source that do not hold",
+      "tone": "warn",
+      "blurb": "Statements made by the original compilation that the audit contradicts.",
+      "items": [
+        {
+          "claim": "\"Every book in every one of these canons is printed in full in this volume\"",
+          "detail": "This is not accurate for the Ethiopian Orthodox Tewahedo canon, the widest of the five. 1 Enoch and Jubilees are indeed here, but 4 Baruch, Ethiopic Clement, the Ethiopic Didascalia, the Sinodos and the Book of the Covenant are not. The statement holds for the Jewish, Protestant, Catholic and Eastern Orthodox canons.",
+          "status": "corrected"
+        },
+        {
+          "claim": "The Psalms of Solomon and Philo are listed as works",
+          "detail": "Both appear in the table of contents but neither has any text. They are described rather than printed. The front matter does explain why, but the contents listing does not distinguish them from works that are actually present.",
+          "status": "corrected"
+        }
+      ]
+    },
+    {
+      "id": "gaps",
+      "title": "Gaps inherited from the source editions",
+      "tone": "warn",
+      "blurb": "Real absences of text. None can be repaired without a copyrighted modern translation, so none have been invented.",
+      "items": [
+        {
+          "claim": "1 Clement is missing its great intercessory prayer",
+          "detail": "The chapters run 1 to 59 rather than 1 to 65. The 1885 Ante-Nicene Fathers printing was made from Codex Alexandrinus, which has a lacuna covering roughly 57:7 to 63:4. The long prayer beginning 'Grant unto us, Lord, that we may hope on Thy name' and the prayer for civil rulers are therefore absent. The Jerusalem manuscript found in 1873 supplies them, but not in this edition. Chapter 57 ends with the ellipsis the editors used to mark the break.",
+          "status": "gap"
+        },
+        {
+          "claim": "Ignatius to the Smyrnaeans lacks chapter 13",
+          "detail": "The closing salutation, 'I salute the households of my brethren, with their wives and children', is absent. The letter ends at chapter 12.",
+          "status": "gap"
+        },
+        {
+          "claim": "Polycarp to the Philippians breaks off mid-sentence",
+          "detail": "Chapter 14 stops at 'These things I have written to you by Crescens, whom up to the present' where the scraped page gave way to editorial matter.",
+          "status": "gap"
+        },
+        {
+          "claim": "The Shepherd of Hermas is missing two similitudes",
+          "detail": "Similitude 1 and Similitude 10 are absent. Visions 1 to 5, all twelve Commandments, and Similitudes 2 to 9 are present.",
+          "status": "gap"
+        },
+        {
+          "claim": "The Psalms of Solomon and Philo of Alexandria have no text",
+          "detail": "Both are public domain but survive mainly as scans of critical editions where the translation and the footnotes share every column, which defeats automatic extraction.",
+          "status": "gap"
+        },
+        {
+          "claim": "The Dead Sea Scrolls appear only as summaries",
+          "detail": "Every English translation of the 1947 and later finds is under copyright. The Hebrew and Aramaic largely exists as photographs rather than transcription.",
+          "status": "gap"
+        }
+      ]
+    },
+    {
+      "id": "numbering",
+      "title": "Numbering artifacts, text intact",
+      "tone": "info",
+      "blurb": "Chapter headings that were lost in transmission. The words survive; they simply run on under the previous heading.",
+      "items": [
+        {
+          "claim": "1 Enoch 78 and 1 Enoch 102",
+          "detail": "Both headings are absent from the Charles edition as digitised. Their text runs on under chapters 77 and 101, which is why 1 Enoch 77 shows 17 verses instead of 4 and 1 Enoch 101 shows 11 instead of 9. Nothing is lost.",
+          "status": "note"
+        },
+        {
+          "claim": "Ignatius to the Magnesians 4 and 8, and to the Trallians 9",
+          "detail": "The headings were dropped during the scrape but the text is present and has been verified word by word. Magnesians 4 begins 'not only to be called Christians, but to be so in reality'; Trallians 9 begins 'Stop your ears, therefore, when any one speaks to you at variance'.",
+          "status": "note"
+        },
+        {
+          "claim": "The Greek version of Esther has ten chapters, not sixteen",
+          "detail": "This is correct, not a defect. The World English Bible weaves additions A to F into the narrative where they belong, rather than appending them as chapters 11 to 16 the way the Latin Vulgate does. All six additions are present.",
+          "status": "note"
+        },
+        {
+          "claim": "Jubilees shows 51 units",
+          "detail": "A prologue plus the standard 50 chapters. Verse numbering follows the marginal numbering of the 1917 printing, which sometimes falls mid-sentence.",
+          "status": "note"
+        }
+      ]
+    },
+    {
+      "id": "order",
+      "title": "About the order itself",
+      "tone": "info",
+      "blurb": "The single most important caveat. The sequence is a reconstruction, and scholars disagree about much of it.",
+      "items": [
+        {
+          "claim": "This is a dating of books, not of events",
+          "detail": "Section V holds Genesis because critical scholarship dates the Torah's final written form to the Persian period, not because the traditions inside it are late. Much of what Genesis contains is far older than the book. Traditional Jewish and Christian teaching assigns the Torah to Moses; this arrangement does not settle that question and cannot.",
+          "status": "note"
+        },
+        {
+          "claim": "Joshua through Kings in the seventh century follows one model among several",
+          "detail": "Placing the Deuteronomistic History here follows Frank Moore Cross's double-redaction theory, in which a first edition was written under Josiah and a second in exile. Martin Noth dated the whole work to the exile. Both remain live positions.",
+          "status": "note"
+        },
+        {
+          "claim": "Galatians second among Paul's letters is a defensible choice, not a settled one",
+          "detail": "An early date depends on the South Galatian hypothesis. Many scholars place Galatians considerably later, near Romans. 1 Thessalonians as the earliest surviving Christian document is far more widely agreed.",
+          "status": "note"
+        },
+        {
+          "claim": "Several books have no scholarly consensus at all",
+          "detail": "Job, Ruth, Song of Songs, Joel, Obadiah and James carry date ranges spanning centuries. James alone has been placed anywhere between 45 and 120 CE. Read their positions here as one reasonable placement among several.",
+          "status": "note"
+        },
+        {
+          "claim": "What is well established",
+          "detail": "Some anchors are firm: Amos as the oldest prophetic book, Daniel's visions dated to the Maccabean crisis of 167 to 164 BCE, Mark written before Matthew and Luke, and 2 Peter as the latest writing in the New Testament. The archaic Hebrew of Exodus 15 and Judges 5 is genuinely older than the prose around it.",
+          "status": "note"
+        }
+      ]
+    }
+  ]
+}
