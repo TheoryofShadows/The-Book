@@ -38,6 +38,15 @@ jobs:
 
   deploy:
     needs: verify
+    # Only the default branch can deploy. The github-pages environment refuses
+    # deployments from any other branch, so a feature-branch run used to fail
+    # after one second having executed no steps. Those failures were harmless
+    # to the site but not harmless to the reader: GitHub's Pages settings
+    # screen reports the *most recent* deployment, so every branch push left it
+    # showing a failed or unfinished state while the live site was in fact
+    # serving happily from the last successful main deploy. Skipping the job
+    # outright keeps that status honest.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -48,8 +57,7 @@ jobs:
       # Settings -> Pages -> Source: GitHub Actions. The workflow cannot turn
       # it on itself: GITHUB_TOKEN lacks the admin right to create the Pages
       # site, so enablement: true fails with "Resource not accessible by
-      # integration". Until that switch is flipped this job fails with
-      # "Get Pages site failed"; the verify job above still runs.
+      # integration".
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
