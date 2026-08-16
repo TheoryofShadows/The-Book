@@ -414,6 +414,72 @@ table.grid tbody tr:hover { background: var(--paper-2); }
   font-size: .78rem; color: var(--ink-faint); margin: 0;
 }
 
+/* ---------- lexicon panel ----------
+   A sheet rather than a tooltip: entries run long and carry links, which a
+   hover bubble cannot hold. Side panel on desktop, bottom sheet on a phone,
+   where thumbs reach the bottom of the screen and not the right edge. */
+
+.lex {
+  position: fixed; z-index: 60;
+  background: var(--raised);
+  border: 1px solid var(--rule);
+  box-shadow: var(--shadow);
+  display: flex; flex-direction: column;
+  right: 1rem; bottom: 1rem; top: auto;
+  width: min(24rem, calc(100vw - 2rem));
+  max-height: min(28rem, 70vh);
+  border-radius: var(--radius);
+  animation: lex-in .16s ease-out;
+}
+
+@keyframes lex-in { from { opacity: 0; transform: translateY(.4rem); } }
+@media (prefers-reduced-motion: reduce) { .lex { animation: none; } }
+
+.lex-head {
+  display: flex; align-items: baseline; gap: .6rem;
+  padding: .7rem .9rem .5rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.lex-head strong {
+  font-family: var(--serif); font-size: 1.06rem; flex: 1;
+}
+.lex-close {
+  background: transparent; border: 0; cursor: pointer;
+  color: var(--ink-faint); font-size: 1rem; padding: .1rem .3rem;
+  line-height: 1;
+}
+.lex-close:hover { color: var(--ink); }
+
+.lex-body { overflow-y: auto; padding: .8rem .9rem 1rem; }
+.lex-text { margin: 0 0 .7rem; font-size: .92rem; line-height: 1.6; }
+.lex-none { margin: 0; font-size: .9rem; color: var(--ink-soft); }
+
+.lex-flag {
+  margin: 0 0 .7rem; font-size: .8rem;
+  padding: .5rem .65rem; border-radius: 6px;
+  background: var(--warn-bg); color: var(--warn);
+  border-left: 3px solid var(--warn);
+}
+.lex-flag.measure { background: var(--fix-bg); color: var(--fix); border-color: var(--fix); }
+
+.lex-cite {
+  margin: 0 0 .8rem; font-size: .76rem; font-style: italic;
+  color: var(--ink-faint);
+  padding-top: .5rem; border-top: 1px solid var(--rule-soft);
+}
+
+@media (max-width: 620px) {
+  .lex {
+    left: 0; right: 0; bottom: 0; width: auto;
+    border-radius: var(--radius) var(--radius) 0 0;
+    border-left: 0; border-right: 0; border-bottom: 0;
+    max-height: 62vh;
+  }
+}
+
+/* A quiet hint that the text responds to a tap at all. */
+.reader { cursor: text; }
+
 .apparatus {
   font-family: var(--sans); font-size: .8rem; color: var(--ink-faint);
   border-top: 1px solid var(--rule-soft); padding-top: .8rem;

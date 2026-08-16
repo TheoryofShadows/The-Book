@@ -554,6 +554,158 @@
   }
 
   /* ================================================================
+     LEXICON -- click any word
+     ================================================================ */
+
+  var aliasTable = null;
+
+  function wordAt(x, y) {
+    /* Find the word under the pointer without wrapping every word in a span.
+       Psalms alone would be ~800,000 elements; this touches none. */
+    var range = null;
+    if (document.caretRangeFromPoint) {
+      range = document.caretRangeFromPoint(x, y);
+    } else if (document.caretPositionFromPoint) {
+      var pos = document.caretPositionFromPoint(x, y);
+      if (pos) {
+        range = document.createRange();
+        range.setStart(pos.offsetNode, pos.offset);
+        range.collapse(true);
+      }
+    }
+    if (!range || range.startContainer.nodeType !== 3) return null;
+
+    var text = range.startContainer.nodeValue || "";
+    var i = range.startOffset;
+    var isWord = function (c) { return /[A-Za-z’']/.test(c); };
+    if (!isWord(text.charAt(i)) && !isWord(text.charAt(i - 1))) return null;
+
+    var a = i, b = i;
+    while (a > 0 && isWord(text.charAt(a - 1))) a--;
+    while (b < text.length && isWord(text.charAt(b))) b++;
+    if (b <= a) return null;
+
+    return { text: text, start: a, end: b, word: text.slice(a, b) };
+  }
+
+  function phrasesAround(hit) {
+    /* Longest match first, so "Sea of Galilee" beats "Sea". */
+    var before = hit.text.slice(Math.max(0, hit.start - 40), hit.start);
+    var after = hit.text.slice(hit.end, hit.end + 40);
+    var lead = (before.match(/([A-Za-z'’]+\s+){0,2}$/) || [""])[0];
+    var tail = (after.match(/^(\s+[A-Za-z'’]+){0,2}/) || [""])[0];
+    var leadWords = lead.trim().split(/\s+/).filter(Boolean);
+    var tailWords = tail.trim().split(/\s+/).filter(Boolean);
+
+    var out = [];
+    for (var l = leadWords.length; l >= 0; l--) {
+      for (var t = tailWords.length; t >= 0; t--) {
+        out.push(leadWords.slice(leadWords.length - l)
+          .concat([hit.word], tailWords.slice(0, t)).join(" "));
+      }
+    }
+    out.sort(function (a, b) { return b.length - a.length; });
+    return out;
+  }
+
+  function normTerm(s) {
+    return s.toLowerCase().replace(/[’']/g, "")
+            .replace(/[^a-z0-9 ]+/g, "").trim();
+  }
+
+  function lookup(term) {
+    var key = normTerm(term);
+    if (!key) return Promise.resolve(null);
+    return getJSON("lexicon-aliases.json").catch(function () { return {}; })
+      .then(function (al) {
+        aliasTable = al;
+        var target = al[key] || key;
+        var shard = /^[a-z]/.test(target) ? target[0] : "0";
+        return getJSON("lexicon/" + shard + ".json")
+          .catch(function () { return {}; })
+          .then(function (table) {
+            var hit = table[target];
+            // Singular/plural and possessive are the common misses.
+            if (!hit && /s$/.test(target)) hit = table[target.replace(/s$/, "")];
+            if (!hit) hit = table[target + "s"];
+            return hit ? { key: target, entry: hit } : null;
+          });
+      });
+  }
+
+  var sheet = null;
+
+  function closeSheet() {
+    if (sheet) { sheet.remove(); sheet = null; }
+  }
+
+  function showEntry(term, found) {
+    closeSheet();
+    sheet = el("aside", { class: "lex", role: "dialog", "aria-label": "Definition" });
+
+    var head = el("div", { class: "lex-head" }, [
+      el("strong", { text: found ? found.entry.name : term }),
+      el("button", {
+        class: "lex-close", "aria-label": "Close", text: "✕",
+        onclick: closeSheet
+      })
+    ]);
+    sheet.appendChild(head);
+
+    var body = el("div", { class: "lex-body" });
+    if (!found) {
+      body.appendChild(el("p", { class: "lex-none", text:
+        "No entry for “" + term + "” in Easton's Bible Dictionary. " +
+        "It covers the Protestant canon closely and the deuterocanon, Enoch, " +
+        "Jubilees and the Apostolic Fathers barely at all." }));
+    } else {
+      body.appendChild(el("p", { class: "lex-text", text: found.entry.text }));
+      (found.entry.flags || []).forEach(function (f) {
+        body.appendChild(el("p", { class: "lex-flag " + f.kind, text: f.note }));
+      });
+      body.appendChild(el("p", { class: "lex-cite", text:
+        "Easton's Bible Dictionary, 1897. Public domain by age, and written "
+        + "before modern archaeology; read it as a Victorian reference, not "
+        + "as current scholarship." }));
+      body.appendChild(el("a", {
+        class: "chip", href: "#/search/" + encodeURIComponent(found.entry.name.split(",")[0]),
+        text: "Find every passage mentioning this",
+        onclick: closeSheet
+      }));
+    }
+    sheet.appendChild(body);
+    document.body.appendChild(sheet);
+  }
+
+  function initLexicon() {
+    document.addEventListener("click", function (e) {
+      if (e.target.closest(".lex")) return;
+      var reader = e.target.closest(".reader");
+      if (!reader) { closeSheet(); return; }
+      if (e.target.closest("a")) return;          // let verse links work
+      if (window.getSelection && String(window.getSelection())) return;
+
+      var hit = wordAt(e.clientX, e.clientY);
+      if (!hit) return;
+
+      var candidates = phrasesAround(hit);
+      var i = 0;
+      (function next() {
+        if (i >= candidates.length) { showEntry(hit.word, null); return; }
+        var term = candidates[i++];
+        lookup(term).then(function (found) {
+          if (found) showEntry(term, found);
+          else next();
+        }).catch(function () { next(); });
+      })();
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeSheet();
+    });
+  }
+
+  /* ================================================================
      SEARCH
      ================================================================ */
 
@@ -1085,5 +1237,6 @@
   });
 
   refreshResume();
+  initLexicon();
   route();
 })();
