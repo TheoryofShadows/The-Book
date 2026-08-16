@@ -398,7 +398,15 @@ table.grid tbody tr:hover { background: var(--paper-2); }
   font-weight: 700;
 }
 .stance .claim { font-family: var(--serif); font-size: 1rem; margin: 0 0 .4rem; }
-.stance .why { font-size: .84rem; color: var(--ink-soft); margin: 0; }
+.stance .why { font-size: .84rem; color: var(--ink-soft); margin: 0 0 .5rem; }
+
+/* The citation is the point of the panel: it is what makes an editorial
+   claim checkable rather than merely asserted. */
+.stance .cite {
+  font-size: .76rem; color: var(--ink-faint); margin: 0;
+  padding-top: .45rem; border-top: 1px solid var(--rule-soft);
+  font-style: italic;
+}
 
 /* spans both stance columns rather than becoming a third one */
 .positions-foot {

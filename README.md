@@ -1,5 +1,11 @@
 # The Book
 
+## Read it here → https://theoryofshadows.github.io/The-Book/
+
+The link is case sensitive. `/The-Book/` works; `/the-book/` does not.
+
+---
+
 Every text of the Jewish, Protestant, Catholic, Eastern Orthodox and Ethiopian
 canons — together with the pseudepigrapha, the New Testament apocrypha and the
 Apostolic Fathers — arranged by when scholars believe each was written, and
@@ -7,7 +13,7 @@ published as a searchable, interactive reader.
 
 It opens with the Song of the Sea, not with Genesis.
 
-**162 works · 2,231 chapters · 40,070 numbered verses · 1.12 million words**
+**165 works · 2,246 chapters · 40,070 numbered verses · 1.13 million words**
 
 ---
 

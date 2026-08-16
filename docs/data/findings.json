@@ -57,6 +57,11 @@
           "status": "fixed"
         },
         {
+          "claim": "Josephus was added, then removed",
+          "detail": "All four works of Flavius Josephus were added as historical context, then taken back out. At 816,294 words he was 42 per cent of the corpus, and a collection described as biblical texts in the order they were written should not be nearly half a Roman-sponsored historian. The removal is recorded here rather than quietly reverted.",
+          "status": "corrected"
+        },
+        {
           "claim": "Three gaps closed by consulting a second edition",
           "detail": "The Apostolic Fathers holes were not inherent to the public domain at all. They were artifacts of which printing the source compilation happened to scrape. The 1870 Ante-Nicene Christian Library carries the same Roberts-Donaldson translation and supplied the Shepherd of Hermas Similitudes 1 and 10, absent entirely, and the full text of Polycarp to the Philippians 14, which had broken off mid-sentence at 'whom up to the present'. The Fragments of Papias, missing from the compilation altogether, were added from the same source.",
           "status": "fixed"
@@ -139,6 +144,34 @@
           "claim": "Jubilees shows 51 units",
           "detail": "A prologue plus the standard 50 chapters. Verse numbering follows the marginal numbering of the 1917 printing, which sometimes falls mid-sentence.",
           "status": "note"
+        }
+      ]
+    },
+    {
+      "id": "editorial",
+      "title": "What is text, and what is us",
+      "tone": "info",
+      "blurb": "Two kinds of content sit on this site and they should never be confused. This section exists because for a while they were.",
+      "items": [
+        {
+          "claim": "The texts are reproduced. The framing is written.",
+          "detail": "1,128,001 words are public-domain text, reproduced verbatim and checked against independent reference counts. Roughly 12,000 words are editorial: the section introductions, the notes on each work, the claims on this page, and the traditional-versus-critical panels. Those were written for this volume. They are not quotations from anyone.",
+          "status": "note"
+        },
+        {
+          "claim": "For a while, the editorial layer was unsourced",
+          "detail": "The panels comparing traditional and critical dating originally carried no citations at all. They asserted things in the same visual frame as text that had been audited three ways, and nothing on the site would have caught an error in them. That was the weakest link in the project and it has been fixed rather than explained away.",
+          "status": "corrected"
+        },
+        {
+          "claim": "Every position now carries a citation, or it was deleted",
+          "detail": "Each of the 52 surviving comparisons names where its claim is actually attested: Bava Batra 14b-15a for the Talmudic attributions of authorship, Papias by way of Eusebius for who wrote Mark and Matthew, Irenaeus for Revelation under Domitian, Porphyry by way of Jerome for the Maccabean reading of Daniel, the Great Isaiah Scroll for Isaiah as a single book. Where a position could only be supported by a vague appeal to consensus, the record was removed instead. Obadiah was cut on those grounds.",
+          "status": "fixed"
+        },
+        {
+          "claim": "A missing citation now fails the build",
+          "detail": "tools/audit.py checks every position record for both source fields and exits non-zero if any is missing, exactly as it does when the data drifts from the source text. The interpretive layer is now held to the same standard as the verse counts. This was verified by deliberately removing one citation and confirming the build broke.",
+          "status": "pass"
         }
       ]
     },
