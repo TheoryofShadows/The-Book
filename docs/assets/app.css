@@ -4,25 +4,32 @@
    as complete palettes so neither depends on the other.
  * ------------------------------------------------------------------ */
 
+/* Palette drawn from the materials of the texts themselves: unbleached
+   linen for the ground, iron-gall ink (which oxidises violet-black) for
+   type, Tyrian purple for the accent — the dye of the Levantine coast,
+   the argaman of Exodus 26 and the trade of Lydia in Acts 16 — and
+   verdigris, the patina of ancient bronze, for confirmations. Neutrals
+   carry a slight violet bias so they read as chosen, not defaulted. */
+
 :root {
-  --paper:      #f7f3ea;
-  --paper-2:    #efe8db;
-  --raised:     #fffdf8;
-  --ink:        #23201b;
-  --ink-soft:   #5b5348;
-  --ink-faint:  #8a8073;
-  --rule:       #ddd3c2;
-  --rule-soft:  #e8e0d1;
-  --accent:     #8a5a2b;
-  --accent-2:   #a8703a;
-  --accent-bg:  #f0e4d2;
-  --good:       #2f6b46;
-  --good-bg:    #e2eee6;
+  --paper:      #f2eee5;
+  --paper-2:    #e8e2d6;
+  --raised:     #fbf9f4;
+  --ink:        #1f1b24;
+  --ink-soft:   #574f5c;
+  --ink-faint:  #857c8a;
+  --rule:       #d6cec4;
+  --rule-soft:  #e4ddd3;
+  --accent:     #6b2d5b;
+  --accent-2:   #8a3f76;
+  --accent-bg:  #eee2ea;
+  --good:       #2f6b5f;
+  --good-bg:    #e0ece9;
   --warn:       #8a5a12;
   --warn-bg:    #f4e9d3;
-  --fix:        #2d5b7a;
-  --fix-bg:     #e0ebf2;
-  --mark:       #ffe9a8;
+  --fix:        #33587e;
+  --fix-bg:     #e2e9f2;
+  --mark:       #f6e2a4;
 
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
            Georgia, "Times New Roman", serif;
@@ -38,47 +45,47 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper:     #14161a;
-    --paper-2:   #1a1d22;
-    --raised:    #1e2127;
-    --ink:       #e6e1d7;
-    --ink-soft:  #a9a294;
-    --ink-faint: #7d766a;
-    --rule:      #2f343c;
-    --rule-soft: #262a31;
-    --accent:    #d9a76a;
-    --accent-2:  #e8bd86;
-    --accent-bg: #2a231a;
-    --good:      #7cc39a;
-    --good-bg:   #17251d;
+    --paper:     #16131a;
+    --paper-2:   #1c1822;
+    --raised:    #211c29;
+    --ink:       #e7e1e9;
+    --ink-soft:  #a79fae;
+    --ink-faint: #7d7484;
+    --rule:      #342d3c;
+    --rule-soft: #292332;
+    --accent:    #c98bb4;
+    --accent-2:  #dda8c8;
+    --accent-bg: #2a1f28;
+    --good:      #78c0b0;
+    --good-bg:   #162623;
     --warn:      #d9b269;
     --warn-bg:   #262015;
-    --fix:       #86b8d8;
-    --fix-bg:    #16222b;
-    --mark:      #5c4a17;
+    --fix:       #8ab3d8;
+    --fix-bg:    #182231;
+    --mark:      #55401f;
     --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 28px rgba(0, 0, 0, .35);
   }
 }
 
 :root[data-theme="dark"] {
-  --paper:     #14161a;
-  --paper-2:   #1a1d22;
-  --raised:    #1e2127;
-  --ink:       #e6e1d7;
-  --ink-soft:  #a9a294;
-  --ink-faint: #7d766a;
-  --rule:      #2f343c;
-  --rule-soft: #262a31;
-  --accent:    #d9a76a;
-  --accent-2:  #e8bd86;
-  --accent-bg: #2a231a;
-  --good:      #7cc39a;
-  --good-bg:   #17251d;
+  --paper:     #16131a;
+  --paper-2:   #1c1822;
+  --raised:    #211c29;
+  --ink:       #e7e1e9;
+  --ink-soft:  #a79fae;
+  --ink-faint: #7d7484;
+  --rule:      #342d3c;
+  --rule-soft: #292332;
+  --accent:    #c98bb4;
+  --accent-2:  #dda8c8;
+  --accent-bg: #2a1f28;
+  --good:      #78c0b0;
+  --good-bg:   #162623;
   --warn:      #d9b269;
   --warn-bg:   #262015;
-  --fix:       #86b8d8;
-  --fix-bg:    #16222b;
-  --mark:      #5c4a17;
+  --fix:       #8ab3d8;
+  --fix-bg:    #182231;
+  --mark:      #55401f;
   --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 28px rgba(0, 0, 0, .35);
 }
 

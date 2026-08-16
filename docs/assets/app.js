@@ -45,6 +45,11 @@
 
   var cache = {};
   function getJSON(path) {
+    // The single-file build inlines every data file under this global, so
+    // the same code runs served-over-HTTP and opened straight from disk.
+    if (window.__BOOK__ && window.__BOOK__[path]) {
+      return Promise.resolve(window.__BOOK__[path]);
+    }
     if (cache[path]) return cache[path];
     cache[path] = fetch(DATA + path).then(function (r) {
       if (!r.ok) throw new Error(path + " -> " + r.status);

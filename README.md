@@ -119,8 +119,17 @@ and scanned for exact verses. Quote a phrase to match it exactly.
 ## Deploying
 
 `.github/workflows/pages.yml` rebuilds the data from source, fails the build if
-`docs/data` has drifted, and publishes `docs/`. Enable it once under
-**Settings → Pages → Source: GitHub Actions**.
+`docs/data` has drifted, and publishes `docs/`.
+
+**One manual step is required before the site can go live:** open
+**Settings → Pages** and set **Source: GitHub Actions**. The workflow cannot do
+this for you — `GITHUB_TOKEN` has no admin right to create a Pages site, so
+until the switch is flipped the deploy job fails with *"Get Pages site failed"*.
+The verify job runs regardless, so the data is still checked on every push.
+
+Once enabled, re-run the workflow (Actions → Deploy site to GitHub Pages →
+Run workflow) and the site appears at
+`https://theoryofshadows.github.io/The-Book/`.
 
 ## Licence
 
