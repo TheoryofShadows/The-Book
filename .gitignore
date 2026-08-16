@@ -1,3 +1,5 @@
 node_modules/
 *.log
 # Gutenberg source etexts are fetched by tools/fetch_extras.sh, not vendored
+__pycache__/
+*.py[cod]
