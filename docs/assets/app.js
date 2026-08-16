@@ -376,7 +376,27 @@
       var reader = el("div", { class: "reader" + (perLine ? " verse-per-line" : "") });
       document.documentElement.style.setProperty("--reader-size", size + "rem");
 
+      var marks = store.get("bookmarks", []);
+      var here = workId + "/" + idx;
+      var marked = marks.some(function (m) { return m.at === here; });
+
       var controls = el("div", { class: "reader-controls" }, [
+        el("button", {
+          class: "chip", "aria-pressed": marked ? "true" : "false",
+          text: marked ? "★ Saved" : "☆ Save",
+          title: "Keep this chapter in your saved list",
+          onclick: function (e) {
+            marks = store.get("bookmarks", []).filter(function (m) { return m.at !== here; });
+            if (!marked) {
+              marks.unshift({ at: here, work: meta.title, label: chapter.label });
+              marks = marks.slice(0, 200);
+            }
+            marked = !marked;
+            store.set("bookmarks", marks);
+            e.currentTarget.textContent = marked ? "★ Saved" : "☆ Save";
+            e.currentTarget.setAttribute("aria-pressed", marked ? "true" : "false");
+          }
+        }),
         el("button", {
           class: "chip", "aria-pressed": perLine ? "true" : "false",
           text: "One verse per line",
@@ -862,6 +882,49 @@
   }
 
   /* ================================================================
+     SAVED
+     ================================================================ */
+
+  function viewSaved() {
+    var wrap = el("div", { class: "wrap" });
+    wrap.appendChild(el("h1", { text: "Saved" }));
+
+    var marks = store.get("bookmarks", []);
+    if (!marks.length) {
+      wrap.appendChild(el("p", { class: "empty", text:
+        "Nothing saved yet. The ☆ Save button at the top of any chapter keeps " +
+        "it here. Saved chapters live in this browser only — nothing is sent " +
+        "anywhere." }));
+      return wrap;
+    }
+
+    wrap.appendChild(el("p", { class: "muted", text:
+      marks.length + (marks.length === 1 ? " chapter" : " chapters") +
+      ", most recent first. Stored in this browser only." }));
+
+    var list = el("div", { class: "results" });
+    marks.forEach(function (m) {
+      var row = el("div", { class: "result" }, [
+        el("div", { class: "result-ref" }, [
+          el("a", { href: "#/read/" + m.at, text: titleCase(m.work) + " · " + m.label })
+        ])
+      ]);
+      row.appendChild(el("button", {
+        class: "chip", text: "Remove",
+        onclick: function () {
+          store.set("bookmarks", store.get("bookmarks", []).filter(function (x) {
+            return x.at !== m.at;
+          }));
+          row.remove();
+        }
+      }));
+      list.appendChild(row);
+    });
+    wrap.appendChild(list);
+    return wrap;
+  }
+
+  /* ================================================================
      ROUTER
      ================================================================ */
 
@@ -906,6 +969,13 @@
             : viewContents(manifest, canon));
           window.scrollTo(0, 0);
         });
+      }
+      if (view === "saved") {
+        setNav("saved");
+        main.innerHTML = "";
+        main.appendChild(viewSaved());
+        window.scrollTo(0, 0);
+        return;
       }
       if (view === "accuracy") {
         setNav("accuracy");
