@@ -68,9 +68,13 @@ def main() -> int:
 
     out = os.path.join(DATA, "index")
     os.makedirs(out, exist_ok=True)
+    # sort_keys keeps the output byte-identical between runs: token order
+    # otherwise follows set iteration, which Python's hash randomisation
+    # varies from process to process, and CI checks these files for drift.
     for key, table in shards.items():
         with open(os.path.join(out, f"{key}.json"), "w", encoding="utf-8") as fh:
-            json.dump(table, fh, ensure_ascii=False, separators=(",", ":"))
+            json.dump(table, fh, ensure_ascii=False, separators=(",", ":"),
+                      sort_keys=True)
 
     with open(os.path.join(DATA, "chapters.json"), "w", encoding="utf-8") as fh:
         json.dump({"chapters": chapters, "common": sorted(common)}, fh,
