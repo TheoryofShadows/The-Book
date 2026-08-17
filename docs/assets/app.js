@@ -43,6 +43,22 @@
       function (m) { return m.toUpperCase(); });
   }
 
+  /* Screen readers get told about things that happen without a page change:
+     saving, copying, search finishing. Without this the app is silent to
+     anyone not watching the pixels. */
+  var liveRegion = null;
+  function announce(message) {
+    if (!liveRegion) {
+      liveRegion = el("div", {
+        class: "sr-only", role: "status",
+        "aria-live": "polite", "aria-atomic": "true"
+      });
+      document.body.appendChild(liveRegion);
+    }
+    liveRegion.textContent = "";
+    setTimeout(function () { liveRegion.textContent = message; }, 60);
+  }
+
   var cache = {};
   function getJSON(path) {
     // The single-file build inlines every data file under this global, so
@@ -385,24 +401,20 @@
       var reader = el("div", { class: "reader" + (perLine ? " verse-per-line" : "") });
       document.documentElement.style.setProperty("--reader-size", size + "rem");
 
-      var marks = store.get("bookmarks", []);
       var here = workId + "/" + idx;
-      var marked = marks.some(function (m) { return m.at === here; });
+      var marked = isSaved(here);
 
       var controls = el("div", { class: "reader-controls" }, [
         el("button", {
           class: "chip", "aria-pressed": marked ? "true" : "false",
-          text: marked ? "★ Saved" : "☆ Save",
-          title: "Keep this chapter in your saved list",
+          text: marked ? "★ Chapter saved" : "☆ Save chapter",
+          title: "Keep this whole chapter in your saved list",
           onclick: function (e) {
-            marks = store.get("bookmarks", []).filter(function (m) { return m.at !== here; });
-            if (!marked) {
-              marks.unshift({ at: here, work: meta.title, label: chapter.label });
-              marks = marks.slice(0, 200);
-            }
-            marked = !marked;
-            store.set("bookmarks", marks);
-            e.currentTarget.textContent = marked ? "★ Saved" : "☆ Save";
+            marked = toggleSave({
+              id: here, kind: "chapter", work: workId,
+              workTitle: meta.title, chapter: idx, label: chapter.label
+            });
+            e.currentTarget.textContent = marked ? "★ Chapter saved" : "☆ Save chapter";
             e.currentTarget.setAttribute("aria-pressed", marked ? "true" : "false");
           }
         }),
@@ -439,12 +451,26 @@
       if (chapter.verses && chapter.verses.length) {
         var p = el("p");
         chapter.verses.forEach(function (v) {
-          var span = el("span", { class: "v", id: "v" + v.v });
-          span.appendChild(el("a", {
+          var span = el("span", {
+            class: "v" + (isSaved(workId + "/" + idx + "/v" + v.v) ? " is-saved" : ""),
+            id: "v" + v.v
+          });
+          // The verse number is the one control per verse: it opens the
+          // actions rather than adding a second tab stop to every verse.
+          // Psalm 119 would otherwise contribute 176 extra of them.
+          span.appendChild(el("button", {
             class: "vnum",
-            href: "#/read/" + workId + "/" + idx + "/v" + v.v,
             text: String(v.v),
-            title: "Link to verse " + v.v
+            "aria-label": "Verse " + v.v + " of " + chapter.label +
+                          ", open verse actions",
+            "aria-expanded": "false",
+            onclick: function (e) {
+              e.stopPropagation();
+              verseMenu(e.currentTarget, {
+                work: workId, workTitle: meta.title, chapter: idx,
+                label: chapter.label, v: v.v, t: v.t
+              });
+            }
           }));
           span.appendChild(document.createTextNode(v.t + " "));
           p.appendChild(span);
@@ -527,13 +553,13 @@
 
     var grid = el("div", { class: "positions-body" }, [
       el("div", { class: "stance" }, [
-        el("h4", { text: "Traditional view" }),
+        el("h3", { text: "Traditional view" }),
         el("p", { class: "claim", text: p.trad }),
         el("p", { class: "why", text: p.tradWhy }),
         el("p", { class: "cite", text: p.tradSource })
       ]),
       el("div", { class: "stance" }, [
-        el("h4", { text: "Critical view" }),
+        el("h3", { text: "Critical view" }),
         el("p", { class: "claim", text: p.crit }),
         el("p", { class: "why", text: p.critWhy }),
         el("p", { class: "cite", text: p.critSource })
@@ -548,9 +574,105 @@
       "critical dating, which is a decision about order, not a verdict on " +
       "which column is right." }));
 
-    wrap.appendChild(head);
+    // Wrapped in an h2 so the document runs h1 (work) > h2 (this panel) >
+    // h3 (each view) > h2 (chapter). Screen-reader users navigate by
+    // heading level, and a jump from h1 straight to h4 loses them.
+    wrap.appendChild(el("h2", { class: "positions-h" }, [head]));
     wrap.appendChild(grid);
     return wrap;
+  }
+
+  /* ================================================================
+     SAVING -- verses, not just chapters
+     ================================================================ */
+
+  function savedItems() { return store.get("saved", []); }
+
+  function isSaved(id) {
+    return savedItems().some(function (s) { return s.id === id; });
+  }
+
+  function toggleSave(item) {
+    var list = savedItems().filter(function (s) { return s.id !== item.id; });
+    var wasSaved = list.length !== savedItems().length;
+    if (!wasSaved) {
+      item.at = Date.now();
+      list.unshift(item);
+    }
+    store.set("saved", list.slice(0, 500));
+    announce(wasSaved ? "Removed from saved" : "Saved");
+    return !wasSaved;
+  }
+
+  function verseId(ref) { return ref.work + "/" + ref.chapter + "/v" + ref.v; }
+
+  var menu = null;
+  function closeMenu() {
+    if (menu) {
+      var owner = menu.owner;
+      menu.node.remove();
+      menu = null;
+      if (owner) owner.setAttribute("aria-expanded", "false");
+    }
+  }
+
+  function verseMenu(button, ref) {
+    var open = menu && menu.owner === button;
+    closeMenu();
+    if (open) return;
+
+    var id = verseId(ref);
+    var node = el("div", { class: "vmenu", role: "menu",
+                           "aria-label": "Actions for verse " + ref.v });
+
+    var saveBtn = el("button", {
+      role: "menuitem",
+      text: isSaved(id) ? "★  Saved — tap to remove" : "☆  Save this verse",
+      onclick: function (e) {
+        var now = toggleSave({
+          id: id, kind: "verse", work: ref.work, workTitle: ref.workTitle,
+          chapter: ref.chapter, label: ref.label, v: ref.v, t: ref.t
+        });
+        e.currentTarget.textContent = now
+          ? "★  Saved — tap to remove" : "☆  Save this verse";
+        span.classList.toggle("is-saved", now);
+      }
+    });
+    var span = button.parentNode;
+    node.appendChild(saveBtn);
+
+    node.appendChild(el("button", {
+      role: "menuitem", text: "🔗  Copy link to this verse",
+      onclick: function (e) {
+        var url = location.href.split("#")[0] +
+                  "#/read/" + ref.work + "/" + ref.chapter + "/v" + ref.v;
+        var done = function () {
+          e.currentTarget.textContent = "🔗  Link copied";
+          announce("Link copied");
+        };
+        if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, done);
+        else done();
+      }
+    }));
+
+    node.appendChild(el("button", {
+      role: "menuitem", text: "⧉  Copy the verse text",
+      onclick: function (e) {
+        var text = ref.t + " — " + titleCase(ref.workTitle) + " " +
+                   ref.label + ":" + ref.v;
+        var done = function () {
+          e.currentTarget.textContent = "⧉  Text copied";
+          announce("Verse text copied");
+        };
+        if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, done);
+        else done();
+      }
+    }));
+
+    span.appendChild(node);
+    button.setAttribute("aria-expanded", "true");
+    menu = { node: node, owner: button };
+    node.querySelector("button").focus();
   }
 
   /* ================================================================
@@ -636,17 +758,35 @@
   var sheet = null;
 
   function closeSheet() {
-    if (sheet) { sheet.remove(); sheet = null; }
+    if (!sheet) return;
+    sheet.remove();
+    sheet = null;
+    // Send focus back where it came from, or a keyboard user is dumped at
+    // the top of the document every time they close a definition.
+    if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+    lastFocus = null;
   }
+
+  function lookupAndShow(term) {
+    if (!term) return;
+    lookup(term).then(function (found) { showEntry(term, found); });
+  }
+
+  var lastFocus = null;
 
   function showEntry(term, found) {
     closeSheet();
-    sheet = el("aside", { class: "lex", role: "dialog", "aria-label": "Definition" });
+    lastFocus = document.activeElement;
+    sheet = el("aside", {
+      class: "lex", role: "dialog", "aria-modal": "false",
+      "aria-label": "Definition of " + (found ? found.entry.name : term),
+      tabindex: "-1"
+    });
 
     var head = el("div", { class: "lex-head" }, [
-      el("strong", { text: found ? found.entry.name : term }),
+      el("h2", { text: found ? found.entry.name : term }),
       el("button", {
-        class: "lex-close", "aria-label": "Close", text: "✕",
+        class: "lex-close", "aria-label": "Close definition", text: "✕",
         onclick: closeSheet
       })
     ]);
@@ -675,6 +815,10 @@
     }
     sheet.appendChild(body);
     document.body.appendChild(sheet);
+    sheet.focus();
+    announce(found
+      ? found.entry.name + ". " + found.entry.text.slice(0, 160)
+      : "No dictionary entry for " + term);
   }
 
   function initLexicon() {
@@ -701,7 +845,30 @@
     });
 
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") closeSheet();
+      if (e.key === "Escape") { closeSheet(); closeMenu(); }
+    });
+  }
+
+  /* A word you can only reach with a mouse is a word a keyboard or screen
+     reader user cannot look up at all. Two routes in without one:
+       d   define the current text selection
+       ?   ask for a word by name
+     Both are listed in the shortcuts panel so they are discoverable. */
+  function initLookupKeys() {
+    document.addEventListener("keydown", function (e) {
+      if (e.target.matches("input, textarea, select")) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key === "d") {
+        var sel = String(window.getSelection() || "").trim();
+        if (sel) { e.preventDefault(); lookupAndShow(sel); }
+        else announce("Select a word first, then press d to define it.");
+      }
+      if (e.key === "?") {
+        e.preventDefault();
+        var term = window.prompt("Look up a word or name:");
+        if (term) lookupAndShow(term.trim());
+      }
     });
   }
 
@@ -1110,35 +1277,104 @@
     var wrap = el("div", { class: "wrap" });
     wrap.appendChild(el("h1", { text: "Saved" }));
 
-    var marks = store.get("bookmarks", []);
-    if (!marks.length) {
+    // Older builds saved whole chapters under a different key. Carry them
+    // over rather than appearing to lose someone's work.
+    var legacy = store.get("bookmarks", []);
+    if (legacy.length) {
+      var merged = savedItems();
+      legacy.forEach(function (m) {
+        var id = m.at;
+        if (!merged.some(function (s) { return s.id === id; })) {
+          merged.push({
+            id: id, kind: "chapter", work: (m.at || "").split("/")[0],
+            workTitle: m.work, chapter: parseInt((m.at || "0/0").split("/")[1], 10) || 0,
+            label: m.label, at: 0
+          });
+        }
+      });
+      store.set("saved", merged);
+      store.set("bookmarks", []);
+    }
+
+    var items = savedItems();
+    if (!items.length) {
       wrap.appendChild(el("p", { class: "empty", text:
-        "Nothing saved yet. The ☆ Save button at the top of any chapter keeps " +
-        "it here. Saved chapters live in this browser only — nothing is sent " +
-        "anywhere." }));
+        "Nothing saved yet. Tap any verse number to save that verse, or use " +
+        "Save at the top of a chapter to keep the whole thing. Everything is " +
+        "stored in this browser only — nothing is sent anywhere, and nobody " +
+        "else can see it." }));
       return wrap;
     }
 
+    var verses = items.filter(function (i) { return i.kind === "verse"; });
     wrap.appendChild(el("p", { class: "muted", text:
-      marks.length + (marks.length === 1 ? " chapter" : " chapters") +
-      ", most recent first. Stored in this browser only." }));
+      items.length + (items.length === 1 ? " item" : " items") + ", " +
+      verses.length + " of them individual verses. Most recent first, stored " +
+      "in this browser only." }));
+
+    var tools = el("div", { class: "toolbar" }, [
+      el("button", {
+        class: "chip", text: "Copy all as text",
+        onclick: function (e) {
+          var text = items.map(function (i) {
+            var ref = titleCase(i.workTitle || i.work) + " " + i.label +
+                      (i.v ? ":" + i.v : "");
+            return i.t ? "“" + i.t + "”\n— " + ref +
+                         (i.note ? "\nNote: " + i.note : "") : ref;
+          }).join("\n\n");
+          var done = function () {
+            e.currentTarget.textContent = "Copied";
+            announce("All saved items copied");
+          };
+          if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, done);
+          else done();
+        }
+      })
+    ]);
+    wrap.appendChild(tools);
 
     var list = el("div", { class: "results" });
-    marks.forEach(function (m) {
-      var row = el("div", { class: "result" }, [
-        el("div", { class: "result-ref" }, [
-          el("a", { href: "#/read/" + m.at, text: titleCase(m.work) + " · " + m.label })
-        ])
-      ]);
+    items.forEach(function (item) {
+      var href = "#/read/" + item.work + "/" + item.chapter +
+                 (item.v ? "/v" + item.v : "");
+      var row = el("article", { class: "saved-row" });
+
+      row.appendChild(el("div", { class: "result-ref" }, [
+        el("a", { href: href, text: titleCase(item.workTitle || item.work) +
+                   " · " + item.label + (item.v ? ":" + item.v : "") })
+      ]));
+
+      if (item.t) {
+        row.appendChild(el("blockquote", { class: "saved-text", text: item.t }));
+      }
+
+      var note = el("textarea", {
+        class: "saved-note", rows: "2",
+        placeholder: "Add a note to yourself…",
+        "aria-label": "Your note on " + (item.workTitle || item.work) +
+                      " " + item.label
+      });
+      note.value = item.note || "";
+      note.addEventListener("change", function () {
+        var all = savedItems();
+        all.forEach(function (s) { if (s.id === item.id) s.note = note.value; });
+        store.set("saved", all);
+        announce("Note saved");
+      });
+      row.appendChild(note);
+
       row.appendChild(el("button", {
         class: "chip", text: "Remove",
+        "aria-label": "Remove " + (item.workTitle || item.work) + " " + item.label,
         onclick: function () {
-          store.set("bookmarks", store.get("bookmarks", []).filter(function (x) {
-            return x.at !== m.at;
+          store.set("saved", savedItems().filter(function (s) {
+            return s.id !== item.id;
           }));
           row.remove();
+          announce("Removed from saved");
         }
       }));
+
       list.appendChild(row);
     });
     wrap.appendChild(list);
@@ -1160,6 +1396,12 @@
     var hash = location.hash.replace(/^#\/?/, "");
     var parts = hash.split("/").filter(function (p) { return p !== ""; });
     var view = parts[0] || "home";
+
+    // Overlays hang off document.body, so they outlive a route change unless
+    // closed here. Otherwise a definition opened in Amos follows you to the
+    // saved page and sits there.
+    closeSheet();
+    closeMenu();
 
     main.innerHTML = "";
     main.appendChild(el("p", { class: "loading", text: "Loading…" }));
@@ -1238,5 +1480,6 @@
 
   refreshResume();
   initLexicon();
+  initLookupKeys();
   route();
 })();
