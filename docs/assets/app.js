@@ -793,15 +793,20 @@
         aliasTable = al;
         var target = al[key] || key;
         var shard = /^[a-z]/.test(target) ? target[0] : "0";
-        return getJSON("lexicon/" + shard + ".json")
-          .catch(function () { return {}; })
-          .then(function (table) {
-            var hit = table[target];
-            // Singular/plural and possessive are the common misses.
-            if (!hit && /s$/.test(target)) hit = table[target.replace(/s$/, "")];
-            if (!hit) hit = table[target + "s"];
-            return hit ? { key: target, entry: hit } : null;
-          });
+        return Promise.all([
+          getJSON("lexicon/" + shard + ".json").catch(function () { return {}; }),
+          getJSON("places/" + shard + ".json").catch(function () { return {}; })
+        ]).then(function (r) {
+          var table = r[0], places = r[1];
+          var hit = table[target];
+          // Singular/plural and possessive are the common misses.
+          if (!hit && /s$/.test(target)) hit = table[target.replace(/s$/, "")];
+          if (!hit) hit = table[target + "s"];
+          var place = places[target] ||
+                      (/s$/.test(target) ? places[target.replace(/s$/, "")] : null);
+          if (!hit && !place) return null;
+          return { key: target, entry: hit, place: place };
+        });
       });
   }
 
@@ -822,6 +827,72 @@
     lookup(term).then(function (found) { showEntry(term, found); });
   }
 
+  /* How far back to stand, by what kind of thing it is. A region needs the
+     camera much higher than a village, and pretending otherwise would show a
+     confident pin on a territory. */
+  var VIEW = {
+    point: 4000, within: 3000, approximate: 25000, region: 400000
+  };
+
+  var KIND_LABEL = {
+    point: "Identified location",
+    within: "Inside a larger city",
+    approximate: "Approximate location",
+    region: "A region, not a point"
+  };
+
+  function placeBlock(p) {
+    var dist = VIEW[p.kind] || 8000;
+    // Google Earth's web URL. On a phone with the app installed this opens
+    // it directly; otherwise it opens Earth in the browser.
+    var earth = "https://earth.google.com/web/@" + p.lat + "," + p.lon +
+                ",0a," + dist + "d,35y,0h,45t,0r";
+    var maps = "https://www.google.com/maps/search/?api=1&query=" +
+               p.lat + "," + p.lon;
+    var osm = "https://www.openstreetmap.org/?mlat=" + p.lat +
+              "&mlon=" + p.lon + "#map=" + (p.kind === "region" ? 6 : 12) +
+              "/" + p.lat + "/" + p.lon;
+
+    var box = el("div", { class: "place place-" + p.kind });
+
+    box.appendChild(el("div", { class: "place-kind" }, [
+      el("span", { class: "place-dot", "aria-hidden": "true" }),
+      el("span", { text: KIND_LABEL[p.kind] || "Location" })
+    ]));
+
+    if (p.modern) {
+      box.appendChild(el("p", { class: "place-modern", text: p.modern }));
+    }
+    if (p.note) {
+      box.appendChild(el("p", { class: "place-note", text: p.note }));
+    }
+
+    box.appendChild(el("p", { class: "place-coords", text:
+      p.lat.toFixed(4) + "°, " + p.lon.toFixed(4) + "°" +
+      (p.mentions ? "  ·  named in " + p.mentions +
+        (p.mentions === 1 ? " passage" : " passages") : "") }));
+
+    var links = el("div", { class: "place-links" }, [
+      el("a", { class: "chip primary", href: earth,
+                target: "_blank", rel: "noopener noreferrer",
+                text: "🌍  Open in Google Earth" }),
+      el("a", { class: "chip", href: maps,
+                target: "_blank", rel: "noopener noreferrer", text: "Maps" }),
+      el("a", { class: "chip", href: osm,
+                target: "_blank", rel: "noopener noreferrer",
+                text: "OpenStreetMap" })
+    ]);
+    box.appendChild(links);
+
+    box.appendChild(el("p", { class: "place-cite", text:
+      "Coordinates from OpenBible.info's Bible Geocoding data, CC BY 4.0, "
+      + "parts derived from OpenStreetMap under the ODbL. Many biblical sites "
+      + "are identified only tentatively; the label above says how firm this "
+      + "one is." }));
+
+    return box;
+  }
+
   var lastFocus = null;
 
   function showEntry(term, found) {
@@ -833,8 +904,12 @@
       tabindex: "-1"
     });
 
+    var title = found
+      ? (found.entry ? found.entry.name : found.place.name)
+      : term;
+
     var head = el("div", { class: "lex-head" }, [
-      el("h2", { text: found ? found.entry.name : term }),
+      el("h2", { text: title }),
       el("button", {
         class: "lex-close", "aria-label": "Close definition", text: "✕",
         onclick: closeSheet
@@ -849,16 +924,21 @@
         "It covers the Protestant canon closely and the deuterocanon, Enoch, " +
         "Jubilees and the Apostolic Fathers barely at all." }));
     } else {
-      body.appendChild(el("p", { class: "lex-text", text: found.entry.text }));
-      (found.entry.flags || []).forEach(function (f) {
-        body.appendChild(el("p", { class: "lex-flag " + f.kind, text: f.note }));
-      });
-      body.appendChild(el("p", { class: "lex-cite", text:
-        "Easton's Bible Dictionary, 1897. Public domain by age, and written "
-        + "before modern archaeology; read it as a Victorian reference, not "
-        + "as current scholarship." }));
+      if (found.place) body.appendChild(placeBlock(found.place));
+
+      if (found.entry) {
+        body.appendChild(el("p", { class: "lex-text", text: found.entry.text }));
+        (found.entry.flags || []).forEach(function (f) {
+          body.appendChild(el("p", { class: "lex-flag " + f.kind, text: f.note }));
+        });
+        body.appendChild(el("p", { class: "lex-cite", text:
+          "Easton's Bible Dictionary, 1897. Public domain by age, and written "
+          + "before modern archaeology; read it as a Victorian reference, not "
+          + "as current scholarship." }));
+      }
+
       body.appendChild(el("a", {
-        class: "chip", href: "#/search/" + encodeURIComponent(found.entry.name.split(",")[0]),
+        class: "chip", href: "#/search/" + encodeURIComponent(title.split(",")[0]),
         text: "Find every passage mentioning this",
         onclick: closeSheet
       }));

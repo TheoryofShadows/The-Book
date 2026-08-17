@@ -767,3 +767,49 @@ main > * { animation: rise .18s ease-out; }
 }
 @keyframes pulse { 50% { opacity: .25; } }
 @media (prefers-reduced-motion: reduce) { .loading::after { animation: none; } }
+
+/* ---------- place, in the definition panel ----------
+   Colour carries how firm the identification is, so a region never looks
+   like a pin and a guess never looks like a survey point. */
+
+.place {
+  background: var(--paper-2); border-radius: var(--radius);
+  padding: .75rem .85rem; margin: 0 0 .9rem;
+  border-left: 3px solid var(--good);
+}
+.place-approximate { border-left-color: var(--warn); }
+.place-region      { border-left-color: var(--fix); }
+.place-within      { border-left-color: var(--ink-faint); }
+
+.place-kind {
+  display: flex; align-items: center; gap: .4rem;
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .06em;
+  font-weight: 700; color: var(--good); margin-bottom: .4rem;
+}
+.place-approximate .place-kind { color: var(--warn); }
+.place-region .place-kind      { color: var(--fix); }
+.place-within .place-kind      { color: var(--ink-faint); }
+
+.place-dot {
+  width: .5rem; height: .5rem; border-radius: 50%;
+  background: currentColor; flex: 0 0 auto;
+}
+.place-region .place-dot { border-radius: 2px; width: .62rem; height: .42rem; }
+.place-approximate .place-dot { opacity: .55; }
+
+.place-modern { margin: 0 0 .3rem; font-size: .9rem; font-weight: 600; }
+.place-note   { margin: 0 0 .4rem; font-size: .82rem; color: var(--ink-soft); }
+.place-coords {
+  margin: 0 0 .6rem; font-family: var(--mono); font-size: .74rem;
+  color: var(--ink-faint); font-variant-numeric: tabular-nums;
+}
+.place-links { display: flex; gap: .35rem; flex-wrap: wrap; }
+.place-links .chip { text-decoration: none; }
+.chip.primary {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+.chip.primary:hover { background: var(--accent-2); border-color: var(--accent-2); color: #fff; }
+.place-cite {
+  margin: .6rem 0 0; font-size: .72rem; font-style: italic;
+  color: var(--ink-faint);
+}
