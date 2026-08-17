@@ -533,6 +533,36 @@
       }
       body.appendChild(reader);
 
+      // What actually survives, and where you can look at it. Nothing is
+      // reproduced -- these objects are all rights reserved -- but linking is
+      // always allowed, and the site already rests arguments on them.
+      getJSON("manuscripts.json").then(function (ms) {
+        var ids = (ms.works || {})[workId];
+        if (!ids || !ids.length) return;
+
+        var box = el("details", { class: "witnesses" });
+        box.appendChild(el("summary", { text:
+          "What survives · " + ids.length +
+          (ids.length === 1 ? " manuscript" : " manuscripts") }));
+
+        ids.forEach(function (id) {
+          var w = ms.witnesses[id];
+          if (!w) return;
+          box.appendChild(el("div", { class: "witness" }, [
+            el("h3", {}, [
+              el("a", { href: w.url, target: "_blank",
+                        rel: "noopener noreferrer", text: w.name })
+            ]),
+            el("p", { class: "witness-when", text:
+              w.date + " · " + w.found + " · " + w.where }),
+            el("p", { class: "witness-holds", text: w.holds }),
+            el("p", { class: "witness-why", text: w.why }),
+            el("p", { class: "witness-rights", text: w.rights })
+          ]));
+        });
+        body.insertBefore(box, body.firstChild);
+      }).catch(function () {});
+
       var src = manifest.sources && manifest.sources[meta.source];
       if (src) {
         body.appendChild(el("div", { class: "apparatus", html:

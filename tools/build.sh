@@ -15,6 +15,9 @@ python3 tools/build_repairs.py "$OUT" source/extra
 echo "==> lexicon"
 python3 tools/build_lexicon.py source/lexicon "$OUT"
 
+echo "==> manuscripts"
+python3 tools/build_manuscripts.py "$OUT"
+
 echo "==> places"
 python3 tools/build_places.py source/places/merged.txt "$OUT"
 
