@@ -303,6 +303,81 @@ table.grid tbody tr:hover { background: var(--paper-2); }
 .no  { color: var(--ink-faint); }
 .part { color: var(--warn); font-weight: 700; }
 
+/* ---------- threads ---------- */
+
+.thread-cards {
+  display: grid; gap: .8rem; margin: 1.8rem 0;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+}
+.thread-card {
+  display: block; text-decoration: none; color: inherit;
+  background: var(--raised); border: 1px solid var(--rule-soft);
+  border-radius: var(--radius); padding: 1.1rem 1.2rem;
+  border-left: 3px solid var(--accent);
+}
+.thread-card:hover { border-color: var(--accent); background: var(--accent-bg); }
+.thread-card h2 {
+  margin: 0 0 .45rem; font-size: 1.16rem; line-height: 1.25;
+  text-wrap: balance;
+}
+.thread-card p { margin: 0 0 .7rem; font-size: .89rem; color: var(--ink-soft); }
+.thread-meta {
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--ink-faint);
+}
+
+/* The spine down the left is the passage of time; each stop hangs off it. */
+.thread { list-style: none; margin: 2rem 0 0; padding: 0; position: relative; }
+.thread::before {
+  content: ""; position: absolute; left: 3.1rem; top: .5rem; bottom: 2rem;
+  width: 2px; background: linear-gradient(var(--accent), var(--rule-soft));
+}
+
+.stop { display: flex; gap: 1.1rem; margin: 0 0 1.7rem; position: relative; }
+
+.stop-when {
+  flex: 0 0 5.4rem; text-align: right; padding-top: .15rem;
+  display: flex; flex-direction: column; align-items: flex-end; gap: .1rem;
+}
+.stop-era {
+  font-family: var(--mono); font-size: .74rem; color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 4px;
+  padding: .05rem .34rem; background: var(--paper);
+  position: relative; z-index: 1;
+}
+.stop-date {
+  font-size: .68rem; color: var(--ink-faint);
+  font-variant-numeric: tabular-nums; max-width: 5.2rem;
+}
+
+.stop-card { flex: 1; min-width: 0; padding-left: .9rem; }
+.stop-ref {
+  display: inline-block; font-size: .78rem; font-weight: 600;
+  text-decoration: none; margin-bottom: .5rem;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.stop-text {
+  font-family: var(--serif); font-size: 1.03rem; line-height: 1.6;
+  margin: 0 0 .6rem; padding: 0; color: var(--ink);
+}
+.stop-vnum {
+  font-family: var(--sans); font-size: .62em; font-weight: 600;
+  color: var(--accent); vertical-align: .4em; margin-right: .3em;
+}
+.stop-why { margin: 0; font-size: .875rem; color: var(--ink-soft); }
+.stop-aside {
+  margin: .6rem 0 0; font-size: .78rem; color: var(--warn);
+  background: var(--warn-bg); border-radius: 6px; padding: .5rem .65rem;
+}
+
+@media (max-width: 620px) {
+  .thread::before { left: 2.2rem; }
+  .stop { gap: .7rem; }
+  .stop-when { flex-basis: 3.6rem; }
+  .stop-date { font-size: .62rem; max-width: 3.6rem; }
+  .stop-card { padding-left: .5rem; }
+}
+
 /* ---------- reader ---------- */
 
 .reader-head { border-bottom: 1px solid var(--rule); padding-bottom: 1rem; margin-bottom: 1.4rem; }
@@ -649,4 +724,13 @@ mark { background: var(--mark); color: inherit; padding: 0 .1em; border-radius: 
   .topbar, .foot, .pager, .chapter-strip, .toolbar { display: none; }
   body { background: #fff; color: #000; }
   .reader { max-width: none; }
+}
+
+/* The threads block on the home page: the argument, before the filing. */
+.threads-hero { margin: 2.2rem 0 .5rem; }
+.threads-hero h2 { margin: 0 0 .3rem; font-size: 1.34rem; }
+.threads-hero .thread-cards { margin-top: 1rem; }
+.threads-hero .thread-card h3 {
+  margin: 0 0 .45rem; font-family: var(--serif); font-size: 1.1rem;
+  font-weight: 600; line-height: 1.25; text-wrap: balance;
 }

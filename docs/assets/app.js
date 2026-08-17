@@ -150,6 +150,29 @@
       });
     wrap.appendChild(stats);
 
+    // The chronological order is the only thing here no other Bible site can
+    // copy. Left as a filing decision it is invisible; this is where a
+    // visitor is shown what it actually reveals.
+    getJSON("threads.json").then(function (threads) {
+      var box = el("section", { class: "threads-hero" });
+      box.appendChild(el("h2", { text: "What the order reveals" }));
+      box.appendChild(el("p", { class: "muted", text:
+        "Follow one question across eight hundred years of writing. Every " +
+        "passage is the text itself; every reference is checked when the site " +
+        "is built." }));
+      var grid = el("div", { class: "thread-cards" });
+      threads.forEach(function (t) {
+        grid.appendChild(el("a", { class: "thread-card", href: "#/thread/" + t.id }, [
+          el("h3", { text: t.title }),
+          el("p", { text: t.question }),
+          el("span", { class: "thread-meta", text: t.stops.length + " passages" })
+        ]));
+      });
+      box.appendChild(grid);
+      var anchor = wrap.querySelector(".callout");
+      if (anchor) wrap.insertBefore(box, anchor);
+    }).catch(function () {});
+
     wrap.appendChild(el("div", { class: "callout" }, [
       el("p", { html:
         "<strong>Read this first.</strong> The order below is a reconstruction, " +
@@ -1270,6 +1293,90 @@
   }
 
   /* ================================================================
+     THREADS -- one question, traced across the collection
+     ================================================================ */
+
+  function viewThreads(threads) {
+    var wrap = el("div", { class: "wrap" });
+    wrap.appendChild(el("h1", { text: "Threads" }));
+    wrap.appendChild(el("p", { class: "lede", text:
+      "One question, followed across the whole collection in the order the " +
+      "texts were written. This is the thing a chronological arrangement can " +
+      "show and a normal Bible cannot: an idea being asked, answered, " +
+      "contradicted and answered again over eight hundred years." }));
+
+    var grid = el("div", { class: "thread-cards" });
+    threads.forEach(function (t) {
+      grid.appendChild(el("a", { class: "thread-card", href: "#/thread/" + t.id }, [
+        el("h2", { text: t.title }),
+        el("p", { text: t.question }),
+        el("span", { class: "thread-meta", text:
+          t.stops.length + " passages · " +
+          t.stops[0].section + " to " + t.stops[t.stops.length - 1].section })
+      ]));
+    });
+    wrap.appendChild(grid);
+    return wrap;
+  }
+
+  function viewThread(threads, id) {
+    var t = threads.filter(function (x) { return x.id === id; })[0];
+    if (!t) return el("div", { class: "wrap" },
+                      [el("p", { class: "empty", text: "No such thread." })]);
+
+    var wrap = el("div", { class: "wrap" });
+    wrap.appendChild(el("div", { class: "crumbs" }, [
+      el("a", { href: "#/threads", text: "Threads" })
+    ]));
+    wrap.appendChild(el("h1", { text: t.title }));
+    wrap.appendChild(el("p", { class: "lede", text: t.question }));
+
+    var line = el("ol", { class: "thread" });
+    t.stops.forEach(function (s, i) {
+      var li = el("li", { class: "stop" });
+
+      li.appendChild(el("div", { class: "stop-when" }, [
+        el("span", { class: "stop-era", text: s.section || "＋" }),
+        el("span", { class: "stop-date", text: s.dates })
+      ]));
+
+      var card = el("div", { class: "stop-card" });
+      card.appendChild(el("a", {
+        class: "stop-ref",
+        href: "#/read/" + s.work + "/" + s.chapter + "/v" + s.verses[0].v,
+        text: titleCase(s.workTitle) + " · " + s.label
+      }));
+
+      s.verses.forEach(function (v) {
+        card.appendChild(el("blockquote", { class: "stop-text" }, [
+          el("span", { class: "stop-vnum", text: String(v.v) }),
+          document.createTextNode(v.t)
+        ]));
+      });
+
+      card.appendChild(el("p", { class: "stop-why", text: s.why }));
+      if (s.aside) {
+        card.appendChild(el("p", { class: "stop-aside", text: s.aside }));
+      }
+      li.appendChild(card);
+      line.appendChild(li);
+    });
+    wrap.appendChild(line);
+
+    wrap.appendChild(el("div", { class: "callout" }, [
+      el("p", { text: t.closing })
+    ]));
+
+    wrap.appendChild(el("p", { class: "tiny", text:
+      "The passages above are the text, reproduced exactly and checked against " +
+      "the same files the reader uses; every reference is verified when the " +
+      "site is built. The commentary between them is editorial, written for " +
+      "this volume." }));
+
+    return wrap;
+  }
+
+  /* ================================================================
      SAVED
      ================================================================ */
 
@@ -1430,6 +1537,16 @@
           main.appendChild(view === "canons"
             ? viewCanons(manifest, canon)
             : viewContents(manifest, canon));
+          window.scrollTo(0, 0);
+        });
+      }
+      if (view === "threads" || view === "thread") {
+        setNav("threads");
+        return getJSON("threads.json").then(function (threads) {
+          main.innerHTML = "";
+          main.appendChild(view === "thread"
+            ? viewThread(threads, parts[1])
+            : viewThreads(threads));
           window.scrollTo(0, 0);
         });
       }
