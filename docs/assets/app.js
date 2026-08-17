@@ -169,7 +169,8 @@
         ]));
       });
       box.appendChild(grid);
-      var anchor = wrap.querySelector(".callout");
+      // Directly under the hero. The argument comes before the statistics.
+      var anchor = wrap.querySelector(".stats");
       if (anchor) wrap.insertBefore(box, anchor);
     }).catch(function () {});
 
@@ -403,6 +404,32 @@
 
       store.set("last", { work: workId, chapter: idx, title: meta.title });
       refreshResume();
+
+      // Psalms is a 150-button grid to scroll through. Past about forty
+      // chapters, hunting stops being viable and you need to just say a number.
+      if (work.chapters.length > 40) {
+        var jump = el("form", {
+          class: "chapter-jump",
+          onsubmit: function (e) {
+            e.preventDefault();
+            var n = parseInt(field.value, 10);
+            if (!n || n < 1 || n > work.chapters.length) {
+              announce("Enter a number between 1 and " + work.chapters.length);
+              return;
+            }
+            location.hash = "#/read/" + workId + "/" + (n - 1);
+          }
+        });
+        var field = el("input", {
+          type: "number", min: "1", max: String(work.chapters.length),
+          placeholder: "1–" + work.chapters.length,
+          "aria-label": "Jump to a chapter of " + titleCase(meta.title) +
+                        ", between 1 and " + work.chapters.length
+        });
+        jump.appendChild(field);
+        jump.appendChild(el("button", { class: "chip", type: "submit", text: "Go" }));
+        head.appendChild(jump);
+      }
 
       if (work.chapters.length > 1) {
         var strip = el("div", { class: "chapter-strip" });

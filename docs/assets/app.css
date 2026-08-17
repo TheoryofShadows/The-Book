@@ -713,10 +713,21 @@ mark { background: var(--mark); color: inherit; padding: 0 .1em; border-radius: 
 }
 
 @media (max-width: 620px) {
-  .nav a { padding: .3rem .5rem; font-size: .82rem; }
+  /* Seven nav items wrapped to three lines and took 18% of the screen before
+     a word of scripture appeared. One row that scrolls sideways instead. */
+  .topbar { gap: .5rem; padding: .45rem .7rem; }
+  .nav {
+    flex-wrap: nowrap; overflow-x: auto; order: 3; width: 100%;
+    gap: .1rem; padding-bottom: .1rem;
+    scrollbar-width: none; -ms-overflow-style: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a { padding: .28rem .55rem; font-size: .82rem; flex: 0 0 auto; }
+
   /* Keep the name, drop only the strapline. A lone icon is not a wordmark. */
   .brand-sub { display: none; }
   .brand-name { font-size: 1.02rem; }
+  .tools { margin-left: auto; }
   table.grid thead th { top: 5.6rem; }
 }
 
@@ -734,3 +745,25 @@ mark { background: var(--mark); color: inherit; padding: 0 .1em; border-radius: 
   margin: 0 0 .45rem; font-family: var(--serif); font-size: 1.1rem;
   font-weight: 600; line-height: 1.25; text-wrap: balance;
 }
+
+/* Chapter jump, for books too long to scan as a grid. */
+.chapter-jump { display: flex; gap: .4rem; align-items: center; margin: .8rem 0 0; }
+.chapter-jump input {
+  width: 6.5rem; font: inherit; font-size: .85rem;
+  background: var(--raised); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 8px; padding: .32rem .55rem;
+}
+.chapter-jump button { cursor: pointer; }
+
+/* Content arriving should settle rather than snap. */
+main > * { animation: rise .18s ease-out; }
+@keyframes rise { from { opacity: 0; transform: translateY(.25rem); } }
+@media (prefers-reduced-motion: reduce) { main > * { animation: none; } }
+
+.loading::after {
+  content: ""; display: inline-block; width: .5rem; height: .5rem;
+  margin-left: .4rem; border-radius: 50%;
+  background: var(--accent); animation: pulse 1s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .loading::after { animation: none; } }

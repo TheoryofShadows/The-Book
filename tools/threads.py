@@ -180,6 +180,118 @@ THREADS = [
         ],
     },
     {
+        "id": "what-is-god-like",
+        "question": "The oldest surviving line in this collection calls God a "
+                    "man of war. The latest says God is love. Everything in "
+                    "between is the same collection changing its mind, or "
+                    "being shown more.",
+        "title": "What is God like?",
+        "closing": "Two readings of this sequence are available and the volume "
+                   "does not choose between them. One is that a people's idea "
+                   "of God grew as they did, from a tribal war deity into "
+                   "something universal. The other is that a real God revealed "
+                   "himself gradually, to people who could only receive so much "
+                   "at a time. The passages are identical either way. What you "
+                   "make of them is not a matter the arrangement can decide.",
+        "stops": [
+            {"work": "the-song-of-the-sea-exodus-15", "chapter": 0, "verses": [3, 11],
+             "why": "The oldest continuous text in the volume, archaic Hebrew, "
+                    "perhaps the twelfth century BCE. God is a warrior who "
+                    "drowns an army, and the question asked is who is like him "
+                    "among the gods — not whether other gods exist."},
+            {"work": "hosea", "chapter": 10, "verses": [8, 9],
+             "why": "Eighth century. Something new: God torn about punishing, "
+                    "and the reason given for relenting is that he is God and "
+                    "not a man. Divine unlikeness becomes a reason for mercy "
+                    "rather than for terror."},
+            {"work": "isaiah-1-39-first-isaiah", "chapter": 5, "verses": [3, 5],
+             "why": "The temple vision. Holiness is the defining attribute, and "
+                    "the prophet's first reaction to seeing it is to think he "
+                    "is about to die."},
+            {"work": "ezekiel", "chapter": 0, "verses": [26, 28],
+             "why": "In exile, far from the temple, Ezekiel sees the throne "
+                    "mobile and above him in Babylon. The language piles up "
+                    "hedges — likeness, appearance, as it were — because he is "
+                    "describing something he says cannot be described."},
+            {"work": "isaiah-40-55-second-isaiah", "chapter": 5, "verses": [5, 7],
+             "why": "The decisive moment. Not merely that Israel should worship "
+                    "one God, but that there is no other, and that this God "
+                    "forms light and creates darkness. Monotheism stated "
+                    "outright, and with it the problem of evil arrives."},
+            {"work": "job", "chapter": 37, "verses": [4],
+             "why": "Job demands an answer and receives a tour of creation "
+                    "instead. God's reply is not a justification; it is a "
+                    "question about how little Job can see."},
+            {"work": "daniel", "chapter": 6, "verses": [9, 13],
+             "why": "c. 165 BCE. The Ancient of Days on a throne of flame, and "
+                    "beside him one like a son of man receiving dominion. A "
+                    "second figure appears in the divine scene."},
+            {"work": "1-enoch-the-book-of-parables-chapters-37-71",
+             "chapter": 9, "verses": [1, 2],
+             "why": "Enoch's Parables develop that figure further, and call God "
+                    "the Lord of Spirits throughout. Not scripture in most "
+                    "canons, but the vocabulary the gospels' audience already "
+                    "had."},
+            {"work": "john", "chapter": 0, "verses": [1, 14],
+             "why": "The most radical claim in the collection: that the God of "
+                    "the Song of the Sea took a body and lived in a street."},
+            {"work": "1-john", "chapter": 3, "verses": [8],
+             "why": "Three words, written perhaps eleven centuries after the "
+                    "war hymn, in the same book."},
+        ],
+    },
+    {
+        "id": "innocent-suffering",
+        "title": "Why do the innocent suffer?",
+        "question": "The collection states a rule, then spends centuries "
+                    "attacking it. This is the clearest case of these texts "
+                    "arguing with one another rather than agreeing.",
+        "closing": "No stop here cancels the others. Deuteronomy's rule is "
+                   "still in the book that contains Job's refutation of it, and "
+                   "Ecclesiastes' flat observation that the same fate meets "
+                   "everyone was never edited out. A collection assembled to "
+                   "reassure would not have kept all three. Whatever else that "
+                   "means, it means the people who preserved these texts were "
+                   "willing to preserve the objection.",
+        "stops": [
+            {"work": "deuteronomy", "chapter": 27, "verses": [1, 15],
+             "why": "The rule, stated as plainly as it ever gets: obey and be "
+                    "blessed, disobey and be cursed. Much of the collection "
+                    "assumes this, and much of the rest exists to dispute it."},
+            {"work": "habakkuk", "chapter": 0, "verses": [13],
+             "why": "Late seventh century. A prophet accuses God directly of "
+                    "watching treachery and doing nothing. The complaint is in "
+                    "scripture, not answered from outside it."},
+            {"work": "job", "chapter": 20, "verses": [7],
+             "why": "Job takes the rule and inverts it with the evidence: the "
+                    "wicked grow old and powerful. His friends defend the rule "
+                    "for thirty chapters and God tells them at the end that "
+                    "they were wrong and Job was right."},
+            {"work": "psalms", "chapter": 72, "verses": [2, 3, 16, 17],
+             "why": "Psalm 73 admits the writer nearly lost his footing over "
+                    "this, and resolves it only by going into the sanctuary — "
+                    "an answer that is honest about being a change of vantage "
+                    "rather than an argument."},
+            {"work": "ecclesiastes", "chapter": 7, "verses": [14],
+             "why": "The bleakest verse on the subject, and it was kept: "
+                    "righteous men get what the wicked deserve, and wicked men "
+                    "get what the righteous deserve."},
+            {"work": "the-wisdom-of-solomon", "chapter": 2, "verses": [1, 2, 4],
+             "why": "A resolution arrives, and it arrives only once an "
+                    "afterlife does: the righteous seemed to die, but they are "
+                    "at peace. The problem is answered by moving the accounting "
+                    "past death."},
+            {"work": "john", "chapter": 8, "verses": [2, 3],
+             "why": "Asked whose sin caused a man's blindness, Jesus rejects "
+                    "the premise of the question outright. The retribution rule "
+                    "is denied to its face."},
+            {"work": "romans", "chapter": 7, "verses": [18, 28],
+             "why": "Paul does not explain suffering away. He argues that it is "
+                    "not the last word and not worth comparing to what follows "
+                    "— a claim about the ending, not a solution to the problem."},
+        ],
+    },
+    {
         "id": "quoting-enoch",
         "title": "The New Testament quotes a book most Bibles leave out",
         "question": "Jude cites Enoch by name, as prophecy. Because this "
