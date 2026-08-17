@@ -126,13 +126,30 @@ a:hover { color: var(--accent-2); }
   flex-wrap: wrap;
 }
 
+/* The wordmark. The subtitle is the whole argument of the project in five
+   words, so it belongs in the mark rather than buried on the home page. */
 .brand {
-  display: inline-flex; align-items: baseline; gap: .45rem;
-  font-family: var(--serif); font-size: 1.16rem; font-weight: 600;
-  color: var(--ink); text-decoration: none; letter-spacing: .01em;
-  white-space: nowrap;
+  display: inline-flex; align-items: center; gap: .5rem;
+  color: var(--ink); text-decoration: none; white-space: nowrap;
 }
-.brand-mark { color: var(--accent); font-size: .9em; }
+.brand-mark { color: var(--accent); display: flex; align-items: center; }
+.brand-text { display: flex; flex-direction: column; line-height: 1.05; }
+.brand-name {
+  font-family: var(--serif); font-size: 1.16rem; font-weight: 600;
+  letter-spacing: .005em;
+}
+.brand-sub {
+  font-size: .62rem; color: var(--ink-faint);
+  letter-spacing: .07em; text-transform: uppercase;
+}
+.brand:hover .brand-name { color: var(--accent); }
+
+/* Visible only to screen readers. */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+}
 
 .nav { display: flex; gap: .15rem; flex: 1; flex-wrap: wrap; }
 .nav a {
@@ -286,6 +303,81 @@ table.grid tbody tr:hover { background: var(--paper-2); }
 .no  { color: var(--ink-faint); }
 .part { color: var(--warn); font-weight: 700; }
 
+/* ---------- threads ---------- */
+
+.thread-cards {
+  display: grid; gap: .8rem; margin: 1.8rem 0;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+}
+.thread-card {
+  display: block; text-decoration: none; color: inherit;
+  background: var(--raised); border: 1px solid var(--rule-soft);
+  border-radius: var(--radius); padding: 1.1rem 1.2rem;
+  border-left: 3px solid var(--accent);
+}
+.thread-card:hover { border-color: var(--accent); background: var(--accent-bg); }
+.thread-card h2 {
+  margin: 0 0 .45rem; font-size: 1.16rem; line-height: 1.25;
+  text-wrap: balance;
+}
+.thread-card p { margin: 0 0 .7rem; font-size: .89rem; color: var(--ink-soft); }
+.thread-meta {
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--ink-faint);
+}
+
+/* The spine down the left is the passage of time; each stop hangs off it. */
+.thread { list-style: none; margin: 2rem 0 0; padding: 0; position: relative; }
+.thread::before {
+  content: ""; position: absolute; left: 3.1rem; top: .5rem; bottom: 2rem;
+  width: 2px; background: linear-gradient(var(--accent), var(--rule-soft));
+}
+
+.stop { display: flex; gap: 1.1rem; margin: 0 0 1.7rem; position: relative; }
+
+.stop-when {
+  flex: 0 0 5.4rem; text-align: right; padding-top: .15rem;
+  display: flex; flex-direction: column; align-items: flex-end; gap: .1rem;
+}
+.stop-era {
+  font-family: var(--mono); font-size: .74rem; color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 4px;
+  padding: .05rem .34rem; background: var(--paper);
+  position: relative; z-index: 1;
+}
+.stop-date {
+  font-size: .68rem; color: var(--ink-faint);
+  font-variant-numeric: tabular-nums; max-width: 5.2rem;
+}
+
+.stop-card { flex: 1; min-width: 0; padding-left: .9rem; }
+.stop-ref {
+  display: inline-block; font-size: .78rem; font-weight: 600;
+  text-decoration: none; margin-bottom: .5rem;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.stop-text {
+  font-family: var(--serif); font-size: 1.03rem; line-height: 1.6;
+  margin: 0 0 .6rem; padding: 0; color: var(--ink);
+}
+.stop-vnum {
+  font-family: var(--sans); font-size: .62em; font-weight: 600;
+  color: var(--accent); vertical-align: .4em; margin-right: .3em;
+}
+.stop-why { margin: 0; font-size: .875rem; color: var(--ink-soft); }
+.stop-aside {
+  margin: .6rem 0 0; font-size: .78rem; color: var(--warn);
+  background: var(--warn-bg); border-radius: 6px; padding: .5rem .65rem;
+}
+
+@media (max-width: 620px) {
+  .thread::before { left: 2.2rem; }
+  .stop { gap: .7rem; }
+  .stop-when { flex-basis: 3.6rem; }
+  .stop-date { font-size: .62rem; max-width: 3.6rem; }
+  .stop-card { padding-left: .5rem; }
+}
+
 /* ---------- reader ---------- */
 
 .reader-head { border-bottom: 1px solid var(--rule); padding-bottom: 1rem; margin-bottom: 1.4rem; }
@@ -318,13 +410,64 @@ table.grid tbody tr:hover { background: var(--paper-2); }
 .reader .v.target { background: var(--mark); border-radius: 3px; }
 .reader p { margin: 0 0 1.05rem; }
 
+/* The verse number is a button now, but must still read as a superscript
+   numeral inside flowing text rather than as a control. */
 .vnum {
   font-family: var(--sans); font-size: .68em; font-weight: 600;
   color: var(--accent); vertical-align: .35em;
-  margin-right: .22em; text-decoration: none;
-  font-variant-numeric: tabular-nums;
+  margin-right: .22em; font-variant-numeric: tabular-nums;
+  background: none; border: 0; padding: 0 .1em; cursor: pointer;
+  line-height: 1;
 }
 .vnum:hover { text-decoration: underline; }
+.vnum[aria-expanded="true"] {
+  background: var(--accent); color: #fff; border-radius: 3px;
+}
+
+/* A saved verse keeps a quiet marker in the margin of the text. */
+.v.is-saved {
+  background: linear-gradient(transparent 60%, var(--mark) 60%);
+  border-radius: 2px;
+}
+
+.vmenu {
+  position: absolute; z-index: 50;
+  margin-top: .3rem;
+  display: flex; flex-direction: column;
+  background: var(--raised); border: 1px solid var(--rule);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  min-width: 15rem; padding: .25rem;
+  font-family: var(--sans);
+}
+.vmenu button {
+  font: inherit; font-size: .85rem; text-align: left;
+  background: transparent; border: 0; border-radius: 6px;
+  padding: .5rem .6rem; cursor: pointer; color: var(--ink);
+}
+.vmenu button:hover { background: var(--paper-2); }
+
+.v { position: relative; }
+
+/* ---------- saved ---------- */
+
+.saved-row {
+  border-bottom: 1px solid var(--rule-soft);
+  padding: 1rem 0;
+  display: flex; flex-direction: column; align-items: flex-start; gap: .5rem;
+}
+.saved-text {
+  font-family: var(--serif); font-size: 1rem; line-height: 1.62;
+  margin: 0; padding-left: .9rem;
+  border-left: 3px solid var(--accent-bg);
+  color: var(--ink);
+}
+.saved-note {
+  font: inherit; font-size: .87rem; width: 100%;
+  background: var(--paper-2); color: var(--ink);
+  border: 1px solid var(--rule-soft); border-radius: 8px;
+  padding: .45rem .6rem; resize: vertical;
+}
+.saved-note::placeholder { color: var(--ink-faint); }
 
 .pager {
   display: flex; justify-content: space-between; gap: 1rem;
@@ -392,7 +535,9 @@ table.grid tbody tr:hover { background: var(--paper-2); }
   background: var(--raised); border: 1px solid var(--rule-soft);
   border-radius: var(--radius); padding: .8rem .9rem;
 }
-.stance h4 {
+.positions-h { margin: 0; font-size: inherit; font-weight: inherit; }
+
+.stance h3 {
   margin: 0 0 .3rem; font-family: var(--sans); font-size: .7rem;
   text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint);
   font-weight: 700;
@@ -440,8 +585,8 @@ table.grid tbody tr:hover { background: var(--paper-2); }
   padding: .7rem .9rem .5rem;
   border-bottom: 1px solid var(--rule-soft);
 }
-.lex-head strong {
-  font-family: var(--serif); font-size: 1.06rem; flex: 1;
+.lex-head h2 {
+  font-family: var(--serif); font-size: 1.06rem; flex: 1; margin: 0;
 }
 .lex-close {
   background: transparent; border: 0; cursor: pointer;
@@ -549,9 +694,40 @@ mark { background: var(--mark); color: inherit; padding: 0 .1em; border-radius: 
 }
 .foot p { max-width: 52rem; margin: .4rem 0; }
 
+.keys { margin: 1.2rem 0 0; max-width: 52rem; }
+.keys summary {
+  cursor: pointer; font-size: .84rem; color: var(--ink-soft);
+  padding: .3rem 0;
+}
+.keys summary:hover { color: var(--ink); }
+.keys dl {
+  display: grid; grid-template-columns: auto 1fr; gap: .4rem .9rem;
+  margin: .7rem 0; font-size: .84rem; align-items: baseline;
+}
+.keys dt { margin: 0; }
+.keys dd { margin: 0; color: var(--ink-soft); }
+.keys kbd {
+  font-family: var(--mono); font-size: .78rem;
+  background: var(--paper-2); border: 1px solid var(--rule);
+  border-radius: 4px; padding: .1rem .35rem; color: var(--ink);
+}
+
 @media (max-width: 620px) {
-  .nav a { padding: .3rem .5rem; font-size: .82rem; }
-  .brand-text { display: none; }
+  /* Seven nav items wrapped to three lines and took 18% of the screen before
+     a word of scripture appeared. One row that scrolls sideways instead. */
+  .topbar { gap: .5rem; padding: .45rem .7rem; }
+  .nav {
+    flex-wrap: nowrap; overflow-x: auto; order: 3; width: 100%;
+    gap: .1rem; padding-bottom: .1rem;
+    scrollbar-width: none; -ms-overflow-style: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a { padding: .28rem .55rem; font-size: .82rem; flex: 0 0 auto; }
+
+  /* Keep the name, drop only the strapline. A lone icon is not a wordmark. */
+  .brand-sub { display: none; }
+  .brand-name { font-size: 1.02rem; }
+  .tools { margin-left: auto; }
   table.grid thead th { top: 5.6rem; }
 }
 
@@ -559,4 +735,81 @@ mark { background: var(--mark); color: inherit; padding: 0 .1em; border-radius: 
   .topbar, .foot, .pager, .chapter-strip, .toolbar { display: none; }
   body { background: #fff; color: #000; }
   .reader { max-width: none; }
+}
+
+/* The threads block on the home page: the argument, before the filing. */
+.threads-hero { margin: 2.2rem 0 .5rem; }
+.threads-hero h2 { margin: 0 0 .3rem; font-size: 1.34rem; }
+.threads-hero .thread-cards { margin-top: 1rem; }
+.threads-hero .thread-card h3 {
+  margin: 0 0 .45rem; font-family: var(--serif); font-size: 1.1rem;
+  font-weight: 600; line-height: 1.25; text-wrap: balance;
+}
+
+/* Chapter jump, for books too long to scan as a grid. */
+.chapter-jump { display: flex; gap: .4rem; align-items: center; margin: .8rem 0 0; }
+.chapter-jump input {
+  width: 6.5rem; font: inherit; font-size: .85rem;
+  background: var(--raised); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 8px; padding: .32rem .55rem;
+}
+.chapter-jump button { cursor: pointer; }
+
+/* Content arriving should settle rather than snap. */
+main > * { animation: rise .18s ease-out; }
+@keyframes rise { from { opacity: 0; transform: translateY(.25rem); } }
+@media (prefers-reduced-motion: reduce) { main > * { animation: none; } }
+
+.loading::after {
+  content: ""; display: inline-block; width: .5rem; height: .5rem;
+  margin-left: .4rem; border-radius: 50%;
+  background: var(--accent); animation: pulse 1s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .loading::after { animation: none; } }
+
+/* ---------- place, in the definition panel ----------
+   Colour carries how firm the identification is, so a region never looks
+   like a pin and a guess never looks like a survey point. */
+
+.place {
+  background: var(--paper-2); border-radius: var(--radius);
+  padding: .75rem .85rem; margin: 0 0 .9rem;
+  border-left: 3px solid var(--good);
+}
+.place-approximate { border-left-color: var(--warn); }
+.place-region      { border-left-color: var(--fix); }
+.place-within      { border-left-color: var(--ink-faint); }
+
+.place-kind {
+  display: flex; align-items: center; gap: .4rem;
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .06em;
+  font-weight: 700; color: var(--good); margin-bottom: .4rem;
+}
+.place-approximate .place-kind { color: var(--warn); }
+.place-region .place-kind      { color: var(--fix); }
+.place-within .place-kind      { color: var(--ink-faint); }
+
+.place-dot {
+  width: .5rem; height: .5rem; border-radius: 50%;
+  background: currentColor; flex: 0 0 auto;
+}
+.place-region .place-dot { border-radius: 2px; width: .62rem; height: .42rem; }
+.place-approximate .place-dot { opacity: .55; }
+
+.place-modern { margin: 0 0 .3rem; font-size: .9rem; font-weight: 600; }
+.place-note   { margin: 0 0 .4rem; font-size: .82rem; color: var(--ink-soft); }
+.place-coords {
+  margin: 0 0 .6rem; font-family: var(--mono); font-size: .74rem;
+  color: var(--ink-faint); font-variant-numeric: tabular-nums;
+}
+.place-links { display: flex; gap: .35rem; flex-wrap: wrap; }
+.place-links .chip { text-decoration: none; }
+.chip.primary {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+.chip.primary:hover { background: var(--accent-2); border-color: var(--accent-2); color: #fff; }
+.place-cite {
+  margin: .6rem 0 0; font-size: .72rem; font-style: italic;
+  color: var(--ink-faint);
 }

@@ -43,6 +43,22 @@
       function (m) { return m.toUpperCase(); });
   }
 
+  /* Screen readers get told about things that happen without a page change:
+     saving, copying, search finishing. Without this the app is silent to
+     anyone not watching the pixels. */
+  var liveRegion = null;
+  function announce(message) {
+    if (!liveRegion) {
+      liveRegion = el("div", {
+        class: "sr-only", role: "status",
+        "aria-live": "polite", "aria-atomic": "true"
+      });
+      document.body.appendChild(liveRegion);
+    }
+    liveRegion.textContent = "";
+    setTimeout(function () { liveRegion.textContent = message; }, 60);
+  }
+
   var cache = {};
   function getJSON(path) {
     // The single-file build inlines every data file under this global, so
@@ -133,6 +149,30 @@
         ]));
       });
     wrap.appendChild(stats);
+
+    // The chronological order is the only thing here no other Bible site can
+    // copy. Left as a filing decision it is invisible; this is where a
+    // visitor is shown what it actually reveals.
+    getJSON("threads.json").then(function (threads) {
+      var box = el("section", { class: "threads-hero" });
+      box.appendChild(el("h2", { text: "What the order reveals" }));
+      box.appendChild(el("p", { class: "muted", text:
+        "Follow one question across eight hundred years of writing. Every " +
+        "passage is the text itself; every reference is checked when the site " +
+        "is built." }));
+      var grid = el("div", { class: "thread-cards" });
+      threads.forEach(function (t) {
+        grid.appendChild(el("a", { class: "thread-card", href: "#/thread/" + t.id }, [
+          el("h3", { text: t.title }),
+          el("p", { text: t.question }),
+          el("span", { class: "thread-meta", text: t.stops.length + " passages" })
+        ]));
+      });
+      box.appendChild(grid);
+      // Directly under the hero. The argument comes before the statistics.
+      var anchor = wrap.querySelector(".stats");
+      if (anchor) wrap.insertBefore(box, anchor);
+    }).catch(function () {});
 
     wrap.appendChild(el("div", { class: "callout" }, [
       el("p", { html:
@@ -365,6 +405,32 @@
       store.set("last", { work: workId, chapter: idx, title: meta.title });
       refreshResume();
 
+      // Psalms is a 150-button grid to scroll through. Past about forty
+      // chapters, hunting stops being viable and you need to just say a number.
+      if (work.chapters.length > 40) {
+        var jump = el("form", {
+          class: "chapter-jump",
+          onsubmit: function (e) {
+            e.preventDefault();
+            var n = parseInt(field.value, 10);
+            if (!n || n < 1 || n > work.chapters.length) {
+              announce("Enter a number between 1 and " + work.chapters.length);
+              return;
+            }
+            location.hash = "#/read/" + workId + "/" + (n - 1);
+          }
+        });
+        var field = el("input", {
+          type: "number", min: "1", max: String(work.chapters.length),
+          placeholder: "1–" + work.chapters.length,
+          "aria-label": "Jump to a chapter of " + titleCase(meta.title) +
+                        ", between 1 and " + work.chapters.length
+        });
+        jump.appendChild(field);
+        jump.appendChild(el("button", { class: "chip", type: "submit", text: "Go" }));
+        head.appendChild(jump);
+      }
+
       if (work.chapters.length > 1) {
         var strip = el("div", { class: "chapter-strip" });
         work.chapters.forEach(function (c, i) {
@@ -385,24 +451,20 @@
       var reader = el("div", { class: "reader" + (perLine ? " verse-per-line" : "") });
       document.documentElement.style.setProperty("--reader-size", size + "rem");
 
-      var marks = store.get("bookmarks", []);
       var here = workId + "/" + idx;
-      var marked = marks.some(function (m) { return m.at === here; });
+      var marked = isSaved(here);
 
       var controls = el("div", { class: "reader-controls" }, [
         el("button", {
           class: "chip", "aria-pressed": marked ? "true" : "false",
-          text: marked ? "★ Saved" : "☆ Save",
-          title: "Keep this chapter in your saved list",
+          text: marked ? "★ Chapter saved" : "☆ Save chapter",
+          title: "Keep this whole chapter in your saved list",
           onclick: function (e) {
-            marks = store.get("bookmarks", []).filter(function (m) { return m.at !== here; });
-            if (!marked) {
-              marks.unshift({ at: here, work: meta.title, label: chapter.label });
-              marks = marks.slice(0, 200);
-            }
-            marked = !marked;
-            store.set("bookmarks", marks);
-            e.currentTarget.textContent = marked ? "★ Saved" : "☆ Save";
+            marked = toggleSave({
+              id: here, kind: "chapter", work: workId,
+              workTitle: meta.title, chapter: idx, label: chapter.label
+            });
+            e.currentTarget.textContent = marked ? "★ Chapter saved" : "☆ Save chapter";
             e.currentTarget.setAttribute("aria-pressed", marked ? "true" : "false");
           }
         }),
@@ -439,12 +501,26 @@
       if (chapter.verses && chapter.verses.length) {
         var p = el("p");
         chapter.verses.forEach(function (v) {
-          var span = el("span", { class: "v", id: "v" + v.v });
-          span.appendChild(el("a", {
+          var span = el("span", {
+            class: "v" + (isSaved(workId + "/" + idx + "/v" + v.v) ? " is-saved" : ""),
+            id: "v" + v.v
+          });
+          // The verse number is the one control per verse: it opens the
+          // actions rather than adding a second tab stop to every verse.
+          // Psalm 119 would otherwise contribute 176 extra of them.
+          span.appendChild(el("button", {
             class: "vnum",
-            href: "#/read/" + workId + "/" + idx + "/v" + v.v,
             text: String(v.v),
-            title: "Link to verse " + v.v
+            "aria-label": "Verse " + v.v + " of " + chapter.label +
+                          ", open verse actions",
+            "aria-expanded": "false",
+            onclick: function (e) {
+              e.stopPropagation();
+              verseMenu(e.currentTarget, {
+                work: workId, workTitle: meta.title, chapter: idx,
+                label: chapter.label, v: v.v, t: v.t
+              });
+            }
           }));
           span.appendChild(document.createTextNode(v.t + " "));
           p.appendChild(span);
@@ -527,13 +603,13 @@
 
     var grid = el("div", { class: "positions-body" }, [
       el("div", { class: "stance" }, [
-        el("h4", { text: "Traditional view" }),
+        el("h3", { text: "Traditional view" }),
         el("p", { class: "claim", text: p.trad }),
         el("p", { class: "why", text: p.tradWhy }),
         el("p", { class: "cite", text: p.tradSource })
       ]),
       el("div", { class: "stance" }, [
-        el("h4", { text: "Critical view" }),
+        el("h3", { text: "Critical view" }),
         el("p", { class: "claim", text: p.crit }),
         el("p", { class: "why", text: p.critWhy }),
         el("p", { class: "cite", text: p.critSource })
@@ -548,9 +624,105 @@
       "critical dating, which is a decision about order, not a verdict on " +
       "which column is right." }));
 
-    wrap.appendChild(head);
+    // Wrapped in an h2 so the document runs h1 (work) > h2 (this panel) >
+    // h3 (each view) > h2 (chapter). Screen-reader users navigate by
+    // heading level, and a jump from h1 straight to h4 loses them.
+    wrap.appendChild(el("h2", { class: "positions-h" }, [head]));
     wrap.appendChild(grid);
     return wrap;
+  }
+
+  /* ================================================================
+     SAVING -- verses, not just chapters
+     ================================================================ */
+
+  function savedItems() { return store.get("saved", []); }
+
+  function isSaved(id) {
+    return savedItems().some(function (s) { return s.id === id; });
+  }
+
+  function toggleSave(item) {
+    var list = savedItems().filter(function (s) { return s.id !== item.id; });
+    var wasSaved = list.length !== savedItems().length;
+    if (!wasSaved) {
+      item.at = Date.now();
+      list.unshift(item);
+    }
+    store.set("saved", list.slice(0, 500));
+    announce(wasSaved ? "Removed from saved" : "Saved");
+    return !wasSaved;
+  }
+
+  function verseId(ref) { return ref.work + "/" + ref.chapter + "/v" + ref.v; }
+
+  var menu = null;
+  function closeMenu() {
+    if (menu) {
+      var owner = menu.owner;
+      menu.node.remove();
+      menu = null;
+      if (owner) owner.setAttribute("aria-expanded", "false");
+    }
+  }
+
+  function verseMenu(button, ref) {
+    var open = menu && menu.owner === button;
+    closeMenu();
+    if (open) return;
+
+    var id = verseId(ref);
+    var node = el("div", { class: "vmenu", role: "menu",
+                           "aria-label": "Actions for verse " + ref.v });
+
+    var saveBtn = el("button", {
+      role: "menuitem",
+      text: isSaved(id) ? "★  Saved — tap to remove" : "☆  Save this verse",
+      onclick: function (e) {
+        var now = toggleSave({
+          id: id, kind: "verse", work: ref.work, workTitle: ref.workTitle,
+          chapter: ref.chapter, label: ref.label, v: ref.v, t: ref.t
+        });
+        e.currentTarget.textContent = now
+          ? "★  Saved — tap to remove" : "☆  Save this verse";
+        span.classList.toggle("is-saved", now);
+      }
+    });
+    var span = button.parentNode;
+    node.appendChild(saveBtn);
+
+    node.appendChild(el("button", {
+      role: "menuitem", text: "🔗  Copy link to this verse",
+      onclick: function (e) {
+        var url = location.href.split("#")[0] +
+                  "#/read/" + ref.work + "/" + ref.chapter + "/v" + ref.v;
+        var done = function () {
+          e.currentTarget.textContent = "🔗  Link copied";
+          announce("Link copied");
+        };
+        if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, done);
+        else done();
+      }
+    }));
+
+    node.appendChild(el("button", {
+      role: "menuitem", text: "⧉  Copy the verse text",
+      onclick: function (e) {
+        var text = ref.t + " — " + titleCase(ref.workTitle) + " " +
+                   ref.label + ":" + ref.v;
+        var done = function () {
+          e.currentTarget.textContent = "⧉  Text copied";
+          announce("Verse text copied");
+        };
+        if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, done);
+        else done();
+      }
+    }));
+
+    span.appendChild(node);
+    button.setAttribute("aria-expanded", "true");
+    menu = { node: node, owner: button };
+    node.querySelector("button").focus();
   }
 
   /* ================================================================
@@ -621,32 +793,125 @@
         aliasTable = al;
         var target = al[key] || key;
         var shard = /^[a-z]/.test(target) ? target[0] : "0";
-        return getJSON("lexicon/" + shard + ".json")
-          .catch(function () { return {}; })
-          .then(function (table) {
-            var hit = table[target];
-            // Singular/plural and possessive are the common misses.
-            if (!hit && /s$/.test(target)) hit = table[target.replace(/s$/, "")];
-            if (!hit) hit = table[target + "s"];
-            return hit ? { key: target, entry: hit } : null;
-          });
+        return Promise.all([
+          getJSON("lexicon/" + shard + ".json").catch(function () { return {}; }),
+          getJSON("places/" + shard + ".json").catch(function () { return {}; })
+        ]).then(function (r) {
+          var table = r[0], places = r[1];
+          var hit = table[target];
+          // Singular/plural and possessive are the common misses.
+          if (!hit && /s$/.test(target)) hit = table[target.replace(/s$/, "")];
+          if (!hit) hit = table[target + "s"];
+          var place = places[target] ||
+                      (/s$/.test(target) ? places[target.replace(/s$/, "")] : null);
+          if (!hit && !place) return null;
+          return { key: target, entry: hit, place: place };
+        });
       });
   }
 
   var sheet = null;
 
   function closeSheet() {
-    if (sheet) { sheet.remove(); sheet = null; }
+    if (!sheet) return;
+    sheet.remove();
+    sheet = null;
+    // Send focus back where it came from, or a keyboard user is dumped at
+    // the top of the document every time they close a definition.
+    if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+    lastFocus = null;
   }
+
+  function lookupAndShow(term) {
+    if (!term) return;
+    lookup(term).then(function (found) { showEntry(term, found); });
+  }
+
+  /* How far back to stand, by what kind of thing it is. A region needs the
+     camera much higher than a village, and pretending otherwise would show a
+     confident pin on a territory. */
+  var VIEW = {
+    point: 4000, within: 3000, approximate: 25000, region: 400000
+  };
+
+  var KIND_LABEL = {
+    point: "Identified location",
+    within: "Inside a larger city",
+    approximate: "Approximate location",
+    region: "A region, not a point"
+  };
+
+  function placeBlock(p) {
+    var dist = VIEW[p.kind] || 8000;
+    // Google Earth's web URL. On a phone with the app installed this opens
+    // it directly; otherwise it opens Earth in the browser.
+    var earth = "https://earth.google.com/web/@" + p.lat + "," + p.lon +
+                ",0a," + dist + "d,35y,0h,45t,0r";
+    var maps = "https://www.google.com/maps/search/?api=1&query=" +
+               p.lat + "," + p.lon;
+    var osm = "https://www.openstreetmap.org/?mlat=" + p.lat +
+              "&mlon=" + p.lon + "#map=" + (p.kind === "region" ? 6 : 12) +
+              "/" + p.lat + "/" + p.lon;
+
+    var box = el("div", { class: "place place-" + p.kind });
+
+    box.appendChild(el("div", { class: "place-kind" }, [
+      el("span", { class: "place-dot", "aria-hidden": "true" }),
+      el("span", { text: KIND_LABEL[p.kind] || "Location" })
+    ]));
+
+    if (p.modern) {
+      box.appendChild(el("p", { class: "place-modern", text: p.modern }));
+    }
+    if (p.note) {
+      box.appendChild(el("p", { class: "place-note", text: p.note }));
+    }
+
+    box.appendChild(el("p", { class: "place-coords", text:
+      p.lat.toFixed(4) + "°, " + p.lon.toFixed(4) + "°" +
+      (p.mentions ? "  ·  named in " + p.mentions +
+        (p.mentions === 1 ? " passage" : " passages") : "") }));
+
+    var links = el("div", { class: "place-links" }, [
+      el("a", { class: "chip primary", href: earth,
+                target: "_blank", rel: "noopener noreferrer",
+                text: "🌍  Open in Google Earth" }),
+      el("a", { class: "chip", href: maps,
+                target: "_blank", rel: "noopener noreferrer", text: "Maps" }),
+      el("a", { class: "chip", href: osm,
+                target: "_blank", rel: "noopener noreferrer",
+                text: "OpenStreetMap" })
+    ]);
+    box.appendChild(links);
+
+    box.appendChild(el("p", { class: "place-cite", text:
+      "Coordinates from OpenBible.info's Bible Geocoding data, CC BY 4.0, "
+      + "parts derived from OpenStreetMap under the ODbL. Many biblical sites "
+      + "are identified only tentatively; the label above says how firm this "
+      + "one is." }));
+
+    return box;
+  }
+
+  var lastFocus = null;
 
   function showEntry(term, found) {
     closeSheet();
-    sheet = el("aside", { class: "lex", role: "dialog", "aria-label": "Definition" });
+    lastFocus = document.activeElement;
+    sheet = el("aside", {
+      class: "lex", role: "dialog", "aria-modal": "false",
+      "aria-label": "Definition of " + (found ? found.entry.name : term),
+      tabindex: "-1"
+    });
+
+    var title = found
+      ? (found.entry ? found.entry.name : found.place.name)
+      : term;
 
     var head = el("div", { class: "lex-head" }, [
-      el("strong", { text: found ? found.entry.name : term }),
+      el("h2", { text: title }),
       el("button", {
-        class: "lex-close", "aria-label": "Close", text: "✕",
+        class: "lex-close", "aria-label": "Close definition", text: "✕",
         onclick: closeSheet
       })
     ]);
@@ -659,22 +924,31 @@
         "It covers the Protestant canon closely and the deuterocanon, Enoch, " +
         "Jubilees and the Apostolic Fathers barely at all." }));
     } else {
-      body.appendChild(el("p", { class: "lex-text", text: found.entry.text }));
-      (found.entry.flags || []).forEach(function (f) {
-        body.appendChild(el("p", { class: "lex-flag " + f.kind, text: f.note }));
-      });
-      body.appendChild(el("p", { class: "lex-cite", text:
-        "Easton's Bible Dictionary, 1897. Public domain by age, and written "
-        + "before modern archaeology; read it as a Victorian reference, not "
-        + "as current scholarship." }));
+      if (found.place) body.appendChild(placeBlock(found.place));
+
+      if (found.entry) {
+        body.appendChild(el("p", { class: "lex-text", text: found.entry.text }));
+        (found.entry.flags || []).forEach(function (f) {
+          body.appendChild(el("p", { class: "lex-flag " + f.kind, text: f.note }));
+        });
+        body.appendChild(el("p", { class: "lex-cite", text:
+          "Easton's Bible Dictionary, 1897. Public domain by age, and written "
+          + "before modern archaeology; read it as a Victorian reference, not "
+          + "as current scholarship." }));
+      }
+
       body.appendChild(el("a", {
-        class: "chip", href: "#/search/" + encodeURIComponent(found.entry.name.split(",")[0]),
+        class: "chip", href: "#/search/" + encodeURIComponent(title.split(",")[0]),
         text: "Find every passage mentioning this",
         onclick: closeSheet
       }));
     }
     sheet.appendChild(body);
     document.body.appendChild(sheet);
+    sheet.focus();
+    announce(found
+      ? found.entry.name + ". " + found.entry.text.slice(0, 160)
+      : "No dictionary entry for " + term);
   }
 
   function initLexicon() {
@@ -701,7 +975,30 @@
     });
 
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") closeSheet();
+      if (e.key === "Escape") { closeSheet(); closeMenu(); }
+    });
+  }
+
+  /* A word you can only reach with a mouse is a word a keyboard or screen
+     reader user cannot look up at all. Two routes in without one:
+       d   define the current text selection
+       ?   ask for a word by name
+     Both are listed in the shortcuts panel so they are discoverable. */
+  function initLookupKeys() {
+    document.addEventListener("keydown", function (e) {
+      if (e.target.matches("input, textarea, select")) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key === "d") {
+        var sel = String(window.getSelection() || "").trim();
+        if (sel) { e.preventDefault(); lookupAndShow(sel); }
+        else announce("Select a word first, then press d to define it.");
+      }
+      if (e.key === "?") {
+        e.preventDefault();
+        var term = window.prompt("Look up a word or name:");
+        if (term) lookupAndShow(term.trim());
+      }
     });
   }
 
@@ -1103,6 +1400,90 @@
   }
 
   /* ================================================================
+     THREADS -- one question, traced across the collection
+     ================================================================ */
+
+  function viewThreads(threads) {
+    var wrap = el("div", { class: "wrap" });
+    wrap.appendChild(el("h1", { text: "Threads" }));
+    wrap.appendChild(el("p", { class: "lede", text:
+      "One question, followed across the whole collection in the order the " +
+      "texts were written. This is the thing a chronological arrangement can " +
+      "show and a normal Bible cannot: an idea being asked, answered, " +
+      "contradicted and answered again over eight hundred years." }));
+
+    var grid = el("div", { class: "thread-cards" });
+    threads.forEach(function (t) {
+      grid.appendChild(el("a", { class: "thread-card", href: "#/thread/" + t.id }, [
+        el("h2", { text: t.title }),
+        el("p", { text: t.question }),
+        el("span", { class: "thread-meta", text:
+          t.stops.length + " passages · " +
+          t.stops[0].section + " to " + t.stops[t.stops.length - 1].section })
+      ]));
+    });
+    wrap.appendChild(grid);
+    return wrap;
+  }
+
+  function viewThread(threads, id) {
+    var t = threads.filter(function (x) { return x.id === id; })[0];
+    if (!t) return el("div", { class: "wrap" },
+                      [el("p", { class: "empty", text: "No such thread." })]);
+
+    var wrap = el("div", { class: "wrap" });
+    wrap.appendChild(el("div", { class: "crumbs" }, [
+      el("a", { href: "#/threads", text: "Threads" })
+    ]));
+    wrap.appendChild(el("h1", { text: t.title }));
+    wrap.appendChild(el("p", { class: "lede", text: t.question }));
+
+    var line = el("ol", { class: "thread" });
+    t.stops.forEach(function (s, i) {
+      var li = el("li", { class: "stop" });
+
+      li.appendChild(el("div", { class: "stop-when" }, [
+        el("span", { class: "stop-era", text: s.section || "＋" }),
+        el("span", { class: "stop-date", text: s.dates })
+      ]));
+
+      var card = el("div", { class: "stop-card" });
+      card.appendChild(el("a", {
+        class: "stop-ref",
+        href: "#/read/" + s.work + "/" + s.chapter + "/v" + s.verses[0].v,
+        text: titleCase(s.workTitle) + " · " + s.label
+      }));
+
+      s.verses.forEach(function (v) {
+        card.appendChild(el("blockquote", { class: "stop-text" }, [
+          el("span", { class: "stop-vnum", text: String(v.v) }),
+          document.createTextNode(v.t)
+        ]));
+      });
+
+      card.appendChild(el("p", { class: "stop-why", text: s.why }));
+      if (s.aside) {
+        card.appendChild(el("p", { class: "stop-aside", text: s.aside }));
+      }
+      li.appendChild(card);
+      line.appendChild(li);
+    });
+    wrap.appendChild(line);
+
+    wrap.appendChild(el("div", { class: "callout" }, [
+      el("p", { text: t.closing })
+    ]));
+
+    wrap.appendChild(el("p", { class: "tiny", text:
+      "The passages above are the text, reproduced exactly and checked against " +
+      "the same files the reader uses; every reference is verified when the " +
+      "site is built. The commentary between them is editorial, written for " +
+      "this volume." }));
+
+    return wrap;
+  }
+
+  /* ================================================================
      SAVED
      ================================================================ */
 
@@ -1110,35 +1491,104 @@
     var wrap = el("div", { class: "wrap" });
     wrap.appendChild(el("h1", { text: "Saved" }));
 
-    var marks = store.get("bookmarks", []);
-    if (!marks.length) {
+    // Older builds saved whole chapters under a different key. Carry them
+    // over rather than appearing to lose someone's work.
+    var legacy = store.get("bookmarks", []);
+    if (legacy.length) {
+      var merged = savedItems();
+      legacy.forEach(function (m) {
+        var id = m.at;
+        if (!merged.some(function (s) { return s.id === id; })) {
+          merged.push({
+            id: id, kind: "chapter", work: (m.at || "").split("/")[0],
+            workTitle: m.work, chapter: parseInt((m.at || "0/0").split("/")[1], 10) || 0,
+            label: m.label, at: 0
+          });
+        }
+      });
+      store.set("saved", merged);
+      store.set("bookmarks", []);
+    }
+
+    var items = savedItems();
+    if (!items.length) {
       wrap.appendChild(el("p", { class: "empty", text:
-        "Nothing saved yet. The ☆ Save button at the top of any chapter keeps " +
-        "it here. Saved chapters live in this browser only — nothing is sent " +
-        "anywhere." }));
+        "Nothing saved yet. Tap any verse number to save that verse, or use " +
+        "Save at the top of a chapter to keep the whole thing. Everything is " +
+        "stored in this browser only — nothing is sent anywhere, and nobody " +
+        "else can see it." }));
       return wrap;
     }
 
+    var verses = items.filter(function (i) { return i.kind === "verse"; });
     wrap.appendChild(el("p", { class: "muted", text:
-      marks.length + (marks.length === 1 ? " chapter" : " chapters") +
-      ", most recent first. Stored in this browser only." }));
+      items.length + (items.length === 1 ? " item" : " items") + ", " +
+      verses.length + " of them individual verses. Most recent first, stored " +
+      "in this browser only." }));
+
+    var tools = el("div", { class: "toolbar" }, [
+      el("button", {
+        class: "chip", text: "Copy all as text",
+        onclick: function (e) {
+          var text = items.map(function (i) {
+            var ref = titleCase(i.workTitle || i.work) + " " + i.label +
+                      (i.v ? ":" + i.v : "");
+            return i.t ? "“" + i.t + "”\n— " + ref +
+                         (i.note ? "\nNote: " + i.note : "") : ref;
+          }).join("\n\n");
+          var done = function () {
+            e.currentTarget.textContent = "Copied";
+            announce("All saved items copied");
+          };
+          if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, done);
+          else done();
+        }
+      })
+    ]);
+    wrap.appendChild(tools);
 
     var list = el("div", { class: "results" });
-    marks.forEach(function (m) {
-      var row = el("div", { class: "result" }, [
-        el("div", { class: "result-ref" }, [
-          el("a", { href: "#/read/" + m.at, text: titleCase(m.work) + " · " + m.label })
-        ])
-      ]);
+    items.forEach(function (item) {
+      var href = "#/read/" + item.work + "/" + item.chapter +
+                 (item.v ? "/v" + item.v : "");
+      var row = el("article", { class: "saved-row" });
+
+      row.appendChild(el("div", { class: "result-ref" }, [
+        el("a", { href: href, text: titleCase(item.workTitle || item.work) +
+                   " · " + item.label + (item.v ? ":" + item.v : "") })
+      ]));
+
+      if (item.t) {
+        row.appendChild(el("blockquote", { class: "saved-text", text: item.t }));
+      }
+
+      var note = el("textarea", {
+        class: "saved-note", rows: "2",
+        placeholder: "Add a note to yourself…",
+        "aria-label": "Your note on " + (item.workTitle || item.work) +
+                      " " + item.label
+      });
+      note.value = item.note || "";
+      note.addEventListener("change", function () {
+        var all = savedItems();
+        all.forEach(function (s) { if (s.id === item.id) s.note = note.value; });
+        store.set("saved", all);
+        announce("Note saved");
+      });
+      row.appendChild(note);
+
       row.appendChild(el("button", {
         class: "chip", text: "Remove",
+        "aria-label": "Remove " + (item.workTitle || item.work) + " " + item.label,
         onclick: function () {
-          store.set("bookmarks", store.get("bookmarks", []).filter(function (x) {
-            return x.at !== m.at;
+          store.set("saved", savedItems().filter(function (s) {
+            return s.id !== item.id;
           }));
           row.remove();
+          announce("Removed from saved");
         }
       }));
+
       list.appendChild(row);
     });
     wrap.appendChild(list);
@@ -1160,6 +1610,12 @@
     var hash = location.hash.replace(/^#\/?/, "");
     var parts = hash.split("/").filter(function (p) { return p !== ""; });
     var view = parts[0] || "home";
+
+    // Overlays hang off document.body, so they outlive a route change unless
+    // closed here. Otherwise a definition opened in Amos follows you to the
+    // saved page and sits there.
+    closeSheet();
+    closeMenu();
 
     main.innerHTML = "";
     main.appendChild(el("p", { class: "loading", text: "Loading…" }));
@@ -1188,6 +1644,16 @@
           main.appendChild(view === "canons"
             ? viewCanons(manifest, canon)
             : viewContents(manifest, canon));
+          window.scrollTo(0, 0);
+        });
+      }
+      if (view === "threads" || view === "thread") {
+        setNav("threads");
+        return getJSON("threads.json").then(function (threads) {
+          main.innerHTML = "";
+          main.appendChild(view === "thread"
+            ? viewThread(threads, parts[1])
+            : viewThreads(threads));
           window.scrollTo(0, 0);
         });
       }
@@ -1238,5 +1704,6 @@
 
   refreshResume();
   initLexicon();
+  initLookupKeys();
   route();
 })();

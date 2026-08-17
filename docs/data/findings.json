@@ -169,6 +169,16 @@
           "status": "fixed"
         },
         {
+          "claim": "Place coordinates say how firm they are",
+          "detail": "1,232 places can be opened on a map or in Google Earth, and the identification is graded rather than pinned: 735 are identified locations, 328 are approximate, 105 are regions rather than points, and 64 are spots inside a larger city. Assyria opens on Nineveh and says outright that it is a territory, not a dot. Dropping a confident pin on a site scholars still argue about would be exactly the false precision this report exists to prevent.",
+          "status": "note"
+        },
+        {
+          "claim": "Not everything here is public domain, and the footer now says so",
+          "detail": "The texts are public domain and always will be. The reference data is not: Easton's dictionary reaches this site through a machine-readable parse by NEUU under CC BY 4.0, and the coordinates come from OpenBible.info under CC BY 4.0 with parts derived from OpenStreetMap under the ODbL. The site previously claimed public domain throughout, which stopped being true the moment that data was added.",
+          "status": "corrected"
+        },
+        {
           "claim": "A missing citation now fails the build",
           "detail": "tools/audit.py checks every position record for both source fields and exits non-zero if any is missing, exactly as it does when the data drifts from the source text. The interpretive layer is now held to the same standard as the verse counts. This was verified by deliberately removing one citation and confirming the build broke.",
           "status": "pass"

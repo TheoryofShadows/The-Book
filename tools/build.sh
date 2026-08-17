@@ -15,6 +15,12 @@ python3 tools/build_repairs.py "$OUT" source/extra
 echo "==> lexicon"
 python3 tools/build_lexicon.py source/lexicon "$OUT"
 
+echo "==> places"
+python3 tools/build_places.py source/places/merged.txt "$OUT"
+
+echo "==> threads"
+python3 tools/build_threads.py "$OUT"
+
 echo "==> canon membership"
 python3 tools/build_canon.py "$OUT"
 

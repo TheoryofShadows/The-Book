@@ -13,13 +13,24 @@
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="topbar">
-  <a class="brand" href="#/">
-    <span class="brand-mark" aria-hidden="true">✦</span>
-    <span class="brand-text">The&nbsp;Book</span>
+  <a class="brand" href="#/" aria-label="The Book, home">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+        <!-- an open codex: two leaves meeting at a spine -->
+        <path d="M12 5.6C10.3 4.3 7.9 3.7 4.5 3.7v13.9c3.4 0 5.8.6 7.5 1.9 1.7-1.3 4.1-1.9 7.5-1.9V3.7c-3.4 0-5.8.6-7.5 1.9Z"
+              stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+        <path d="M12 5.6v13.9" stroke="currentColor" stroke-width="1.4"/>
+      </svg>
+    </span>
+    <span class="brand-text">
+      <span class="brand-name">The Book</span>
+      <span class="brand-sub">in the order it was written</span>
+    </span>
   </a>
 
   <nav class="nav" aria-label="Main">
     <a href="#/" data-route="home">Timeline</a>
+    <a href="#/threads" data-route="threads">Threads</a>
     <a href="#/contents" data-route="contents">Contents</a>
     <a href="#/search" data-route="search">Search</a>
     <a href="#/canons" data-route="canons">Canons</a>
@@ -37,15 +48,44 @@
 
 <footer class="foot">
   <p>
-    Public-domain texts throughout: the World English Bible with Deuterocanon,
-    R. H. Charles's 1917 Enoch and Jubilees, and the 1885 Ante-Nicene Fathers.
-    Nothing here is drawn from a modern copyrighted translation.
+    <strong>The texts are public domain</strong> — the World English Bible with
+    Deuterocanon, R. H. Charles's 1917 Enoch and Jubilees, and the Ante-Nicene
+    Fathers of 1870 and 1885. Nothing here is drawn from a modern copyrighted
+    translation.
+  </p>
+  <p class="muted">
+    <strong>The reference data is openly licensed, not public domain.</strong>
+    Word definitions are Easton's Bible Dictionary, 1897, itself public domain,
+    in a machine-readable parse by
+    <a href="https://github.com/neuu-org/bible-dictionary-dataset">NEUU</a>
+    under CC&nbsp;BY&nbsp;4.0. Coordinates come from
+    <a href="https://www.openbible.info/geo/">OpenBible.info's Bible
+    Geocoding</a> under CC&nbsp;BY&nbsp;4.0, parts of it derived from
+    OpenStreetMap under the ODbL.
   </p>
   <p class="muted">
     The order is a scholarly reconstruction and is contested at many points.
     The <a href="#/accuracy">accuracy report</a> sets out what was verified,
     what was corrected, and what is still missing.
   </p>
+
+  <details class="keys">
+    <summary>Keyboard shortcuts and accessibility</summary>
+    <dl>
+      <dt><kbd>/</kbd></dt><dd>Go to search</dd>
+      <dt><kbd>d</kbd></dt><dd>Define the word you have selected</dd>
+      <dt><kbd>?</kbd></dt><dd>Look up any word by name</dd>
+      <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Previous and next chapter</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Close a definition or verse menu</dd>
+    </dl>
+    <p>
+      Every verse number is a button: reach it with <kbd>Tab</kbd> and press
+      <kbd>Enter</kbd> to save the verse, copy it, or copy a link to it.
+      Text size is adjustable in any chapter, the whole site works in light
+      and dark, and animation is dropped if your system asks for reduced
+      motion.
+    </p>
+  </details>
 </footer>
 
 <script src="assets/app.js"></script>
