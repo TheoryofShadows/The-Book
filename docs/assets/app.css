@@ -813,3 +813,38 @@ main > * { animation: rise .18s ease-out; }
   margin: .6rem 0 0; font-size: .72rem; font-style: italic;
   color: var(--ink-faint);
 }
+
+/* ---------- surviving manuscripts ----------
+   Links out, never reproductions: these objects are all rights reserved.
+   Closed by default so it never competes with the text itself. */
+
+.witnesses {
+  margin: 0 auto 1.6rem; max-width: calc(var(--measure) + 2.2rem);
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  background: var(--raised);
+}
+.witnesses summary {
+  cursor: pointer; padding: .6rem .85rem; font-size: .88rem;
+  color: var(--ink-soft); list-style-position: inside;
+}
+.witnesses summary:hover { color: var(--ink); }
+.witnesses[open] summary {
+  border-bottom: 1px solid var(--rule-soft); color: var(--ink);
+}
+
+.witness { padding: .85rem; border-bottom: 1px solid var(--rule-soft); }
+.witness:last-child { border-bottom: 0; }
+.witness h3 {
+  margin: 0 0 .25rem; font-size: 1rem;
+}
+.witness h3 a { text-decoration: none; }
+.witness h3 a::after { content: " ↗"; font-size: .7em; opacity: .6; }
+.witness-when {
+  margin: 0 0 .45rem; font-size: .74rem; color: var(--ink-faint);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.witness-holds { margin: 0 0 .4rem; font-size: .88rem; }
+.witness-why   { margin: 0 0 .5rem; font-size: .85rem; color: var(--ink-soft); }
+.witness-rights {
+  margin: 0; font-size: .72rem; font-style: italic; color: var(--ink-faint);
+}
