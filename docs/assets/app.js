@@ -396,6 +396,7 @@
           text: "This work is described in the volume but no text was available " +
                 "from a public-domain source. See the accuracy report for why."
         }));
+        listeningDeadEnd();
         return;
       }
 
@@ -496,11 +497,18 @@
         })
       ]);
       body.appendChild(controls);
-      body.appendChild(el("h2", { class: "chapter-title", text: chapter.label }));
+      var chapterTitle = el("h2", { class: "chapter-title", text: chapter.label });
+      body.appendChild(chapterTitle);
 
       // What the narrator will read, in the order it appears, pointing at the
       // very nodes just rendered so the highlight lands on the visible text.
-      var passages = [];
+      // It opens with the heading the way a recording does — and names the
+      // work as well on its first chapter, which is where one work has just
+      // run on into the next.
+      var passages = [{
+        el: chapterTitle, node: null, unit: "heading", verse: null,
+        text: (idx === 0 ? titleCase(meta.title) + ". " : "") + chapter.label + "."
+      }];
 
       if (chapter.verses && chapter.verses.length) {
         var p = el("p");
@@ -544,7 +552,8 @@
 
       attachListening({
         work: workId, workTitle: meta.title, chapter: idx, label: chapter.label,
-        next: idx < work.chapters.length - 1 ? idx + 1 : null
+        next: idx < work.chapters.length - 1 ? idx + 1 : null,
+        nextWork: nextWorkAfter(manifest, workId)
       }, passages, controls);
 
       // What actually survives, and where you can look at it. Nothing is
@@ -1803,8 +1812,25 @@
     return items;
   }
 
+  /* Engines land near 165 words a minute at rate 1 — about fifteen characters
+     a second. This is not a duration, it is the difference between a psalm
+     you can hear now and a chapter of Jeremiah you cannot. */
+  function minutesLeft() {
+    var chars = 0;
+    for (var i = nar.at; i < nar.items.length; i++) chars += nar.items[i].text.length;
+    return chars / (15 * (store.get("listen-rate", 1) || 1)) / 60;
+  }
+
+  function timeLabel(min) {
+    if (min < 1) return "under a minute left";
+    if (min < 60) return Math.round(min) + " min left";
+    var h = Math.floor(min / 60);
+    return h + " h " + Math.round(min - h * 60) + " min left";
+  }
+
   function itemLabel(item) {
     if (!item) return "";
+    if (item.unit === "heading") return "Heading";
     if (item.verse) return "Verse " + item.verse;
     return titleCase(item.unit || "paragraph") + " " + item.ordinal;
   }
@@ -1914,14 +1940,21 @@
       stopListening("Listening stopped — end of chapter.");
       return;
     }
-    if (store.get("listen-continue", true) && ctx && ctx.next !== null) {
-      // Carry the intent across the route change; viewRead picks it up once
-      // the next chapter has rendered and starts it from the top.
-      nar.resumeChapter = ctx.work + "/" + ctx.next;
-      nar.playing = false;
-      updatePlayer();
-      location.hash = "#/read/" + ctx.work + "/" + ctx.next;
-      return;
+    if (store.get("listen-continue", true) && ctx) {
+      var intoWork = ctx.next === null;
+      var target = intoWork
+        ? (ctx.nextWork ? ctx.nextWork.id + "/0" : null)
+        : ctx.work + "/" + ctx.next;
+      if (target) {
+        // Carry the intent across the route change; viewRead picks it up once
+        // the next chapter has rendered and starts it from the top.
+        nar.resumeChapter = target;
+        nar.playing = false;
+        updatePlayer();
+        if (intoWork) announce("Continuing into " + titleCase(ctx.nextWork.title));
+        location.hash = "#/read/" + target;
+        return;
+      }
     }
     nar.playing = false;
     updatePlayer();
@@ -2102,7 +2135,8 @@
     var item = nar.items[nar.at];
     whereEl.textContent = nar.ctx
       ? titleCase(nar.ctx.workTitle) + " · " + nar.ctx.label : "";
-    unitEl.textContent = item ? itemLabel(item) : "";
+    unitEl.textContent = item
+      ? itemLabel(item) + " · " + timeLabel(minutesLeft()) : "";
     barEl.style.width = nar.items.length
       ? Math.round((nar.at / nar.items.length) * 100) + "%" : "0";
   }
@@ -2113,6 +2147,23 @@
       b.setAttribute("aria-pressed", live ? "true" : "false");
       b.textContent = live ? "⏸ Listening" : "▶ Listen";
     });
+  }
+
+  /* The volume's whole argument is that these works are a sequence, so the
+     narration follows it: the end of a work runs on into the one that was
+     written next, skipping the entries that carry no text of their own. */
+  function nextWorkAfter(manifest, workId) {
+    var flat = [];
+    manifest.sections.forEach(function (sec) {
+      sec.works.forEach(function (w) { flat.push(w); });
+    });
+    var i = -1;
+    flat.forEach(function (w, n) { if (i < 0 && w.id === workId) i = n; });
+    if (i < 0) return null;
+    for (var j = i + 1; j < flat.length; j++) {
+      if (flat[j].chapters) return { id: flat[j].id, title: flat[j].title };
+    }
+    return null;
   }
 
   /* Called by the reader once a chapter is on the page. */
@@ -2175,6 +2226,13 @@
     if (found < 0) return;
     nar.pendingResumeAt = 0;
     startHere(found, true);
+  }
+
+  /* The reader reached a work it has no text for while the narration was on
+     its way into it. Say so rather than going quiet with the player up. */
+  function listeningDeadEnd() {
+    if (!nar.on || !nar.resumeChapter) return;
+    stopListening("Listening stopped — there is no text here to read.");
   }
 
   /* A route change that is not the auto-advance ends the narration: the

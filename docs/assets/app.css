@@ -864,6 +864,7 @@ main > * { animation: rise .18s ease-out; }
    Word marking uses the Custom Highlight API — where it is missing the
    verse marking alone still carries the position. */
 
+.chapter-title.is-speaking,
 .reader .v.is-speaking,
 .reader p.is-speaking {
   background: var(--accent-bg);

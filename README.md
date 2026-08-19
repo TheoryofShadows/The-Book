@@ -104,14 +104,19 @@ chapter, or `l`.
 
 - The verse being spoken is marked, and the word inside it is highlighted where
   the browser supports the Custom Highlight API.
-- Speed, voice and a sleep timer are in the player; it carries on into the next
-  chapter unless you turn that off, so a book plays end to end.
+- Speed, voice, time remaining and a sleep timer are in the player.
+- It announces each chapter, then runs on: to the next chapter, and at the end
+  of a work into the work written next, stepping over the entries that carry no
+  text. Left alone it plays the library in composition order. The toggle in the
+  player stops it at the end of the chapter instead.
 - Where you stopped is remembered per chapter, the way **Resume** works for
   reading, and any verse can be the starting point from its verse menu.
 
 The voices are the ones your device has installed, and they are synthetic: no
 audio is downloaded, no text is sent anywhere, and it works offline. A browser
-with no speech engine is not offered the control at all.
+with no speech engine is not offered the control at all. On a phone the reading
+usually stops when the screen locks or you switch app — the browser suspends
+the page, and this is speech, not a track playing in the background.
 
 ## Building it
 
