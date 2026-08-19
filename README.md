@@ -95,6 +95,24 @@ Gaps inherited from the source editions, left honest rather than invented:
 - The Dead Sea Scrolls appear as summaries — every English translation of the
   1947-and-later finds is under copyright.
 
+## Listening to it
+
+Every chapter can be read aloud. There is no audiobook of these translations
+in the public domain and 1.13 million words cannot be recorded, so the reading
+is done by the speech engine already in the browser: press **Listen** in any
+chapter, or `l`.
+
+- The verse being spoken is marked, and the word inside it is highlighted where
+  the browser supports the Custom Highlight API.
+- Speed, voice and a sleep timer are in the player; it carries on into the next
+  chapter unless you turn that off, so a book plays end to end.
+- Where you stopped is remembered per chapter, the way **Resume** works for
+  reading, and any verse can be the starting point from its verse menu.
+
+The voices are the ones your device has installed, and they are synthetic: no
+audio is downloaded, no text is sent anywhere, and it works offline. A browser
+with no speech engine is not offered the control at all.
+
 ## Building it
 
 ```bash
@@ -116,7 +134,9 @@ say so. Findings are stated so they can be falsified.
 
 Static files only — no build step, no dependencies, no tracking. Work texts and
 search-index shards are fetched on demand, so the first paint is small even
-though the library is seven megabytes.
+though the library is seven megabytes. Read-aloud is the browser's own
+`speechSynthesis`, with each passage cut into utterances short enough to clear
+Chrome's fifteen-second cut-off.
 
 Search is a two-stage design: a chapter-granularity inverted index (1.45 MB
 across 27 shards) narrows candidates, then only the matching works are fetched

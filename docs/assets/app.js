@@ -498,6 +498,10 @@
       body.appendChild(controls);
       body.appendChild(el("h2", { class: "chapter-title", text: chapter.label }));
 
+      // What the narrator will read, in the order it appears, pointing at the
+      // very nodes just rendered so the highlight lands on the visible text.
+      var passages = [];
+
       if (chapter.verses && chapter.verses.length) {
         var p = el("p");
         chapter.verses.forEach(function (v) {
@@ -522,16 +526,26 @@
               });
             }
           }));
-          span.appendChild(document.createTextNode(v.t + " "));
+          var textNode = document.createTextNode(v.t + " ");
+          span.appendChild(textNode);
+          passages.push({ el: span, node: textNode, text: v.t, verse: v.v });
           p.appendChild(span);
         });
         reader.appendChild(p);
       } else {
         (chapter.paras || []).forEach(function (t) {
-          reader.appendChild(el("p", { text: t }));
+          var para = el("p", { text: t });
+          reader.appendChild(para);
+          passages.push({ el: para, node: para.firstChild, text: t,
+                          verse: null, unit: "paragraph" });
         });
       }
       body.appendChild(reader);
+
+      attachListening({
+        work: workId, workTitle: meta.title, chapter: idx, label: chapter.label,
+        next: idx < work.chapters.length - 1 ? idx + 1 : null
+      }, passages, controls);
 
       // What actually survives, and where you can look at it. Nothing is
       // reproduced -- these objects are all rights reserved -- but linking is
@@ -720,6 +734,13 @@
     });
     var span = button.parentNode;
     node.appendChild(saveBtn);
+
+    if (SPEECH_OK) {
+      node.appendChild(el("button", {
+        role: "menuitem", text: "▶  Read aloud from here",
+        onclick: function () { closeMenu(); listenFromVerse(ref.v); }
+      }));
+    }
 
     node.appendChild(el("button", {
       role: "menuitem", text: "🔗  Copy link to this verse",
@@ -1626,6 +1647,550 @@
   }
 
   /* ================================================================
+     LISTEN — the text read aloud
+     ------------------------------------------------------------------
+     An audiobook of a 1.13-million-word library cannot be recorded, and
+     no recording of these translations exists in the public domain. What
+     every modern browser does ship is a speech engine, so the chapter is
+     narrated by the voices already installed on the machine. Nothing is
+     downloaded, nothing is sent anywhere, and it works offline.
+
+     The narration is verse-granular on purpose: it is the unit the reader
+     already navigates by, it is what gets highlighted as the voice moves,
+     and it is what the position is remembered as, so listening picks up
+     mid-chapter the way reading does.
+     ================================================================ */
+
+  var speech = window.speechSynthesis;
+  var SPEECH_OK = !!(speech && typeof window.SpeechSynthesisUtterance === "function");
+
+  /* Chrome cuts off a single utterance at around fifteen seconds and simply
+     stops. The usual workaround is a pause/resume heartbeat, which clips
+     words; instead every passage is cut into pieces short enough that no
+     one utterance ever reaches the limit. Verses are already about this
+     length, so only the long paragraph works are really affected. */
+  var MAX_CHARS = 220;
+
+  function sentenceSpans(text) {
+    var out = [], start = 0, i = 0, n = text.length;
+    while (i < n) {
+      var c = text.charAt(i);
+      if (c === "." || c === "!" || c === "?") {
+        var j = i + 1;
+        while (j < n && /["'’”)\]]/.test(text.charAt(j))) j++;
+        if (j >= n || /\s/.test(text.charAt(j))) {
+          while (j < n && /\s/.test(text.charAt(j))) j++;
+          out.push({ start: start, text: text.slice(start, j) });
+          start = j; i = j;
+          continue;
+        }
+      }
+      i++;
+    }
+    if (start < n) out.push({ start: start, text: text.slice(start) });
+    return out;
+  }
+
+  /* A sentence longer than the limit on its own — Hebrews and 4 Maccabees
+     both manage it — is broken at word boundaries rather than mid-word. */
+  function splitLong(span) {
+    var out = [], re = /\S+\s*/g, m, cur = "", curStart = 0;
+    while ((m = re.exec(span.text))) {
+      if (cur && cur.length + m[0].length > MAX_CHARS) {
+        out.push({ start: span.start + curStart, text: cur });
+        cur = "";
+      }
+      if (!cur) curStart = m.index;
+      cur += m[0];
+    }
+    if (cur) out.push({ start: span.start + curStart, text: cur });
+    return out;
+  }
+
+  function chunk(text) {
+    var out = [], cur = null;
+
+    function flush() { if (cur) { out.push(cur); cur = null; } }
+
+    sentenceSpans(text).forEach(function (s) {
+      if (s.text.length > MAX_CHARS) {
+        flush();
+        splitLong(s).forEach(function (p) { out.push(p); });
+        return;
+      }
+      if (cur && cur.text.length + s.text.length <= MAX_CHARS) cur.text += s.text;
+      else { flush(); cur = { start: s.start, text: s.text }; }
+    });
+    flush();
+    return out.length ? out : [{ start: 0, text: text }];
+  }
+
+  /* ---------------- voices ---------------- */
+
+  var voices = [];
+  function loadVoices() {
+    if (!SPEECH_OK) return;
+    var all = speech.getVoices() || [];
+    // English first and default-marked first within that, since the texts
+    // are English; everything else stays available underneath.
+    var en = all.filter(function (v) { return /^en(-|$)/i.test(v.lang); });
+    var rest = all.filter(function (v) { return !/^en(-|$)/i.test(v.lang); });
+    en.sort(function (a, b) { return (b.default ? 1 : 0) - (a.default ? 1 : 0); });
+    voices = en.concat(rest);
+  }
+  if (SPEECH_OK) {
+    loadVoices();
+    speech.addEventListener("voiceschanged", function () {
+      loadVoices();
+      if (player) fillVoices();
+    });
+  }
+
+  function chosenVoice() {
+    var want = store.get("listen-voice", null);
+    var found = null;
+    voices.forEach(function (v) { if (v.voiceURI === want) found = v; });
+    return found || voices[0] || null;
+  }
+
+  /* ---------------- the narrator ---------------- */
+
+  var HIGHLIGHT_OK = !!(window.CSS && CSS.highlights &&
+                        typeof window.Highlight === "function");
+
+  var nar = {
+    items: [],      // one utterance-sized piece each
+    at: 0,
+    ctx: null,      // which chapter these belong to
+    on: false,      // the player is open
+    playing: false,
+    utter: null,
+    gen: 0,         // cancels stale onend/onerror from a discarded utterance
+    resumeChapter: null,  // set when auto-advancing into the next chapter
+    sleepAt: 0,
+    stopAtEnd: false,
+    pendingResumeAt: 0
+  };
+
+  function reducedMotion() {
+    return window.matchMedia &&
+           window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  function clearWordHighlight() {
+    if (HIGHLIGHT_OK) CSS.highlights.delete("book-speaking");
+  }
+
+  function clearMarks() {
+    var prev = document.querySelector(".is-speaking");
+    if (prev) prev.classList.remove("is-speaking");
+    clearWordHighlight();
+  }
+
+  /* Build the speakable queue from what was actually rendered, so the thing
+     being highlighted is the thing on the page rather than a second copy of
+     the text held somewhere else. */
+  function buildItems(passages) {
+    var items = [];
+    passages.forEach(function (p, pi) {
+      chunk(p.text).forEach(function (c) {
+        items.push({
+          el: p.el, node: p.node, start: c.start, text: c.text,
+          verse: p.verse, unit: p.unit, ordinal: pi + 1
+        });
+      });
+    });
+    return items;
+  }
+
+  function itemLabel(item) {
+    if (!item) return "";
+    if (item.verse) return "Verse " + item.verse;
+    return titleCase(item.unit || "paragraph") + " " + item.ordinal;
+  }
+
+  function speakFrom(i) {
+    if (!SPEECH_OK) return;
+    nar.gen++;
+    var gen = nar.gen;
+    speech.cancel();
+    nar.at = Math.max(0, Math.min(i, nar.items.length - 1));
+    nar.playing = true;
+    // Chrome can swallow a speak() issued in the same tick as the cancel()
+    // before it; a beat of daylight between the two is the usual remedy.
+    setTimeout(function () { step(gen); }, 60);
+  }
+
+  function step(gen) {
+    if (gen !== nar.gen) return;
+
+    if (nar.sleepAt && Date.now() > nar.sleepAt) {
+      stopListening("Listening stopped — sleep timer.");
+      return;
+    }
+
+    var item = nar.items[nar.at];
+    if (!item) { chapterFinished(); return; }
+
+    mark(item);
+
+    var u = new SpeechSynthesisUtterance(item.text);
+    var v = chosenVoice();
+    if (v) { u.voice = v; u.lang = v.lang; }
+    u.rate = store.get("listen-rate", 1);
+    u.pitch = 1;
+
+    u.onboundary = function (e) {
+      if (gen !== nar.gen || !HIGHLIGHT_OK) return;
+      if (e.name && e.name !== "word") return;
+      highlightWord(item, e.charIndex, e.charLength);
+    };
+    u.onend = function () {
+      if (gen !== nar.gen) return;
+      nar.at++;
+      step(gen);
+    };
+    u.onerror = function (e) {
+      if (gen !== nar.gen) return;
+      // "interrupted" and "canceled" are what a deliberate stop looks like.
+      if (e.error === "interrupted" || e.error === "canceled") return;
+      stopListening("Listening stopped — the voice reported an error.");
+    };
+
+    nar.utter = u;
+    speech.speak(u);
+    updatePlayer();
+  }
+
+  function highlightWord(item, charIndex, charLength) {
+    if (typeof charIndex !== "number" || !item.node) return;
+    var len = charLength;
+    if (!len) {
+      var m = /^\S+/.exec(item.text.slice(charIndex));
+      len = m ? m[0].length : 0;
+    }
+    if (!len) return;
+    var a = item.start + charIndex;
+    var b = a + len;
+    var max = item.node.length;
+    if (a >= max) return;
+    if (b > max) b = max;
+    try {
+      var r = document.createRange();
+      r.setStart(item.node, a);
+      r.setEnd(item.node, b);
+      CSS.highlights.set("book-speaking", new Highlight(r));
+    } catch (e) { /* the chapter was re-rendered underneath us */ }
+  }
+
+  function mark(item) {
+    clearMarks();
+    if (!item.el || !item.el.isConnected) return;
+    item.el.classList.add("is-speaking");
+
+    var box = item.el.getBoundingClientRect();
+    var margin = Math.min(160, window.innerHeight * 0.2);
+    if (box.top < margin || box.bottom > window.innerHeight - margin) {
+      item.el.scrollIntoView({
+        block: "center",
+        behavior: reducedMotion() ? "auto" : "smooth"
+      });
+    }
+
+    if (nar.ctx) {
+      store.set("listen-at", {
+        work: nar.ctx.work, chapter: nar.ctx.chapter, at: nar.at
+      });
+    }
+  }
+
+  function chapterFinished() {
+    clearMarks();
+    var ctx = nar.ctx;
+    store.set("listen-at", null);
+
+    if (nar.stopAtEnd) {
+      nar.stopAtEnd = false;
+      stopListening("Listening stopped — end of chapter.");
+      return;
+    }
+    if (store.get("listen-continue", true) && ctx && ctx.next !== null) {
+      // Carry the intent across the route change; viewRead picks it up once
+      // the next chapter has rendered and starts it from the top.
+      nar.resumeChapter = ctx.work + "/" + ctx.next;
+      nar.playing = false;
+      updatePlayer();
+      location.hash = "#/read/" + ctx.work + "/" + ctx.next;
+      return;
+    }
+    nar.playing = false;
+    updatePlayer();
+    announce("Finished reading " + (ctx ? ctx.label : "the chapter"));
+  }
+
+  function stopListening(message) {
+    nar.gen++;
+    nar.playing = false;
+    nar.on = false;
+    nar.resumeChapter = null;
+    nar.sleepAt = 0;
+    nar.stopAtEnd = false;
+    if (SPEECH_OK) speech.cancel();
+    clearMarks();
+    // The position is deliberately left behind: stopping is not finishing,
+    // and reopening the chapter should offer the spot back.
+    if (player) player.hidden = true;
+    document.body.classList.remove("listening");
+    syncListenButtons();
+    if (message) announce(message);
+  }
+
+  function pauseListening() {
+    if (!nar.playing) return;
+    // Pause is unreliable on some Android engines, so the position is kept
+    // and the piece restarted on resume rather than trusted to the queue.
+    nar.gen++;
+    nar.playing = false;
+    speech.cancel();
+    clearWordHighlight();
+    updatePlayer();
+    syncListenButtons();
+  }
+
+  function resumeListening() {
+    if (!nar.on || !nar.items.length) return;
+    speakFrom(nar.at);
+    syncListenButtons();
+  }
+
+  function jump(delta) {
+    if (!nar.on || !nar.items.length) return;
+    var target = nar.at + delta;
+    // Back-arrow within a long passage restarts it, as a player would.
+    if (delta < 0 && nar.items[nar.at] && nar.items[nar.at].verse) {
+      var here = nar.items[nar.at].verse;
+      while (target > 0 && nar.items[target] && nar.items[target].verse === here) target--;
+    }
+    if (target < 0) target = 0;
+    if (target >= nar.items.length) { chapterFinished(); return; }
+    if (nar.playing) speakFrom(target);
+    else { nar.at = target; mark(nar.items[target]); updatePlayer(); }
+  }
+
+  /* ---------------- the player ---------------- */
+
+  var player = null, playBtn = null, whereEl = null, unitEl = null,
+      barEl = null, voiceSel = null;
+
+  function option(value, label, selected) {
+    return el("option", { value: value, selected: selected ? true : null, text: label });
+  }
+
+  function fillVoices() {
+    if (!voiceSel) return;
+    var want = store.get("listen-voice", null);
+    voiceSel.innerHTML = "";
+    if (!voices.length) {
+      voiceSel.appendChild(option("", "Default voice", true));
+      return;
+    }
+    voices.forEach(function (v) {
+      voiceSel.appendChild(option(v.voiceURI, v.name + " · " + v.lang,
+                                  v.voiceURI === want));
+    });
+    if (!want && voices[0]) voiceSel.value = voices[0].voiceURI;
+  }
+
+  function buildPlayer() {
+    playBtn = el("button", {
+      class: "player-btn player-play", "aria-label": "Pause reading",
+      text: "⏸", onclick: function () {
+        if (nar.playing) pauseListening(); else resumeListening();
+      }
+    });
+
+    whereEl = el("strong", { class: "player-where" });
+    unitEl = el("span", { class: "player-unit" });
+    barEl = el("i");
+
+    var rate = el("select", {
+      "aria-label": "Reading speed",
+      onchange: function (e) {
+        store.set("listen-rate", parseFloat(e.target.value));
+        if (nar.playing) speakFrom(nar.at);   // rate only applies to a new utterance
+      }
+    });
+    var current = store.get("listen-rate", 1);
+    [0.7, 0.85, 1, 1.15, 1.3, 1.5, 1.75, 2].forEach(function (r) {
+      rate.appendChild(option(String(r), r + "×", Math.abs(r - current) < 0.001));
+    });
+
+    voiceSel = el("select", {
+      "aria-label": "Voice",
+      onchange: function (e) {
+        store.set("listen-voice", e.target.value || null);
+        if (nar.playing) speakFrom(nar.at);
+      }
+    });
+    fillVoices();
+
+    var sleep = el("select", {
+      "aria-label": "Sleep timer",
+      onchange: function (e) {
+        var v = e.target.value;
+        nar.stopAtEnd = v === "chapter";
+        nar.sleepAt = /^\d+$/.test(v) && +v > 0 ? Date.now() + (+v) * 60000 : 0;
+        announce(v === "off" ? "Sleep timer off"
+               : v === "chapter" ? "Stopping at the end of this chapter"
+               : "Stopping in " + v + " minutes");
+      }
+    });
+    [["off", "Sleep: off"], ["10", "10 min"], ["20", "20 min"], ["30", "30 min"],
+     ["45", "45 min"], ["60", "60 min"], ["chapter", "End of chapter"]
+    ].forEach(function (o) { sleep.appendChild(option(o[0], o[1], o[0] === "off")); });
+
+    var cont = el("button", {
+      class: "player-btn player-cont",
+      "aria-pressed": store.get("listen-continue", true) ? "true" : "false",
+      title: "Keep going into the next chapter",
+      text: "↻",
+      "aria-label": "Continue into the next chapter",
+      onclick: function (e) {
+        var now = !store.get("listen-continue", true);
+        store.set("listen-continue", now);
+        e.currentTarget.setAttribute("aria-pressed", now ? "true" : "false");
+        announce(now ? "Will continue into the next chapter"
+                     : "Will stop at the end of this chapter");
+      }
+    });
+
+    player = el("div", {
+      class: "player", role: "region", "aria-label": "Read aloud", hidden: true
+    }, [
+      el("div", { class: "player-bar" }, [barEl]),
+      el("div", { class: "player-line" }, [
+        el("button", {
+          class: "player-btn", "aria-label": "Back one verse", title: "Back one verse",
+          text: "⏮", onclick: function () { jump(-1); }
+        }),
+        playBtn,
+        el("button", {
+          class: "player-btn", "aria-label": "Forward one verse", title: "Forward one verse",
+          text: "⏭", onclick: function () { jump(1); }
+        }),
+        el("div", { class: "player-pos" }, [whereEl, unitEl]),
+        cont,
+        el("button", {
+          class: "player-btn player-close", "aria-label": "Stop reading aloud",
+          title: "Stop reading aloud", text: "✕",
+          onclick: function () { stopListening("Stopped reading aloud"); }
+        })
+      ]),
+      el("div", { class: "player-line player-opts" }, [rate, voiceSel, sleep])
+    ]);
+    document.body.appendChild(player);
+  }
+
+  function updatePlayer() {
+    if (!player) return;
+    player.hidden = !nar.on;
+    if (!nar.on) return;
+
+    playBtn.textContent = nar.playing ? "⏸" : "▶";
+    playBtn.setAttribute("aria-label", nar.playing ? "Pause reading" : "Continue reading");
+
+    var item = nar.items[nar.at];
+    whereEl.textContent = nar.ctx
+      ? titleCase(nar.ctx.workTitle) + " · " + nar.ctx.label : "";
+    unitEl.textContent = item ? itemLabel(item) : "";
+    barEl.style.width = nar.items.length
+      ? Math.round((nar.at / nar.items.length) * 100) + "%" : "0";
+  }
+
+  function syncListenButtons() {
+    document.querySelectorAll("[data-listen]").forEach(function (b) {
+      var live = nar.on && nar.playing;
+      b.setAttribute("aria-pressed", live ? "true" : "false");
+      b.textContent = live ? "⏸ Listening" : "▶ Listen";
+    });
+  }
+
+  /* Called by the reader once a chapter is on the page. */
+  function attachListening(ctx, passages, controls) {
+    if (!SPEECH_OK || !passages.length) return;
+
+    nar.items = buildItems(passages);
+    nar.ctx = ctx;
+    if (!player) buildPlayer();
+
+    var btn = el("button", {
+      class: "chip", "data-listen": "1", "aria-pressed": "false",
+      text: "▶ Listen",
+      title: "Read this chapter aloud with a voice from your device",
+      onclick: function () {
+        if (nar.on && nar.playing) { pauseListening(); return; }
+        if (nar.on && !nar.playing) { resumeListening(); return; }
+        startHere(0, true);
+      }
+    });
+    controls.insertBefore(btn, controls.firstChild);
+
+    var pending = nar.resumeChapter === ctx.work + "/" + ctx.chapter;
+    nar.resumeChapter = null;
+    if (pending) { startHere(0, false); return; }
+
+    // Opening the chapter you stopped listening in offers that spot back,
+    // the same way Resume does for reading.
+    var last = store.get("listen-at", null);
+    if (last && last.work === ctx.work && last.chapter === ctx.chapter &&
+        last.at > 0 && last.at < nar.items.length) {
+      nar.pendingResumeAt = last.at;
+      btn.textContent = "▶ Resume listening";
+      btn.title = "Pick up at " + itemLabel(nar.items[last.at]).toLowerCase();
+    }
+  }
+
+  function startHere(index, announceIt) {
+    if (!SPEECH_OK || !nar.items.length) return;
+    if (index === 0 && nar.pendingResumeAt) {
+      index = nar.pendingResumeAt;
+      nar.pendingResumeAt = 0;
+    }
+    nar.on = true;
+    if (player) player.hidden = false;
+    document.body.classList.add("listening");
+    speakFrom(index);
+    syncListenButtons();
+    if (announceIt) {
+      announce("Reading aloud from " + itemLabel(nar.items[nar.at]).toLowerCase());
+    }
+  }
+
+  /* Start at a particular verse — used by the verse menu. */
+  function listenFromVerse(v) {
+    var found = -1;
+    nar.items.forEach(function (it, i) {
+      if (found < 0 && it.verse === v) found = i;
+    });
+    if (found < 0) return;
+    nar.pendingResumeAt = 0;
+    startHere(found, true);
+  }
+
+  /* A route change that is not the auto-advance ends the narration: the
+     queue points at elements that are about to be thrown away. */
+  function listeningPageChange() {
+    if (!nar.on) return;
+    if (nar.resumeChapter) { nar.gen++; if (SPEECH_OK) speech.cancel(); clearMarks(); return; }
+    stopListening(null);
+  }
+
+  window.addEventListener("pagehide", function () {
+    // Speech outlives the document in several browsers if left running.
+    if (SPEECH_OK) speech.cancel();
+  });
+
+  /* ================================================================
      ROUTER
      ================================================================ */
 
@@ -1646,6 +2211,7 @@
     // saved page and sits there.
     closeSheet();
     closeMenu();
+    listeningPageChange();
 
     main.innerHTML = "";
     main.appendChild(el("p", { class: "loading", text: "Loading…" }));
@@ -1721,6 +2287,11 @@
   document.addEventListener("keydown", function (e) {
     if (e.target.matches("input, textarea, select")) return;
     if (e.key === "/") { e.preventDefault(); location.hash = "#/search"; return; }
+    if (e.key === "l" || e.key === "L") {
+      var listen = document.querySelector("[data-listen]");
+      if (listen) { e.preventDefault(); listen.click(); }
+      return;
+    }
     var pager = document.querySelectorAll(".pager a");
     if (e.key === "ArrowLeft" && pager.length) {
       var prev = Array.prototype.find.call(pager, function (a) { return a.textContent.indexOf("←") === 0; });

@@ -41,6 +41,10 @@
   --radius: 10px;
   --measure: 34rem;
   --reader-size: 1.075rem;
+
+  /* Native widgets -- select dropdowns, scrollbars -- are drawn by the
+     browser itself, and follow this rather than the palette above. */
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -64,8 +68,11 @@
     --fix-bg:    #182231;
     --mark:      #55401f;
     --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 28px rgba(0, 0, 0, .35);
+    color-scheme: dark;
   }
 }
+
+:root[data-theme="light"] { color-scheme: light; }
 
 :root[data-theme="dark"] {
   --paper:     #16131a;
@@ -87,6 +94,7 @@
   --fix-bg:    #182231;
   --mark:      #55401f;
   --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 28px rgba(0, 0, 0, .35);
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -848,3 +856,97 @@ main > * { animation: rise .18s ease-out; }
 .witness-rights {
   margin: 0; font-size: .72rem; font-style: italic; color: var(--ink-faint);
 }
+
+/* ---------- read aloud ----------
+   The passage being spoken is marked twice: the whole verse takes a quiet
+   ground so you can find your place after looking away, and the individual
+   word takes the highlighter, so following along is possible at speed.
+   Word marking uses the Custom Highlight API — where it is missing the
+   verse marking alone still carries the position. */
+
+.reader .v.is-speaking,
+.reader p.is-speaking {
+  background: var(--accent-bg);
+  border-radius: 3px;
+  box-shadow: 0 0 0 .18em var(--accent-bg);
+}
+
+::highlight(book-speaking) {
+  background: var(--mark);
+  color: var(--ink);
+}
+
+.player {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  isolation: isolate;
+  background: var(--raised); border-top: 1px solid var(--rule);
+  box-shadow: var(--shadow);
+  font-family: var(--sans);
+  padding: .5rem max(.8rem, env(safe-area-inset-left))
+           calc(.5rem + env(safe-area-inset-bottom))
+           max(.8rem, env(safe-area-inset-right));
+  display: flex; flex-direction: column; gap: .4rem;
+}
+.player[hidden] { display: none; }
+
+.player-line { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+
+.player-btn {
+  font: inherit; font-size: .95rem; line-height: 1;
+  background: transparent; color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 999px;
+  width: 2.2rem; height: 2.2rem; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: none;
+}
+.player-btn:hover { border-color: var(--accent); color: var(--accent); }
+/* The accent is a deep purple in light and a pale one in dark, so the glyph
+   takes the ground colour rather than a fixed white and stays legible in both. */
+.player-play {
+  background: var(--accent); border-color: var(--accent); color: var(--paper);
+  width: 2.6rem; height: 2.6rem; font-size: 1.05rem;
+}
+.player-play:hover {
+  background: var(--accent-2); border-color: var(--accent-2); color: var(--paper);
+}
+.player-cont[aria-pressed="true"] { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+
+.player-pos {
+  display: flex; flex-direction: column; min-width: 0; line-height: 1.25;
+  flex: 1;
+}
+.player-where {
+  font-size: .84rem; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.player-unit { font-size: .74rem; color: var(--ink-faint); }
+
+/* How far through the chapter, as a hairline along the top edge — the same
+   place a player puts it, and out of the way of the controls. */
+.player-bar {
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--rule-soft); overflow: hidden;
+}
+.player-bar i {
+  display: block; height: 100%; width: 0;
+  background: var(--accent); transition: width .3s linear;
+}
+@media (prefers-reduced-motion: reduce) { .player-bar i { transition: none; } }
+
+.player-opts select {
+  font: inherit; font-size: .78rem; color: var(--ink);
+  background: var(--paper-2); border: 1px solid var(--rule-soft);
+  border-radius: 8px; padding: .28rem .4rem; max-width: 11rem;
+}
+.player-opts { justify-content: flex-start; }
+.player-close { margin-left: auto; }
+
+/* The player covers the last inch of the page; the reader gets that back. */
+body.listening { padding-bottom: 7.5rem; }
+
+@media (max-width: 620px) {
+  .player-opts select { max-width: 7.5rem; }
+  .player-where { font-size: .8rem; }
+}
+
+@media print { .player { display: none; } }
