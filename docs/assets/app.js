@@ -78,15 +78,41 @@
 
   /* ---------------- persistent settings ---------------- */
 
+  /* Saving can fail for reasons the reader has no way to see: Safari's
+     private browsing gives every site a storage quota of zero, and a browser
+     that has been reading for a long time can simply run out. Swallowing that
+     silently is the worst of the options -- the verse is announced as saved,
+     the reader moves on, and it is gone. set() reports whether it actually
+     wrote, and the callers that promise the reader something say the true
+     thing instead. */
+  var storageWorks = true;
+
   var store = {
     get: function (k, d) {
       try { var v = localStorage.getItem("thebook:" + k); return v === null ? d : JSON.parse(v); }
       catch (e) { return d; }
     },
     set: function (k, v) {
-      try { localStorage.setItem("thebook:" + k, JSON.stringify(v)); } catch (e) {}
-    }
+      try {
+        localStorage.setItem("thebook:" + k, JSON.stringify(v));
+        storageWorks = true;
+        return true;
+      } catch (e) {
+        storageWorks = false;
+        return false;
+      }
+    },
+    /* False once a write has been refused. Read it after set(), not before:
+       a quota is only ever discovered by trying. */
+    works: function () { return storageWorks; }
   };
+
+  /* Why the write failed, in the terms that decide what the reader can do
+     about it. Quota is recoverable by removing saved items; private browsing
+     is not recoverable at all, and saying "try again" there would be a lie. */
+  var STORAGE_FAILED = "This browser is not letting the page store anything, " +
+    "so that was not kept. Private browsing usually does this, and so does a " +
+    "browser that has run out of room for this site.";
 
   /* ---------------- theme ---------------- */
 
@@ -702,7 +728,10 @@
       item.at = Date.now();
       list.unshift(item);
     }
-    store.set("saved", list.slice(0, 500));
+    if (!store.set("saved", list.slice(0, 500))) {
+      announce(STORAGE_FAILED);
+      return wasSaved;          // nothing changed, so neither does the button
+    }
     announce(wasSaved ? "Removed from saved" : "Saved");
     return !wasSaved;
   }
@@ -838,11 +867,6 @@
     }
     out.sort(function (a, b) { return b.length - a.length; });
     return out;
-  }
-
-  function normTerm(s) {
-    return s.toLowerCase().replace(/[’']/g, "")
-            .replace(/[^a-z0-9 ]+/g, "").trim();
   }
 
   function lookup(term) {
@@ -1066,10 +1090,64 @@
      SEARCH
      ================================================================ */
 
+  /* ---------------- folding text into keys ------------------------------
+
+     Search tokens, lexicon headwords and place names are all keys. They are
+     built here, and built again by tools/textnorm.py when the data files are
+     made. The two copies have to agree exactly, or the key a reader arrives
+     at is not the key the entry was filed under -- and that failure is
+     silent. The search answers that no text contains a word that is on the
+     page; the definition of a word the volume does have an entry for does
+     not open.
+
+     They did part company, twice. Accented letters were being deleted rather
+     than folded, so "Mastêmâ" went into the index as "mast" and "m" and
+     "Cæsar" as "c" and "sar" -- 163 word-forms that no spelling could reach.
+     And this file derived its lexicon key by deleting anything outside
+     [a-z0-9 ] while the builder decomposed first, so the same word gave
+     "mastm" here and "mastema" there.
+
+     The region between the markers below is lifted out and run against the
+     Python one by tests/python/test_tokeniser_agreement.py. Keep the two in
+     step; the step order is part of the rule.
+     ------------------------------------------------------------------- */
+  /* --8<-- fold: start --8<-- */
   var TOKEN = /[a-z0-9]+/g;
-  function tokenise(s) {
-    return (s.toLowerCase().replace(/[’‘]/g, "'").match(TOKEN) || []);
+
+  /* NFKD leaves these alone -- they are letters in their own right, not
+     accented forms of anything -- so without expanding them by hand a reader
+     typing "Caesar" never meets "Cæsar". */
+  var LIGATURES = {
+    "æ": "ae", "œ": "oe", "ß": "ss", "ð": "d", "þ": "th",
+    "ø": "o", "đ": "d", "ł": "l", "ħ": "h", "ŋ": "ng"
+  };
+  var LIGATURE_RE = /[æœßðþøđłħŋ]/g;
+  var CURLY_RE = /[‘’ʼʻ]/g;
+  var COMBINING_RE = /[\u0300-\u036f]/g;
+
+  function fold(s) {
+    return String(s)
+      .toLowerCase()
+      .replace(CURLY_RE, "'")
+      .replace(LIGATURE_RE, function (c) { return LIGATURES[c]; })
+      .normalize("NFKD")
+      .replace(COMBINING_RE, "");
   }
+
+  /* The words the index files, and the words a query is looked up as. */
+  function tokenise(s) {
+    return (fold(s).match(TOKEN) || []);
+  }
+
+  /* The key a lexicon entry or a place is filed under. Unlike a search token
+     this keeps the spaces, because the headwords are phrases, and drops the
+     apostrophe rather than splitting on it, so "Rachel's tomb" and "Rachels
+     tomb" are one entry. */
+  function normTerm(s) {
+    return fold(s).replace(/'/g, "")
+            .replace(/[^a-z0-9 ]+/g, "").replace(/\s+/g, " ").trim();
+  }
+  /* --8<-- fold: end --8<-- */
 
   function viewSearch(manifest, initialQuery) {
     var wrap = el("div", { class: "wrap" });
@@ -1400,7 +1478,7 @@
      ACCURACY
      ================================================================ */
 
-  function viewAccuracy(findings, removals) {
+  function viewAccuracy(findings, removals, splices) {
     var wrap = el("div", { class: "wrap" });
     wrap.appendChild(el("h1", { text: "Accuracy report" }));
     wrap.appendChild(el("p", { class: "lede", text: findings.summary }));
@@ -1446,6 +1524,36 @@
     });
     table.appendChild(tb);
     wrap.appendChild(el("div", { class: "scroller" }, [table]));
+
+    if (splices && splices.length) {
+      wrap.appendChild(el("hr", { class: "rule" }));
+      wrap.appendChild(el("h2", { text: "Chapter boundaries repaired" }));
+      wrap.appendChild(el("p", { class: "muted", text:
+        "The Ante-Nicene Fathers print a heading above each chapter. Preparing " +
+        "the source turned those headings into chapter markers, except where " +
+        "the scan had misread the full stop as a comma — “CHAP, IV.—” rather " +
+        "than “CHAP. IV.—”. Those headings stayed in the running text, the " +
+        "chapters they opened were folded into the chapter before, and the " +
+        "heading itself was read out as though it were scripture. The " +
+        "boundaries below are put back by the parser, and the heading dropped, " +
+        "as it is in every other chapter of these works." }));
+
+      var stable = el("table", { class: "grid" });
+      stable.appendChild(el("thead", {}, [el("tr", {}, [
+        el("th", { text: "As printed" }), el("th", { text: "Chapter restored" }),
+        el("th", { text: "Heading removed" })
+      ])]));
+      var sb = el("tbody");
+      splices.forEach(function (sp) {
+        sb.appendChild(el("tr", {}, [
+          el("td", { class: "tiny", text: "CHAP. " + sp.numeral + ".—" }),
+          el("td", { text: String(sp.chapter) }),
+          el("td", { class: "muted", text: sp.heading })
+        ]));
+      });
+      stable.appendChild(sb);
+      wrap.appendChild(el("div", { class: "scroller" }, [stable]));
+    }
 
     wrap.appendChild(el("hr", { class: "rule" }));
     wrap.appendChild(el("h2", { text: "How to check this yourself" }));
@@ -1566,8 +1674,14 @@
           });
         }
       });
-      store.set("saved", merged);
-      store.set("bookmarks", []);
+      // Order matters, and it used to be wrong: clearing the old key after a
+      // failed write threw the reader's bookmarks away to save nothing. The
+      // old copy is only released once the new one is known to be on disk.
+      if (store.set("saved", merged)) store.set("bookmarks", []);
+    }
+
+    if (!store.works()) {
+      wrap.appendChild(el("p", { class: "empty", text: STORAGE_FAILED }));
     }
 
     var items = savedItems();
@@ -1632,8 +1746,7 @@
       note.addEventListener("change", function () {
         var all = savedItems();
         all.forEach(function (s) { if (s.id === item.id) s.note = note.value; });
-        store.set("saved", all);
-        announce("Note saved");
+        announce(store.set("saved", all) ? "Note saved" : STORAGE_FAILED);
       });
       row.appendChild(note);
 
@@ -1641,9 +1754,8 @@
         class: "chip", text: "Remove",
         "aria-label": "Remove " + (item.workTitle || item.work) + " " + item.label,
         onclick: function () {
-          store.set("saved", savedItems().filter(function (s) {
-            return s.id !== item.id;
-          }));
+          var kept = savedItems().filter(function (s) { return s.id !== item.id; });
+          if (!store.set("saved", kept)) { announce(STORAGE_FAILED); return; }
           row.remove();
           announce("Removed from saved");
         }
@@ -2707,10 +2819,11 @@
       }
       if (view === "accuracy") {
         setNav("accuracy");
-        return Promise.all([getJSON("findings.json"), getJSON("removals.json")])
+        return Promise.all([getJSON("findings.json"), getJSON("removals.json"),
+                            getJSON("splices.json").catch(function () { return []; })])
           .then(function (r) {
             main.innerHTML = "";
-            main.appendChild(viewAccuracy(r[0], r[1]));
+            main.appendChild(viewAccuracy(r[0], r[1], r[2]));
             window.scrollTo(0, 0);
           });
       }

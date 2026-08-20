@@ -27,6 +27,9 @@ import sys
 import unicodedata
 from collections import defaultdict
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import textnorm  # noqa: E402
+
 RAW = sys.argv[1] if len(sys.argv) > 1 else "source/places/merged.txt"
 OUT = sys.argv[2] if len(sys.argv) > 2 else "docs/data"
 
@@ -41,9 +44,8 @@ KIND = {
 
 
 def norm(name: str) -> str:
-    name = unicodedata.normalize("NFKD", name)
-    name = name.encode("ascii", "ignore").decode("ascii").lower()
-    return re.sub(r"[^a-z0-9 ]+", "", name).strip()
+    """The same key the lexicon and the reader use. See tools/textnorm.py."""
+    return textnorm.lookup_key(name)
 
 
 def main() -> int:

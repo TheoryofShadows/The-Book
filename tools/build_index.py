@@ -20,15 +20,18 @@ import re
 import sys
 from collections import defaultdict
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import textnorm  # noqa: E402
+
 DATA = sys.argv[1] if len(sys.argv) > 1 else "docs/data"
 COMMON_RATIO = 0.35
-TOKEN = re.compile(r"[a-z0-9]+")
+# The rule lives in tools/textnorm.py, which docs/assets/app.js mirrors and
+# tests/python/test_tokeniser_agreement.py holds the two copies to.
+TOKEN = textnorm.TOKEN
 
 
 def normalise(text: str) -> list[str]:
-    text = text.lower()
-    text = text.replace("’", "'").replace("‘", "'")
-    return TOKEN.findall(text)
+    return textnorm.search_tokens(text)
 
 
 def main() -> int:
