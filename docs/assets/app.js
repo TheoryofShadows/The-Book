@@ -744,7 +744,7 @@
     var span = button.parentNode;
     node.appendChild(saveBtn);
 
-    if (SPEECH_OK) {
+    if (SPEECH_OK && !nar.blocked) {
       node.appendChild(el("button", {
         role: "menuitem", text: "▶  Read aloud from here",
         onclick: function () { closeMenu(); listenFromVerse(ref.v); }
@@ -2292,9 +2292,18 @@
   /* A route change that is not the auto-advance ends the narration: the
      queue points at elements that are about to be thrown away. */
   function listeningPageChange() {
-    if (!nar.on) return;
-    if (nar.resumeChapter) { nar.gen++; if (SPEECH_OK) speech.cancel(); clearMarks(); return; }
-    stopListening(null);
+    // Mid auto-advance the queue is about to be replaced by the next
+    // chapter's, so leave it in place until that arrives.
+    if (nar.on && nar.resumeChapter) {
+      nar.gen++;
+      if (SPEECH_OK) speech.cancel();
+      clearMarks();
+      return;
+    }
+    if (nar.on) stopListening(null);
+    // Every item holds a node from a chapter this route change is discarding.
+    nar.items = [];
+    nar.ctx = null;
   }
 
   window.addEventListener("pagehide", function () {
