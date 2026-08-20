@@ -278,13 +278,21 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 | `words` | Turning a word on the page into an entry — by selection, by keyboard, by alias — what a missing entry says, and the places panel |
 | `keeping` | Saving, unsaving, notes, the migration from the old bookmarks key, and what happens when the browser refuses to store anything at all |
 | `resilience` | The data failing to load, malformed data, routes that name nothing, the keyboard shortcuts, the skip link, and what a screen reader is actually told |
-| `listening` | What is spoken and in what order, which voice out of a bad drawer is picked, that the apparatus is never read out, where long passages are broken and how long the pauses are, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |
+| `listening` | What is spoken and in what order, which voice out of a bad drawer is picked, that the apparatus is never read out, where long passages are broken and how long the pauses are at each pace, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |
 | `offline` | The single-file build opens from `file://` and every feature in it works with no network at all |
 
 The unit tests and the lint run on every pull request and again before every
 deploy. The browser checks used to run on pull requests only, which meant
 anything pushed straight to `main` went live without a browser having opened
 the site; they now gate the deploy as well.
+
+The player also offers a **pace** — natural, measured, liturgical — which sets
+how long the silences are. Conversational pauses are wrong for verse, where
+the line is the unit and the silence after it is part of the line. It is the
+reader's control rather than something the volume decides: there is no genre
+data here, Job is verse inside a prose frame, the prophets move between the two
+mid-chapter, and a hand-written list of "the poetry books" would be an
+editorial claim with no citation behind it.
 
 **What they cannot check: whether a voice actually sounds right.** A headless
 browser has no speech engine — the one these run in reports zero voices and

@@ -329,6 +329,68 @@ module.exports = async function listening(t, ctx) {
           JSON.stringify(gaps.seams));
   await page.close();
 
+  /* ---- pace ----
+     Conversational pauses are wrong for verse: the line is the unit and the
+     silence after it is part of the line. The volume does not decide which
+     books are poetry -- it has no genre data and no business inventing any --
+     so this is the reader's control, and what it has to do is lengthen the
+     silences without touching the seam inside a broken sentence. */
+  const beatsAt = async (setting) => {
+    const p = ctx.tally.watch(await ctx.browser.newPage(), 'pace:' + setting);
+    await p.addInitScript(workingEngine(30));
+    await p.addInitScript({ content:
+      `try { localStorage.setItem('thebook:listen-pace', ` +
+      `${JSON.stringify(JSON.stringify(setting))}); } catch (e) {}` });
+    await p.goto(ctx.base + '#/read/psalms/22');
+    await p.waitForSelector('.reader .v');
+    await p.locator('[data-listen]').click();
+    await p.waitForFunction(() => window.__spoken.length >= 6);
+    const out = await p.evaluate(() => {
+      const s = window.__spoken, beats = [], seams = [];
+      for (let i = 1; i < s.length; i++) {
+        const g = Math.round(s[i].at - s[i - 1].at);
+        (/[.!?]["'’”)\]]?\s*$/.test(s[i - 1].text) ? beats : seams).push(g);
+      }
+      return { first: Math.round(s[1].at - s[0].at), beats, seams };
+    });
+    await p.close();
+    return out;
+  };
+
+  const natural = await beatsAt('natural');
+  const liturgy = await beatsAt('liturgical');
+  const median = xs => xs.slice().sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+
+  t.check('a slower pace lengthens the silence between lines',
+          median(liturgy.beats.slice(1)) > median(natural.beats.slice(1)) * 2,
+          median(natural.beats.slice(1)) + 'ms -> ' + median(liturgy.beats.slice(1)) + 'ms');
+
+  t.check('and gives the chapter heading longer still',
+          liturgy.first > natural.first,
+          natural.first + 'ms -> ' + liturgy.first + 'ms');
+
+  t.check('but never pulls apart a sentence broken only for length',
+          liturgy.seams.length === 0 || liturgy.seams.every(g => g < 150),
+          JSON.stringify(liturgy.seams.slice(0, 5)));
+
+  {
+    const p = ctx.tally.watch(await ctx.browser.newPage(), 'pace-control');
+    await p.addInitScript(workingEngine(30));
+    await p.goto(ctx.base + '#/read/psalms/22');
+    await p.waitForSelector('.reader .v');
+    await p.locator('[data-listen]').click();
+    await p.waitForSelector('.player:not([hidden])');
+    const sel = p.locator('select[aria-label="Pace"]');
+    t.check('the pace is offered in the player', await sel.count() === 1);
+    await sel.selectOption('liturgical');
+    await p.waitForTimeout(200);
+    t.check('and choosing one is remembered',
+            await p.evaluate(
+              () => JSON.parse(localStorage.getItem('thebook:listen-pace'))) ===
+            'liturgical');
+    await p.close();
+  }
+
   /* And broken where the sentence itself pauses, not in the middle of a
      clause: an engine drops its pitch at the end of every utterance, so the
      wrong break is heard as a full stop that is not there. */

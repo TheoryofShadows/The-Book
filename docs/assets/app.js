@@ -2532,13 +2532,43 @@
      beat a person reading aloud would take, the chapter heading a longer
      one, and a sentence that was cut only because it was too long gets none
      at all: that seam is the one place a pause would be a lie. */
+  /* How long the silences are.
+
+     The default is speech: the pauses a reader would leave, and no more. That
+     is wrong for the half of this library that is verse. A psalm read at
+     conversational pacing is a list of sentences; the line is the unit, and
+     the silence after it is part of the line.
+
+     This is a control rather than something the volume decides, because the
+     volume does not classify its books by genre and has no business
+     pretending to. Job is verse inside a prose frame, the prophets move
+     between the two mid-chapter, and Ecclesiastes is argued about. A reader
+     can hear which one they are in; a hand-written list of "the poetry books"
+     would be an editorial claim with no citation behind it, which is the one
+     thing the rest of this volume refuses to do. */
+  var PACE = {
+    natural:    { rest: 1,   line: 1,   label: "Pace: natural" },
+    measured:   { rest: 1.8, line: 2.2, label: "Measured" },
+    liturgical: { rest: 3,   line: 4,   label: "Liturgical" }
+  };
+
+  function pace() {
+    return PACE[store.get("listen-pace", "natural")] || PACE.natural;
+  }
+
   function restAfter(item, next) {
     if (!next) return 0;
-    if (item.unit === "heading") return 550;
+    var p = pace();
+    if (item.unit === "heading") return Math.round(550 * p.rest);
     var ends = /[.!?]["'’”)\]]?\s*$/.test(item.text);
     var moved = next.verse !== item.verse || next.el !== item.el;
+
+    /* At a slower pace the break between verses is the break between lines
+       and takes the longer silence. A sentence broken only for the engine's
+       length limit still takes none, at any pace, or the words come apart. */
     if (!ends && !moved) return 0;
-    return moved ? 260 : 170;
+    if (moved) return Math.round(260 * p.line);
+    return Math.round(170 * p.rest);
   }
 
   function speakFrom(i) {
@@ -2936,6 +2966,21 @@
       onclick: function () { previewVoice(); }
     });
 
+    var paceSel = el("select", {
+      "aria-label": "Pace",
+      title: "How long the silences are. Slower suits verse, where the line " +
+             "is the unit and the pause after it is part of it.",
+      onchange: function (e) {
+        store.set("listen-pace", e.target.value);
+        announce(e.target.value === "natural"
+          ? "Natural pace" : PACE[e.target.value].label + " pace");
+      }
+    });
+    var nowPace = store.get("listen-pace", "natural");
+    ["natural", "measured", "liturgical"].forEach(function (k) {
+      paceSel.appendChild(option(k, PACE[k].label, k === nowPace));
+    });
+
     var sleep = el("select", {
       "aria-label": "Sleep timer",
       onchange: function (e) {
@@ -2988,7 +3033,7 @@
           onclick: function () { stopListening("Stopped reading aloud"); }
         })
       ]),
-      el("div", { class: "player-line player-opts" }, [rate, voiceSel, tryIt, sleep]),
+      el("div", { class: "player-line player-opts" }, [rate, paceSel, voiceSel, tryIt, sleep]),
       hintEl
     ]);
     document.body.appendChild(player);
