@@ -134,9 +134,40 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | `tools/audit.py` | Checks chapter and verse counts against reference figures |
 | `tools/build_canon.py` | Builds canon membership and checks coverage claims |
 | `tools/build_index.py` | Builds the sharded search index |
+| `tools/build_standalone.py` | Inlines the whole library into one HTML file that runs offline |
+| `tools/test.sh` | Runs the browser checks in `tests/` |
 
 The audit is the point: if a count on the site is wrong, `tools/audit.py` will
 say so. Findings are stated so they can be falsified.
+
+## Checking it
+
+The audit checks the text. The browser checks check the reader — that it
+renders, that it fits a phone, and that reading aloud says the right words in
+the right order.
+
+```bash
+./tools/test.sh                     # everything
+./tools/test.sh listening           # one suite
+```
+
+The site itself still has no dependencies. These need Node, and install
+Playwright and a Chromium into `tests/node_modules` on first run; set
+`CHROME_PATH` to use a browser already on the machine instead. Both the audit
+and the browser checks run on every pull request.
+
+| Suite | Checks |
+| --- | --- |
+| `routes` | Every page renders, search returns verses, a saved verse survives a reload, nothing throws |
+| `layout` | At 320–430px every nav link is on screen, nothing scrolls sideways, the bar tucks away as you read, desktop is unchanged |
+| `listening` | What is spoken and in what order, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |
+| `offline` | The single-file build opens from `file://` and every feature in it works with no network at all |
+
+**What they cannot check: whether a voice actually sounds right.** A headless
+browser has no speech engine — the one these run in reports zero voices and
+fails every utterance — so the engine is replaced with a stand-in that records
+what it was asked to say. Everything above that line is the site's own code.
+The last inch, audible sound, needs a real device.
 
 ## How the site works
 

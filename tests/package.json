@@ -1,0 +1,12 @@
+{
+  "name": "the-book-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser checks for the reader. The site itself has no dependencies; these are for running the checks, and nothing here is shipped.",
+  "scripts": {
+    "test": "node run.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}

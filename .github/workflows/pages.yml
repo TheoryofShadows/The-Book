@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - claude/biblical-texts-chronological-4267vq
   workflow_dispatch:
 
 permissions:
