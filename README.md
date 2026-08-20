@@ -104,7 +104,9 @@ chapter, or `l`.
 
 - The verse being spoken is marked, and the word inside it is highlighted where
   the browser supports the Custom Highlight API.
-- Speed, voice, time remaining and a sleep timer are in the player.
+- Speed, voice, time remaining and a sleep timer are in the player, and **♪**
+  reads a sentence in the selected voice so a chapter is not the way you find
+  out what it sounds like.
 - It announces each chapter, then runs on: to the next chapter, and at the end
   of a work into the work written next, stepping over the entries that carry no
   text. Left alone it plays the library in composition order. The toggle in the
@@ -113,9 +115,53 @@ chapter, or `l`.
   reading, and any verse can be the starting point from its verse menu.
 
 The voices are the ones your device has installed, and they are synthetic: no
-audio is downloaded, no text is sent anywhere, and it works offline. A browser
-with no speech support is not offered the control at all, and a device that
-has the support but no installed voice — a Linux desktop without
+audio is downloaded, no text is sent anywhere, and it works offline.
+
+### Which voice, and why it used to sound like that
+
+A device does not offer a voice, it offers a drawer of them, and the drawer is
+not sorted by how they sound. macOS files two dozen novelties — Zarvox,
+Bubbles, Deranged, Trinoids — beside its good ones, and the MacinTalk voices of
+the early nineties beside those. Linux answers with eSpeak. Windows still ships
+the old SAPI *Desktop* voices alongside its neural ones. And the voice a system
+flags as its default is very often the worst thing in the drawer.
+
+So the drawer is now scored rather than taken in the order it arrives. Apple's
+enhanced and premium downloads, Microsoft's natural voices, Google's, and
+anything the browser synthesises on a server rather than on the device are
+preferred and grouped first; the relics sit under them; the novelties and the
+other languages sit under those, labelled rather than hidden, because a device
+may have nothing else and the choice stays yours. The scoring goes on voice
+names, because the Web Speech API has no field for quality and no way to ask —
+so it is a list of what the platforms are known to ship, and it will age. It is
+only ever a default: one selection in the player overrides all of it.
+
+Three other things were making the reading sound mechanical whatever voice was
+doing it, and are fixed:
+
+- **The apparatus was being read out.** Charles prints his in the running text
+  — daggers round a corrupt reading, angle brackets round a restoration, plus
+  signs round an emendation. The eye steps over them; an engine says "dagger".
+  They are blanked before speaking and left standing on the page.
+- **Long verses were cut mid-clause.** Chrome stops a single utterance at about
+  fifteen seconds, so long passages have to be broken up — and an engine drops
+  its pitch and takes a breath at the end of every utterance, so a break inside
+  a clause is heard as a full stop that is not there. Breaks are now taken at
+  the nearest comma, semicolon, colon or dash: across the library that moved
+  the proportion of pieces ending mid-clause from 31% to 0.25%.
+- **There were no pauses.** Engines run one utterance straight into the next,
+  so a chapter arrived as an unbroken wall. A verse now gets the beat a person
+  reading aloud would take and the chapter heading a longer one, while a
+  sentence cut only because it was too long gets none — that seam is the one
+  place a pause would be a lie.
+
+None of this synthesises audio. If a device has nothing but eSpeak installed,
+nothing a web page can do will make eSpeak sound like a person; the player says
+so, and says where better voices are a free download, rather than leaving you
+to conclude the site is broken.
+
+A browser with no speech support is not offered the control at all, and a
+device that has the support but no installed voice — a Linux desktop without
 speech-dispatcher, for instance — is told exactly that rather than left
 pressing a button that does nothing. On a phone the reading
 usually stops when the screen locks or you switch app — the browser suspends
@@ -160,7 +206,7 @@ and the browser checks run on every pull request.
 | --- | --- |
 | `routes` | Every page renders, search returns verses, a saved verse survives a reload, nothing throws |
 | `layout` | At 320–430px every nav link is on screen, nothing scrolls sideways, the bar tucks away as you read, desktop is unchanged |
-| `listening` | What is spoken and in what order, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |
+| `listening` | What is spoken and in what order, which voice out of a bad drawer is picked, that the apparatus is never read out, where long passages are broken and how long the pauses are, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |
 | `offline` | The single-file build opens from `file://` and every feature in it works with no network at all |
 
 **What they cannot check: whether a voice actually sounds right.** A headless

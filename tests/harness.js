@@ -79,8 +79,11 @@ class Tally {
    to "[native code]", which the page then fails to parse. A string says what
    it means and survives the trip. */
 
-/* Speaks: records each utterance, fires start, one word boundary, then end. */
-function workingEngine(msPerUtterance) {
+/* Speaks: records each utterance, fires start, one word boundary, then end.
+   A voice list can be supplied to stand in for a particular device's drawer
+   -- the point of several of the listening checks is which voice out of a
+   bad drawer the reader picks up. */
+function workingEngine(msPerUtterance, voiceList) {
   return { content: `
     (() => {
       const MS = ${Number(msPerUtterance) || 30};
@@ -92,16 +95,19 @@ function workingEngine(msPerUtterance) {
         set onboundary(f) { this._b = f; } get onboundary() { return this._b; }
         set onerror(f) { this._r = f; } get onerror() { return this._r; }
       }
-      const voices = [
+      const voices = ${JSON.stringify(voiceList || [
         { name: 'Test English', lang: 'en-US', voiceURI: 'test-en', default: true },
         { name: 'Test French', lang: 'fr-FR', voiceURI: 'test-fr', default: false }
-      ];
+      ])};
       let current = null, timer = null;
       const synth = new EventTarget();
       synth.getVoices = () => voices;
       synth.speak = u => {
         current = u;
-        log.push({ text: u.text, rate: u.rate, voice: u.voice ? u.voice.voiceURI : null });
+        // The moment matters as well as the words: the gaps between pieces
+        // are what a chapter sounds like rather than a list read out.
+        log.push({ text: u.text, rate: u.rate, at: performance.now(),
+                   voice: u.voice ? u.voice.voiceURI : null });
         if (u._s) u._s({});
         timer = setTimeout(() => {
           if (current !== u) return;
