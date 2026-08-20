@@ -980,12 +980,20 @@ main > * { animation: rise .18s ease-out; }
 .player-try { width: 2rem; height: 2rem; font-size: .85rem; }
 
 /* Only shown when the device has nothing good installed, which is a fact
-   about the device and not a failure of the page. */
+   about the device and not a failure of the page. It opens rather than
+   hovering: the phone that most needs it has no tooltips. */
 .player-hint {
-  margin: 0; font-size: .72rem; line-height: 1.4; color: var(--ink-faint);
+  margin: 0; font-size: .72rem; line-height: 1.45; color: var(--ink-faint);
   max-width: 42rem;
 }
 .player-hint[hidden] { display: none; }
+.player-hint > summary { cursor: pointer; }
+.player-hint > summary:hover { color: var(--ink); }
+.player-hint > p { margin: .4rem 0 0; }
+.player-hint > p strong { color: var(--ink-soft); font-weight: 600; }
+/* Opened, it is a paragraph or five, and the player is already at the
+   bottom of the screen. */
+.player-hint[open] { max-height: 40vh; overflow-y: auto; }
 
 /* The player covers the last inch of the page; the reader gets that back.
    Measured rather than assumed, because the player is a different height

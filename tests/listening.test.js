@@ -223,6 +223,62 @@ module.exports = async function listening(t, ctx) {
           }));
   await page.close();
 
+  /* ---- an iPhone, where the quality is not in the name ----
+     Apple ships the same voice at three grades and tells them apart only in
+     the identifier. A phone out of the box has the compact set, which is the
+     thin one, and every one of them just says "Samantha". */
+  const IPHONE = [
+    { name: 'Samantha', lang: 'en-US', localService: true, default: true,
+      voiceURI: 'com.apple.voice.compact.en-US.Samantha' },
+    { name: 'Daniel', lang: 'en-GB', localService: true,
+      voiceURI: 'com.apple.voice.compact.en-GB.Daniel' },
+    { name: 'Aaron', lang: 'en-US', localService: true,
+      voiceURI: 'com.apple.voice.compact.en-US.Aaron' }
+  ];
+  page = await open(ctx, '#/read/amos/2', workingEngine(30, IPHONE));
+  await page.locator('[data-listen]').click();
+  await page.waitForSelector('.player:not([hidden])');
+  const stock = await page.evaluate(() => Array.from(
+    document.querySelectorAll('select[aria-label="Voice"] optgroup'), g => g.label));
+  t.check('a stock iPhone is not told its compact voices are the best there is',
+          stock.indexOf('Best on this device') === -1, JSON.stringify(stock));
+  t.check('it is told the download is what fixes it, and where',
+          await page.evaluate(() => {
+            const h = document.querySelector('.player-hint');
+            return !h.hidden && /free download/.test(h.textContent) &&
+                   /Spoken Content/.test(h.textContent);
+          }));
+  t.check('and the help opens rather than hovering, there being no hover',
+          await page.evaluate(
+            () => document.querySelector('.player-hint > summary') !== null));
+  t.check('the grade is on the label, since the names repeat',
+          /Compact$/.test(await page.evaluate(() => document.querySelector(
+            'select[aria-label="Voice"] option').textContent)),
+          await page.evaluate(() => document.querySelector(
+            'select[aria-label="Voice"] option').textContent));
+  await page.close();
+
+  /* Download the better one and it has to win, over the same name. */
+  page = await open(ctx, '#/read/amos/2', workingEngine(30, IPHONE.concat([
+    { name: 'Samantha', lang: 'en-US', localService: true,
+      voiceURI: 'com.apple.voice.enhanced.en-US.Samantha' }
+  ])));
+  await page.locator('[data-listen]').click();
+  await page.waitForFunction(() => window.__spoken.length >= 1);
+  t.check('a downloaded voice outranks the stock one of the same name',
+          await page.evaluate(() => window.__spoken[0].voice) ===
+            'com.apple.voice.enhanced.en-US.Samantha',
+          await page.evaluate(() => window.__spoken[0].voice));
+  const samanthas = await page.evaluate(() => Array.from(
+    document.querySelectorAll('select[aria-label="Voice"] option'),
+    o => o.textContent).filter(x => x.indexOf('Samantha') !== -1));
+  t.check('and the drawer says which Samantha is which',
+          samanthas.length === 2 && samanthas.some(x => /Enhanced$/.test(x)) &&
+          samanthas.some(x => /Compact$/.test(x)), JSON.stringify(samanthas));
+  t.check('and nothing is said about downloads once there is a good one',
+          await page.evaluate(() => document.querySelector('.player-hint').hidden));
+  await page.close();
+
   /* ---- the editorial apparatus is not read out ----
      Charles prints his apparatus in the running text. The eye steps over a
      dagger; an engine says "dagger". */

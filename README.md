@@ -131,10 +131,33 @@ enhanced and premium downloads, Microsoft's natural voices, Google's, and
 anything the browser synthesises on a server rather than on the device are
 preferred and grouped first; the relics sit under them; the novelties and the
 other languages sit under those, labelled rather than hidden, because a device
-may have nothing else and the choice stays yours. The scoring goes on voice
-names, because the Web Speech API has no field for quality and no way to ask —
-so it is a list of what the platforms are known to ship, and it will age. It is
-only ever a default: one selection in the player overrides all of it.
+may have nothing else and the choice stays yours. The Web Speech API has no
+field for quality and no way to ask, so this is a list of what the platforms
+are known to ship, and it will age. It is only ever a default: one selection in
+the player overrides all of it.
+
+### On an iPhone or iPad, the voice is a download
+
+Most platforms write the quality into the voice's name — *Natural*, *Neural*,
+*Online*. Apple does the opposite: the name is bare and the grade is in the
+identifier, so the same Samantha arrives as
+
+```
+com.apple.voice.compact.en-US.Samantha      nothing downloaded
+com.apple.voice.enhanced.en-US.Samantha     the free download
+com.apple.voice.premium.en-US.Samantha      the larger free download
+```
+
+and an iPhone out of the box has only the compact set — the thin, clipped
+reading this whole section is about. So the identifier is read as well as the
+name: a downloaded voice outranks the stock one of the same name, the drawer
+labels which Samantha is which, and a device carrying nothing but the compact
+set is told so, with the path to the download rather than a shrug.
+
+**Settings › Accessibility › Spoken Content › Voices › English**, then pick a
+voice and download its Enhanced or Premium version. That single download does
+more for how this sounds than everything else here put together, and nothing a
+web page does can substitute for it: the audio is the operating system's.
 
 Three other things were making the reading sound mechanical whatever voice was
 doing it, and are fixed:
@@ -155,10 +178,12 @@ doing it, and are fixed:
   sentence cut only because it was too long gets none — that seam is the one
   place a pause would be a lie.
 
-None of this synthesises audio. If a device has nothing but eSpeak installed,
-nothing a web page can do will make eSpeak sound like a person; the player says
-so, and says where better voices are a free download, rather than leaving you
-to conclude the site is broken.
+None of this synthesises audio. If a device has nothing but eSpeak or the
+compact set installed, nothing a web page can do will make those sound like a
+person; the player says so, and opens to say where better voices are a free
+download on each platform, rather than leaving you to conclude the site is
+broken. It opens rather than hovering, because the phone that most needs it has
+no tooltips.
 
 A browser with no speech support is not offered the control at all, and a
 device that has the support but no installed voice — a Linux desktop without
