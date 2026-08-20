@@ -534,10 +534,87 @@ table.grid tbody tr:hover { background: var(--paper-2); }
 .gap-tag.wide   { background: var(--warn-bg); color: var(--warn); }
 
 .positions-body {
-  display: none; gap: .7rem; margin-top: .6rem;
+  display: none; flex-direction: column; gap: .7rem; margin-top: .6rem;
+}
+.positions.open .positions-body { display: flex; }
+
+/* The two views sit side by side where there is room and stack where there
+   is not; the date card above them always runs the full width, because the
+   whole point of it is the distance between the two. */
+.stances {
+  display: grid; gap: .7rem;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
 }
-.positions.open .positions-body { display: grid; }
+
+/* ---------- the date card ----------
+   Two spans on one scale. Reading it should take about a second: if the bars
+   overlap the positions agree about the date, and if they do not, the gap on
+   the page is the gap in the scholarship. */
+.datecard {
+  background: var(--raised); border: 1px solid var(--rule-soft);
+  border-radius: var(--radius); padding: .8rem .9rem;
+}
+
+.datescale { display: flex; flex-direction: column; gap: .45rem; }
+
+.daterow { display: grid; align-items: center; gap: .5rem;
+           grid-template-columns: 5.5rem 1fr 8.5rem; }
+
+.datelabel {
+  font-family: var(--sans); font-size: .68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint);
+}
+
+.datetrack {
+  position: relative; height: 1.15rem; border-radius: 3px;
+  background: var(--paper-2); overflow: hidden;
+}
+
+.datebar {
+  position: absolute; top: 0; bottom: 0; border-radius: 3px; min-width: 3px;
+}
+.daterow.trad .datebar { background: var(--warn); }
+.daterow.crit .datebar { background: var(--fix); }
+
+/* A span read from a century or a named period is a looser claim than one
+   read from a year, and is drawn as one rather than pretending to an
+   exactness the position never had. */
+.datebar.century,
+.datebar.period,
+.datebar.decade { opacity: .62; }
+.datebar.period {
+  background-image: repeating-linear-gradient(
+    45deg, transparent 0 4px, rgba(255, 255, 255, .35) 4px 8px);
+}
+
+.dateunknown {
+  position: absolute; inset: 0; display: flex; align-items: center;
+  padding-left: .4rem; font-size: .7rem; color: var(--ink-faint);
+  font-style: italic;
+}
+
+.datespan {
+  font-family: var(--sans); font-size: .74rem; color: var(--ink-soft);
+  text-align: right; font-variant-numeric: tabular-nums;
+}
+
+.dateverdict {
+  margin: .6rem 0 0; font-size: .84rem; color: var(--ink-soft);
+}
+
+.datecite {
+  margin: .45rem 0 0; padding-top: .45rem;
+  border-top: 1px solid var(--rule-soft);
+  font-size: .74rem; color: var(--ink-faint);
+}
+.datecite a { color: inherit; }
+
+/* On a phone the three-column row has nowhere to go, so the figure moves
+   under the bar rather than squeezing it to nothing. */
+@media (max-width: 30rem) {
+  .daterow { grid-template-columns: 5rem 1fr; row-gap: .15rem; }
+  .datespan { grid-column: 2; text-align: left; }
+}
 
 .stance {
   background: var(--raised); border: 1px solid var(--rule-soft);
@@ -561,9 +638,7 @@ table.grid tbody tr:hover { background: var(--paper-2); }
   font-style: italic;
 }
 
-/* spans both stance columns rather than becoming a third one */
 .positions-foot {
-  grid-column: 1 / -1;
   font-size: .78rem; color: var(--ink-faint); margin: 0;
 }
 

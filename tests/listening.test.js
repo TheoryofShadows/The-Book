@@ -434,8 +434,15 @@ module.exports = async function listening(t, ctx) {
   await page.locator('.reader .v .vnum').first().click();
   t.check('and no read-aloud item in the verse menu',
           await page.locator('.vmenu button', { hasText: 'Read aloud' }).count() === 0);
+  /* Named rather than counted: the menu grows, and a count here would fail
+     for the wrong reason every time it does. What matters is that losing the
+     speech engine costs the reader the read-aloud item and nothing else. */
+  const stillThere = await page.locator('.vmenu button').allTextContents();
   t.check('while the rest of the verse menu still works',
-          await page.locator('.vmenu button').count() === 3);
+          ['Save', 'link', 'citation', 'BibTeX', 'verse text']
+            .every(want => stillThere.some(
+              got => got.toLowerCase().indexOf(want.toLowerCase()) >= 0)),
+          stillThere.length + ' items: ' + stillThere.join(' | '));
   await page.keyboard.press('Escape');
   await page.keyboard.press('l');
   await page.waitForTimeout(settle);

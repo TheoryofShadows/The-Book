@@ -30,6 +30,7 @@ import unicodedata
 from collections import OrderedDict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import dates  # noqa: E402
 from positions import POSITIONS  # noqa: E402
 
 SRC = sys.argv[1] if len(sys.argv) > 1 else "THE_BOOK_COMPLETE.txt"
@@ -476,7 +477,10 @@ def main() -> None:
             total_words += words
             src = source_for(work["id"], section["id"], nch > 0)
             work["source"] = src
-            stance = POSITIONS.get(work["id"])
+            # The prose position is what the volume asserts; the span is
+            # arithmetic on it, so the reader can be shown how far apart the
+            # two datings are without the page having to parse English.
+            stance = dates.enrich(POSITIONS.get(work["id"]))
             if stance:
                 work["positions"] = stance
             entry["works"].append({

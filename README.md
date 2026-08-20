@@ -54,6 +54,31 @@ translation.
 | R. H. Charles, 1917 | 1 Enoch, Jubilees |
 | Ante-Nicene Fathers, ed. Roberts and Donaldson, 1885 | Apostolic Fathers, Testaments of the Twelve Patriarchs, NT apocrypha, Shepherd of Hermas, Ignatius (shorter recension) |
 
+## Seeing the disagreement
+
+Every work with a position record carries a **date card**: the traditional and
+the critical dating drawn as two bars on one scale, so how far apart they are
+is a thing you see rather than a thing you work out. On Amos the bars sit on
+top of each other. On Genesis they are seven centuries apart.
+
+The bars are read out of the prose positions by `tools/dates.py`, and it
+refuses to guess. Where a position names a person rather than a time — "Samuel",
+"Moses, shortly before his death" — there is no bar and the card says why.
+About two in five traditional positions have none, which is a fact about the
+tradition rather than a gap in the data. A span read from a century or a named
+period is drawn as the looser claim it is.
+
+[How the dating was decided](#) is a page of its own: what the arrangement is
+and is not, where each date comes from, how the bars are derived, the boundary
+of every named period and the event that fixes it, and the two things the bars
+cannot tell you — that a composite book has one bar and several dates, and that
+overlapping bars are not agreement.
+
+Any verse can be copied out as a citation or a BibTeX entry that names the
+public-domain edition and where the passage sits in the composition order,
+which is the part an ordinary reference leaves out and the part this
+arrangement exists for.
+
 ## What the audit found
 
 Verified correct:
@@ -207,6 +232,7 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | `tools/build_index.py` | Builds the sharded search index |
 | `tools/build_standalone.py` | Inlines the whole library into one HTML file that runs offline |
 | `tools/textnorm.py` | The one rule that folds text into a search token or a lookup key |
+| `tools/dates.py` | Reads a numeric span out of a position statement, and refuses to where there is none |
 | `tools/lint.sh` | Everything parses, and every data file is the JSON it claims to be |
 | `tools/test.sh` | Runs the unit tests and the browser checks in `tests/` |
 
@@ -247,6 +273,7 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 | `tests/python` | The parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. One of them runs the reader's own copy of the folding rule against the Python one, because the two are written in different languages and a divergence between them is silent |
 | `routes` | Every page renders, search returns verses, a saved verse survives a reload, nothing throws |
 | `layout` | At 320–430px every nav link is on screen, nothing scrolls sideways, the bar tucks away as you read, desktop is unchanged |
+| `dating` | The date card against the spans the parser read, the method page, and that a citation names the edition and the era rather than just a URL |
 | `search` | Result counts against known answers rather than "more than zero": phrases against their words, several terms meaning all of them, the three different ways a search can end with nothing, and that an accented or ligatured spelling on the page is reachable by an ordinary one |
 | `words` | Turning a word on the page into an entry — by selection, by keyboard, by alias — what a missing entry says, and the places panel |
 | `keeping` | Saving, unsaving, notes, the migration from the old bookmarks key, and what happens when the browser refuses to store anything at all |

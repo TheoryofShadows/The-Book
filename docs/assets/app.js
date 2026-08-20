@@ -681,6 +681,104 @@
     wide:   "sharply divided"
   };
 
+  /* ---------------- the date card ----------------
+
+     The two positions are prose, which is the right form for the claim and
+     the wrong form for seeing how far apart they are. tools/dates.py reads a
+     numeric span out of each where the wording commits to one, and the card
+     shows the two as bars on a shared scale: on Amos they sit on top of each
+     other, on Genesis they are seven centuries apart, and the difference is
+     the thing this volume is actually about.
+
+     Where a position names a person rather than a date -- "Samuel",
+     "Moses, shortly before his death" -- there is no bar, and the card says
+     so. Drawing a plausible one would be inventing evidence. */
+
+  function yearText(y) {
+    return Math.abs(y) + (y < 0 ? " BCE" : " CE");
+  }
+
+  function spanText(sp) {
+    if (!sp) return "no date given";
+    var head = sp.approx ? "c. " : "";
+    if (sp.frm === sp.to) return head + yearText(sp.frm);
+    if ((sp.frm < 0) === (sp.to < 0)) {
+      return head + Math.abs(sp.frm) + "–" + yearText(sp.to);
+    }
+    return head + yearText(sp.frm) + " – " + yearText(sp.to);
+  }
+
+  /* How firm the span is, in the reader's terms rather than the parser's. */
+  var SPAN_KIND = {
+    explicit: "as dated",
+    decade: "to the decade",
+    century: "to the century",
+    period: "to the period"
+  };
+
+  function dateCard(p) {
+    var sp = p.span;
+    if (!sp || (!sp.trad && !sp.crit)) return null;
+
+    var card = el("div", { class: "datecard" });
+
+    /* One scale for both bars, padded so a single-year position is still
+       visible as something rather than as a hairline. */
+    var ends = [];
+    ["trad", "crit"].forEach(function (k) {
+      if (sp[k]) { ends.push(sp[k].frm, sp[k].to); }
+    });
+    var lo = Math.min.apply(null, ends), hi = Math.max.apply(null, ends);
+    var pad = Math.max(25, Math.round((hi - lo) * 0.08));
+    lo -= pad; hi += pad;
+    var at = function (y) { return ((y - lo) / (hi - lo)) * 100; };
+
+    var scale = el("div", { class: "datescale" });
+    [["trad", "Traditional"], ["crit", "Critical"]].forEach(function (pair) {
+      var one = sp[pair[0]];
+      var row = el("div", { class: "daterow " + pair[0] });
+      row.appendChild(el("span", { class: "datelabel", text: pair[1] }));
+
+      var track = el("div", { class: "datetrack" });
+      if (one) {
+        var bar = el("span", { class: "datebar " + one.kind });
+        bar.style.left = at(one.frm) + "%";
+        bar.style.width = Math.max(1.5, at(one.to) - at(one.frm)) + "%";
+        bar.title = spanText(one) + " (" + (SPAN_KIND[one.kind] || one.kind) + ")";
+        track.appendChild(bar);
+      } else {
+        track.appendChild(el("span", { class: "dateunknown",
+                                       text: "names a person, not a date" }));
+      }
+      row.appendChild(track);
+      row.appendChild(el("span", { class: "datespan", text: spanText(one) }));
+      scale.appendChild(row);
+    });
+    card.appendChild(scale);
+
+    /* The one number that says what the card is for. */
+    var verdict;
+    if (sp.apart === null || sp.apart === undefined) {
+      verdict = "The two positions cannot be compared as dates: one of them " +
+                "names a person rather than a time.";
+    } else if (sp.apart === 0) {
+      verdict = "The two datings overlap. This is a book the traditional and " +
+                "critical positions agree about, whatever else they differ on.";
+    } else {
+      verdict = "The two datings are " + fmt(sp.apart) + " years apart at " +
+                "their closest.";
+    }
+    card.appendChild(el("p", { class: "dateverdict", text: verdict }));
+
+    card.appendChild(el("p", { class: "datecite", html:
+      "Read from the two positions below, which carry the citations. How the " +
+      "spans are derived, and what they are not: " +
+      "<a href=\"#/method\">the dating method</a>. " +
+      "<a href=\"#/accuracy\">Accuracy report</a>." }));
+
+    return card;
+  }
+
   function positionsPanel(p) {
     var open = store.get("positions-open", false);
     var wrap = el("div", { class: "positions" + (open ? " open" : "") });
@@ -701,7 +799,11 @@
       el("span", { class: "caret", text: open ? "▲" : "▼" })
     ]);
 
-    var grid = el("div", { class: "positions-body" }, [
+    var grid = el("div", { class: "positions-body" });
+    var card = dateCard(p);
+    if (card) grid.appendChild(card);
+
+    var views = el("div", { class: "stances" }, [
       el("div", { class: "stance" }, [
         el("h3", { text: "Traditional view" }),
         el("p", { class: "claim", text: p.trad }),
@@ -715,6 +817,7 @@
         el("p", { class: "cite", text: p.critSource })
       ])
     ]);
+    grid.appendChild(views);
 
     grid.appendChild(el("p", { class: "positions-foot", html:
       "<strong>Written for this volume, not quoted from a source.</strong> " +
@@ -758,6 +861,96 @@
   }
 
   function verseId(ref) { return ref.work + "/" + ref.chapter + "/v" + ref.v; }
+
+  /* ---------------- citing a passage ----------------
+
+     A reader who wants to quote this has to be able to say where it came
+     from, and "a website" is not a citation. What makes a reference to this
+     volume worth anything is the two things an ordinary Bible reference
+     leaves out: which public-domain edition the text is from, and where the
+     passage sits in the composition order, which is the whole reason for
+     reading it here.
+
+     Everything below is built from the manifest the page already has. */
+
+  var SOURCE_CITE = {
+    web: "The World English Bible with Deuterocanon (eBible.org), public domain",
+    charles: "R. H. Charles, ed., The Apocrypha and Pseudepigrapha of the Old " +
+             "Testament, Oxford, 1913, public domain",
+    anf: "Ante-Nicene Fathers, ed. Alexander Roberts and James Donaldson, " +
+         "1885, public domain",
+    editorial: "Editorial summary written for this volume; no public-domain " +
+               "primary text was available"
+  };
+
+  /* The verse menu and the saved page both need to name a work's edition and
+     era, and neither of them is inside the view that loaded the manifest.
+     route() puts it here as it goes. */
+  var MANIFEST = null;
+
+  function workContext(manifest, workId) {
+    manifest = manifest || MANIFEST;
+    if (!manifest) return null;
+    var found = null;
+    manifest.sections.forEach(function (s) {
+      s.works.forEach(function (w) {
+        if (w.id === workId) found = { work: w, section: s };
+      });
+    });
+    return found;
+  }
+
+  function permalink(ref) {
+    return location.origin + location.pathname + "#/read/" + ref.work + "/" +
+           ref.chapter + (ref.v ? "/v" + ref.v : "");
+  }
+
+  /* A stable key, so two people citing the same verse produce the same one. */
+  function bibKey(ctx, ref) {
+    var stem = (ctx ? ctx.work.id : ref.work).replace(/[^a-z0-9]+/gi, "");
+    return "thebook:" + stem + (ref.chapter + 1) + (ref.v ? "." + ref.v : "");
+  }
+
+  function citation(manifest, ref, style) {
+    var ctx = workContext(manifest, ref.work);
+    if (!ctx) return permalink(ref);
+    var title = titleCase(ctx ? ctx.work.title : ref.work);
+    var where = title + " " + ref.label + (ref.v ? ":" + ref.v : "");
+    var edition = SOURCE_CITE[ctx && ctx.work.source] || "";
+    var era = ctx ? (ctx.section.name || ctx.section.title) : "";
+    var eraDates = ctx ? ctx.section.dates : "";
+    var url = permalink(ref);
+    var today = new Date().toISOString().slice(0, 10);
+
+    if (style === "bibtex") {
+      return "@incollection{" + bibKey(ctx, ref) + ",\n" +
+        "  title     = {" + where + "},\n" +
+        "  booktitle = {The Book in Order: Every Text in the Order It Was Written},\n" +
+        "  edition   = {" + edition + "},\n" +
+        (era ? "  series    = {" + titleCase(era) +
+               (eraDates ? ", " + eraDates : "") + "},\n" : "") +
+        "  url       = {" + url + "},\n" +
+        "  urldate   = {" + today + "}\n" +
+        "}";
+    }
+
+    /* Plain, for pasting into anything that is not a bibliography. */
+    return where + ". " + edition + ". " +
+           (era ? "Arranged under " + titleCase(era) +
+                  (eraDates ? ", " + eraDates : "") + ". " : "") +
+           url + " (accessed " + today + ").";
+  }
+
+  function copyText(text, button, said) {
+    var done = function () {
+      var was = button.textContent;
+      button.textContent = "Copied";
+      announce(said);
+      setTimeout(function () { button.textContent = was; }, 1600);
+    };
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, done);
+    else done();
+  }
 
   var menu = null;
   function closeMenu() {
@@ -804,14 +997,27 @@
     node.appendChild(el("button", {
       role: "menuitem", text: "🔗  Copy link to this verse",
       onclick: function (e) {
-        var url = location.href.split("#")[0] +
-                  "#/read/" + ref.work + "/" + ref.chapter + "/v" + ref.v;
-        var done = function () {
-          e.currentTarget.textContent = "🔗  Link copied";
-          announce("Link copied");
-        };
-        if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, done);
-        else done();
+        copyText(permalink(ref), e.currentTarget, "Link copied");
+      }
+    }));
+
+    /* A reference to this volume is worth having only if it says which
+       public-domain edition the text is from and where the passage sits in
+       the composition order. Both are in the manifest; neither is in the
+       reference a reader would otherwise type. */
+    node.appendChild(el("button", {
+      role: "menuitem", text: "❝  Copy a citation",
+      onclick: function (e) {
+        copyText(citation(MANIFEST, ref, "plain"), e.currentTarget,
+                 "Citation copied");
+      }
+    }));
+
+    node.appendChild(el("button", {
+      role: "menuitem", text: "📚  Copy as BibTeX",
+      onclick: function (e) {
+        copyText(citation(MANIFEST, ref, "bibtex"), e.currentTarget,
+                 "BibTeX copied");
       }
     }));
 
@@ -1616,6 +1822,15 @@
     }
 
     wrap.appendChild(el("hr", { class: "rule" }));
+    wrap.appendChild(el("h2", { text: "How the order was decided" }));
+    wrap.appendChild(el("p", { html:
+      "This page is about the text. The arrangement is a separate set of " +
+      "decisions, and they are written down too: " +
+      "<a href=\"#/method\">how the dating was decided</a> — what the two " +
+      "columns on every work are, where each date comes from, how the bars " +
+      "on a date card are derived, and the two things they cannot tell you." }));
+
+    wrap.appendChild(el("hr", { class: "rule" }));
     wrap.appendChild(el("h2", { text: "How to check this yourself" }));
     wrap.appendChild(el("p", { html:
       "The parser, the audit and the index builder are in <code>tools/</code> " +
@@ -1630,6 +1845,134 @@
   /* ================================================================
      THREADS -- one question, traced across the collection
      ================================================================ */
+
+  /* ================================================================
+     METHOD -- how the order was decided, stated so it can be argued with
+     ================================================================ */
+
+  function viewMethod(manifest) {
+    var wrap = el("div", { class: "wrap" });
+    wrap.appendChild(el("h1", { text: "How the dating was decided" }));
+    wrap.appendChild(el("p", { class: "lede", text:
+      "This volume puts the texts in the order they were written. That order " +
+      "is a series of decisions, and a reader who cannot see the decisions " +
+      "has been handed a verdict. Here they are." }));
+
+    function part(title, paras) {
+      wrap.appendChild(el("hr", { class: "rule" }));
+      wrap.appendChild(el("h2", { text: title }));
+      paras.forEach(function (p) {
+        wrap.appendChild(el("p", typeof p === "string" ? { text: p } : p));
+      });
+    }
+
+    part("What the arrangement is, and is not", [
+      "The arrangement follows the critical dating: the date a book reached " +
+      "something like its present form, as argued from its language, the " +
+      "events it knows about, and its relation to the books around it.",
+      { html: "<strong>That is a decision about order, not a verdict about " +
+        "truth.</strong> Every work carries the traditional position beside " +
+        "the critical one, in the same size type, each with its citation. " +
+        "Where they disagree the volume shows the disagreement rather than " +
+        "resolving it. The order had to be <em>some</em> order; this one is " +
+        "the one that makes the development of an idea visible, which is the " +
+        "one thing this arrangement can do that a canonical Bible cannot." },
+      "Nothing here is a claim to have settled a question scholars have not."
+    ]);
+
+    part("Where each date comes from", [
+      "Neither column is quoted from a single authority, because no single " +
+      "authority covers this range of texts. Each is a summary of the " +
+      "majority position as it stands, written for this volume and " +
+      "referenced so it can be checked: the traditional column cites the " +
+      "text or the received attribution it rests on, and the critical column " +
+      "cites the argument or the scholar the position is associated with.",
+      { html: "A position with no citation is a build failure, not a warning. " +
+        "<code>tools/audit.py</code> refuses to finish if any of the seven " +
+        "fields on any of the " + fmt(52) + " position records is empty. " +
+        "That rule exists because an editorial claim sitting beside verse " +
+        "counts that were audited against independent references borrows " +
+        "their authority without having earned it." }
+    ]);
+
+    part("How the bars are drawn", [
+      "The positions are prose. The bars on each work's date card are read " +
+      "out of that prose by a parser, and are arithmetic on what the position " +
+      "already says — nothing is added.",
+      { html: "Four forms are recognised. <strong>A year or a span of " +
+        "years</strong> is taken as written. <strong>A century</strong> is " +
+        "taken as its hundred years, so the 8th century BCE is 800–701 BCE. " +
+        "<strong>A decade</strong> likewise. <strong>A named period</strong> " +
+        "is the one case where boundaries are imposed that the position did " +
+        "not state, so each is fixed by the event that fixes it, and a bar " +
+        "drawn from one is hatched to mark it as the looser kind." },
+      { html: "<strong>Where a position names a person rather than a time, " +
+        "there is no bar and the card says so.</strong> “Samuel”, “Moses, " +
+        "shortly before his death” — these are not dates, and drawing a " +
+        "plausible-looking bar for them would be inventing evidence. About " +
+        "two in five traditional positions have no bar for this reason. That " +
+        "is a fact about the tradition, not a gap in the data." }
+    ]);
+
+    var table = el("table", { class: "grid" });
+    table.appendChild(el("thead", {}, [el("tr", {}, [
+      el("th", { text: "Period" }), el("th", { text: "Taken as" }),
+      el("th", { text: "Fixed by" })
+    ])]));
+    var tb = el("tbody");
+    (PERIOD_TABLE).forEach(function (row) {
+      tb.appendChild(el("tr", {}, [
+        el("td", { text: titleCase(row[0]) }), el("td", { text: row[1] }),
+        el("td", { class: "muted", text: row[2] })
+      ]));
+    });
+    table.appendChild(tb);
+    wrap.appendChild(el("div", { class: "scroller" }, [table]));
+    wrap.appendChild(el("p", { class: "muted", text:
+      "Where a boundary is itself argued, the span is drawn wide rather than " +
+      "picking a side." }));
+
+    part("The two things the bars cannot tell you", [
+      { html: "<strong>A composite book has one bar and several dates.</strong> " +
+        "Genesis is not a book written between 500 and 400 BCE; it is a book " +
+        "assembled then out of material centuries older. The bar shows when " +
+        "the critical position puts the form we have, and the prose beside " +
+        "it says the rest. Any single date for a composite work is a " +
+        "simplification, and this one is no exception." },
+      { html: "<strong>Overlapping bars are not agreement.</strong> They mean " +
+        "the two positions admit a common date. Amos is dated the same way " +
+        "by both columns and they still differ about whether the last five " +
+        "verses are his." }
+    ]);
+
+    part("Arguing with it", [
+      { html: "The source text is in <code>source/</code>, the positions in " +
+        "<code>tools/positions.py</code>, the parser that reads the spans in " +
+        "<code>tools/dates.py</code>, and the audit in " +
+        "<code>tools/audit.py</code>. Every figure on this site can be " +
+        "reproduced by running <code>./tools/build.sh</code>." },
+      { html: "If a date here is wrong, the fix is a citation. Open an issue " +
+        "with one and the position changes. That is the whole standard: " +
+        "<a href=\"#/accuracy\">the accuracy report</a> lists what is known " +
+        "to be imperfect, and this page lists how the rest was decided." }
+    ]);
+
+    return wrap;
+  }
+
+  /* Kept beside the method page it documents, and mirrored from PERIODS in
+     tools/dates.py -- if one changes the other has to. */
+  var PERIOD_TABLE = [
+    ["monarchic", "1020–586 BCE", "Saul to the fall of Jerusalem"],
+    ["exilic", "597–538 BCE", "the first deportation to the edict of Cyrus"],
+    ["post-exilic", "538–332 BCE", "the return under Cyrus to Alexander"],
+    ["persian period", "539–332 BCE", "the fall of Babylon to Alexander"],
+    ["hellenistic", "332–63 BCE", "Alexander to Pompey's capture of Jerusalem"],
+    ["maccabean", "167–63 BCE", "the revolt to Pompey"],
+    ["hasmonean", "140–63 BCE", "Simon's rule to Pompey"],
+    ["second temple", "516 BCE – 70 CE", "the rebuilt temple to its destruction"],
+    ["roman period", "63 BCE – 324 CE", "Pompey to Constantine"]
+  ];
 
   function viewThreads(threads) {
     var wrap = el("div", { class: "wrap" });
@@ -1772,23 +2115,41 @@
       verses.length + " of them individual verses. Most recent first, stored " +
       "in this browser only." }));
 
+    /* Three ways out, because saved verses are working notes and the next
+       place they go is different every time: a document, a bibliography, or
+       a file that outlives this browser. Everything here lives in local
+       storage only, so being able to get it out is not a convenience. */
+    var asText = function () {
+      return items.map(function (i) {
+        var ref = titleCase(i.workTitle || i.work) + " " + i.label +
+                  (i.v ? ":" + i.v : "");
+        return i.t ? "“" + i.t + "”\n— " + ref +
+                     (i.note ? "\nNote: " + i.note : "") : ref;
+      }).join("\n\n");
+    };
+
+    var asCitations = function (style) {
+      return items.map(function (i) {
+        var one = citation(MANIFEST, i, style);
+        return i.note && style !== "bibtex" ? one + "\nNote: " + i.note : one;
+      }).join(style === "bibtex" ? "\n\n" : "\n\n");
+    };
+
     var tools = el("div", { class: "toolbar" }, [
       el("button", {
         class: "chip", text: "Copy all as text",
-        onclick: function (e) {
-          var text = items.map(function (i) {
-            var ref = titleCase(i.workTitle || i.work) + " " + i.label +
-                      (i.v ? ":" + i.v : "");
-            return i.t ? "“" + i.t + "”\n— " + ref +
-                         (i.note ? "\nNote: " + i.note : "") : ref;
-          }).join("\n\n");
-          var done = function () {
-            e.currentTarget.textContent = "Copied";
-            announce("All saved items copied");
-          };
-          if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, done);
-          else done();
-        }
+        onclick: function (e) { copyText(asText(), e.currentTarget,
+                                         "All saved items copied"); }
+      }),
+      el("button", {
+        class: "chip", text: "Copy as citations",
+        onclick: function (e) { copyText(asCitations("plain"), e.currentTarget,
+                                         "Citations copied"); }
+      }),
+      el("button", {
+        class: "chip", text: "Copy as BibTeX",
+        onclick: function (e) { copyText(asCitations("bibtex"), e.currentTarget,
+                                         "BibTeX copied"); }
       })
     ]);
     wrap.appendChild(tools);
@@ -2846,6 +3207,7 @@
     main.appendChild(el("p", { class: "loading", text: "Loading…" }));
 
     getJSON("manifest.json").then(function (manifest) {
+      MANIFEST = manifest;
       var node;
       if (view === "read") {
         setNav("");
@@ -2881,6 +3243,13 @@
             : viewThreads(threads));
           window.scrollTo(0, 0);
         });
+      }
+      if (view === "method") {
+        setNav("accuracy");
+        main.innerHTML = "";
+        main.appendChild(viewMethod(manifest));
+        window.scrollTo(0, 0);
+        return;
       }
       if (view === "saved") {
         setNav("saved");
