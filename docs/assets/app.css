@@ -970,8 +970,27 @@ main > * { animation: rise .18s ease-out; }
 .player-opts { justify-content: flex-start; }
 .player-close { margin-left: auto; }
 
-/* The player covers the last inch of the page; the reader gets that back. */
-body.listening { padding-bottom: 7.5rem; }
+/* The voice drawer is grouped by how the voices sound; the headings carry
+   that, so they have to read as headings and not as choices. */
+.player-opts optgroup { font-style: normal; font-weight: 600; }
+.player-opts option { font-weight: 400; }
+
+/* Try-this-voice sits with the drawer it belongs to, and smaller than the
+   transport: it is a convenience, not a control. */
+.player-try { width: 2rem; height: 2rem; font-size: .85rem; }
+
+/* Only shown when the device has nothing good installed, which is a fact
+   about the device and not a failure of the page. */
+.player-hint {
+  margin: 0; font-size: .72rem; line-height: 1.4; color: var(--ink-faint);
+  max-width: 42rem;
+}
+.player-hint[hidden] { display: none; }
+
+/* The player covers the last inch of the page; the reader gets that back.
+   Measured rather than assumed, because the player is a different height
+   with the hint up, and on a narrow phone where the options wrap. */
+body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
 
 @media (max-width: 620px) {
   .player-opts select { max-width: 7.5rem; }

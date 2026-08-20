@@ -1680,6 +1680,24 @@
      length, so only the long paragraph works are really affected. */
   var MAX_CHARS = 220;
 
+  /* The Charles editions print their apparatus in the running text: daggers
+     round a corrupt reading, angle brackets round a restoration, plus signs
+     round an emendation, square brackets round a later hand. The eye steps
+     over them without noticing. An engine does not — it reads them out,
+     "dagger", "less than", "plus" — and a paragraph of that is half of why
+     a voice sounds deranged. They are blanked before speaking and left
+     standing on the page, where they belong.
+
+     Blanked rather than deleted: each mark becomes a space, so the text
+     handed to the engine is the same length as the text on the page, and the
+     word highlight — which is drawn from character offsets into it — still
+     lands on the right word. */
+  var EDITORIAL = /[†+<>\[\]]/g;
+
+  function speakable(text) {
+    return text.replace(EDITORIAL, " ");
+  }
+
   var NO_VOICE =
     "This device has no speech voice for the page to read with. Voices are " +
     "installed by the operating system rather than by a website — adding one " +
@@ -1706,18 +1724,38 @@
   }
 
   /* A sentence longer than the limit on its own — Hebrews and 4 Maccabees
-     both manage it — is broken at word boundaries rather than mid-word. */
+     both manage it — has to be broken somewhere, and where matters more than
+     it looks. An engine drops its pitch and takes a breath at the end of
+     every utterance, so a break in the middle of a clause is heard as a full
+     stop that is not there: the commonest way a long verse comes out sounding
+     chopped up by a machine. The break is taken at the last comma, semicolon,
+     colon or dash that still leaves a piece worth speaking, and only falls
+     back to the nearest word boundary when a clause runs past the limit by
+     itself. */
+  var CLAUSE_END = /[,;:—–)]["'’”]?\s*$/;
+  var MIN_PIECE = 90;
+
   function splitLong(span) {
-    var out = [], re = /\S+\s*/g, m, cur = "", curStart = 0;
-    while ((m = re.exec(span.text))) {
-      if (cur && cur.length + m[0].length > MAX_CHARS) {
-        out.push({ start: span.start + curStart, text: cur });
-        cur = "";
+    var re = /\S+\s*/g, m, toks = [];
+    while ((m = re.exec(span.text))) toks.push({ text: m[0], at: m.index });
+    if (!toks.length) return [span];
+
+    var out = [], i = 0;
+    while (i < toks.length) {
+      var len = 0, j = i, clause = -1;
+      while (j < toks.length && (len === 0 || len + toks[j].text.length <= MAX_CHARS)) {
+        len += toks[j].text.length;
+        j++;
+        if (len >= MIN_PIECE && CLAUSE_END.test(toks[j - 1].text)) clause = j;
       }
-      if (!cur) curStart = m.index;
-      cur += m[0];
+      // The tail of a sentence already ends where the sentence does; only a
+      // piece with more coming after it is worth pulling back to a pause.
+      var end = (j < toks.length && clause > i) ? clause : j;
+      var text = "";
+      for (var k = i; k < end; k++) text += toks[k].text;
+      out.push({ start: span.start + toks[i].at, text: text });
+      i = end;
     }
-    if (cur) out.push({ start: span.start + curStart, text: cur });
     return out;
   }
 
@@ -1739,18 +1777,92 @@
     return out.length ? out : [{ start: 0, text: text }];
   }
 
-  /* ---------------- voices ---------------- */
+  /* ---------------- voices ----------------
+
+     A device does not offer a voice, it offers a drawer of them, and the
+     drawer is not sorted by how they sound. macOS files two dozen novelties
+     — Zarvox, Bubbles, Deranged, Trinoids — beside its good ones, and the
+     MacinTalk voices of the early nineties beside those. Linux answers with
+     eSpeak. Windows still ships the old SAPI "Desktop" voices alongside its
+     neural ones. Taking the first voice in the list, or the one the system
+     happens to flag as default, is how a library of scripture ends up read
+     by a joke robot — which is exactly what it used to do here.
+
+     So the drawer is scored. What is known to be good — Apple's enhanced and
+     premium downloads, Microsoft's natural voices, Google's, anything the
+     browser synthesises on a server rather than on the device — is preferred
+     and offered first. What is known to be a toy or a relic is put at the
+     bottom and labelled, rather than hidden: a device may have nothing else,
+     and the choice stays the reader's.
+
+     The scoring goes on names, which is unlovely, but names are all there is:
+     the API has no field for quality, and no way to ask. So this is a list of
+     what the platforms are known to ship, and it will age. It is only ever a
+     default — one selection in the player overrides the lot of it. */
+
+  var GOOD    = /(natural|neural|premium|enhanced|siri|wavenet|studio|journey|online)/i;
+  var GOOGLE  = /^google\b/i;
+  /* The engines that sound synthetic however they are driven, and the SAPI5
+     "Desktop" voices Windows keeps for compatibility. */
+  var POOR    = /(espeak|festival|flite|pico|klatt|robosoft|mbrola|compact|\bdesktop\b)/i;
+  /* The novelties and the MacinTalk set, by name, because that is how they
+     arrive. Any of them can still be chosen; none is ever chosen for you. */
+  var NOVELTY = /^(albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|junior|kathy|organ|pipe organ|princess|ralph|superstar|trinoids|whisper|wobble|zarvox|agnes|bruce|fred|vicki|victoria)\b/i;
+  /* Apple's standard English voices, which carry no marker in their names
+     and are perfectly good to listen to. */
+  var MODERN  = /^(alex|allison|ava|aaron|daniel|evan|fiona|joelle|karen|moira|nathan|nicky|noelle|rishi|samantha|serena|susan|tessa|tom|zoe)\b/i;
+
+  function isEnglish(v) { return /^en(-|_|$)/i.test(v.lang || ""); }
+
+  /* Three drawers rather than a ranking the reader cannot see: what to use,
+     what else is here, and what not to be surprised by. */
+  function voiceTier(v) {
+    var name = v.name || "";
+    if (NOVELTY.test(name) || !isEnglish(v)) return 2;
+    if (POOR.test(name)) return 1;
+    if (GOOD.test(name) || GOOGLE.test(name) || MODERN.test(name) ||
+        v.localService === false) return 0;
+    return 1;
+  }
+
+  function voiceScore(v) {
+    var name = v.name || "";
+    var lang = (v.lang || "").replace("_", "-");
+    var here = (navigator.language || "en-US").replace("_", "-");
+    var s = 0;
+
+    // The library is English. A Polish voice reading Amos is not a matter of
+    // taste, so language outranks everything else in the sort.
+    if (isEnglish(v)) {
+      s += 1000;
+      if (lang.toLowerCase() === here.toLowerCase()) s += 20;
+      else if (/^en-(us|gb)$/i.test(lang)) s += 12;
+    }
+
+    if (NOVELTY.test(name)) s -= 500;
+    else if (POOR.test(name)) s -= 200;
+
+    if (GOOD.test(name)) s += 60;
+    if (GOOGLE.test(name)) s += 45;
+    if (MODERN.test(name)) s += 30;
+    // Chrome and Android synthesise their good voices on a server and their
+    // stopgaps on the device, so this is a quality signal as much as a
+    // network one. Safari runs everything locally and simply scores flat.
+    if (v.localService === false) s += 15;
+    if (v.default) s += 2;
+    return s;
+  }
 
   var voices = [];
   function loadVoices() {
     if (!SPEECH_OK) return;
-    var all = speech.getVoices() || [];
-    // English first and default-marked first within that, since the texts
-    // are English; everything else stays available underneath.
-    var en = all.filter(function (v) { return /^en(-|$)/i.test(v.lang); });
-    var rest = all.filter(function (v) { return !/^en(-|$)/i.test(v.lang); });
-    en.sort(function (a, b) { return (b.default ? 1 : 0) - (a.default ? 1 : 0); });
-    voices = en.concat(rest);
+    voices = (speech.getVoices() || []).slice();
+    var order = [];
+    voices.forEach(function (v, i) { order.push({ v: v, i: i, s: voiceScore(v) }); });
+    // Sorted best first, and by the drawer's own order where the score ties,
+    // so the list does not reshuffle itself between visits.
+    order.sort(function (a, b) { return b.s - a.s || a.i - b.i; });
+    voices = order.map(function (o) { return o.v; });
   }
   if (SPEECH_OK) {
     loadVoices();
@@ -1763,7 +1875,10 @@
   function chosenVoice() {
     var want = store.get("listen-voice", null);
     var found = null;
-    voices.forEach(function (v) { if (v.voiceURI === want) found = v; });
+    // Some engines renumber their voice URIs between releases; the name is
+    // the more durable half of a saved choice, so it is the fallback.
+    voices.forEach(function (v) { if (!found && v.voiceURI === want) found = v; });
+    voices.forEach(function (v) { if (!found && v.name === want) found = v; });
     return found || voices[0] || null;
   }
 
@@ -1842,6 +1957,21 @@
     return titleCase(item.unit || "paragraph") + " " + item.ordinal;
   }
 
+  /* Engines run one utterance straight into the next, so a chapter arrives
+     as an unbroken wall of words — on its own the thing that most makes a
+     reading sound mechanical, whatever voice is doing it. A verse gets the
+     beat a person reading aloud would take, the chapter heading a longer
+     one, and a sentence that was cut only because it was too long gets none
+     at all: that seam is the one place a pause would be a lie. */
+  function restAfter(item, next) {
+    if (!next) return 0;
+    if (item.unit === "heading") return 550;
+    var ends = /[.!?]["'’”)\]]?\s*$/.test(item.text);
+    var moved = next.verse !== item.verse || next.el !== item.el;
+    if (!ends && !moved) return 0;
+    return moved ? 260 : 170;
+  }
+
   function speakFrom(i) {
     if (!SPEECH_OK) return;
     nar.gen++;
@@ -1865,9 +1995,14 @@
     var item = nar.items[nar.at];
     if (!item) { chapterFinished(); return; }
 
+    // A piece that is nothing but editorial marks has nothing to say, and
+    // an empty utterance makes several engines report a failure.
+    var said = speakable(item.text);
+    if (!/\S/.test(said)) { nar.at++; step(gen); return; }
+
     mark(item);
 
-    var u = new SpeechSynthesisUtterance(item.text);
+    var u = new SpeechSynthesisUtterance(said);
     var v = chosenVoice();
     if (v) { u.voice = v; u.lang = v.lang; }
     u.rate = store.get("listen-rate", 1);
@@ -1890,7 +2025,9 @@
       clearTimeout(watchdog);
       if (gen !== nar.gen) return;
       nar.at++;
-      step(gen);
+      var rest = restAfter(item, nar.items[nar.at]);
+      if (!rest) { step(gen); return; }
+      setTimeout(function () { if (gen === nar.gen) step(gen); }, rest);
     };
     u.onerror = function (e) {
       if (gen !== nar.gen) return;
@@ -2065,25 +2202,107 @@
   /* ---------------- the player ---------------- */
 
   var player = null, playBtn = null, whereEl = null, unitEl = null,
-      barEl = null, voiceSel = null;
+      barEl = null, voiceSel = null, hintEl = null;
 
   function option(value, label, selected) {
     return el("option", { value: value, selected: selected ? true : null, text: label });
   }
 
+  var displayNames = null;
+  function langLabel(tag) {
+    var t = (tag || "").replace("_", "-");
+    try {
+      if (displayNames === null && window.Intl && Intl.DisplayNames) {
+        displayNames = new Intl.DisplayNames([navigator.language || "en"],
+                                             { type: "language" });
+      }
+      if (displayNames) return displayNames.of(t) || t;
+    } catch (e) { displayNames = false; }
+    return t;
+  }
+
+  /* "Microsoft Aria Online (Natural) - English (United States)" names the
+     language twice and the second half is the browser's doing, not the
+     voice's; it comes off, and the language goes back on cleanly. */
+  function voiceLabel(v) {
+    var name = String(v.name || "Voice").replace(/\s+[-–]\s+[^-–]*\(.*\)\s*$/, "").trim();
+    return (name || "Voice") + " · " + langLabel(v.lang);
+  }
+
+  var TIERS = ["Best on this device", "Other voices",
+               "Novelty, legacy and other languages"];
+
   function fillVoices() {
     if (!voiceSel) return;
-    var want = store.get("listen-voice", null);
+    var want = chosenVoice();
     voiceSel.innerHTML = "";
     if (!voices.length) {
       voiceSel.appendChild(option("", "Default voice", true));
+      updateHint();
       return;
     }
+    var groups = [null, null, null];
     voices.forEach(function (v) {
-      voiceSel.appendChild(option(v.voiceURI, v.name + " · " + v.lang,
-                                  v.voiceURI === want));
+      var t = voiceTier(v);
+      if (!groups[t]) groups[t] = el("optgroup", { label: TIERS[t] });
+      groups[t].appendChild(option(v.voiceURI, voiceLabel(v),
+                                   !!want && v.voiceURI === want.voiceURI));
     });
-    if (!want && voices[0]) voiceSel.value = voices[0].voiceURI;
+    groups.forEach(function (g) { if (g) voiceSel.appendChild(g); });
+    if (want) voiceSel.value = want.voiceURI;
+    updateHint();
+  }
+
+  /* Nothing a web page can do will make eSpeak sound like a person: the audio
+     belongs to the operating system, not to the site. When the drawer holds
+     nothing better than a relic, saying where better voices come from is more
+     use to the reader than letting them conclude the site is broken. */
+  var VOICE_HELP =
+    "Windows: Settings › Time & language › Speech › Manage voices. " +
+    "macOS: System Settings › Accessibility › Spoken Content › System voice › " +
+    "Manage Voices, where the Enhanced and Premium downloads are. " +
+    "iOS: Settings › Accessibility › Spoken Content › Voices. " +
+    "Android: Settings › Accessibility › Text-to-speech output. " +
+    "Linux: install a neural engine such as Piper, or speech-dispatcher with " +
+    "a better module than eSpeak.";
+
+  function bestIsPoor() {
+    if (!voices.length) return false;
+    for (var i = 0; i < voices.length; i++) {
+      if (voiceTier(voices[i]) === 0) return false;
+    }
+    return true;
+  }
+
+  function updateHint() {
+    if (!hintEl) return;
+    var poor = bestIsPoor();
+    hintEl.hidden = !poor;
+    if (poor) {
+      hintEl.textContent =
+        "This device has no high-quality voice installed. Better ones are a " +
+        "free download in its own speech settings.";
+      hintEl.title = VOICE_HELP;
+    }
+  }
+
+  /* Only the person listening can say whether a voice is bearable, and a
+     chapter is a long way to find out, so the drawer comes with a sentence
+     to try one on. */
+  var SAMPLE = "In the beginning, God created the heavens and the earth.";
+
+  function previewVoice() {
+    if (!SPEECH_OK) return;
+    if (nar.playing) pauseListening();
+    nar.gen++;
+    speech.cancel();
+    var u = new SpeechSynthesisUtterance(SAMPLE);
+    var v = chosenVoice();
+    if (v) { u.voice = v; u.lang = v.lang; }
+    u.rate = store.get("listen-rate", 1);
+    u.pitch = 1;
+    // The same beat of daylight after a cancel() that the narration needs.
+    setTimeout(function () { speech.speak(u); }, 60);
   }
 
   function buildPlayer() {
@@ -2115,9 +2334,17 @@
       onchange: function (e) {
         store.set("listen-voice", e.target.value || null);
         if (nar.playing) speakFrom(nar.at);
+        else previewVoice();   // picked while stopped: let it be heard
       }
     });
+    hintEl = el("p", { class: "player-hint", hidden: true });
     fillVoices();
+
+    var tryIt = el("button", {
+      class: "player-btn player-try", text: "♪",
+      "aria-label": "Hear this voice", title: "Hear this voice",
+      onclick: function () { previewVoice(); }
+    });
 
     var sleep = el("select", {
       "aria-label": "Sleep timer",
@@ -2171,15 +2398,26 @@
           onclick: function () { stopListening("Stopped reading aloud"); }
         })
       ]),
-      el("div", { class: "player-line player-opts" }, [rate, voiceSel, sleep])
+      el("div", { class: "player-line player-opts" }, [rate, voiceSel, tryIt, sleep]),
+      hintEl
     ]);
     document.body.appendChild(player);
+  }
+
+  /* The page gives back the inch the player covers, and the player is not
+     always the same height: the hint doubles it, and on a narrow phone the
+     options wrap. So it is measured rather than guessed at. */
+  function sizePlayer() {
+    if (!player || player.hidden) return;
+    document.documentElement.style.setProperty(
+      "--player-h", player.offsetHeight + "px");
   }
 
   function updatePlayer() {
     if (!player) return;
     player.hidden = !nar.on;
     if (!nar.on) return;
+    sizePlayer();
 
     playBtn.textContent = nar.playing ? "⏸" : "▶";
     playBtn.setAttribute("aria-label", nar.playing ? "Pause reading" : "Continue reading");
@@ -2262,7 +2500,7 @@
       nar.pendingResumeAt = 0;
     }
     nar.on = true;
-    if (player) player.hidden = false;
+    if (player) { player.hidden = false; sizePlayer(); }
     document.body.classList.add("listening");
     speakFrom(index);
     syncListenButtons();
@@ -2305,6 +2543,8 @@
     nar.items = [];
     nar.ctx = null;
   }
+
+  window.addEventListener("resize", function () { sizePlayer(); });
 
   window.addEventListener("pagehide", function () {
     // Speech outlives the document in several browsers if left running.

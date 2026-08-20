@@ -155,6 +155,137 @@ module.exports = async function listening(t, ctx) {
   t.check('the pieces reassemble into the paragraph exactly', para.indexOf(rejoined) === 0);
   await page.close();
 
+  /* ---- which voice comes out of the drawer ----
+     A device does not offer a voice, it offers a drawer of them: novelties
+     and thirty-year-old relics filed beside the good ones, and often enough
+     the worst thing in it flagged as the system default. Picking the first
+     one, which is what this used to do, is how scripture ends up read by a
+     joke robot. */
+  const DRAWER = [
+    { name: 'Zarvox', lang: 'en-US', voiceURI: 'zarvox', default: true, localService: true },
+    { name: 'eSpeak English', lang: 'en-GB', voiceURI: 'espeak', localService: true },
+    { name: 'Microsoft David Desktop - English (United States)', lang: 'en-US',
+      voiceURI: 'david', localService: true },
+    { name: 'Google US English', lang: 'en-US', voiceURI: 'google', localService: false },
+    { name: 'Google Deutsch', lang: 'de-DE', voiceURI: 'google-de', localService: false }
+  ];
+  page = await open(ctx, '#/read/amos/2', workingEngine(30, DRAWER));
+  await page.locator('[data-listen]').click();
+  await page.waitForFunction(() => window.__spoken.length >= 1);
+  t.check('the best voice is used, not the one the device calls default',
+          await page.evaluate(() => window.__spoken[0].voice) === 'google',
+          await page.evaluate(() => window.__spoken[0].voice));
+
+  const drawer = await page.evaluate(() => Array.from(
+    document.querySelectorAll('select[aria-label="Voice"] optgroup'),
+    g => [g.label, Array.from(g.querySelectorAll('option'), o => o.value)]));
+  t.check('the drawer is grouped by what the voices are',
+          drawer.length === 3 && drawer[0][0] === 'Best on this device' &&
+          drawer[0][1].join() === 'google',
+          JSON.stringify(drawer.map(g => g[0])));
+  t.check('the relics are kept, and kept apart',
+          drawer[1][1].indexOf('espeak') !== -1 && drawer[1][1].indexOf('david') !== -1,
+          JSON.stringify(drawer[1][1]));
+  t.check('the novelties and the other languages are last',
+          drawer[2][1].indexOf('zarvox') !== -1 && drawer[2][1].indexOf('google-de') !== -1,
+          JSON.stringify(drawer[2][1]));
+  t.check('and nothing is said about voices when there is a good one',
+          await page.evaluate(() => document.querySelector('.player-hint').hidden));
+
+  /* The ranking is a default, not a policy: a choice made by hand outranks it. */
+  await page.selectOption('select[aria-label="Voice"]', 'zarvox');
+  await page.waitForFunction(
+    () => window.__spoken[window.__spoken.length - 1].voice === 'zarvox');
+  t.check('a voice chosen by hand is the one used', true);
+
+  await page.locator('.player-play').click();          // pause, then audition
+  await page.waitForTimeout(settle);
+  const beforeTry = await page.evaluate(() => window.__spoken.length);
+  await page.locator('.player-try').click();
+  await page.waitForFunction(n => window.__spoken.length > n, beforeTry);
+  t.check('a voice can be heard on a sentence before a chapter is given to it',
+          await page.evaluate(
+            () => /^In the beginning/.test(window.__spoken[window.__spoken.length - 1].text)),
+          await page.evaluate(() => window.__spoken[window.__spoken.length - 1].text));
+  await page.close();
+
+  /* Nothing a page can do makes eSpeak sound like a person; saying where
+     better voices come from is the only honest help there is. */
+  page = await open(ctx, '#/read/amos/2', workingEngine(30, [
+    { name: 'eSpeak English', lang: 'en-GB', voiceURI: 'espeak', default: true }
+  ]));
+  await page.locator('[data-listen]').click();
+  await page.waitForSelector('.player:not([hidden])');
+  t.check('a device with nothing but a relic is told where better voices come from',
+          await page.evaluate(() => {
+            const h = document.querySelector('.player-hint');
+            return !h.hidden && /free download/.test(h.textContent);
+          }));
+  await page.close();
+
+  /* ---- the editorial apparatus is not read out ----
+     Charles prints his apparatus in the running text. The eye steps over a
+     dagger; an engine says "dagger". */
+  page = await open(ctx, '#/read/1-enoch-the-astronomical-book-chapters-72-82/0',
+                    workingEngine(15));
+  await page.locator('[data-listen]').click();
+  await page.waitForFunction(() => window.__spoken.length >= 14);
+  t.check('the marks are still on the page',
+          await page.evaluate(
+            () => /[+†<>[\]]/.test(document.querySelector('.reader').textContent)));
+  t.check('and the voice is never handed one to read',
+          await page.evaluate(
+            () => !window.__spoken.some(s => /[+†<>[\]]/.test(s.text))),
+          JSON.stringify((await page.evaluate(
+            () => window.__spoken.map(s => s.text).filter(x => /[+†<>[\]]/.test(x)))).slice(0, 2)));
+
+  const kept = await page.evaluate(() => {
+    const said = window.__spoken.filter(s => s.text.indexOf('In this way he rises') === 0)[0];
+    const v = Array.from(document.querySelectorAll('.reader .v')).filter(
+      x => x.lastChild.textContent.trim().indexOf('In this way he rises') === 0)[0];
+    return said && v ? [said.text.length, v.lastChild.textContent.trim().length] : null;
+  });
+  t.check('blanked rather than cut out, so the word highlight still lands',
+          !!kept && kept[0] === kept[1], JSON.stringify(kept));
+
+  /* ---- the gaps between the pieces ----
+     Engines run one utterance straight into the next, which is what makes a
+     chapter arrive as a wall of words whatever voice is reading it. */
+  /* Every verse of this chapter ends in a full stop, so a piece that does not
+     is a sentence that was cut for length — the one seam a pause would lie
+     about. The two are told apart that way. */
+  const gaps = await page.evaluate(() => {
+    const s = window.__spoken, beats = [], seams = [];
+    for (let i = 1; i < s.length; i++) {
+      const g = Math.round(s[i].at - s[i - 1].at);
+      (/[.!?]["'’”)\]]?\s*$/.test(s[i - 1].text) ? beats : seams).push(g);
+    }
+    return { first: Math.round(s[1].at - s[0].at), beats: beats, seams: seams };
+  });
+  t.check('the chapter heading is given a longer beat than a verse',
+          gaps.first > 400 && gaps.first > Math.max.apply(null, gaps.beats.slice(1)),
+          gaps.first + ' vs ' + JSON.stringify(gaps.beats.slice(1, 4)));
+  t.check('and every finished sentence a beat of its own',
+          gaps.beats.length > 4 && gaps.beats.slice(1).every(g => g > 150),
+          JSON.stringify(gaps.beats.slice(0, 8)));
+  t.check('while a sentence broken for length is put back without a gap',
+          gaps.seams.length > 0 && gaps.seams.every(g => g < 150),
+          JSON.stringify(gaps.seams));
+  await page.close();
+
+  /* And broken where the sentence itself pauses, not in the middle of a
+     clause: an engine drops its pitch at the end of every utterance, so the
+     wrong break is heard as a full stop that is not there. */
+  page = await open(ctx, '#/read/the-testament-of-issachar/0', workingEngine(15));
+  await page.locator('[data-listen]').click();
+  await page.waitForFunction(() => window.__spoken.length >= 6);
+  t.check('a long passage is cut at its pauses, never mid-clause',
+          await page.evaluate(() => window.__spoken.slice(1, -1).every(
+            s => /[,;:—–)."!?’”]["'’”]?\s*$/.test(s.text))),
+          JSON.stringify(await page.evaluate(
+            () => window.__spoken.slice(1, -1).map(s => s.text.slice(-24)).slice(0, 3))));
+  await page.close();
+
   /* ---- one work runs into the next written ---- */
   page = await open(ctx, '#/read/amos/8', workingEngine(25));   // Amos has nine chapters
   await page.locator('[data-listen]').click();
