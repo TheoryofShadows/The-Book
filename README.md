@@ -114,7 +114,10 @@ chapter, or `l`.
 
 The voices are the ones your device has installed, and they are synthetic: no
 audio is downloaded, no text is sent anywhere, and it works offline. A browser
-with no speech engine is not offered the control at all. On a phone the reading
+with no speech support is not offered the control at all, and a device that
+has the support but no installed voice — a Linux desktop without
+speech-dispatcher, for instance — is told exactly that rather than left
+pressing a button that does nothing. On a phone the reading
 usually stops when the screen locks or you switch app — the browser suspends
 the page, and this is speech, not a track playing in the background.
 

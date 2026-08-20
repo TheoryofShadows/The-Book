@@ -893,6 +893,18 @@ main > * { animation: rise .18s ease-out; }
   color: var(--ink);
 }
 
+/* Said out loud where the button is, not only to the live region. */
+.listen-note {
+  max-width: calc(var(--measure) + 2.2rem);
+  margin: .5rem auto 0;
+  font-family: var(--sans); font-size: .82rem; line-height: 1.5;
+  color: var(--warn); background: var(--warn-bg);
+  border-radius: var(--radius); padding: .55rem .75rem;
+}
+
+.chip[disabled] { opacity: .55; cursor: default; }
+.chip[disabled]:hover { border-color: var(--rule); color: var(--ink-soft); }
+
 .player {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
   isolation: isolate;

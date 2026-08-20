@@ -1680,6 +1680,11 @@
      length, so only the long paragraph works are really affected. */
   var MAX_CHARS = 220;
 
+  var NO_VOICE =
+    "This device has no speech voice for the page to read with. Voices are " +
+    "installed by the operating system rather than by a website — adding one " +
+    "in your system's speech or accessibility settings will turn this on.";
+
   function sentenceSpans(text) {
     var out = [], start = 0, i = 0, n = text.length;
     while (i < n) {
@@ -1778,7 +1783,9 @@
     resumeChapter: null,  // set when auto-advancing into the next chapter
     sleepAt: 0,
     stopAtEnd: false,
-    pendingResumeAt: 0
+    pendingResumeAt: 0,
+    blocked: null   // the engine has already told us it cannot speak
+
   };
 
   function reducedMotion() {
@@ -1866,20 +1873,36 @@
     u.rate = store.get("listen-rate", 1);
     u.pitch = 1;
 
+    // Some engines neither speak nor report a failure. Nothing having
+    // happened several seconds after asking is itself the answer.
+    var watchdog = setTimeout(function () {
+      if (gen === nar.gen && nar.playing) listenUnavailable(NO_VOICE);
+    }, 5000);
+
+    u.onstart = function () { clearTimeout(watchdog); };
     u.onboundary = function (e) {
+      clearTimeout(watchdog);
       if (gen !== nar.gen || !HIGHLIGHT_OK) return;
       if (e.name && e.name !== "word") return;
       highlightWord(item, e.charIndex, e.charLength);
     };
     u.onend = function () {
+      clearTimeout(watchdog);
       if (gen !== nar.gen) return;
       nar.at++;
       step(gen);
     };
     u.onerror = function (e) {
       if (gen !== nar.gen) return;
+      clearTimeout(watchdog);
       // "interrupted" and "canceled" are what a deliberate stop looks like.
       if (e.error === "interrupted" || e.error === "canceled") return;
+      if (e.error === "synthesis-failed" || e.error === "synthesis-unavailable" ||
+          e.error === "language-unavailable" || e.error === "voice-unavailable" ||
+          !voices.length) {
+        listenUnavailable(NO_VOICE);
+        return;
+      }
       stopListening("Listening stopped — the voice reported an error.");
     };
 
@@ -1959,6 +1982,35 @@
     nar.playing = false;
     updatePlayer();
     announce("Finished reading " + (ctx ? ctx.label : "the chapter"));
+  }
+
+  /* Having the API is not having a voice. Plenty of desktops -- any Linux
+     without speech-dispatcher, some locked-down Windows builds -- expose
+     speechSynthesis and then fail the moment you ask it to say something.
+     The engine's report of that has to reach the person who pressed the
+     button, not just the live region. */
+  function listenUnavailable(message) {
+    nar.blocked = message;
+    stopListening(null);
+    document.querySelectorAll("[data-listen]").forEach(function (b) {
+      markUnavailable(b);
+    });
+    announce(message);
+  }
+
+  function markUnavailable(button) {
+    button.disabled = true;
+    button.textContent = "▶ Listen";
+    button.title = nar.blocked;
+    button.setAttribute("aria-disabled", "true");
+    button.setAttribute("aria-pressed", "false");
+
+    var controls = button.parentNode;
+    if (!controls || controls.parentNode.querySelector(".listen-note")) return;
+    controls.parentNode.insertBefore(
+      el("p", { class: "listen-note", role: "note", text: nar.blocked }),
+      controls.nextSibling
+    );
   }
 
   function stopListening(message) {
@@ -2143,6 +2195,7 @@
 
   function syncListenButtons() {
     document.querySelectorAll("[data-listen]").forEach(function (b) {
+      if (b.disabled) return;
       var live = nar.on && nar.playing;
       b.setAttribute("aria-pressed", live ? "true" : "false");
       b.textContent = live ? "⏸ Listening" : "▶ Listen";
@@ -2185,6 +2238,7 @@
       }
     });
     controls.insertBefore(btn, controls.firstChild);
+    if (nar.blocked) { markUnavailable(btn); return; }
 
     var pending = nar.resumeChapter === ctx.work + "/" + ctx.chapter;
     nar.resumeChapter = null;
