@@ -19,16 +19,22 @@ DATA = os.path.join(DOCS, "data")
 
 
 def collect() -> dict:
+    """Every JSON file under docs/data, keyed by the path the site fetches.
+
+    Naming the files individually meant that anything added later -- threads,
+    the lexicon, the places, the manuscripts -- was left out, and the page
+    lost those features with nothing but a failed fetch in the console to say
+    so. Walking the tree keeps the offline copy honest by construction.
+    """
     bundle = {}
-    for name in ("manifest.json", "canon.json", "chapters.json",
-                 "findings.json", "removals.json"):
-        with open(os.path.join(DATA, name), encoding="utf-8") as fh:
-            bundle[name] = json.load(fh)
-    for sub in ("works", "index"):
-        folder = os.path.join(DATA, sub)
-        for fn in sorted(os.listdir(folder)):
-            with open(os.path.join(folder, fn), encoding="utf-8") as fh:
-                bundle[f"{sub}/{fn}"] = json.load(fh)
+    for folder, _dirs, files in os.walk(DATA):
+        for fn in sorted(files):
+            if not fn.endswith(".json"):
+                continue
+            full = os.path.join(folder, fn)
+            key = os.path.relpath(full, DATA).replace(os.sep, "/")
+            with open(full, encoding="utf-8") as fh:
+                bundle[key] = json.load(fh)
     return bundle
 
 
