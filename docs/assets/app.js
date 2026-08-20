@@ -2259,6 +2259,42 @@
     });
   }
 
+  /* ---------------- the bar gets out of the way ----------------
+     On a phone the bar carries the wordmark, the tools and two rows of
+     links: a sixth of the screen, held there permanently by position:
+     sticky, in front of a page whose entire purpose is the text below it.
+     So it leaves as you read down and returns as soon as you turn back up
+     -- one gesture, no button, and it is always there at the top of a page.
+     Wide screens have the room and keep it in place. */
+
+  var topbar = document.querySelector(".topbar");
+  var lastY = window.pageYOffset, tucked = false;
+
+  function phone() {
+    return window.matchMedia && window.matchMedia("(max-width: 620px)").matches;
+  }
+
+  function tuck(on) {
+    if (on === tucked) return;
+    tucked = on;
+    topbar.classList.toggle("tucked", on);
+  }
+
+  function onScroll() {
+    var y = Math.max(0, window.pageYOffset);
+    if (!phone()) { tuck(false); lastY = y; return; }
+    // Ignore the small jitter of a finger resting on a scrolling page, and
+    // never hide the bar while the top of the page is still in view.
+    if (Math.abs(y - lastY) < 8) return;
+    tuck(y > lastY && y > 120);
+    lastY = y;
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", function () { if (!phone()) tuck(false); });
+  // Tabbing into a hidden bar would move focus to something off-screen.
+  topbar.addEventListener("focusin", function () { tuck(false); });
+
   function route() {
     var hash = location.hash.replace(/^#\/?/, "");
     var parts = hash.split("/").filter(function (p) { return p !== ""; });
@@ -2270,6 +2306,9 @@
     closeSheet();
     closeMenu();
     listeningPageChange();
+
+    tuck(false);
+    lastY = 0;
 
     main.innerHTML = "";
     main.appendChild(el("p", { class: "loading", text: "Loading…" }));

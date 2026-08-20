@@ -721,16 +721,29 @@ mark { background: var(--mark); color: inherit; padding: 0 .1em; border-radius: 
 }
 
 @media (max-width: 620px) {
-  /* Seven nav items wrapped to three lines and took 18% of the screen before
-     a word of scripture appeared. One row that scrolls sideways instead. */
-  .topbar { gap: .5rem; padding: .45rem .7rem; }
+  /* The nav has to claim lines of its own. `width: 100%` cannot make it: the
+     base rule's `flex: 1` sets a basis of 0%, which beats width on a flex
+     item, so the nav collapsed into whatever was left beside the brand --
+     ninety pixels on a phone -- and crushed all seven links into a sliver at
+     the right edge. The basis is the thing that has to change.
+
+     Given its own width it wraps to two rows and every link is visible. A
+     link behind a sideways swipe is a feature most people never find out
+     about, which is too high a price for one row; the height it costs is
+     given back below by tucking the whole bar away as you read. */
+  .topbar { gap: .5rem .6rem; padding: .45rem .7rem; }
   .nav {
-    flex-wrap: nowrap; overflow-x: auto; order: 3; width: 100%;
-    gap: .1rem; padding-bottom: .1rem;
-    scrollbar-width: none; -ms-overflow-style: none;
+    flex: 1 0 100%; order: 3;
+    gap: .12rem .15rem;
   }
-  .nav::-webkit-scrollbar { display: none; }
-  .nav a { padding: .28rem .55rem; font-size: .82rem; flex: 0 0 auto; }
+  .nav a { padding: .3rem .58rem; font-size: .84rem; flex: 0 0 auto; }
+
+  /* Reading is what the screen is for. The bar leaves as you go down the
+     page and comes back the moment you turn back up, so the two rows of
+     links cost nothing while you are actually reading. */
+  .topbar { transition: transform .2s ease; }
+  .topbar.tucked { transform: translateY(-100%); }
+
 
   /* Keep the name, drop only the strapline. A lone icon is not a wordmark. */
   .brand-sub { display: none; }
@@ -766,7 +779,10 @@ mark { background: var(--mark); color: inherit; padding: 0 .1em; border-radius: 
 /* Content arriving should settle rather than snap. */
 main > * { animation: rise .18s ease-out; }
 @keyframes rise { from { opacity: 0; transform: translateY(.25rem); } }
-@media (prefers-reduced-motion: reduce) { main > * { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  main > * { animation: none; }
+  .topbar { transition: none; }
+}
 
 .loading::after {
   content: ""; display: inline-block; width: .5rem; height: .5rem;
