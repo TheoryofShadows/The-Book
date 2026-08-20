@@ -206,33 +206,58 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | `tools/build_canon.py` | Builds canon membership and checks coverage claims |
 | `tools/build_index.py` | Builds the sharded search index |
 | `tools/build_standalone.py` | Inlines the whole library into one HTML file that runs offline |
-| `tools/test.sh` | Runs the browser checks in `tests/` |
+| `tools/textnorm.py` | The one rule that folds text into a search token or a lookup key |
+| `tools/lint.sh` | Everything parses, and every data file is the JSON it claims to be |
+| `tools/test.sh` | Runs the unit tests and the browser checks in `tests/` |
 
 The audit is the point: if a count on the site is wrong, `tools/audit.py` will
-say so. Findings are stated so they can be falsified.
+say so, and the build will stop. Findings are stated so they can be falsified.
+
+`tools/audit-baseline.txt` is what makes that a gate rather than a report.
+Every finding the audit produces is either a defect or a known property of the
+printed edition — the World English Bible really does omit Luke 17:36 — and the
+baseline is where the second kind is written down, in groups, each with a
+reason. A finding that is not in it fails the build; so does a baseline entry
+that no longer occurs. Nothing regenerates the file by itself: a baseline that
+rewrote itself would let the next regression through under a passing build.
+
+Until that existed the audit collected 157 findings and returned zero
+regardless. Three chapters of Ignatius and fifty-six chapter openings were
+missing from the volume the whole time it was running.
 
 ## Checking it
 
-The audit checks the text. The browser checks check the reader — that it
-renders, that it fits a phone, and that reading aloud says the right words in
-the right order.
+Three layers, cheapest first.
 
 ```bash
-./tools/test.sh                     # everything
-./tools/test.sh listening           # one suite
+./tools/lint.sh                     # everything parses (seconds)
+python3 -m unittest discover -s tests/python -t tests/python
+./tools/test.sh                     # both of the above, then the browser
+./tools/test.sh listening           # one browser suite
 ```
 
-The site itself still has no dependencies. These need Node, and install
-Playwright and a Chromium into `tests/node_modules` on first run; set
-`CHROME_PATH` to use a browser already on the machine instead. Both the audit
-and the browser checks run on every pull request.
+The unit tests cover the build scripts — the layer that decides what the text
+of the volume actually is — and need nothing installed beyond Python, for the
+same reason the site ships no dependencies. The browser checks need Node, and
+install Playwright and a Chromium into `tests/node_modules` on first run; set
+`CHROME_PATH` to use a browser already on the machine instead.
 
 | Suite | Checks |
 | --- | --- |
+| `tests/python` | The parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. One of them runs the reader's own copy of the folding rule against the Python one, because the two are written in different languages and a divergence between them is silent |
 | `routes` | Every page renders, search returns verses, a saved verse survives a reload, nothing throws |
 | `layout` | At 320–430px every nav link is on screen, nothing scrolls sideways, the bar tucks away as you read, desktop is unchanged |
+| `search` | Result counts against known answers rather than "more than zero": phrases against their words, several terms meaning all of them, the three different ways a search can end with nothing, and that an accented or ligatured spelling on the page is reachable by an ordinary one |
+| `words` | Turning a word on the page into an entry — by selection, by keyboard, by alias — what a missing entry says, and the places panel |
+| `keeping` | Saving, unsaving, notes, the migration from the old bookmarks key, and what happens when the browser refuses to store anything at all |
+| `resilience` | The data failing to load, malformed data, routes that name nothing, the keyboard shortcuts, the skip link, and what a screen reader is actually told |
 | `listening` | What is spoken and in what order, which voice out of a bad drawer is picked, that the apparatus is never read out, where long passages are broken and how long the pauses are, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |
 | `offline` | The single-file build opens from `file://` and every feature in it works with no network at all |
+
+The unit tests and the lint run on every pull request and again before every
+deploy. The browser checks used to run on pull requests only, which meant
+anything pushed straight to `main` went live without a browser having opened
+the site; they now gate the deploy as well.
 
 **What they cannot check: whether a voice actually sounds right.** A headless
 browser has no speech engine — the one these run in reports zero voices and
@@ -254,8 +279,10 @@ and scanned for exact verses. Quote a phrase to match it exactly.
 
 ## Deploying
 
-`.github/workflows/pages.yml` rebuilds the data from source, fails the build if
-`docs/data` has drifted, and publishes `docs/`.
+`.github/workflows/pages.yml` runs the lint and the unit tests, rebuilds the
+data from source, fails the build if `docs/data` has drifted or the audit finds
+anything not in the baseline, runs the browser checks, and only then publishes
+`docs/`.
 
 **One manual step is required before the site can go live:** open
 **Settings → Pages** and set **Source: GitHub Actions**. The workflow cannot do

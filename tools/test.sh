@@ -23,4 +23,15 @@ if [ ! -d tests/node_modules ]; then
   fi
 fi
 
+# The unit tests come first when the whole suite is asked for: they take
+# milliseconds, need nothing installed, and cover the half of the codebase the
+# browser never sees. Finding out that split_verses is broken should not
+# require waiting a minute for Chromium to finish.
+if [ "$#" -eq 0 ]; then
+  echo "==> the build scripts"
+  python3 -m unittest discover -s tests/python -t tests/python
+  echo
+  echo "==> the reader"
+fi
+
 exec node tests/run.js "$@"

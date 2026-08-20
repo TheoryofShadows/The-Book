@@ -23,8 +23,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      # Rebuild every data file from the source text and fail if the parse
-      # stops matching the reference chapter and verse counts.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Everything parses
+        run: ./tools/lint.sh
+      - name: The build scripts do what they say
+        run: python3 -m unittest discover -s tests/python -t tests/python
+      # Rebuild every data file from the source text. build.sh ends with the
+      # audit, which now exits non-zero on any finding that is not in
+      # tools/audit-baseline.txt -- so this step really does fail when the
+      # parse stops matching the reference counts, which the comment here
+      # claimed for a long time while the script returned zero regardless.
       - name: Rebuild data from source
         run: ./tools/build.sh
       - name: Check nothing drifted
@@ -35,8 +45,30 @@ jobs:
             exit 1
           fi
 
+  # The browser checks used to run on pull requests only, so anything pushed
+  # straight to main -- or merged without a pull request -- went live with
+  # nothing having opened the site at all. Deploying is the last moment that
+  # can be caught, so it is caught here.
+  reader:
+    name: The reader works in a browser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the test dependencies
+        run: npm --prefix tests ci
+      - name: Install Chromium
+        run: npm --prefix tests exec -- playwright install --with-deps chromium
+      - name: Run the browser checks
+        run: node tests/run.js
+
   deploy:
-    needs: verify
+    needs: [verify, reader]
     # Only the default branch can deploy. The github-pages environment refuses
     # deployments from any other branch, so a feature-branch run used to fail
     # after one second having executed no steps. Those failures were harmless

@@ -17,6 +17,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Cheap and fast, so it runs first and says which half broke. Nothing is
+  # installed: the build scripts have no dependencies and the tests use the
+  # standard library, which is the same reason the site itself ships none.
+  units:
+    name: The build scripts do what they say
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Node too: one of these runs the reader's own copy of the text-folding
+      # rule against the Python one, and skips itself if node is missing --
+      # which would quietly stop checking the thing it exists to check.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Unit tests
+        run: python3 -m unittest discover -s tests/python -t tests/python -v
+      - name: Nothing has a syntax error
+        run: ./tools/lint.sh
+
   data:
     name: Data matches the source text
     runs-on: ubuntu-latest
@@ -34,6 +56,10 @@ jobs:
             git diff --stat -- docs/data
             exit 1
           fi
+      # Exits non-zero on any finding that is not in tools/audit-baseline.txt.
+      # It used to exit zero whatever it found, which is how three chapters of
+      # Ignatius and fifty-six chapter openings went missing without anything
+      # going red.
       - name: Audit chapter and verse counts
         run: python3 tools/audit.py docs/data
 

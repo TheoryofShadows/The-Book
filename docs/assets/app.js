@@ -46,15 +46,18 @@
   /* Screen readers get told about things that happen without a page change:
      saving, copying, search finishing. Without this the app is silent to
      anyone not watching the pixels. */
-  var liveRegion = null;
+  /* In the document from the first line rather than created on the first
+     announcement. A live region that appears and is filled in the same breath
+     is a region several screen readers do not announce at all -- they watch
+     for changes inside a region they already know about -- so the first thing
+     the site ever had to say was the thing most likely to be missed. */
+  var liveRegion = el("div", {
+    class: "sr-only", role: "status",
+    "aria-live": "polite", "aria-atomic": "true"
+  });
+  document.body.appendChild(liveRegion);
+
   function announce(message) {
-    if (!liveRegion) {
-      liveRegion = el("div", {
-        class: "sr-only", role: "status",
-        "aria-live": "polite", "aria-atomic": "true"
-      });
-      document.body.appendChild(liveRegion);
-    }
     liveRegion.textContent = "";
     setTimeout(function () { liveRegion.textContent = message; }, 60);
   }
@@ -384,7 +387,25 @@
     manifest.sections.forEach(function (s) {
       s.works.forEach(function (w) { if (w.id === workId) { meta = w; section = s; } });
     });
-    if (!meta) return el("div", { class: "wrap" }, [el("p", { class: "empty", text: "No such work." })]);
+    if (!meta) {
+      return el("div", { class: "wrap" }, [
+        el("div", { class: "crumbs" }, [
+          el("a", { href: "#/", text: "Timeline" }),
+          document.createTextNode(" → "),
+          el("span", { text: "Not found" })
+        ]),
+        el("h1", { text: "No such work" }),
+        el("p", { class: "empty", text: workId
+          ? "Nothing in this volume is filed under “" + workId + "”. It may " +
+            "have been renamed, or the link may have been mistyped."
+          : "That link does not name a work to open." }),
+        el("p", {}, [
+          el("a", { class: "chip", href: "#/contents", text: "Everything in the volume" }),
+          document.createTextNode(" "),
+          el("a", { class: "chip", href: "#/search", text: "Search the text" })
+        ])
+      ]);
+    }
 
     var wrap = el("div", { class: "wrap" });
     var head = el("div", { class: "reader-head" });
@@ -1041,6 +1062,13 @@
       var reader = e.target.closest(".reader");
       if (!reader) { closeSheet(); return; }
       if (e.target.closest("a")) return;          // let verse links work
+      // The verse menu is rendered inside the verse it belongs to, so every
+      // click on one of its buttons landed here as well and looked up
+      // whatever word was under the cursor. On a screen reader that turned
+      // "Saved" into "No dictionary entry for verse": the menu's own
+      // announcement was overwritten by the answer to a question nobody had
+      // asked. The number that opens the menu is the same case.
+      if (e.target.closest(".vmenu, .vnum")) return;
       if (window.getSelection && String(window.getSelection())) return;
 
       var hit = wordAt(e.clientX, e.clientY);
@@ -1190,7 +1218,10 @@
 
       var phrase = null;
       var m = query.match(/^\s*"(.+)"\s*$/);
-      if (m) phrase = m[1].toLowerCase().replace(/\s+/g, " ").trim();
+      // Folded, because the verses it will be compared against are folded:
+      // a phrase typed as "Caesar's household" has to meet "Cæsar's" on the
+      // page, and the index has already filed that chapter under "caesar".
+      if (m) phrase = fold(m[1]).replace(/\s+/g, " ").trim();
 
       var terms = tokenise(phrase || query);
       if (!terms.length) { status.textContent = ""; return; }
@@ -1215,15 +1246,39 @@
         var tbl = ctx.tbl, lookup = ctx.lookup;
 
         // Narrow to candidate chapters using the selective terms only.
+        //
+        // The narrowing has to use the same rule the verse test below uses,
+        // and that rule is a prefix: "jubilee" is meant to find "jubilees",
+        // and does, once the chapter is being read. The index files whole
+        // words, so asking it for the exact token and then prefix-matching
+        // inside whatever came back returns only the verses that happen to
+        // sit beside the exact spelling. Searching for "caesar" found 44 of
+        // the 59 verses that mention him: the other 15 say "Caesarea", which
+        // is a token of its own and so never made it into the candidates.
+        //
+        // Every token in the shard that starts with the term contributes its
+        // chapters instead. The largest shard holds about two thousand
+        // tokens, so this is a scan of a few thousand strings once per term.
         var candidate = null;
         var unknown = [];
         terms.forEach(function (t) {
           var k = /^[a-z]/.test(t) ? t[0] : "0";
-          var post = lookup[k] ? lookup[k][t] : undefined;
-          if (post === undefined) { unknown.push(t); return; }
-          if (post === 0) return;                 // too common to narrow with
-          var set = {};
-          post.forEach(function (c) { set[c] = 1; });
+          var table = lookup[k];
+          if (!table) { unknown.push(t); return; }
+
+          var set = null, matched = false, common = false;
+          for (var token in table) {
+            if (token.lastIndexOf(t, 0) !== 0) continue;      // startsWith
+            matched = true;
+            if (table[token] === 0) { common = true; break; } // no narrowing
+            if (set === null) set = {};
+            var post = table[token];
+            for (var i = 0; i < post.length; i++) set[post[i]] = 1;
+          }
+
+          if (!matched) { unknown.push(t); return; }
+          if (common || set === null) return;   // too common to narrow with
+
           if (candidate === null) candidate = set;
           else {
             var next = {};
@@ -1289,9 +1344,14 @@
 
               units.forEach(function (u) {
                 if (found >= LIMIT) return;
-                var low = u.t.toLowerCase();
+                // The same fold the index was built with. Comparing the
+                // raw text here would undo it: the index narrows to the
+                // chapter that has "Cæsar" in it and this test then throws
+                // every one of those verses away, so the search reports no
+                // match for a word it just located.
+                var low = fold(u.t).replace(/\s+/g, " ");
                 var ok = phrase
-                  ? low.replace(/\s+/g, " ").indexOf(phrase) !== -1
+                  ? low.indexOf(phrase) !== -1
                   : terms.every(function (t) { return new RegExp("\\b" + t, "i").test(low); });
                 if (!ok) return;
                 found++;
@@ -1596,8 +1656,20 @@
 
   function viewThread(threads, id) {
     var t = threads.filter(function (x) { return x.id === id; })[0];
-    if (!t) return el("div", { class: "wrap" },
-                      [el("p", { class: "empty", text: "No such thread." })]);
+    if (!t) {
+      return el("div", { class: "wrap" }, [
+        el("div", { class: "crumbs" }, [
+          el("a", { href: "#/threads", text: "Threads" })
+        ]),
+        el("h1", { text: "No such thread" }),
+        el("p", { class: "empty", text:
+          "There is no thread by that name. The ones there are are listed " +
+          "on the threads page." }),
+        el("p", {}, [
+          el("a", { class: "chip", href: "#/threads", text: "Every thread" })
+        ])
+      ]);
+    }
 
     var wrap = el("div", { class: "wrap" });
     wrap.appendChild(el("div", { class: "crumbs" }, [

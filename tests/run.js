@@ -12,7 +12,8 @@
 const path = require('path');
 const { serve, launch, Tally } = require('./harness');
 
-const SUITES = ['routes', 'layout', 'listening', 'offline'];
+const SUITES = ['routes', 'layout', 'search', 'words', 'keeping',
+                'resilience', 'listening', 'offline'];
 
 async function main() {
   const wanted = process.argv.slice(2);
