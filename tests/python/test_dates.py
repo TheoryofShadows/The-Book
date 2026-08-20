@@ -6,6 +6,7 @@ holds it to a coverage figure, so a change that quietly stops recognising a
 form shows up as a number rather than as a date card that went blank.
 """
 
+import re
 import unittest
 
 import _tools  # noqa: F401
@@ -337,3 +338,78 @@ class TheMethodPageMatchesTheParser(unittest.TestCase):
     def test_every_row_states_the_reason_the_parser_carries(self):
         for name, _span, why in self.rows:
             self.assertEqual(why, dates.PERIODS[name][2], name)
+
+
+class SectionDates(unittest.TestCase):
+    """The forms the volume's own section headings use.
+
+    These were found by trying to draw a timeline from them, at which point
+    three of the ten sections turned out to be losing half their range: the
+    span patterns could not see a hedge inside a span, could not see a span
+    whose two ends carry different eras, and read "before c. 900 BCE" as the
+    year 900 rather than as everything up to it.
+    """
+
+    def test_a_hedge_inside_the_span_does_not_eat_the_start(self):
+        s = dates.span("539 - c. 400 BCE")
+        self.assertEqual((s["frm"], s["to"]), (-539, -400))
+
+    def test_a_span_across_the_eras(self):
+        s = dates.span("c. 100 BCE - 50 CE")
+        self.assertEqual((s["frm"], s["to"]), (-100, 50))
+
+    def test_a_span_across_the_eras_is_not_read_as_its_second_half(self):
+        self.assertNotEqual(dates.span("c. 100 BCE - 50 CE")["frm"], 50)
+
+    def test_before_leaves_the_early_end_open(self):
+        s = dates.span("before c. 900 BCE")
+        self.assertEqual(s["open"], "before")
+        self.assertEqual(s["to"], -900)
+
+    def test_after_leaves_the_late_end_open(self):
+        self.assertEqual(dates.span("after 200 BCE")["open"], "after")
+
+    def test_an_ordinary_span_is_not_marked_open(self):
+        self.assertNotIn("open", dates.span("c. 760-700 BCE"))
+
+    def test_a_span_whose_end_is_hedged_is_not_marked_open(self):
+        # "539 - c. 400 BCE" has no "before" in it, but neither may a phrase
+        # like "from 539 to c. 400 BCE" be turned into an open span once the
+        # two ends have already been read.
+        self.assertNotIn("open", dates.span("from 539 to c. 400 BCE"))
+
+    def test_an_open_span_cannot_be_measured_against_anything(self):
+        self.assertIsNone(dates.distance(dates.span("before c. 900 BCE"),
+                                         dates.span("c. 500 BCE")))
+
+    def test_an_open_span_says_so_when_written_out(self):
+        self.assertEqual(dates.describe(dates.span("before c. 900 BCE")),
+                         "before c. 900 BCE")
+
+    def test_years_with_no_era_are_still_not_dates(self):
+        # Section X is dated 1896-1979 -- when the manuscripts were found, not
+        # when anything was written. Leaving it out of a composition timeline
+        # is the right answer, and falls out of the rule already in force.
+        self.assertIsNone(dates.span("1896-1979"))
+
+    def test_every_dated_section_of_the_volume_is_read(self):
+        import json
+        import os
+        path = os.path.join(_tools.ROOT, "docs", "data", "manifest.json")
+        with open(path, encoding="utf-8") as fh:
+            manifest = json.load(fh)
+        missed = []
+        for section in manifest["sections"]:
+            text = section.get("dates") or ""
+            if not section["works"] or not re.search(r"\b(BCE|CE)\b", text):
+                continue
+            sp = dates.span(text)
+            if not sp:
+                missed.append((section["name"], text))
+            else:
+                # A span that swallowed only half its range is the failure
+                # this class exists for, and it looks like success otherwise.
+                stated = [int(n) for n in re.findall(r"\b(\d{3,4})\b", text)]
+                if len(stated) > 1 and sp["frm"] == sp["to"]:
+                    missed.append((section["name"], text + " -> single point"))
+        self.assertEqual(missed, [], "sections whose dates were not fully read")

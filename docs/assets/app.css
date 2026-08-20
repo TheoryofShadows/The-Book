@@ -1081,3 +1081,88 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
 }
 
 @media print { .player { display: none; } }
+
+
+/* ---------- the timeline ----------
+   Every work as a bar on one axis. The length of a bar is the length of the
+   claim behind it, which is the thing a list of dates cannot show. */
+
+.tl-axis {
+  position: relative; height: 1.4rem; margin: .3rem 0 .2rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.tl-tick {
+  position: absolute; bottom: .15rem; transform: translateX(-50%);
+  font-family: var(--sans); font-size: .66rem; color: var(--ink-faint);
+  white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.tl-tick::after {
+  content: ""; position: absolute; left: 50%; bottom: -.35rem;
+  width: 1px; height: .3rem; background: var(--rule);
+}
+
+.tl-rows { display: flex; flex-direction: column; }
+
+.tl-row {
+  display: grid; align-items: center; gap: .5rem; padding: .12rem .25rem;
+  grid-template-columns: 13rem 1fr 8rem;
+  color: inherit; text-decoration: none; border-radius: 4px;
+}
+.tl-row:hover, .tl-row:focus-visible { background: var(--paper-2); }
+
+.tl-name {
+  font-size: .78rem; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tl-track {
+  position: relative; height: .62rem; border-radius: 2px;
+  background: var(--rule-soft);
+}
+
+.tl-bar {
+  position: absolute; top: 0; bottom: 0; border-radius: 2px;
+  background: var(--accent); min-width: 2px;
+}
+
+/* A span read from a century or a period commits to less than one read from
+   a year, and a work placed by its era commits to less still. Both are drawn
+   as the looser claims they are rather than being levelled up. */
+.tl-bar.century, .tl-bar.period, .tl-bar.decade { opacity: .7; }
+.tl-row.placed-section .tl-bar { background: var(--ink-faint); opacity: .45; }
+
+/* An open end runs off the edge instead of stopping at a year nobody stated. */
+.tl-bar.open-before {
+  border-top-left-radius: 0; border-bottom-left-radius: 0;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 3rem);
+  mask-image: linear-gradient(to right, transparent, #000 3rem);
+}
+.tl-bar.open-after {
+  border-top-right-radius: 0; border-bottom-right-radius: 0;
+  -webkit-mask-image: linear-gradient(to left, transparent, #000 3rem);
+  mask-image: linear-gradient(to left, transparent, #000 3rem);
+}
+
+.tl-when {
+  font-family: var(--sans); font-size: .68rem; color: var(--ink-faint);
+  text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+
+.tl-note {
+  margin: .9rem 0 0; padding-top: .6rem; border-top: 1px solid var(--rule-soft);
+  font-size: .8rem; color: var(--ink-soft);
+}
+.tl-note a { color: inherit; }
+
+.tl-undated { margin-top: .8rem; font-size: .82rem; }
+.tl-undated summary { cursor: pointer; color: var(--ink-soft); }
+.tl-undated-list { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .5rem; }
+
+/* On a phone the title needs the width more than the figure does, so the
+   figure goes under the bar. */
+@media (max-width: 40rem) {
+  .tl-row { grid-template-columns: 8.5rem 1fr; row-gap: .1rem; }
+  .tl-when { grid-column: 2; text-align: left; font-size: .64rem; }
+  .tl-name { font-size: .72rem; }
+}

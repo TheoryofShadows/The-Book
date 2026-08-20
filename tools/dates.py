@@ -66,8 +66,29 @@ DECADE_SPAN = re.compile(
     r"\b(\d{1,3})0s\s*[-–]\s*(\d{1,3})0s\s*(BCE|CE)\b", re.I)
 DECADE = re.compile(r"\b(\d{1,3})0s\s*(BCE|CE)\b", re.I)
 
-YEAR_SPAN = re.compile(r"\b(\d{1,4})\s*[-–]\s*(\d{1,4})\s*(BCE|CE)\b", re.I)
+# "c. 100 BCE - 50 CE": each end carries its own era, so the two-number
+# pattern below cannot see it and would read only the second half.
+# The separator is a dash or the word "to"; both are used in the volume.
+SEP = r"(?:\s*[-–]\s*|\s+to\s+)"
+
+CROSS_ERA = re.compile(
+    r"\b(\d{1,4})\s*(BCE|CE)" + SEP + r"(?:c\.|ca\.)?\s*(\d{1,4})\s*(BCE|CE)\b",
+    re.I)
+# The hedge is allowed to sit inside the span -- "539 - c. 400 BCE" -- which
+# is how the section dates in this volume are written. Without it the start
+# of the span is dropped and the section begins where it ends.
+YEAR_SPAN = re.compile(
+    r"\b(\d{1,4})" + SEP + r"(?:c\.|ca\.)?\s*(\d{1,4})\s*(BCE|CE)\b", re.I)
 YEAR = re.compile(r"\b(\d{1,4})\s*(BCE|CE)\b", re.I)
+
+# "before c. 900 BCE" states one end and leaves the other open. Giving it a
+# start would be inventing one, so the stated figure is recorded as both ends
+# and the openness is recorded beside it; a caller that draws a bar runs it
+# off the edge, and a caller measuring a distance refuses.
+OPEN_BEFORE = re.compile(r"\bbefore\b", re.I)
+# "from" is deliberately not here. "from 539 to c. 400 BCE" is a closed span
+# and reading it as an open one would throw away the end that is stated.
+OPEN_AFTER = re.compile(r"\b(after|no earlier than|onwards?)\b", re.I)
 
 APPROX = re.compile(r"\b(c\.|ca\.|about|around|roughly|perhaps|probably)", re.I)
 
@@ -127,6 +148,12 @@ def span(text: str) -> dict | None:
         frm, to = _decade_bounds(int(m.group(1)), m.group(2))
         return _span(min(frm, to), max(frm, to), "decade", True, m.group(0))
 
+    m = CROSS_ERA.search(text)
+    if m:
+        a = _signed(int(m.group(1)), m.group(2))
+        b = _signed(int(m.group(3)), m.group(4))
+        return _span(min(a, b), max(a, b), "explicit", approx, m.group(0))
+
     m = YEAR_SPAN.search(text)
     if m:
         a = _signed(int(m.group(1)), m.group(3))
@@ -136,7 +163,14 @@ def span(text: str) -> dict | None:
     m = YEAR.search(text)
     if m:
         year = _signed(int(m.group(1)), m.group(2))
-        return _span(year, year, "explicit", approx, m.group(0))
+        out = _span(year, year, "explicit", approx, m.group(0))
+        # Only when the hedge governs the whole statement, not when it is one
+        # end of something already read as a span above.
+        if OPEN_BEFORE.search(text):
+            out["open"] = "before"
+        elif OPEN_AFTER.search(text):
+            out["open"] = "after"
+        return out
 
     # Named periods last: a position that gives a year and also mentions the
     # period it falls in should be read by its year, which is the tighter
@@ -165,6 +199,8 @@ def label(year: int) -> str:
 def describe(sp: dict | None) -> str:
     if not sp:
         return "no numeric date"
+    if sp.get("open"):
+        return sp["open"] + " " + ("c. " if sp["approx"] else "") + label(sp["to"])
     if sp["frm"] == sp["to"]:
         return ("c. " if sp["approx"] else "") + label(sp["frm"])
     same_era = (sp["frm"] < 0) == (sp["to"] < 0)
@@ -181,6 +217,10 @@ def distance(a: dict | None, b: dict | None) -> int | None:
     are not in disagreement about the date, whatever else they disagree about.
     """
     if not a or not b:
+        return None
+    # One end unstated means the distance is unstated. Measuring from the
+    # figure that is given would report a confidence the position never had.
+    if a.get("open") or b.get("open"):
         return None
     if a["frm"] <= b["to"] and b["frm"] <= a["to"]:
         return 0

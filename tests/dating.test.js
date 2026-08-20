@@ -123,6 +123,111 @@ module.exports = async function dating(t, ctx) {
             return await page.locator('main a[href="#/method"]').count() >= 1;
           })());
 
+  /* ---- the whole library on one axis ---- */
+  await page.goto(ctx.base + '#/timeline');
+  await page.waitForSelector('.tl-row');
+  await page.waitForTimeout(400);
+
+  const shot = () => page.evaluate(() => ({
+    rows: document.querySelectorAll('.tl-row').length,
+    bySection: document.querySelectorAll('.tl-row.placed-section').length,
+    ticks: Array.from(document.querySelectorAll('.tl-tick')).map(t => t.textContent),
+    order: Array.from(document.querySelectorAll('.tl-row .tl-name'))
+                .slice(0, 6).map(n => n.textContent),
+    undated: (document.querySelector('.tl-undated summary') || {}).textContent || '',
+    bars: Array.from(document.querySelectorAll('.tl-bar')).map(b => ({
+      left: parseFloat(b.style.left), width: parseFloat(b.style.width)
+    }))
+  }));
+
+  const crit = await shot();
+  t.check('the timeline draws most of the library',
+          crit.rows > 90, crit.rows + ' works placed');
+
+  t.check('every bar has a position and a width on the axis',
+          crit.bars.length === crit.rows &&
+          crit.bars.every(b => b.left >= 0 && b.left <= 100 && b.width > 0),
+          crit.bars.length + ' bars');
+
+  t.check('the works come out in date order',
+          await page.evaluate(() => {
+            const at = Array.from(document.querySelectorAll('.tl-bar'))
+                            .map(b => parseFloat(b.style.left));
+            return at.every((v, i) => i === 0 || v >= at[i - 1] - 0.001);
+          }));
+
+  t.check('the axis is ruled in round years',
+          crit.ticks.length >= 3 && crit.ticks.every(x => /BCE|CE/.test(x)),
+          crit.ticks.join(', '));
+
+  /* There is no year zero, and a tick that says so is simply wrong. */
+  t.check('and never labels a year zero',
+          !crit.ticks.some(x => /^0\s*(BCE|CE)/.test(x)), crit.ticks.join(', '));
+
+  t.check('works placed by their era are marked as the looser claim',
+          crit.bySection > 0 && crit.bySection < crit.rows,
+          crit.bySection + ' of ' + crit.rows + ' placed by era');
+
+  t.check('the count of each is stated on the page',
+          /placed by the work's own dated position/i.test(
+            await page.textContent('.tl-note')));
+
+  t.check('works with no date under this column are listed, not dropped',
+          /carry no date under this column/.test(crit.undated) &&
+          await page.locator('.tl-undated .chip').count() > 0,
+          crit.undated);
+
+  t.check('and the page says why that is not a gap in the data',
+          /nothing here is a gap in the data/i.test(
+            await page.textContent('.tl-undated')));
+
+  /* ---- switching the column reorders the library ---- */
+  await page.locator('.seg button', { hasText: 'Traditional' }).click();
+  await page.waitForTimeout(400);
+  const trad = await shot();
+
+  t.check('switching to the traditional dating redraws the order',
+          trad.order[0] !== crit.order[0],
+          crit.order[0] + ' -> ' + trad.order[0]);
+
+  t.check('and the Torah moves to the front, which is the disagreement',
+          /genesis|exodus|leviticus|numbers|deuteronomy/i.test(trad.order[0]),
+          trad.order.slice(0, 3).join(' | '));
+
+  t.check('the axis is redrawn to fit, not left on the old scale',
+          trad.ticks[0] !== crit.ticks[0],
+          crit.ticks[0] + ' -> ' + trad.ticks[0]);
+
+  t.check('more works fall back to their era under the traditional column',
+          trad.bySection > crit.bySection,
+          crit.bySection + ' -> ' + trad.bySection);
+
+  await page.reload();
+  await page.waitForSelector('.tl-row');
+  await page.waitForTimeout(400);
+  t.check('the chosen column is remembered',
+          await page.locator('.seg button[aria-pressed=true]').textContent() ===
+          'Traditional dating');
+
+  /* An open-ended range must not be printed as the year it stops at. */
+  const whens = await page.locator('.tl-when').allTextContents();
+  t.check('a range with one end unstated says so rather than naming a date',
+          whens.some(w => /^before |^after /.test(w)),
+          whens.filter(w => /^before |^after /.test(w))[0] || 'none found');
+
+  t.check('every row links to the work it stands for',
+          await page.locator('.tl-row[href^="#/read/"]').count() === trad.rows);
+
+  await page.locator('.seg button', { hasText: 'Critical' }).click();
+  await page.waitForTimeout(300);
+
+  /* ---- and it is reachable ---- */
+  await page.goto(ctx.base + '#/');
+  await page.waitForSelector('h1');
+  await page.waitForTimeout(400);
+  t.check('the timeline is linked from the front page',
+          await page.locator('main a[href="#/timeline"]').count() >= 1);
+
   /* ---- citing a passage ----
      A reference to this volume is worth having only if it names the edition
      and where the passage sits in the order. Neither is in the reference a

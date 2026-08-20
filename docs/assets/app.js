@@ -214,7 +214,12 @@
       el("p", { html:
         'The <a href="#/accuracy">accuracy report</a> lists exactly what was ' +
         "verified against reference counts, what was corrected, and what is still " +
-        "missing from the public-domain sources." })
+        "missing from the public-domain sources. " +
+        '<a href="#/method">How the dating was decided</a> states the ' +
+        "decisions the order rests on, and " +
+        '<a href="#/timeline">the library on one axis</a> draws every work as ' +
+        "the range its position actually commits to — under either column, so " +
+        "you can watch the order change." })
     ]));
 
     var line = el("div", { class: "timeline" });
@@ -701,6 +706,9 @@
   function spanText(sp) {
     if (!sp) return "no date given";
     var head = sp.approx ? "c. " : "";
+    /* One end unstated. Printing the figure alone would turn "before c. 900
+       BCE" into a claim that something was written in 900 BCE. */
+    if (sp.open) return sp.open + " " + head + yearText(sp.to);
     if (sp.frm === sp.to) return head + yearText(sp.frm);
     if ((sp.frm < 0) === (sp.to < 0)) {
       return head + Math.abs(sp.frm) + "–" + yearText(sp.to);
@@ -1847,6 +1855,176 @@
      ================================================================ */
 
   /* ================================================================
+     TIMELINE -- the whole library on one axis, under either dating
+     ------------------------------------------------------------------
+     The home page is the arrangement as a reader walks it: era by era, in
+     order. This is the same library seen side-on, every work a bar on a
+     shared scale, and it exists to make two things visible that a list
+     cannot.
+
+     The first is how much of the library is a guess about a range rather
+     than a date. A bar that runs three centuries is not a book we know less
+     about than its neighbour; it is a book whose position says three
+     centuries, and reading that as a point is the mistake this view is meant
+     to stop.
+
+     The second is what happens when you switch the dating. Under the
+     traditional column the Torah moves eight hundred years and lands on top
+     of everything else. That is the disagreement this volume is about, and
+     it is worth being able to see rather than read.
+     ================================================================ */
+
+  /* Where a bar comes from, in the reader's terms. A work with a position
+     record of its own is placed by it; the rest are placed by the era they
+     are filed under, which is a looser claim and is drawn as one. */
+  var PLACED = {
+    own: "from this work's own dated position",
+    section: "from the era it is filed under, no dated position of its own"
+  };
+
+  function timelineRows(manifest, mode) {
+    var rows = [];
+    manifest.sections.forEach(function (s) {
+      s.works.forEach(function (w) {
+        var own = w.positions && w.positions.span && w.positions.span[mode];
+        var sp = own || s.span || null;
+        rows.push({
+          id: w.id, title: w.title, section: s, span: sp,
+          placed: own ? "own" : (s.span ? "section" : null),
+          words: w.words
+        });
+      });
+    });
+    return rows;
+  }
+
+  function viewTimeline(manifest) {
+    var wrap = el("div", { class: "wrap-wide" });
+    wrap.appendChild(el("h1", { text: "The library on one axis" }));
+    wrap.appendChild(el("p", { class: "lede", text:
+      "Every work in the volume, drawn against time. A bar is a range, not a " +
+      "date: its length is how much the position it comes from actually " +
+      "commits to." }));
+
+    var mode = store.get("timeline-mode", "crit");
+    var body = el("div");
+
+    var seg = el("div", { class: "seg" });
+    [["crit", "Critical dating"], ["trad", "Traditional dating"]].forEach(function (p) {
+      seg.appendChild(el("button", {
+        "aria-pressed": mode === p[0] ? "true" : "false",
+        text: p[1],
+        onclick: function () {
+          mode = p[0];
+          store.set("timeline-mode", mode);
+          Array.prototype.forEach.call(seg.children, function (b) {
+            b.setAttribute("aria-pressed",
+                           b.textContent === p[1] ? "true" : "false");
+          });
+          announce(p[1] + ": the order is redrawn");
+          render();
+        }
+      }));
+    });
+    wrap.appendChild(el("div", { class: "toolbar" }, [seg]));
+    wrap.appendChild(body);
+
+    function render() {
+      body.innerHTML = "";
+      var rows = timelineRows(manifest, mode);
+      var dated = rows.filter(function (r) { return r.span; });
+      var undated = rows.filter(function (r) { return !r.span; });
+
+      if (!dated.length) {
+        body.appendChild(el("p", { class: "empty", text:
+          "No work in the volume carries a date under this column." }));
+        return;
+      }
+
+      /* Sorted by where the bar starts, so switching the column really does
+         reorder the library rather than recolouring it. */
+      dated.sort(function (a, b) {
+        return a.span.frm - b.span.frm || a.span.to - b.span.to;
+      });
+
+      var lo = Math.min.apply(null, dated.map(function (r) { return r.span.frm; }));
+      var hi = Math.max.apply(null, dated.map(function (r) { return r.span.to; }));
+      var pad = Math.round((hi - lo) * 0.03) || 25;
+      lo -= pad; hi += pad;
+      var at = function (y) { return ((y - lo) / (hi - lo)) * 100; };
+
+      /* A ruler the eye can hold: round centuries, thinned so the labels
+         never collide on a phone. */
+      var axis = el("div", { class: "tl-axis" });
+      var step = (hi - lo) > 1600 ? 400 : (hi - lo) > 700 ? 200 : 100;
+      var first = Math.ceil(lo / step) * step;
+      for (var y = first; y <= hi; y += step) {
+        /* There is no year zero: the tick that lands there is the boundary
+           between the eras, not a date, and saying "0 CE" would be wrong. */
+        var tick = el("span", { class: "tl-tick",
+                                text: y === 0 ? "BCE | CE" : yearText(y) });
+        tick.style.left = at(y) + "%";
+        axis.appendChild(tick);
+      }
+      body.appendChild(axis);
+
+      var list = el("div", { class: "tl-rows" });
+      dated.forEach(function (r) {
+        var row = el("a", {
+          class: "tl-row placed-" + r.placed,
+          href: "#/read/" + r.id + "/0"
+        });
+        row.appendChild(el("span", { class: "tl-name", text: titleCase(r.title) }));
+
+        var track = el("span", { class: "tl-track" });
+        var bar = el("span", {
+          class: "tl-bar " + r.span.kind + (r.span.open ? " open-" + r.span.open : "")
+        });
+        var left = r.span.open === "before" ? 0 : at(r.span.frm);
+        var right = r.span.open === "after" ? 100 : at(r.span.to);
+        bar.style.left = left + "%";
+        bar.style.width = Math.max(0.8, right - left) + "%";
+        track.appendChild(bar);
+        row.appendChild(track);
+
+        row.appendChild(el("span", { class: "tl-when", text: spanText(r.span) }));
+        row.title = titleCase(r.title) + " — " + spanText(r.span) + "\n" +
+                    PLACED[r.placed];
+        list.appendChild(row);
+      });
+      body.appendChild(list);
+
+      var byOwn = dated.filter(function (r) { return r.placed === "own"; }).length;
+      body.appendChild(el("p", { class: "tl-note", html:
+        "<strong>" + fmt(byOwn) + "</strong> of these " + fmt(dated.length) +
+        " are placed by the work's own dated position, each with its citation " +
+        "on the work itself. The rest are placed by the era they are filed " +
+        "under, which is a looser claim, and are drawn fainter. " +
+        "<a href=\"#/method\">How the dating was decided</a>." }));
+
+      if (undated.length) {
+        body.appendChild(el("details", { class: "tl-undated" }, [
+          el("summary", { text: fmt(undated.length) +
+            " works carry no date under this column" }),
+          el("p", { class: "muted", text:
+            "Nothing here is a gap in the data. Under the traditional column " +
+            "many positions name a person rather than a time, and the later " +
+            "collections — the Testaments, the Apostolic Fathers, the " +
+            "Shepherd — are filed after the numbered eras and have no era " +
+            "range to fall back on." }),
+          el("div", { class: "tl-undated-list" }, undated.map(function (r) {
+            return el("a", { class: "chip", href: "#/read/" + r.id + "/0",
+                             text: titleCase(r.title) });
+          }))
+        ]));
+      }
+    }
+
+    render();
+    return wrap;
+  }
+
+  /* ================================================================
      METHOD -- how the order was decided, stated so it can be argued with
      ================================================================ */
 
@@ -1943,6 +2121,16 @@
         "the two positions admit a common date. Amos is dated the same way " +
         "by both columns and they still differ about whether the last five " +
         "verses are his." }
+    ]);
+
+    part("Seeing it", [
+      { html: "<a href=\"#/timeline\">The library on one axis</a> draws every " +
+        "work as a bar, under either column. Switching the column reorders " +
+        "the whole library: under the traditional dating the Torah moves " +
+        "eight hundred years and lands on top of everything else. A bar " +
+        "placed by a work's own dated position is drawn solid; one placed by " +
+        "the era it is filed under is drawn fainter, because it is a looser " +
+        "claim." }
     ]);
 
     part("Arguing with it", [
@@ -3288,6 +3476,13 @@
             : viewThreads(threads));
           window.scrollTo(0, 0);
         });
+      }
+      if (view === "timeline") {
+        setNav("");
+        main.innerHTML = "";
+        main.appendChild(viewTimeline(manifest));
+        window.scrollTo(0, 0);
+        return;
       }
       if (view === "method") {
         setNav("accuracy");

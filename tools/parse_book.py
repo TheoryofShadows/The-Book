@@ -460,6 +460,11 @@ def main() -> None:
             "roman": section["roman"],
             "name": section["name"],
             "dates": section["dates"],
+            # The section heading's own range, read the same way a position
+            # is. It places the works that carry no position record of their
+            # own, which is most of them, and the timeline says which of the
+            # two a bar came from rather than blurring them together.
+            "span": dates.span(section["dates"] or ""),
             "intro": section["intro"],
             "works": [],
         }

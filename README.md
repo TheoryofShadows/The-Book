@@ -68,6 +68,15 @@ About two in five traditional positions have none, which is a fact about the
 tradition rather than a gap in the data. A span read from a century or a named
 period is drawn as the looser claim it is.
 
+**The library on one axis** draws every work as a bar against time, under
+either column. Switching the column reorders the whole library: under the
+traditional dating the Torah moves eight hundred years and lands on top of
+everything else, which is the disagreement this volume is about. A bar placed
+by a work's own dated position is drawn solid; one placed by the era it is
+filed under is drawn fainter, because it is a looser claim; a range with one
+end unstated runs off the edge rather than stopping at a year nobody named.
+The works that carry no date under a column are listed rather than dropped.
+
 [How the dating was decided](#) is a page of its own: what the arrangement is
 and is not, where each date comes from, how the bars are derived, the boundary
 of every named period and the event that fixes it, and the two things the bars
