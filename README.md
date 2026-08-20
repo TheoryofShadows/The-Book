@@ -95,6 +95,32 @@ Gaps inherited from the source editions, left honest rather than invented:
 - The Dead Sea Scrolls appear as summaries — every English translation of the
   1947-and-later finds is under copyright.
 
+## Listening to it
+
+Every chapter can be read aloud. There is no audiobook of these translations
+in the public domain and 1.13 million words cannot be recorded, so the reading
+is done by the speech engine already in the browser: press **Listen** in any
+chapter, or `l`.
+
+- The verse being spoken is marked, and the word inside it is highlighted where
+  the browser supports the Custom Highlight API.
+- Speed, voice, time remaining and a sleep timer are in the player.
+- It announces each chapter, then runs on: to the next chapter, and at the end
+  of a work into the work written next, stepping over the entries that carry no
+  text. Left alone it plays the library in composition order. The toggle in the
+  player stops it at the end of the chapter instead.
+- Where you stopped is remembered per chapter, the way **Resume** works for
+  reading, and any verse can be the starting point from its verse menu.
+
+The voices are the ones your device has installed, and they are synthetic: no
+audio is downloaded, no text is sent anywhere, and it works offline. A browser
+with no speech support is not offered the control at all, and a device that
+has the support but no installed voice — a Linux desktop without
+speech-dispatcher, for instance — is told exactly that rather than left
+pressing a button that does nothing. On a phone the reading
+usually stops when the screen locks or you switch app — the browser suspends
+the page, and this is speech, not a track playing in the background.
+
 ## Building it
 
 ```bash
@@ -108,15 +134,48 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | `tools/audit.py` | Checks chapter and verse counts against reference figures |
 | `tools/build_canon.py` | Builds canon membership and checks coverage claims |
 | `tools/build_index.py` | Builds the sharded search index |
+| `tools/build_standalone.py` | Inlines the whole library into one HTML file that runs offline |
+| `tools/test.sh` | Runs the browser checks in `tests/` |
 
 The audit is the point: if a count on the site is wrong, `tools/audit.py` will
 say so. Findings are stated so they can be falsified.
+
+## Checking it
+
+The audit checks the text. The browser checks check the reader — that it
+renders, that it fits a phone, and that reading aloud says the right words in
+the right order.
+
+```bash
+./tools/test.sh                     # everything
+./tools/test.sh listening           # one suite
+```
+
+The site itself still has no dependencies. These need Node, and install
+Playwright and a Chromium into `tests/node_modules` on first run; set
+`CHROME_PATH` to use a browser already on the machine instead. Both the audit
+and the browser checks run on every pull request.
+
+| Suite | Checks |
+| --- | --- |
+| `routes` | Every page renders, search returns verses, a saved verse survives a reload, nothing throws |
+| `layout` | At 320–430px every nav link is on screen, nothing scrolls sideways, the bar tucks away as you read, desktop is unchanged |
+| `listening` | What is spoken and in what order, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |
+| `offline` | The single-file build opens from `file://` and every feature in it works with no network at all |
+
+**What they cannot check: whether a voice actually sounds right.** A headless
+browser has no speech engine — the one these run in reports zero voices and
+fails every utterance — so the engine is replaced with a stand-in that records
+what it was asked to say. Everything above that line is the site's own code.
+The last inch, audible sound, needs a real device.
 
 ## How the site works
 
 Static files only — no build step, no dependencies, no tracking. Work texts and
 search-index shards are fetched on demand, so the first paint is small even
-though the library is seven megabytes.
+though the library is seven megabytes. Read-aloud is the browser's own
+`speechSynthesis`, with each passage cut into utterances short enough to clear
+Chrome's fifteen-second cut-off.
 
 Search is a two-stage design: a chapter-granularity inverted index (1.45 MB
 across 27 shards) narrows candidates, then only the matching works are fetched

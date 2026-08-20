@@ -1,0 +1,57 @@
+name: Checks
+
+# The deploy workflow rebuilds the data on main. This runs on the branches
+# and pull requests where a mistake can still be caught before it is merged,
+# and adds the browser checks, which the deploy workflow does not run.
+# Pull requests only: a branch push with a pull request open would otherwise
+# run everything twice for the same commit.
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  data:
+    name: Data matches the source text
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Rebuild every data file from source
+        run: ./tools/build.sh
+      - name: Check nothing drifted
+        run: |
+          if ! git diff --quiet -- docs/data; then
+            echo "::error::docs/data is out of date with source/. Run ./tools/build.sh and commit."
+            git diff --stat -- docs/data
+            exit 1
+          fi
+      - name: Audit chapter and verse counts
+        run: python3 tools/audit.py docs/data
+
+  reader:
+    name: The reader works in a browser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Playwright's own Chromium, pinned by tests/package-lock.json.
+      - name: Install the test dependencies
+        run: npm --prefix tests ci
+      - name: Install Chromium
+        run: npm --prefix tests exec -- playwright install --with-deps chromium
+      - name: Run the browser checks
+        run: node tests/run.js

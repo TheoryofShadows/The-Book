@@ -3,3 +3,5 @@ node_modules/
 # Gutenberg source etexts are fetched by tools/fetch_extras.sh, not vendored
 __pycache__/
 *.py[cod]
+# Playwright and its browser, installed by tools/test.sh on first run
+tests/node_modules/
