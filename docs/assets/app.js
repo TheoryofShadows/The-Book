@@ -1808,17 +1808,36 @@
   /* The novelties and the MacinTalk set, by name, because that is how they
      arrive. Any of them can still be chosen; none is ever chosen for you. */
   var NOVELTY = /^(albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|junior|kathy|organ|pipe organ|princess|ralph|superstar|trinoids|whisper|wobble|zarvox|agnes|bruce|fred|vicki|victoria)\b/i;
-  /* Apple's standard English voices, which carry no marker in their names
-     and are perfectly good to listen to. */
+  /* Apple's standard English voices, which carry no marker in their names. */
   var MODERN  = /^(alex|allison|ava|aaron|daniel|evan|fiona|joelle|karen|moira|nathan|nicky|noelle|rishi|samantha|serena|susan|tessa|tom|zoe)\b/i;
+
+  /* Everything above reads the name, because on Windows, Android and Linux
+     the name is where the quality is written. Apple does the opposite: the
+     name is bare and the quality is in the identifier. The same Samantha is
+
+       com.apple.voice.compact.en-US.Samantha     nothing downloaded
+       com.apple.voice.enhanced.en-US.Samantha    the free download
+       com.apple.voice.premium.en-US.Samantha     the larger free download
+
+     and an iPhone out of the box has only the compact set — the thin,
+     clipped reading this whole change is about. Reading only the name filed
+     that under "best on this device" and said nothing, which was worse than
+     useless: it is the one case where the reader has to be told, because the
+     fix is a download in Settings and no web page can do it for them. */
+  var APPLE_BETTER  = /\b(premium|enhanced)\b/i;
+  var APPLE_COMPACT = /\bcompact\b/i;
 
   function isEnglish(v) { return /^en(-|_|$)/i.test(v.lang || ""); }
 
   /* Three drawers rather than a ranking the reader cannot see: what to use,
      what else is here, and what not to be surprised by. */
   function voiceTier(v) {
-    var name = v.name || "";
+    var name = v.name || "", uri = v.voiceURI || "";
     if (NOVELTY.test(name) || !isEnglish(v)) return 2;
+    // Apple's own tiering, where it keeps it, and ahead of the name so a
+    // compact Samantha is not promoted on the strength of being a Samantha.
+    if (APPLE_BETTER.test(uri)) return 0;
+    if (APPLE_COMPACT.test(uri)) return 1;
     if (POOR.test(name)) return 1;
     if (GOOD.test(name) || GOOGLE.test(name) || MODERN.test(name) ||
         v.localService === false) return 0;
@@ -1845,6 +1864,11 @@
     if (GOOD.test(name)) s += 60;
     if (GOOGLE.test(name)) s += 45;
     if (MODERN.test(name)) s += 30;
+    // Where Apple writes the quality, so a downloaded voice outranks the
+    // stock one of the same name rather than tying with it.
+    var uri = v.voiceURI || "";
+    if (APPLE_BETTER.test(uri)) s += 70;
+    else if (APPLE_COMPACT.test(uri)) s -= 40;
     // Chrome and Android synthesise their good voices on a server and their
     // stopgaps on the device, so this is a quality signal as much as a
     // network one. Safari runs everything locally and simply scores flat.
@@ -2226,7 +2250,14 @@
      voice's; it comes off, and the language goes back on cleanly. */
   function voiceLabel(v) {
     var name = String(v.name || "Voice").replace(/\s+[-–]\s+[^-–]*\(.*\)\s*$/, "").trim();
-    return (name || "Voice") + " · " + langLabel(v.lang);
+    var label = (name || "Voice") + " · " + langLabel(v.lang);
+    // Apple ships several voices under one name and tells them apart only in
+    // the identifier, so the drawer would otherwise show the same word twice
+    // with no way to know which is the one worth having.
+    var grade = APPLE_BETTER.exec(v.voiceURI || "") ||
+                APPLE_COMPACT.exec(v.voiceURI || "");
+    if (grade) label += " · " + titleCase(grade[0].toLowerCase());
+    return label;
   }
 
   var TIERS = ["Best on this device", "Other voices",
@@ -2257,14 +2288,19 @@
      belongs to the operating system, not to the site. When the drawer holds
      nothing better than a relic, saying where better voices come from is more
      use to the reader than letting them conclude the site is broken. */
-  var VOICE_HELP =
-    "Windows: Settings › Time & language › Speech › Manage voices. " +
-    "macOS: System Settings › Accessibility › Spoken Content › System voice › " +
-    "Manage Voices, where the Enhanced and Premium downloads are. " +
-    "iOS: Settings › Accessibility › Spoken Content › Voices. " +
-    "Android: Settings › Accessibility › Text-to-speech output. " +
-    "Linux: install a neural engine such as Piper, or speech-dispatcher with " +
-    "a better module than eSpeak.";
+  var VOICE_HELP = [
+    ["iPhone and iPad", "Settings › Accessibility › Spoken Content › Voices › " +
+     "English — pick a voice and download the Enhanced or Premium one. The " +
+     "stock voices are the compact set, and they are the thin ones."],
+    ["macOS", "System Settings › Accessibility › Spoken Content › System voice › " +
+     "Manage Voices, where the Enhanced and Premium downloads are."],
+    ["Windows", "Settings › Time & language › Speech › Manage voices, and the " +
+     "Natural voices in Narrator's settings."],
+    ["Android", "Settings › Accessibility › Text-to-speech output › " +
+     "install voice data."],
+    ["Linux", "install a neural engine such as Piper, or speech-dispatcher " +
+     "with a better module than eSpeak."]
+  ];
 
   function bestIsPoor() {
     if (!voices.length) return false;
@@ -2274,16 +2310,25 @@
     return true;
   }
 
+  /* A title attribute is a tooltip, and a tooltip on a phone is nothing at
+     all — which is where this matters most. So it opens instead. */
+  function buildHint() {
+    var box = el("details", { class: "player-hint", hidden: true }, [
+      el("summary", { text:
+        "No high-quality voice is installed on this device — better ones are " +
+        "a free download. How ›" })
+    ]);
+    VOICE_HELP.forEach(function (row) {
+      box.appendChild(el("p", {}, [
+        el("strong", { text: row[0] + ": " }), row[1]
+      ]));
+    });
+    return box;
+  }
+
   function updateHint() {
     if (!hintEl) return;
-    var poor = bestIsPoor();
-    hintEl.hidden = !poor;
-    if (poor) {
-      hintEl.textContent =
-        "This device has no high-quality voice installed. Better ones are a " +
-        "free download in its own speech settings.";
-      hintEl.title = VOICE_HELP;
-    }
+    hintEl.hidden = !bestIsPoor();
   }
 
   /* Only the person listening can say whether a voice is bearable, and a
@@ -2337,7 +2382,7 @@
         else previewVoice();   // picked while stopped: let it be heard
       }
     });
-    hintEl = el("p", { class: "player-hint", hidden: true });
+    hintEl = buildHint();
     fillVoices();
 
     var tryIt = el("button", {
