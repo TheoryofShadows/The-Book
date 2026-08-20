@@ -3,10 +3,9 @@ name: Checks
 # The deploy workflow rebuilds the data on main. This runs on the branches
 # and pull requests where a mistake can still be caught before it is merged,
 # and adds the browser checks, which the deploy workflow does not run.
+# Pull requests only: a branch push with a pull request open would otherwise
+# run everything twice for the same commit.
 on:
-  push:
-    branches-ignore:
-      - main
   pull_request:
   workflow_dispatch:
 
@@ -45,7 +44,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

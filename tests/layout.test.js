@@ -7,6 +7,21 @@ const { workingEngine } = require('./harness');
 
 const PHONES = [320, 360, 390, 430];
 
+/* Scrolling is smooth site-wide, so a fixed wait is a bet on how fast the
+   machine is -- one that CI loses. These jump instead, and every assertion
+   about the bar waits for the state rather than for the clock. */
+const jumpScroll = page => page.evaluate(
+  () => { document.documentElement.style.scrollBehavior = 'auto'; });
+
+const tucked = page => page.evaluate(
+  () => document.querySelector('.topbar').classList.contains('tucked'));
+
+async function waitTucked(page, want, ms) {
+  return page.waitForFunction(
+    w => document.querySelector('.topbar').classList.contains('tucked') === w,
+    want, { timeout: ms || 4000 }).then(() => true).catch(() => false);
+}
+
 const ROUTES = ['#/', '#/threads', '#/contents', '#/search/lion', '#/canons',
                 '#/saved', '#/accuracy', '#/read/amos/2', '#/read/psalms/118'];
 
@@ -16,6 +31,7 @@ module.exports = async function layout(t, ctx) {
       await ctx.browser.newPage({ viewport: { width, height: 760 } }), width + 'px');
     await page.goto(ctx.base + '#/read/amos/2');
     await page.waitForSelector('.reader .v');
+    await jumpScroll(page);
 
     const links = await page.evaluate(vw => Array.from(document.querySelectorAll('.nav a'))
       .map(a => {
@@ -37,34 +53,29 @@ module.exports = async function layout(t, ctx) {
             await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
 
     /* The bar is sticky and two rows tall, so it earns its keep by leaving. */
+    // The class goes on first and the bar then slides; wait for it to have
+    // actually left, which is the thing being claimed.
     await page.evaluate(() => window.scrollTo(0, 600));
-    await page.waitForTimeout(350);
-    const gone = await page.evaluate(() => {
-      const b = document.querySelector('.topbar');
-      return { tucked: b.classList.contains('tucked'),
-               offScreen: b.getBoundingClientRect().bottom <= 1 };
-    });
-    t.check(`${width}px: reading down puts the bar away`, gone.tucked && gone.offScreen,
-            JSON.stringify(gone));
+    t.check(`${width}px: reading down puts the bar away`,
+            await page.waitForFunction(
+              () => document.querySelector('.topbar').getBoundingClientRect().bottom <= 1,
+              null, { timeout: 4000 }).then(() => true).catch(() => false));
 
     await page.evaluate(() => window.scrollTo(0, 380));
-    await page.waitForTimeout(350);
     t.check(`${width}px: turning back up brings it straight back`,
-            !(await page.evaluate(() => document.querySelector('.topbar').classList.contains('tucked'))));
+            await waitTucked(page, false));
 
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(200);
     await page.evaluate(() => window.scrollTo(0, 90));
-    await page.waitForTimeout(300);
-    t.check(`${width}px: it stays put near the top of the page`,
-            !(await page.evaluate(() => document.querySelector('.topbar').classList.contains('tucked'))));
+    await page.waitForTimeout(400);
+    t.check(`${width}px: it stays put near the top of the page`, !(await tucked(page)));
 
     await page.evaluate(() => window.scrollTo(0, 900));
-    await page.waitForTimeout(300);
+    await waitTucked(page, true);
     await page.evaluate(() => { location.hash = '#/accuracy'; });
-    await page.waitForTimeout(450);
-    t.check(`${width}px: a new page opens with the bar showing`,
-            !(await page.evaluate(() => document.querySelector('.topbar').classList.contains('tucked'))));
+    await page.waitForSelector('h1');
+    t.check(`${width}px: a new page opens with the bar showing`, !(await tucked(page)));
     await page.close();
   }
 
@@ -102,13 +113,12 @@ module.exports = async function layout(t, ctx) {
   await reader.waitForSelector('.reader .v');
   await reader.locator('[data-listen]').click();
   await reader.waitForSelector('.player:not([hidden])');
+  await jumpScroll(reader);
   await reader.evaluate(() => window.scrollTo(0, 800));
-  await reader.waitForTimeout(350);
+  const barGone = await waitTucked(reader, true);
   t.check('the player stays put while the bar tucks away',
-          await reader.evaluate(() => !document.querySelector('.player').hidden &&
-                                      document.querySelector('.topbar').classList.contains('tucked')));
+          barGone && await reader.evaluate(() => !document.querySelector('.player').hidden));
   await reader.locator('.player-play').click();          // stop it moving the page under us
-  await reader.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; });
   await reader.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await reader.waitForTimeout(500);
   t.check('and never covers the end of the page',
@@ -127,8 +137,9 @@ module.exports = async function layout(t, ctx) {
   t.check('desktop: the nav is still one row beside the wordmark',
           await desk.evaluate(() => new Set(Array.from(document.querySelectorAll('.nav a'))
             .map(a => Math.round(a.getBoundingClientRect().y))).size) === 1);
+  await jumpScroll(desk);
   await desk.evaluate(() => window.scrollTo(0, 1200));
-  await desk.waitForTimeout(350);
+  await desk.waitForTimeout(400);
   t.check('desktop: the bar stays where it is',
           await desk.evaluate(() => !document.querySelector('.topbar').classList.contains('tucked') &&
                                     document.querySelector('.topbar').getBoundingClientRect().y === 0));
