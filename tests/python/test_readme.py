@@ -74,9 +74,9 @@ class TheHeadline(unittest.TestCase):
 
 
 class WhatCountsAsAWork(unittest.TestCase):
-    """The headline counts 165. Nine of them are not texts.
+    """The headline counts 166. Nine of them are not texts.
 
-    Checking that 165 matches manifest.totals.works proves the arithmetic
+    Checking that the count matches manifest.totals.works proves the arithmetic
     and nothing else -- the number was never the doubtful part, the noun
     was. Two of the entries are editorial asides, four are notes on
     manuscript discoveries, and three are placeholders for material the
@@ -92,8 +92,8 @@ class WhatCountsAsAWork(unittest.TestCase):
 
     def test_the_split_between_text_and_apparatus(self):
         texts = [w for w in self.works if w.get("words")]
-        self.assertEqual(len(self.works), 165)
-        self.assertEqual(len(texts), 156)
+        self.assertEqual(len(self.works), 166)
+        self.assertEqual(len(texts), 157)
         self.assertEqual(len(self.works) - len(texts), 9)
 
     def test_the_readme_says_how_many_carry_text(self):
@@ -164,7 +164,11 @@ class WhatTheFrontMatterClaimsIsMissing(unittest.TestCase):
 
 
 class TheAbsentBooks(unittest.TestCase):
-    """Five books of the Ethiopian canon are missing, and now say why.
+    """Four books of the Ethiopian canon are missing, and each says why.
+
+    There were five. The Ethiopic Didascalia was added from Platt's 1834
+    printing; the other four have no English translation old enough to be
+    public domain, and that is now recorded rather than left blank.
 
     The coverage table named them and stopped, which is a gap asserted
     without a citation -- the one move this volume says it does not make.
@@ -184,7 +188,6 @@ class TheAbsentBooks(unittest.TestCase):
             ["4 Baruch (Paraleipomena Jeremiou)",
              "Book of the Covenant (Mets'hafe Kidan)",
              "Ethiopic Clement (Qalementos)",
-             "Ethiopic Didascalia",
              "Sinodos"])
 
     def test_every_absence_carries_a_reason_and_a_source(self):
@@ -193,15 +196,6 @@ class TheAbsentBooks(unittest.TestCase):
                             f"{b['name']} is absent with no reason")
             self.assertTrue(b.get("absentSource", "").strip(),
                             f"{b['name']} gives no source for its reason")
-
-    def test_the_one_that_could_be_added_says_so(self):
-        """The Didascalia is the only one held back by judgement, not by
-        the absence of a public-domain translation. That distinction is
-        the useful part of the whole table."""
-        d = next(b for b in self.absent if b["name"] == "Ethiopic Didascalia")
-        self.assertIn("Platt", d["absentSource"])
-        self.assertIn("1834", d["absentSource"])
-        self.assertIn("public-domain English translation exists", d["absentWhy"])
 
 
 class TheGazetteer(unittest.TestCase):

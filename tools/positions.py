@@ -41,6 +41,30 @@ from __future__ import annotations
 TALMUD = "Talmud, Bava Batra 14b-15a"
 
 POSITIONS: dict[str, dict] = {
+    "the-ethiopic-didascalia": {
+        "trad": "c. 50 CE",
+        "tradWhy": "The work opens by naming its own authors and occasion: "
+                   "\u201cWe the Twelve Apostles, Messengers of the only-begotten "
+                   "Son Jesus Christ, being assembled together in Jerusalem\u201d, "
+                   "with Paul and with James the brother of the Lord presiding as "
+                   "bishop of the city. That is the council of Acts 15, and the "
+                   "Ethiopian church receives the book on those terms.",
+        "tradSource": "The text's own opening charge, Platt 1834, p. 1",
+        "crit": "3rd century CE",
+        "critWhy": "The Didascalia Apostolorum is a Greek church order composed "
+                   "in northern Syria, generally placed in the third century; the "
+                   "Apostles' names are the convention of the genre rather than a "
+                   "claim of authorship. What is printed here is later still: the "
+                   "Ethiopic is a translation of a translation, reaching Ge'ez "
+                   "through Arabic, and its own date is medieval.",
+        "critSource": "R. H. Connolly, Didascalia Apostolorum: The Syriac Version "
+                      "Translated and Accompanied by the Verona Latin Fragments, "
+                      "Oxford, 1929, introduction",
+        "gap": "About two centuries between the apostolic setting the book claims "
+               "for itself and the century that produced it, and a further gulf "
+               "again to the Ge'ez version this volume prints.",
+    },
+
 
     # ---- Torah -----------------------------------------------------------
     "genesis": {

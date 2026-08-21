@@ -1,0 +1,196 @@
+{
+ "note": "Words the 1834 scan broke, and what Platt printed. Found by reading every token that occurs once or twice in context, not by spell-checking, and applied as an explicit table so each change is countable.",
+ "source": "source/extra/didascalia-platt-1834.txt",
+ "repairs": [
+  {
+   "scanned": "Hfe",
+   "printed": "Life",
+   "times": 2
+  },
+  {
+   "scanned": "Hke",
+   "printed": "Like",
+   "times": 2
+  },
+  {
+   "scanned": "Hkeness",
+   "printed": "Likeness",
+   "times": 1
+  },
+  {
+   "scanned": "Ufe",
+   "printed": "life",
+   "times": 4
+  },
+  {
+   "scanned": "accomphsh",
+   "printed": "accomplish",
+   "times": 1
+  },
+  {
+   "scanned": "afiiict",
+   "printed": "afflict",
+   "times": 1
+  },
+  {
+   "scanned": "afiiicted",
+   "printed": "afflicted",
+   "times": 1
+  },
+  {
+   "scanned": "deceitfiilness",
+   "printed": "deceitfulness",
+   "times": 1
+  },
+  {
+   "scanned": "eveiy",
+   "printed": "every",
+   "times": 1
+  },
+  {
+   "scanned": "finiit",
+   "printed": "fruit",
+   "times": 1
+  },
+  {
+   "scanned": "firsthng",
+   "printed": "firstling",
+   "times": 1
+  },
+  {
+   "scanned": "fljdng",
+   "printed": "flying",
+   "times": 1
+  },
+  {
+   "scanned": "fooHshly",
+   "printed": "foolishly",
+   "times": 1
+  },
+  {
+   "scanned": "hfe",
+   "printed": "life",
+   "times": 3
+  },
+  {
+   "scanned": "hke",
+   "printed": "like",
+   "times": 4
+  },
+  {
+   "scanned": "hkeness",
+   "printed": "likeness",
+   "times": 1
+  },
+  {
+   "scanned": "law/iiljbr",
+   "printed": "lawful for",
+   "times": 1
+  },
+  {
+   "scanned": "likevdse",
+   "printed": "likewise",
+   "times": 1
+  },
+  {
+   "scanned": "murnmring",
+   "printed": "murmuring",
+   "times": 1
+  },
+  {
+   "scanned": "oiir",
+   "printed": "our",
+   "times": 1
+  },
+  {
+   "scanned": "slothfiilness",
+   "printed": "slothfulness",
+   "times": 1
+  },
+  {
+   "scanned": "suppHcation",
+   "printed": "supplication",
+   "times": 1
+  },
+  {
+   "scanned": "supphcation",
+   "printed": "supplication",
+   "times": 1
+  },
+  {
+   "scanned": "trembhng",
+   "printed": "trembling",
+   "times": 1
+  },
+  {
+   "scanned": "vdcked",
+   "printed": "wicked",
+   "times": 1
+  },
+  {
+   "scanned": "vddow",
+   "printed": "widow",
+   "times": 1
+  },
+  {
+   "scanned": "vdlt",
+   "printed": "wilt",
+   "times": 1
+  },
+  {
+   "scanned": "vdse",
+   "printed": "wise",
+   "times": 1
+  },
+  {
+   "scanned": "vdth",
+   "printed": "with",
+   "times": 1
+  },
+  {
+   "scanned": "vdthout",
+   "printed": "without",
+   "times": 1
+  },
+  {
+   "scanned": "vdzards",
+   "printed": "wizards",
+   "times": 1
+  },
+  {
+   "scanned": "vmderstand",
+   "printed": "understand",
+   "times": 1
+  },
+  {
+   "scanned": "vmto",
+   "printed": "unto",
+   "times": 2
+  },
+  {
+   "scanned": "vmtten",
+   "printed": "written",
+   "times": 1
+  },
+  {
+   "scanned": "vnse",
+   "printed": "wise",
+   "times": 1
+  },
+  {
+   "scanned": "vnth",
+   "printed": "with",
+   "times": 2
+  },
+  {
+   "scanned": "vvdth",
+   "printed": "with",
+   "times": 1
+  },
+  {
+   "scanned": "yoixng",
+   "printed": "young",
+   "times": 1
+  }
+ ]
+}
