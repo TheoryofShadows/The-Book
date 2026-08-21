@@ -1281,6 +1281,13 @@
     ctx.stroke();
     ctx.globalAlpha = 1;
 
+    /* Neither overlay below removes a place from the canvas. Dimming and
+       ringing are the whole vocabulary, deliberately: the page promises that
+       the list beside the map holds the same places the map draws, and an
+       overlay that filtered pins would quietly break that promise while
+       still looking like a working map. */
+    var kin = state.kin ? state.kin.counts : null;
+
     /* Jerusalem is named 719 times and Jabbok seven. Linear sizing makes one
        a blot and the other invisible, so the count is taken as a logarithm:
        the difference stays legible without the big ones swallowing the map. */
@@ -1291,6 +1298,12 @@
       var r = 2.2 + Math.log(1 + (p.mentions || 1)) * 1.15;
       state.hit.push({ x: x, y: y, r: Math.max(r, 7), place: p });
 
+      /* With a place chosen, the ones it shares a chapter with keep their
+         weight and the rest fall back. Nothing is drawn between them: a line
+         from one pin to another says the text moved from here to there, and
+         being named in the same chapter does not say that. */
+      var weight = !kin || p === state.chosen || kin[p.key] > 0 ? 1 : 0.25;
+
       ctx.beginPath();
       if (p.kind === "region") {
         /* A region is not a pin. It gets a soft halo centred on the point
@@ -1298,7 +1311,10 @@
         var g = ctx.createRadialGradient(x, y, 0, x, y, r * 3.2);
         g.addColorStop(0, ink.pin);
         g.addColorStop(1, "transparent");
-        ctx.globalAlpha = 0.28;
+        /* The halo is already translucent, so emphasis multiplies rather
+           than replaces -- setting it flat would make a dimmed region the
+           most solid thing on the map. */
+        ctx.globalAlpha = 0.28 * weight;
         ctx.fillStyle = g;
         ctx.arc(x, y, r * 3.2, 0, 6.284);
         ctx.fill();
@@ -1306,19 +1322,39 @@
       } else if (p.kind === "approximate") {
         /* Open, because the ring says "somewhere here" and a filled dot
            would say "here". */
+        ctx.globalAlpha = weight;
         ctx.arc(x, y, r, 0, 6.284);
         ctx.strokeStyle = ink.pin;
         ctx.lineWidth = 1.5;
         ctx.setLineDash([2, 2]);
         ctx.stroke();
         ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
       } else {
+        ctx.globalAlpha = weight;
         ctx.arc(x, y, r, 0, 6.284);
         ctx.fillStyle = ink.pin;
         ctx.fill();
         ctx.strokeStyle = ink.sea;
         ctx.lineWidth = 1;
         ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+
+      /* A place the library has not named before this chapter. The mark is a
+         finely dashed ring outside the pin: clear of the chosen ring, which
+         is solid and closer in, and clear of an approximate pin's own dashes,
+         which sit on the pin itself rather than around it. */
+      if (state.firstHere && state.firstHere[p.key]) {
+        ctx.beginPath();
+        ctx.arc(x, y, r + 5.5, 0, 6.284);
+        ctx.strokeStyle = ink.pin;
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.6 * weight;
+        ctx.setLineDash([1, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
       }
 
       if (p === state.chosen) {
@@ -1343,6 +1379,66 @@
     canvas.dataset.drawn = state.hit.map(function (h) {
       return h.place.name;
     }).join("\n");
+  }
+
+  /* ---------------- what the mention index already knows ----------------
+
+     Two questions can be answered from the file the map already loads, with
+     no second index and nothing new to build: where a place is first named
+     in the order this volume is arranged in, and which places keep company
+     with it. Both are arithmetic over mentions.json. Neither is a claim
+     about history, and the wording downstream is careful to say so.
+
+     What they are not is an itinerary. mentions.json records which places a
+     chapter names, not the order it names them in and not that anybody
+     travelled between them; Paul's journey and a list of nations under
+     judgement are the same shape in this data. So nothing here draws a
+     route, and nothing here counts a sequence.
+     ==================================================================== */
+
+  /* Composition order costs one more file -- chapters.json, which the index
+     and the search already fetch, so it is usually in the cache and always
+     in the offline build. It is fetched when a reader first asks for first
+     appearances rather than on every map, because a chapter map that nobody
+     interrogates should not pay for it. */
+  var libraryPromise = null;
+  function libraryOrder() {
+    if (!libraryPromise) {
+      libraryPromise = Promise.all([
+        getJSON("chapters.json"), getJSON("mentions.json")
+      ]).then(function (both) {
+        var chapters = both[0].chapters, mentions = both[1];
+        var pos = {}, firstSeen = {};
+        chapters.forEach(function (c, n) {
+          var k = c[0] + "/" + c[1];
+          pos[k] = n;
+          (mentions[k] || []).forEach(function (key) {
+            if (!(key in firstSeen)) firstSeen[key] = n;
+          });
+        });
+        return { chapters: chapters, pos: pos, firstSeen: firstSeen };
+      });
+    }
+    return libraryPromise;
+  }
+
+  /* Which places share a chapter with this one, and in how many chapters.
+     Answered for one place at a time: the full table would be 1,232 squared
+     to answer a question the reader asked about one pin. */
+  var kinCache = {};
+  function kinOf(key, mentions) {
+    if (kinCache[key]) return kinCache[key];
+    var counts = {}, chapters = 0;
+    Object.keys(mentions).forEach(function (k) {
+      var list = mentions[k];
+      if (list.indexOf(key) < 0) return;
+      chapters++;
+      list.forEach(function (other) {
+        if (other !== key) counts[other] = (counts[other] || 0) + 1;
+      });
+    });
+    kinCache[key] = { counts: counts, chapters: chapters };
+    return kinCache[key];
   }
 
   function chapterMap(workId, chapterIdx, chapterLabel) {
@@ -1382,8 +1478,14 @@
           loadedShards.forEach(function (t) {
             Object.keys(t).forEach(function (k) { all[k] = t[k]; });
           });
-          var places = keys.map(function (k) { return all[k]; })
-                           .filter(Boolean);
+          /* A place record carries no key of its own -- it is the key that
+             found it. Both overlays ask questions of the mention index,
+             which is keyed, so the key has to come along. */
+          var places = keys.map(function (k) {
+            var p = all[k];
+            if (p) p.key = k;
+            return p;
+          }).filter(Boolean);
           if (!places.length) {
             body.innerHTML = "";
             body.appendChild(el("p", { class: "empty",
@@ -1404,7 +1506,7 @@
           return getJSON("basemap/" + (needsWorld ? "world" : "levant") + ".json")
             .then(function (base) {
               body.innerHTML = "";
-              build(body, places, base.rings, frame, needsWorld);
+              build(body, places, base.rings, frame, needsWorld, table);
             });
         });
       }).catch(function (e) {
@@ -1414,11 +1516,14 @@
       });
     });
 
-    function build(root, places, rings, frame, isWorld) {
+    function build(root, places, rings, frame, isWorld, table) {
       var state = {
         rings: rings, places: places, home: frame, view: frame,
-        chosen: null, hit: []
+        chosen: null, hit: [], kin: null, firstHere: null
       };
+      var here = workId + "/" + chapterIdx;
+      var onCanvas = {};
+      places.forEach(function (p) { onCanvas[p.key] = p; });
 
       var canvas = el("canvas", {
         class: "map-canvas",
@@ -1443,14 +1548,118 @@
 
       var detail = el("div", { class: "map-detail", hidden: true });
 
+      /* Which places share a chapter with this one. The count is of
+         chapters, and it is kept well away from placeBlock's "named in N
+         passages", which counts something else entirely: Jerusalem is 293
+         chapters and 719 passages, and one number wearing the other's
+         sentence would be worse than no number at all. */
+      function kinBlock(p) {
+        var kin = kinOf(p.key, table);
+        var ranked = Object.keys(kin.counts).sort(function (a, b) {
+          return kin.counts[b] - kin.counts[a] ||
+                 (onCanvas[a] ? -1 : 1) - (onCanvas[b] ? -1 : 1) ||
+                 a.localeCompare(b);
+        }).slice(0, 8);
+
+        var box = el("div", { class: "map-kin" });
+        box.appendChild(el("h4", { text: "Named in the same chapter as" }));
+
+        if (!ranked.length) {
+          box.appendChild(el("p", { class: "map-kin-none", text:
+            "Nowhere. Every chapter that names " + p.name + " names no "
+            + "other place in the gazetteer." }));
+          return box;
+        }
+
+        var ol = el("ol", { class: "map-kin-list" });
+        ranked.forEach(function (key) {
+          var mate = onCanvas[key];
+          var count = kin.counts[key];
+          var tail = " · " + count + (count === 1 ? " chapter" : " chapters");
+          var li = el("li", {});
+          if (mate) {
+            /* On this map already, so it can be pointed at. */
+            var b = el("button", { class: "map-kin-here", text: mate.name,
+                                   onclick: function () { choose(mate); } });
+            b.appendChild(el("span", { class: "map-kin-count", text: tail }));
+            li.appendChild(b);
+          } else {
+            /* Off this canvas, so its shard was never loaded and all we hold
+               is the index key. "bethel 1" is a lookup key, not a name; the
+               gazetteer's own "Bethel 1" is, so it is worth the fetch. The
+               shards are small and cached, and the eight shown here are the
+               most it can ever ask for. */
+            var span = el("span", { class: "map-kin-name", text: key });
+            li.appendChild(span);
+            li.appendChild(el("span", { class: "map-kin-count", text: tail }));
+            getJSON("places/" + (/^[a-z]/.test(key) ? key[0] : "0") + ".json")
+              .then(function (shard) {
+                if (shard[key]) span.textContent = shard[key].name;
+              }).catch(function () { /* the key is a readable fallback */ });
+          }
+          ol.appendChild(li);
+        });
+        box.appendChild(ol);
+
+        box.appendChild(el("p", { class: "map-kin-note", text:
+          "Counted over every chapter in the volume, from the same curated "
+          + "references the pins come from. Sharing a chapter is not travel "
+          + "between two places and not a route: nothing here records the "
+          + "order a chapter names things in, so nothing here draws one." }));
+        return box;
+      }
+
+      /* Where the library first names this place, in the order the volume is
+         arranged in. Needs chapters.json, so it arrives after the panel. */
+      function arrivalLine(p) {
+        var line = el("p", { class: "map-arrival" });
+        libraryOrder().then(function (order) {
+          if (state.chosen !== p) return;   // the reader has moved on
+          var first = order.firstSeen[p.key];
+          if (first === undefined) return;
+          if (first === order.pos[here]) {
+            line.appendChild(el("strong", { text: "First named here." }));
+            line.appendChild(document.createTextNode(
+              " Nothing earlier in the arrangement names " + p.name + "."));
+          } else {
+            var c = order.chapters[first];
+            line.appendChild(document.createTextNode("First named in "));
+            line.appendChild(el("a", {
+              href: "#/read/" + c[0] + "/" + c[1],
+              text: c[3] + ", " + c[2]
+            }));
+            line.appendChild(document.createTextNode("."));
+          }
+          line.appendChild(el("span", { class: "map-arrival-note", text:
+            " That is where the text sits in this volume's composition "
+            + "order, which is an argument about when things were written. "
+            + "It is not when the place came to exist, and not the first "
+            + "time anyone wrote it down." }));
+        });
+        return line;
+      }
+
       function choose(p) {
         state.chosen = p;
+        state.kin = kinOf(p.key, table);
         detail.innerHTML = "";
         detail.hidden = false;
         detail.appendChild(el("h3", { class: "map-detail-name", text: p.name }));
         detail.appendChild(placeBlock(p));
+        detail.appendChild(arrivalLine(p));
+        detail.appendChild(kinBlock(p));
         redraw();
-        announce(p.name + ", " + (KIND_LABEL[p.kind] || "location"));
+        var mates = Object.keys(state.kin.counts).filter(function (k) {
+          return onCanvas[k];
+        }).length;
+        announce(p.name + ", " + (KIND_LABEL[p.kind] || "location") + ". " +
+                 (mates ? mates + (mates === 1 ? " place" : " places") +
+                          " on this map " +
+                          (mates === 1 ? "is" : "are") +
+                          " named in a chapter with it."
+                        : "No other place on this map is named in a chapter " +
+                          "with it.") +
+                 " The full list is in the panel.");
       }
 
       canvas.addEventListener("click", function (ev) {
@@ -1521,12 +1730,54 @@
       canvas.addEventListener("pointerup", endDrag);
       canvas.addEventListener("pointercancel", endDrag);
 
+      /* Off by default. The caption is a legend of three marks already, and
+         a fourth drawn for every reader whether or not they asked is a
+         busier map for no gain -- and this one needs a sentence of
+         qualification that only makes sense once it has been asked for. */
+      var firstOn = false;
+      var firstChip = el("button", {
+        class: "chip", "aria-pressed": "false", text: "First appearances",
+        onclick: function () {
+          firstChip.disabled = true;
+          libraryOrder().then(function (order) {
+            firstOn = !firstOn;
+            state.firstHere = null;
+            var n = 0;
+            if (firstOn) {
+              state.firstHere = {};
+              places.forEach(function (p) {
+                if (order.firstSeen[p.key] === order.pos[here]) {
+                  state.firstHere[p.key] = true;
+                  n++;
+                }
+              });
+            }
+            firstChip.setAttribute("aria-pressed", firstOn ? "true" : "false");
+            firstChip.disabled = false;
+            /* undefined, not zero: off means the caption loses the sentence
+               altogether, where zero would have it announce a count of none. */
+            paintFirst(firstOn ? n : undefined);
+            redraw();
+            announce(firstOn
+              ? n + " of " + places.length + " places here are named for the "
+                + "first time in the volume's composition order"
+              : "First appearances hidden");
+          }).catch(function () {
+            firstChip.disabled = false;
+            announce("The composition order could not be loaded");
+          });
+        }
+      });
+
       var tools = el("div", { class: "map-tools" }, [
         el("button", { class: "chip", text: "Reset", onclick: function () {
-          state.view = state.home; state.chosen = null;
+          /* The view and the chosen place, not the layer: the reader turned
+             that on deliberately and did not ask for it to go away. */
+          state.view = state.home; state.chosen = null; state.kin = null;
           detail.hidden = true; redraw();
           announce("Map reset");
-        } })
+        } }),
+        firstChip
       ]);
       root.appendChild(tools);
       root.appendChild(detail);
@@ -1543,28 +1794,73 @@
         var b = el("button", {
           class: "map-place map-" + p.kind,
           text: p.name,
+          "data-place": p.key,
           onclick: function () { choose(p); }
         });
+        /* Appended, never prepended: the button's first child is the name,
+           and both the reader's eye and the checks that read this list start
+           there. */
         b.appendChild(el("span", { class: "map-place-kind",
                                    text: KIND_LABEL[p.kind] || "Location" }));
         list.appendChild(el("li", {}, [b]));
       });
 
-      root.appendChild(el("p", { class: "map-caption", html:
-        "<strong>" + fmt(places.length) + "</strong> " +
+      /* The canvas is decoration; the list is the content. A mark that
+         appeared on the canvas alone would be a layer a keyboard cannot
+         reach, so the same fact is written here in words. */
+      function paintFirst(n) {
+        [].forEach.call(list.querySelectorAll(".map-place"), function (b) {
+          var mark = b.querySelector(".map-place-first");
+          var isFirst = state.firstHere && state.firstHere[b.dataset.place];
+          b.classList.toggle("map-first", !!isFirst);
+          if (isFirst && !mark) {
+            b.appendChild(el("span", { class: "map-place-first",
+              text: "First named here in the composition order" }));
+          } else if (!isFirst && mark) {
+            b.removeChild(mark);
+          }
+        });
+        caption.innerHTML = captionHTML(n);
+        canvas.setAttribute("aria-label", labelText(n));
+      }
+
+      function captionHTML(n) {
+        return "<strong>" + fmt(places.length) + "</strong> " +
         (places.length === 1 ? "place is" : "places are") + " recorded as " +
         "named in " + esc(chapterLabel || "this chapter") + ". " +
         (isWorld ? "Shown on the world, because this chapter names somewhere " +
                    "outside the biblical frame. " : "") +
         "A filled dot is an identified location, a dashed ring an approximate " +
         "one, and a soft halo a region rather than a point — centred on a " +
-        "spot inside it, not on its middle. Land outlines from Natural Earth, " +
-        "public domain. No borders are drawn: there are none to draw." }));
+        "spot inside it, not on its middle. " +
+        /* Only while the layer is on. The qualification is the point: a
+           dotted ring with no sentence attached would read as a claim about
+           history, which is precisely what it is not. */
+        (n === undefined ? "" :
+          "A finely dotted outer ring marks the <strong>" + fmt(n) +
+          "</strong> named here for the first time in the volume's " +
+          "composition order — where the text sits in the argument about " +
+          "when things were written, not when a place came to exist. " +
+          "The gazetteer covers the Hebrew Bible and the New Testament and " +
+          "only references somebody checked, so an absence here is a gap in " +
+          "it rather than a fact about the text. ") +
+        "Land outlines from Natural Earth, " +
+        "public domain. No borders are drawn: there are none to draw.";
+      }
+
+      function labelText(n) {
+        return "Map of " + places.length + " places named in this chapter. " +
+          "The same places are listed below as links." +
+          (n === undefined ? "" :
+            " " + n + " of them are named here for the first time in the " +
+            "volume's composition order.");
+      }
+
+      var caption = el("p", { class: "map-caption", html: captionHTML() });
+      root.appendChild(caption);
       root.appendChild(list);
 
-      canvas.setAttribute("aria-label",
-        "Map of " + places.length + " places named in this chapter. " +
-        "The same places are listed below as links.");
+      canvas.setAttribute("aria-label", labelText());
 
       redraw();
 
