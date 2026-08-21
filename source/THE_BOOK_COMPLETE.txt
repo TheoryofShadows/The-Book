@@ -28,7 +28,11 @@ NOT PRESENT, AND WHY
   photographs rather than machine-readable transcription.
   Psalms of Solomon and Philo are public domain but survive only as OCR of
   critical editions where translation and footnotes share every column.
-  Hermas Similitudes 1 and 10 are not captured by the current parser.
+  1 Clement breaks off at chapter 59 and Ignatius to the Smyrnaeans lacks
+  chapter 13. Both are holes in the 1885 printing this was scraped from, not
+  in the public domain: the 1870 Ante-Nicene Christian Library closed the
+  Hermas and Papias gaps, but it predates the 1873 discovery of the Jerusalem
+  manuscript that carries the rest of 1 Clement.
 
 ==============================================================================
 

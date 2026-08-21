@@ -126,3 +126,138 @@ V-GAP | esther-greek-version | Chapter 9 | missing [5, 30]
 
 CHAPTERS | the-epistle-of-ignatius-to-the-smyrnaeans | expected 13 | got 12
 CHAPTERS | the-first-epistle-of-clement-to-the-corinthians | expected 65 | got 59
+
+# ------------------------------------------------------------------------
+# Works placed by their section rather than by a dated argument
+#
+# The arrangement by composition date is the claim this volume exists to
+# make, and it is the least examined thing in it. tools/positions.py holds
+# 52 records, each carrying a traditional and a critical date with a reason
+# and a source for both, and audit.py has always refused to build if any of
+# those fields is blank. What it never asked was the other direction:
+# whether a work has a record at all. It walked the positions and checked
+# them; it never walked the works. So the fifty-two were held to a strict
+# standard and the hundred and four were held to none, and nothing counted
+# them.
+#
+# These are not undated on the page. A work with no record inherits the span
+# of the section it is filed under -- Micah sits in EIGHTH-CENTURY PROPHETIC
+# BOOKS and takes c. 760-700 BCE from the heading -- and the timeline draws
+# that bar fainter than a cited one, which is the site saying, correctly,
+# that it is a looser claim. What was missing is any accounting of how much
+# of the library rests on it: two thirds.
+#
+# They are listed rather than silenced. Every line here is a work whose
+# placement a reader cannot check, and writing a position record for any of
+# them removes its line -- which the gate enforces, since an accepted
+# finding that stops occurring fails the build just as a new one does. The
+# list is meant to shrink.
+#
+# Not included: the nine entries that carry no text -- editorial notes,
+# the Dead Sea Scrolls summaries, and the Psalms of Solomon and Philo
+# placeholders. Nothing dates an apparatus note.
+
+NO-POSITION | 1-corinthians | placed by its section's era | no dated position record
+NO-POSITION | 1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108 | placed by its section's era | no dated position record
+NO-POSITION | 1-enoch-the-astronomical-book-chapters-72-82 | placed by its section's era | no dated position record
+NO-POSITION | 1-enoch-the-book-of-parables-chapters-37-71 | placed by its section's era | no dated position record
+NO-POSITION | 1-esdras | placed by its section's era | no dated position record
+NO-POSITION | 1-john | placed by its section's era | no dated position record
+NO-POSITION | 1-maccabees | placed by its section's era | no dated position record
+NO-POSITION | 1-thessalonians | placed by its section's era | no dated position record
+NO-POSITION | 2-corinthians | placed by its section's era | no dated position record
+NO-POSITION | 2-esdras-4-ezra | placed by its section's era | no dated position record
+NO-POSITION | 2-john | placed by its section's era | no dated position record
+NO-POSITION | 2-maccabees | placed by its section's era | no dated position record
+NO-POSITION | 3-john | placed by its section's era | no dated position record
+NO-POSITION | 3-maccabees | placed by its section's era | no dated position record
+NO-POSITION | 4-maccabees | placed by its section's era | no dated position record
+NO-POSITION | baruch | placed by its section's era | no dated position record
+NO-POSITION | bel-and-the-dragon-greek-daniel-14 | placed by its section's era | no dated position record
+NO-POSITION | commandment-1 | placed by its section's era | no dated position record
+NO-POSITION | commandment-10 | placed by its section's era | no dated position record
+NO-POSITION | commandment-11 | placed by its section's era | no dated position record
+NO-POSITION | commandment-12 | placed by its section's era | no dated position record
+NO-POSITION | commandment-2 | placed by its section's era | no dated position record
+NO-POSITION | commandment-3 | placed by its section's era | no dated position record
+NO-POSITION | commandment-4 | placed by its section's era | no dated position record
+NO-POSITION | commandment-5 | placed by its section's era | no dated position record
+NO-POSITION | commandment-6 | placed by its section's era | no dated position record
+NO-POSITION | commandment-7 | placed by its section's era | no dated position record
+NO-POSITION | commandment-8 | placed by its section's era | no dated position record
+NO-POSITION | commandment-9 | placed by its section's era | no dated position record
+NO-POSITION | deuteronomy-5-the-decalogue | placed by its section's era | no dated position record
+NO-POSITION | deuteronomy-6-the-shema-is-verses-4-9 | placed by its section's era | no dated position record
+NO-POSITION | esther-greek-version | placed by its section's era | no dated position record
+NO-POSITION | ezra | placed by its section's era | no dated position record
+NO-POSITION | fragments-of-papias | placed by its section's era | no dated position record
+NO-POSITION | galatians | placed by its section's era | no dated position record
+NO-POSITION | habakkuk | placed by its section's era | no dated position record
+NO-POSITION | haggai | placed by its section's era | no dated position record
+NO-POSITION | judith | placed by its section's era | no dated position record
+NO-POSITION | lamentations | placed by its section's era | no dated position record
+NO-POSITION | malachi | placed by its section's era | no dated position record
+NO-POSITION | micah | placed by its section's era | no dated position record
+NO-POSITION | nahum | placed by its section's era | no dated position record
+NO-POSITION | nehemiah | placed by its section's era | no dated position record
+NO-POSITION | numbers-6-the-priestly-blessing-is-verses-24-26 | placed by its section's era | no dated position record
+NO-POSITION | obadiah | placed by its section's era | no dated position record
+NO-POSITION | philemon | placed by its section's era | no dated position record
+NO-POSITION | philippians | placed by its section's era | no dated position record
+NO-POSITION | psalm-151 | placed by its section's era | no dated position record
+NO-POSITION | romans | placed by its section's era | no dated position record
+NO-POSITION | similitude-1 | placed by its section's era | no dated position record
+NO-POSITION | similitude-10 | placed by its section's era | no dated position record
+NO-POSITION | similitude-2 | placed by its section's era | no dated position record
+NO-POSITION | similitude-3 | placed by its section's era | no dated position record
+NO-POSITION | similitude-4 | placed by its section's era | no dated position record
+NO-POSITION | similitude-5 | placed by its section's era | no dated position record
+NO-POSITION | similitude-6 | placed by its section's era | no dated position record
+NO-POSITION | similitude-7 | placed by its section's era | no dated position record
+NO-POSITION | similitude-8 | placed by its section's era | no dated position record
+NO-POSITION | similitude-9 | placed by its section's era | no dated position record
+NO-POSITION | sirach-ecclesiasticus | placed by its section's era | no dated position record
+NO-POSITION | susanna-greek-daniel-13 | placed by its section's era | no dated position record
+NO-POSITION | the-acts-of-paul-and-thecla | placed by its section's era | no dated position record
+NO-POSITION | the-epistle-of-barnabas | placed by its section's era | no dated position record
+NO-POSITION | the-epistle-of-ignatius-to-polycarp | placed by its section's era | no dated position record
+NO-POSITION | the-epistle-of-ignatius-to-the-ephesians | placed by its section's era | no dated position record
+NO-POSITION | the-epistle-of-ignatius-to-the-magnesians | placed by its section's era | no dated position record
+NO-POSITION | the-epistle-of-ignatius-to-the-philadelphians | placed by its section's era | no dated position record
+NO-POSITION | the-epistle-of-ignatius-to-the-romans | placed by its section's era | no dated position record
+NO-POSITION | the-epistle-of-ignatius-to-the-smyrnaeans | placed by its section's era | no dated position record
+NO-POSITION | the-epistle-of-ignatius-to-the-trallians | placed by its section's era | no dated position record
+NO-POSITION | the-epistle-of-mathetes-to-diognetus | placed by its section's era | no dated position record
+NO-POSITION | the-epistle-of-polycarp-to-the-philippians | placed by its section's era | no dated position record
+NO-POSITION | the-gospel-of-nicodemus-part-i-the-acts-of-pilate | placed by its section's era | no dated position record
+NO-POSITION | the-gospel-of-pseudo-matthew | placed by its section's era | no dated position record
+NO-POSITION | the-gospel-of-thomas-infancy-first-greek-form | placed by its section's era | no dated position record
+NO-POSITION | the-letter-of-jeremiah-baruch-6 | placed by its section's era | no dated position record
+NO-POSITION | the-martyrdom-of-polycarp | placed by its section's era | no dated position record
+NO-POSITION | the-prayer-of-azariah-and-the-song-of-the-three-greek-daniel-3-24-90 | placed by its section's era | no dated position record
+NO-POSITION | the-prayer-of-manasseh | placed by its section's era | no dated position record
+NO-POSITION | the-protevangelium-of-james | placed by its section's era | no dated position record
+NO-POSITION | the-second-epistle-of-clement | placed by its section's era | no dated position record
+NO-POSITION | the-song-of-deborah-judges-5 | placed by its section's era | no dated position record
+NO-POSITION | the-song-of-the-sea-exodus-15 | placed by its section's era | no dated position record
+NO-POSITION | the-testament-of-asher | placed by its section's era | no dated position record
+NO-POSITION | the-testament-of-benjamin | placed by its section's era | no dated position record
+NO-POSITION | the-testament-of-dan | placed by its section's era | no dated position record
+NO-POSITION | the-testament-of-gad | placed by its section's era | no dated position record
+NO-POSITION | the-testament-of-issachar | placed by its section's era | no dated position record
+NO-POSITION | the-testament-of-joseph | placed by its section's era | no dated position record
+NO-POSITION | the-testament-of-judah | placed by its section's era | no dated position record
+NO-POSITION | the-testament-of-levi | placed by its section's era | no dated position record
+NO-POSITION | the-testament-of-naphtali | placed by its section's era | no dated position record
+NO-POSITION | the-testament-of-reuben | placed by its section's era | no dated position record
+NO-POSITION | the-testament-of-simeon | placed by its section's era | no dated position record
+NO-POSITION | the-testament-of-zebulun | placed by its section's era | no dated position record
+NO-POSITION | the-wisdom-of-solomon | placed by its section's era | no dated position record
+NO-POSITION | tobit | placed by its section's era | no dated position record
+NO-POSITION | vision-1 | placed by its section's era | no dated position record
+NO-POSITION | vision-2 | placed by its section's era | no dated position record
+NO-POSITION | vision-3 | placed by its section's era | no dated position record
+NO-POSITION | vision-4 | placed by its section's era | no dated position record
+NO-POSITION | vision-5 | placed by its section's era | no dated position record
+NO-POSITION | zechariah-1-8 | placed by its section's era | no dated position record
+NO-POSITION | zephaniah | placed by its section's era | no dated position record

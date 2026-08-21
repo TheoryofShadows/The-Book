@@ -73,6 +73,96 @@ class TheHeadline(unittest.TestCase):
         self.assertEqual(stated, round(self.totals["words"] / 1_000_000, 2))
 
 
+class WhatCountsAsAWork(unittest.TestCase):
+    """The headline counts 165. Nine of them are not texts.
+
+    Checking that 165 matches manifest.totals.works proves the arithmetic
+    and nothing else -- the number was never the doubtful part, the noun
+    was. Two of the entries are editorial asides, four are notes on
+    manuscript discoveries, and three are placeholders for material the
+    volume cannot print. A reader entitled to the count is entitled to
+    know what is in it.
+    """
+
+    def setUp(self):
+        with open(os.path.join(ROOT, "docs", "data", "manifest.json"),
+                  encoding="utf-8") as fh:
+            self.manifest = json.load(fh)
+        self.works = [w for s in self.manifest["sections"] for w in s["works"]]
+
+    def test_the_split_between_text_and_apparatus(self):
+        texts = [w for w in self.works if w.get("words")]
+        self.assertEqual(len(self.works), 165)
+        self.assertEqual(len(texts), 156)
+        self.assertEqual(len(self.works) - len(texts), 9)
+
+    def test_the_readme_says_how_many_carry_text(self):
+        stated = re.search(r"Of the ([\d,]+) entries, \*\*([\d,]+) carry text\*\*",
+                           readme())
+        self.assertIsNotNone(
+            stated, "README.md no longer states how many entries carry text")
+        texts = sum(1 for w in self.works if w.get("words"))
+        self.assertEqual(stated.group(1), f"{len(self.works):,}")
+        self.assertEqual(stated.group(2), f"{texts:,}")
+
+    def test_the_entries_without_text_are_the_ones_on_record(self):
+        """Frozen, so a work cannot lose its text without saying so.
+
+        A parse that silently emptied a book would otherwise just move it
+        into the apparatus column and keep the totals looking reasonable.
+        """
+        self.assertEqual(
+            sorted(w["id"] for w in self.works if not w.get("words")),
+            ["also-often-dated-this-early",
+             "ketef-hinnom-silver-scrolls-found-1979",
+             "on-the-placement-of-the-torah",
+             "philo-of-alexandria",
+             "the-dead-sea-scrolls-as-biblical-manuscripts-found-1947-1956",
+             "the-great-christian-codices",
+             "the-major-dead-sea-scrolls-summaries",
+             "the-nash-papyrus-acquired-1898-1903",
+             "the-psalms-of-solomon"])
+
+
+class WhatTheFrontMatterClaimsIsMissing(unittest.TestCase):
+    """The volume's own list of what it does not contain.
+
+    It said the Shepherd of Hermas Similitudes 1 and 10 were not captured
+    by the parser. They were supplied from the 1870 Ante-Nicene Christian
+    Library in "Close three Apostolic Fathers gaps from a second edition",
+    and the sentence describing their absence outlived the absence by
+    several commits -- the same way the headline counts outlived the parse
+    repair that changed them.
+    """
+
+    def not_present(self):
+        with open(os.path.join(ROOT, "docs", "data", "manifest.json"),
+                  encoding="utf-8") as fh:
+            intro = json.load(fh)["sections"][0]["intro"]
+        note = [p for p in intro if p.startswith("NOT PRESENT")]
+        self.assertEqual(len(note), 1, "no NOT PRESENT note in the front matter")
+        return note[0]
+
+    def test_it_does_not_claim_absent_text_the_volume_now_prints(self):
+        note = self.not_present()
+        self.assertNotIn("Similitudes 1 and 10", note)
+
+    def test_and_the_similitudes_it_used_to_disclaim_really_are_there(self):
+        for n, least in (("similitude-1", 400), ("similitude-10", 2500)):
+            with open(os.path.join(ROOT, "docs", "data", "works", n + ".json"),
+                      encoding="utf-8") as fh:
+                work = json.load(fh)
+            words = sum(len(" ".join(c.get("paras", [])).split())
+                        for c in work["chapters"])
+            self.assertGreater(words, least, f"{n} is empty again")
+
+    def test_it_still_names_what_is_genuinely_absent(self):
+        note = self.not_present()
+        for missing in ("Dead Sea Scrolls", "Psalms of Solomon", "Philo",
+                        "1 Clement", "Smyrnaeans"):
+            self.assertIn(missing, note)
+
+
 class TheGazetteer(unittest.TestCase):
 
     def test_the_number_of_curated_references(self):

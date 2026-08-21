@@ -15,6 +15,12 @@ It opens with the Song of the Sea, not with Genesis.
 
 **165 works · 2,249 chapters · 40,124 numbered verses · 1.13 million words**
 
+Of the 165 entries, **156 carry text**. The other nine are apparatus rather
+than works: the Dead Sea Scrolls summaries, the Psalms of Solomon and Philo
+placeholders, four notes on manuscript discoveries, and two editorial asides.
+They are counted because they are printed and read in sequence with the rest;
+they are named here because a count of works should say what it counts.
+
 ---
 
 ## What this is
