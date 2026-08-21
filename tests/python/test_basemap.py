@@ -166,5 +166,124 @@ class Committed(unittest.TestCase):
         self.assertLessEqual(total, 250 * 1024, f"{total/1024:.0f} KB")
 
 
+# The 23 places that fall outside the biblical frame, and so are the whole
+# reason the world layer exists: name one of them in a chapter and that
+# chapter is drawn on the world instead of the Levant.
+#
+# This list is frozen deliberately. It is not derived from anything at build
+# time -- it is a claim the README makes in prose, and the frame it depends on
+# is written down twice, in tools/build_basemap.py and again in the reader's
+# own copy in docs/assets/app.js. Nothing recomputed it. A single edited
+# latitude in source/places/merged.txt could quietly move a place across the
+# boundary, and the only visible effect would be a chapter that used to open
+# on the Levant silently opening on the world, or the reverse. That is a
+# change to what the reader is shown, and it should have to be made on
+# purpose.
+OUTSIDE_THE_FRAME = [
+    "adriatic sea", "dalmatia", "forum of appius", "gog", "illyricum",
+    "india", "italy", "magog", "malta", "meshech", "meshechtubal", "ophir",
+    "puteoli", "rhegium", "rome", "seba", "sheba", "spain", "syracuse",
+    "syrtis", "tarshish", "three taverns", "uphaz",
+]
+
+
+class TheFrame(unittest.TestCase):
+    """The box, the places outside it, and the prose that describes both."""
+
+    @classmethod
+    def setUpClass(cls):
+        import glob
+        import json
+        cls.places = {}
+        pattern = os.path.join(ROOT, "docs", "data", "places", "*.json")
+        shards = sorted(glob.glob(pattern))
+        assert shards, "no gazetteer shards found; the test would prove nothing"
+        for path in shards:
+            with open(path, encoding="utf-8") as fh:
+                cls.places.update(json.load(fh))
+
+    def outside(self):
+        west, south, east, north = bm.FRAME
+        return sorted(k for k, p in self.places.items()
+                      if not (west <= p["lon"] <= east
+                              and south <= p["lat"] <= north))
+
+    def test_the_places_outside_the_frame_are_the_ones_on_record(self):
+        """Freeze the list, so a gazetteer edit cannot quietly flip a frame.
+
+        Adding a place outside the box, or moving an existing one across it,
+        changes which chapters are drawn on the world. Amos is drawn on the
+        Levant because nothing it names sits outside; that is a fact about
+        the data, and this is where it is written down.
+        """
+        self.assertEqual(self.outside(), OUTSIDE_THE_FRAME)
+
+    def test_the_split_is_the_one_the_readme_claims(self):
+        outside = self.outside()
+        self.assertEqual(len(self.places), 1232)
+        self.assertEqual(len(self.places) - len(outside), 1209)
+        self.assertEqual(len(outside), 23)
+
+    def test_the_readme_prints_those_same_numbers(self):
+        """The claim is in prose, so the prose is what gets checked.
+
+        README.md says "1,209 of the 1,232 places sit inside the biblical
+        frame; the 23 that do not". Three numbers a reader has no way to
+        verify, in a volume whose whole argument is that editorial claims
+        carry citations. If the gazetteer grows, this fails and the sentence
+        gets rewritten -- which is the point.
+        """
+        import re
+        with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as fh:
+            readme = fh.read()
+        claim = re.search(
+            r"([\d,]+) of the ([\d,]+) places sit inside the biblical\s+"
+            r"frame; the (\d+) that do not", readme)
+        self.assertIsNotNone(
+            claim, "the sentence this test exists to check is no longer in "
+                   "README.md; rewrite the test or restore the claim")
+
+        outside = self.outside()
+        inside = len(self.places) - len(outside)
+        self.assertEqual(claim.group(1), f"{inside:,}")
+        self.assertEqual(claim.group(2), f"{len(self.places):,}")
+        self.assertEqual(int(claim.group(3)), len(outside))
+
+    def test_no_two_places_share_a_name(self):
+        """What lets the browser check compare the canvas to the list by name.
+
+        The canvas reports what it painted as names, because a place record
+        carries no key. That is only as strong as names being unique -- let
+        two places share one and a canvas could drop the first while the list
+        keeps the second, and the two would still read as equal. They are
+        unique across all 1,232 today, and this is what keeps them so.
+        """
+        import collections
+        counts = collections.Counter(p["name"] for p in self.places.values())
+        self.assertEqual([n for n, c in counts.items() if c > 1], [])
+
+    def test_the_reader_draws_the_same_box_the_builder_clipped_to(self):
+        """FRAME is written twice and the two copies never met.
+
+        tools/build_basemap.py clips the Levant layer to its FRAME;
+        docs/assets/app.js decides world-or-Levant against its own LEVANT
+        literal. Let those drift and the map picks a frame the basemap was
+        never cut for -- land running off one edge, empty paper at the other,
+        and nothing raising anywhere.
+        """
+        import re
+        path = os.path.join(ROOT, "docs", "assets", "app.js")
+        with open(path, encoding="utf-8") as fh:
+            source = fh.read()
+        found = re.search(
+            r"var LEVANT = \{\s*w:\s*(-?[\d.]+),\s*s:\s*(-?[\d.]+),"
+            r"\s*e:\s*(-?[\d.]+),\s*n:\s*(-?[\d.]+)\s*\}", source)
+        self.assertIsNotNone(
+            found, "no LEVANT literal in docs/assets/app.js; this test can no "
+                   "longer see the reader's copy of the frame")
+        west, south, east, north = (float(g) for g in found.groups())
+        self.assertEqual((west, south, east, north), tuple(bm.FRAME))
+
+
 if __name__ == "__main__":
     unittest.main()
