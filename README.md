@@ -114,6 +114,23 @@ frame; the 23 that do not are Rome, Tarshish, Spain, Ophir and the rest of the
 horizon, so a chapter that names one of them is drawn on the world instead.
 Acts 27 gets the Mediterranean it needs; Amos gets the Levant.
 
+Two questions can be answered from the same index the pins come from, so the
+map answers them and adds no data to do it. **First appearances** is a layer,
+off until asked for: it rings the places this chapter is the first in the
+volume to name, in composition order — which is an argument about when a text
+was written, not about when a place came to exist, and the caption says so
+while the layer is on. Choosing any place says **what it is named beside**,
+ranked by how many chapters the two share, with the ones already on the canvas
+offered as links and the rest named but not drawn.
+
+Neither draws a line. Sharing a chapter is not travel between two places, and
+the index does not record the order a chapter names things in — Paul's voyage
+and a list of nations under judgement are the same shape in this data. So kin
+is emphasis and nothing more: the related places keep their weight and the
+rest fall back. There are no itineraries here, and a test counts the map's own
+line segments to keep it that way, because on a 430-pixel canvas a wrong
+hairline is invisible and still wrong.
+
 [How the dating was decided](#) is a page of its own: what the arrangement is
 and is not, where each date comes from, how the bars are derived, the boundary
 of every named period and the event that fixes it, and the two things the bars
@@ -326,7 +343,7 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 | `resilience` | The data failing to load, malformed data, routes that name nothing, the keyboard shortcuts, the skip link, and what a screen reader is actually told |
 | `listening` | What is spoken and in what order, which voice out of a bad drawer is picked, that the apparatus is never read out, where long passages are broken and how long the pauses are at each pace, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |
 | `offline` | The single-file build opens from `file://` and every feature in it works with no network at all |
-| `map` | Land is actually painted, the frame chooses itself from what the chapter names, every place on the canvas is also a link on the page, a disputed identification is not drawn as a settled one, panning cannot lose the map, the canvas follows the theme, and all of it works from `file://` |
+| `map` | Land is actually painted, the frame chooses itself from what the chapter names, every place on the canvas is also a link on the page — checked against the canvas and against the mention index, not against itself — a disputed identification is not drawn as a settled one, panning cannot lose the map, zooming culls pins without inventing them, the first-appearance layer rings places rather than removing them and says it means composition order, relating two places draws no line between them, the canvas follows the theme, and all of it works from `file://` |
 
 The unit tests and the lint run on every pull request and again before every
 deploy. The browser checks used to run on pull requests only, which meant
