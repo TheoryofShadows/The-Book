@@ -917,7 +917,9 @@
    },
    "works": [],
    "present": false,
-   "foldedInto": null
+   "foldedInto": null,
+   "absentWhy": "No public-domain English translation located. The 1889 Rendel Harris edition is the Greek text with a critical introduction, not a translation, and the standard English versions are twentieth-century and in copyright.",
+   "absentSource": "Harris 1889, archive.org/details/restwordsbaruch01harrgoog"
   },
   {
    "name": "Ethiopic Clement (Qalementos)",
@@ -927,7 +929,9 @@
    },
    "works": [],
    "present": false,
-   "foldedInto": null
+   "foldedInto": null,
+   "absentWhy": "Public domain in parts only. The second of its seven books circulates separately as the Ethiopic Apocalypse of Peter and has been translated; the remaining six have no public-domain English translation. Printing a seventh of a book as the book would be worse than the gap.",
+   "absentSource": "Ethiopian Orthodox canon lists; see the coverage note above"
   },
   {
    "name": "Ethiopic Didascalia",
@@ -937,7 +941,9 @@
    },
    "works": [],
    "present": false,
-   "foldedInto": null
+   "foldedInto": null,
+   "absentWhy": "A public-domain English translation exists: Thomas Pell Platt, The Ethiopic Didascalia, Oriental Translation Fund, London, 1834, printed with the Ge'ez facing the English. The scanned text is recoverable -- about 28,000 words of continuous English survive the OCR -- but it carries the scars of a facing-page scan, and no independent chapter and verse counts exist to audit the result against the way the biblical books are audited. It is the one of the five that could be added, and it is a decision about the standard rather than a matter of finding the text.",
+   "absentSource": "Platt 1834, archive.org/details/ethiopicdidascal00platrich"
   },
   {
    "name": "Sinodos",
@@ -947,7 +953,9 @@
    },
    "works": [],
    "present": false,
-   "foldedInto": null
+   "foldedInto": null,
+   "absentWhy": "No public-domain English translation. It is a large collection of canons, prayers and church order ascribed to Clement of Rome, and the scholarly editions of it are modern.",
+   "absentSource": "Ethiopian Orthodox canon lists; see the coverage note above"
   },
   {
    "name": "Book of the Covenant (Mets'hafe Kidan)",
@@ -957,7 +965,9 @@
    },
    "works": [],
    "present": false,
-   "foldedInto": null
+   "foldedInto": null,
+   "absentWhy": "Public domain in part only. Its second part, the discourse of the risen Lord to the disciples, corresponds to the Epistle of the Apostles and has a public-domain English translation; the first part, sections 1-60 on church order, does not.",
+   "absentSource": "Ethiopian Orthodox canon lists; see the coverage note above"
   },
   {
    "name": "Matthew",
