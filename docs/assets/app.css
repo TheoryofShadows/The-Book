@@ -1166,3 +1166,135 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
   .tl-when { grid-column: 2; text-align: left; font-size: .64rem; }
   .tl-name { font-size: .72rem; }
 }
+
+/* ---------- the chapter map ----------
+   Land, water, and the places the chapter names. The canvas is the picture;
+   the list under it is the content, and is what a keyboard and a screen
+   reader use. Both are always present. */
+
+.chapter-map {
+  margin: 1.4rem 0 .4rem;
+  border-top: 1px solid var(--rule-soft);
+  padding-top: .7rem;
+}
+
+.chapter-map > summary {
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: .82rem;
+  color: var(--ink-soft);
+}
+.chapter-map > summary:hover { color: var(--ink); }
+
+.map-body { margin-top: .7rem; }
+
+/* --map-aspect is set from the frame being drawn. Capping the height and
+   then deriving the width from it is what keeps the box the shape of the
+   map, rather than a wide letterbox with the map adrift in the middle. */
+.map-stage {
+  position: relative;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--paper);
+  --map-aspect: 1.2;
+  --map-height: 26rem;
+  aspect-ratio: var(--map-aspect);
+  max-height: var(--map-height);
+  max-width: calc(var(--map-height) * var(--map-aspect));
+  width: 100%;
+  margin: 0 auto;
+}
+
+.map-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;   /* the canvas handles its own drag */
+  cursor: grab;
+}
+.map-canvas:active { cursor: grabbing; }
+
+@media (max-width: 40rem) {
+  .map-stage { --map-height: 17rem; }
+}
+
+.map-tools {
+  display: flex;
+  gap: .4rem;
+  margin: .5rem 0 .2rem;
+}
+
+.map-caption {
+  font-size: .76rem;
+  color: var(--ink-faint);
+  line-height: 1.5;
+  margin: .5rem 0 .7rem;
+}
+
+.map-detail { margin: .7rem 0; }
+.map-detail-name {
+  font-family: var(--sans);
+  font-size: .9rem;
+  margin: 0 0 .3rem;
+}
+
+.map-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem;
+}
+
+.map-place {
+  display: inline-flex;
+  align-items: baseline;
+  gap: .35rem;
+  font-family: var(--sans);
+  font-size: .74rem;
+  padding: .2rem .5rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--ink);
+  cursor: pointer;
+}
+.map-place:hover, .map-place:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* The same three grades the canvas draws, so the list is not a lesser copy:
+   solid for identified, dashed for approximate, faint for a region. */
+.map-place::before {
+  content: "";
+  width: .5rem; height: .5rem;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+.map-place.map-approximate::before {
+  background: transparent;
+  border: 1px dashed var(--accent);
+}
+.map-place.map-region::before {
+  background: var(--accent);
+  opacity: .3;
+}
+.map-place.map-within::before {
+  background: var(--accent);
+  opacity: .6;
+}
+
+.map-place-kind {
+  /* Named for the screen reader, not shown: the dot carries it for the eye. */
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

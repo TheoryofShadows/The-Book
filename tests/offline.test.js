@@ -71,5 +71,9 @@ module.exports = async function offline(t, ctx) {
   t.check('word definitions work offline',
           await page.waitForSelector('.lex', { timeout: 4000 }).then(() => true).catch(() => false));
   await page.close();
-  fs.rmSync(path.dirname(out), { recursive: true, force: true });
+  /* The map suite checks the same single-file build, and building a 12 MB
+     copy twice to check two things about it is a minute of CI for nothing.
+     Hand it over; run.js clears the directory once every suite is done. */
+  ctx.standalone = out;
+  ctx.cleanup.push(path.dirname(out));
 };

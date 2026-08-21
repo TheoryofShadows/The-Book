@@ -21,6 +21,15 @@ python3 tools/build_manuscripts.py "$OUT"
 echo "==> places"
 python3 tools/build_places.py source/places/merged.txt "$OUT"
 
+echo "==> place mentions"
+python3 tools/build_mentions.py source/places/merged.txt "$OUT"
+
+# The land outlines. Deterministic and offline: the Natural Earth source is
+# vendored under source/basemap/, and only ./tools/build_basemap.py --fetch,
+# run by hand, ever downloads anything.
+echo "==> basemap"
+python3 tools/build_basemap.py
+
 echo "==> threads"
 python3 tools/build_threads.py "$OUT"
 

@@ -12,8 +12,10 @@
 const path = require('path');
 const { serve, launch, Tally } = require('./harness');
 
+/* 'offline' builds the single-file copy and hands it to 'map', so it runs
+   first of the two. run.js clears what it left behind at the end. */
 const SUITES = ['routes', 'layout', 'search', 'words', 'keeping',
-                'dating', 'resilience', 'listening', 'offline'];
+                'dating', 'resilience', 'listening', 'offline', 'map'];
 
 async function main() {
   const wanted = process.argv.slice(2);
@@ -47,7 +49,7 @@ async function main() {
   }
 
   const tally = new Tally();
-  const ctx = { browser, base: site.url, root, tally };
+  const ctx = { browser, base: site.url, root, tally, cleanup: [] };
   const started = Date.now();
 
   for (const name of suites) {
@@ -61,6 +63,10 @@ async function main() {
 
   await browser.close();
   await site.close();
+  ctx.cleanup.forEach(dir => {
+    try { require('fs').rmSync(dir, { recursive: true, force: true }); }
+    catch (e) { /* a temp directory that will not go is not a test failure */ }
+  });
 
   const seconds = ((Date.now() - started) / 1000).toFixed(1);
   console.log(`\n${tally.passed} passed, ${tally.failed.length} failed, in ${seconds}s`);

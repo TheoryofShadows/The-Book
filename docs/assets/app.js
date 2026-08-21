@@ -638,6 +638,10 @@
         body.insertBefore(box, body.firstChild);
       }).catch(function () {});
 
+      // After the text rather than before it: the chapter is the thing, and
+      // the geography is what you turn to once you have read it.
+      body.appendChild(chapterMap(workId, idx, chapter.label));
+
       var src = manifest.sources && manifest.sources[meta.source];
       if (src) {
         body.appendChild(el("div", { class: "apparatus", html:
@@ -1149,6 +1153,81 @@
   /* How far back to stand, by what kind of thing it is. A region needs the
      camera much higher than a village, and pretending otherwise would show a
      confident pin on a territory. */
+  /* ================================================================
+     THE MAP -- where the chapter happens
+     ------------------------------------------------------------------
+     The gazetteer has given every place its coordinates since the start,
+     and a pair of coordinates is a number the reader has to imagine. This
+     draws them.
+
+     What it draws is land and water and nothing else. A modern border laid
+     over the Iron Age Levant is an anachronism the moment it is drawn, and
+     this volume has no business asserting one. Natural Earth's land
+     outlines are public domain, which is why they can be carried offline
+     with everything else.
+
+     Which places belong to a chapter is not decided here by scanning the
+     text for names. "Dan" is a man, a tribe and a city; a regex guessing
+     between them would put pins on the map that no text supports. The
+     gazetteer's source carries a curated verse list per place, and
+     tools/build_mentions.py resolves those against this volume's own
+     parse. Every pin on this map is a reference somebody checked.
+
+     A canvas cannot be read by a screen reader, so everything the canvas
+     shows is also on the page as a list of links. That list is not a
+     fallback -- it is the same information, and it is what the keyboard
+     and the screen reader actually use.
+     ================================================================ */
+
+  /* The frame the biblical material sits in: 1,209 of the 1,232 places. The
+     23 outside it are Rome, Tarshish, Spain, Ophir and the rest of the
+     western and eastern horizon, and they are why the world layer exists. */
+  var LEVANT = { w: 20, s: 12, e: 55, n: 42 };
+
+  function inFrame(p, f) {
+    return p.lon >= f.w && p.lon <= f.e && p.lat >= f.s && p.lat <= f.n;
+  }
+
+  /* Equirectangular, with longitude stretched by the cosine of the middle
+     latitude so the Mediterranean is not squashed into an oval. Enough for a
+     frame this size, and it is four lines rather than a projection library. */
+  function projector(frame, w, h) {
+    var midlat = (frame.n + frame.s) / 2 * Math.PI / 180;
+    var kx = Math.cos(midlat);
+    var spanX = (frame.e - frame.w) * kx;
+    var spanY = frame.n - frame.s;
+    var scale = Math.min(w / spanX, h / spanY);
+    var offX = (w - spanX * scale) / 2;
+    var offY = (h - spanY * scale) / 2;
+    return {
+      x: function (lon) { return offX + (lon - frame.w) * kx * scale; },
+      y: function (lat) { return offY + (frame.n - lat) * scale; },
+      scale: scale
+    };
+  }
+
+  /* Canvas colours cannot be CSS variables, so they are read from the page
+     at draw time. Reading them each draw rather than once is what makes the
+     map follow the theme instead of being the one element that ignores it. */
+  function inkOf(el) {
+    var cs = getComputedStyle(document.documentElement);
+    var pick = function (n, fallback) {
+      return (cs.getPropertyValue(n) || "").trim() || fallback;
+    };
+    return {
+      sea: pick("--paper", "#f2eee5"),
+      land: pick("--paper-2", "#e8e2d6"),
+      /* The fill between land and sea is a few points of lightness in either
+         theme, and in the dark one it is almost nothing. The coastline is
+         what actually makes the shape readable, so it is drawn in the text
+         colour rather than the rule colour, which is near-invisible on a
+         dark ground. */
+      coast: pick("--ink-faint", "#857c8a"),
+      pin: pick("--accent", "#6b2d5b"),
+      faint: pick("--ink-faint", "#857c8a")
+    };
+  }
+
   var VIEW = {
     point: 4000, within: 3000, approximate: 25000, region: 400000
   };
@@ -1159,6 +1238,337 @@
     approximate: "Approximate location",
     region: "A region, not a point"
   };
+
+  /* One canvas, drawn from a frame, a set of rings and a set of places.
+     Returns a redraw function; everything that changes -- theme, zoom, the
+     frame -- goes through it, so there is one drawing path and not three. */
+  function drawMap(canvas, state) {
+    var ctx = canvas.getContext("2d");
+    var box = canvas.getBoundingClientRect();
+    var w = Math.max(1, Math.round(box.width));
+    var h = Math.max(1, Math.round(box.height));
+
+    /* Without this the map is blurry on every phone made since 2014. */
+    var dpr = window.devicePixelRatio || 1;
+    if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    var ink = inkOf(canvas);
+    var f = state.view;
+    var pr = projector(f, w, h);
+
+    ctx.fillStyle = ink.sea;
+    ctx.fillRect(0, 0, w, h);
+
+    /* Every ring in one path, filled even-odd, so a lake enclosed by land is
+       drawn as water rather than as ground. */
+    ctx.beginPath();
+    state.rings.forEach(function (ring) {
+      for (var i = 0; i < ring.length; i += 2) {
+        var x = pr.x(ring[i]), y = pr.y(ring[i + 1]);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+    });
+    ctx.fillStyle = ink.land;
+    ctx.fill("evenodd");
+    ctx.strokeStyle = ink.coast;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.55;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    /* Jerusalem is named 719 times and Jabbok seven. Linear sizing makes one
+       a blot and the other invisible, so the count is taken as a logarithm:
+       the difference stays legible without the big ones swallowing the map. */
+    state.hit = [];
+    state.places.forEach(function (p) {
+      var x = pr.x(p.lon), y = pr.y(p.lat);
+      if (x < -20 || y < -20 || x > w + 20 || y > h + 20) return;
+      var r = 2.2 + Math.log(1 + (p.mentions || 1)) * 1.15;
+      state.hit.push({ x: x, y: y, r: Math.max(r, 7), place: p });
+
+      ctx.beginPath();
+      if (p.kind === "region") {
+        /* A region is not a pin. It gets a soft halo centred on the point
+           the source gives, which is a point inside it, not its middle. */
+        var g = ctx.createRadialGradient(x, y, 0, x, y, r * 3.2);
+        g.addColorStop(0, ink.pin);
+        g.addColorStop(1, "transparent");
+        ctx.globalAlpha = 0.28;
+        ctx.fillStyle = g;
+        ctx.arc(x, y, r * 3.2, 0, 6.284);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      } else if (p.kind === "approximate") {
+        /* Open, because the ring says "somewhere here" and a filled dot
+           would say "here". */
+        ctx.arc(x, y, r, 0, 6.284);
+        ctx.strokeStyle = ink.pin;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([2, 2]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      } else {
+        ctx.arc(x, y, r, 0, 6.284);
+        ctx.fillStyle = ink.pin;
+        ctx.fill();
+        ctx.strokeStyle = ink.sea;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      if (p === state.chosen) {
+        ctx.beginPath();
+        ctx.arc(x, y, r + 4, 0, 6.284);
+        ctx.strokeStyle = ink.pin;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    });
+  }
+
+  function chapterMap(workId, chapterIdx, chapterLabel) {
+    var wrap = el("details", { class: "chapter-map" });
+    wrap.appendChild(el("summary", { text: "Where this chapter happens" }));
+
+    var body = el("div", { class: "map-body" });
+    wrap.appendChild(body);
+
+    var loaded = false;
+    wrap.addEventListener("toggle", function () {
+      if (!wrap.open || loaded) return;
+      loaded = true;
+      body.appendChild(el("p", { class: "loading", text: "Loading the map…" }));
+
+      getJSON("mentions.json").then(function (table) {
+        var keys = table[workId + "/" + chapterIdx] || [];
+        if (!keys.length) {
+          body.innerHTML = "";
+          body.appendChild(el("p", { class: "empty", text:
+            "No place in the gazetteer is recorded as named in this chapter. " +
+            "The gazetteer covers the books of the Hebrew Bible and the New " +
+            "Testament; a chapter outside them, or one that names no place, " +
+            "has nothing to draw." }));
+          return;
+        }
+
+        var shards = {};
+        keys.forEach(function (k) {
+          shards[/^[a-z]/.test(k) ? k[0] : "0"] = true;
+        });
+        var names = Object.keys(shards);
+        return Promise.all(names.map(function (s) {
+          return getJSON("places/" + s + ".json").catch(function () { return {}; });
+        })).then(function (loadedShards) {
+          var all = {};
+          loadedShards.forEach(function (t) {
+            Object.keys(t).forEach(function (k) { all[k] = t[k]; });
+          });
+          var places = keys.map(function (k) { return all[k]; })
+                           .filter(Boolean);
+          if (!places.length) {
+            body.innerHTML = "";
+            body.appendChild(el("p", { class: "empty",
+              text: "The places named here have no coordinates on record." }));
+            return;
+          }
+
+          /* World or Levant is not a preference, it is whether the chapter
+             fits. Acts 27 sails to Rome; opening it on the Levant frame
+             would show a reader an empty sea. */
+          var needsWorld = places.some(function (p) {
+            return !inFrame(p, LEVANT);
+          });
+          var frame = needsWorld
+            ? { w: -25, s: -40, e: 100, n: 62 }
+            : LEVANT;
+
+          return getJSON("basemap/" + (needsWorld ? "world" : "levant") + ".json")
+            .then(function (base) {
+              body.innerHTML = "";
+              build(body, places, base.rings, frame, needsWorld);
+            });
+        });
+      }).catch(function (e) {
+        body.innerHTML = "";
+        body.appendChild(el("p", { class: "empty",
+          text: "The map could not be loaded. " + String(e.message) }));
+      });
+    });
+
+    function build(root, places, rings, frame, isWorld) {
+      var state = {
+        rings: rings, places: places, home: frame, view: frame,
+        chosen: null, hit: []
+      };
+
+      var canvas = el("canvas", {
+        class: "map-canvas",
+        /* The canvas itself is decoration; the list below it is the content,
+           and pointing at it by id is what keeps that claim honest. */
+        role: "img",
+        "aria-describedby": "map-list-" + workId + "-" + chapterIdx
+      });
+      var stage = el("div", { class: "map-stage" }, [canvas]);
+
+      /* Give the box the frame's own proportions. Left to fill whatever width
+         it is given, a frame taller than it is wide sits in the middle of a
+         letterbox with empty margins either side -- and the Levant layer is
+         clipped to the frame, so those margins really are empty rather than
+         showing the next country along. */
+      var midlat = (frame.n + frame.s) / 2 * Math.PI / 180;
+      var aspect = ((frame.e - frame.w) * Math.cos(midlat)) / (frame.n - frame.s);
+      stage.style.setProperty("--map-aspect", aspect.toFixed(3));
+      root.appendChild(stage);
+
+      var redraw = function () { drawMap(canvas, state); };
+
+      var detail = el("div", { class: "map-detail", hidden: true });
+
+      function choose(p) {
+        state.chosen = p;
+        detail.innerHTML = "";
+        detail.hidden = false;
+        detail.appendChild(el("h3", { class: "map-detail-name", text: p.name }));
+        detail.appendChild(placeBlock(p));
+        redraw();
+        announce(p.name + ", " + (KIND_LABEL[p.kind] || "location"));
+      }
+
+      canvas.addEventListener("click", function (ev) {
+        var b = canvas.getBoundingClientRect();
+        var x = ev.clientX - b.left, y = ev.clientY - b.top;
+        var best = null, bestD = Infinity;
+        state.hit.forEach(function (h) {
+          var d = Math.pow(h.x - x, 2) + Math.pow(h.y - y, 2);
+          if (d < h.r * h.r && d < bestD) { best = h.place; bestD = d; }
+        });
+        if (best) choose(best);
+      });
+
+      /* Wheel zoom and drag pan, clamped so the frame cannot be dragged off
+         into empty ocean and lost. */
+      function clamp(v) {
+        var home = state.home;
+        var wSpan = Math.min(v.e - v.w, home.e - home.w);
+        var hSpan = Math.min(v.n - v.s, home.n - home.s);
+        if (v.w < home.w) { v.w = home.w; v.e = home.w + wSpan; }
+        if (v.e > home.e) { v.e = home.e; v.w = home.e - wSpan; }
+        if (v.s < home.s) { v.s = home.s; v.n = home.s + hSpan; }
+        if (v.n > home.n) { v.n = home.n; v.s = home.n - hSpan; }
+        return v;
+      }
+
+      function zoomBy(factor, fx, fy) {
+        var v = state.view;
+        var cw = (v.e - v.w), ch = (v.n - v.s);
+        var nw = cw * factor, nh = ch * factor;
+        var maxW = state.home.e - state.home.w;
+        if (nw > maxW) { nw = maxW; nh = (state.home.n - state.home.s); }
+        if (nw < maxW / 25) return;
+        var ax = v.w + cw * fx, ay = v.n - ch * fy;
+        state.view = clamp({
+          w: ax - nw * fx, e: ax + nw * (1 - fx),
+          n: ay + nh * fy, s: ay - nh * (1 - fy)
+        });
+        redraw();
+      }
+
+      canvas.addEventListener("wheel", function (ev) {
+        ev.preventDefault();
+        var b = canvas.getBoundingClientRect();
+        zoomBy(ev.deltaY > 0 ? 1.18 : 0.85,
+               (ev.clientX - b.left) / b.width,
+               (ev.clientY - b.top) / b.height);
+      }, { passive: false });
+
+      var dragging = null;
+      canvas.addEventListener("pointerdown", function (ev) {
+        dragging = { x: ev.clientX, y: ev.clientY, moved: false };
+        canvas.setPointerCapture(ev.pointerId);
+      });
+      canvas.addEventListener("pointermove", function (ev) {
+        if (!dragging) return;
+        var b = canvas.getBoundingClientRect();
+        var v = state.view;
+        var dx = (ev.clientX - dragging.x) / b.width * (v.e - v.w);
+        var dy = (ev.clientY - dragging.y) / b.height * (v.n - v.s);
+        if (Math.abs(ev.clientX - dragging.x) > 3 ||
+            Math.abs(ev.clientY - dragging.y) > 3) dragging.moved = true;
+        state.view = clamp({ w: v.w - dx, e: v.e - dx, n: v.n + dy, s: v.s + dy });
+        dragging.x = ev.clientX; dragging.y = ev.clientY;
+        redraw();
+      });
+      var endDrag = function () { dragging = null; };
+      canvas.addEventListener("pointerup", endDrag);
+      canvas.addEventListener("pointercancel", endDrag);
+
+      var tools = el("div", { class: "map-tools" }, [
+        el("button", { class: "chip", text: "Reset", onclick: function () {
+          state.view = state.home; state.chosen = null;
+          detail.hidden = true; redraw();
+          announce("Map reset");
+        } })
+      ]);
+      root.appendChild(tools);
+      root.appendChild(detail);
+
+      /* The list is the accessible copy of the canvas, and the only thing a
+         keyboard can use. It carries the same places in the same order. */
+      var list = el("ul", {
+        class: "map-list",
+        id: "map-list-" + workId + "-" + chapterIdx
+      });
+      places.slice().sort(function (a, b) {
+        return (b.mentions || 0) - (a.mentions || 0);
+      }).forEach(function (p) {
+        var b = el("button", {
+          class: "map-place map-" + p.kind,
+          text: p.name,
+          onclick: function () { choose(p); }
+        });
+        b.appendChild(el("span", { class: "map-place-kind",
+                                   text: KIND_LABEL[p.kind] || "Location" }));
+        list.appendChild(el("li", {}, [b]));
+      });
+
+      root.appendChild(el("p", { class: "map-caption", html:
+        "<strong>" + fmt(places.length) + "</strong> " +
+        (places.length === 1 ? "place is" : "places are") + " recorded as " +
+        "named in " + esc(chapterLabel || "this chapter") + ". " +
+        (isWorld ? "Shown on the world, because this chapter names somewhere " +
+                   "outside the biblical frame. " : "") +
+        "A filled dot is an identified location, a dashed ring an approximate " +
+        "one, and a soft halo a region rather than a point — centred on a " +
+        "spot inside it, not on its middle. Land outlines from Natural Earth, " +
+        "public domain. No borders are drawn: there are none to draw." }));
+      root.appendChild(list);
+
+      canvas.setAttribute("aria-label",
+        "Map of " + places.length + " places named in this chapter. " +
+        "The same places are listed below as links.");
+
+      redraw();
+
+      /* The theme is a button and a system setting, and the canvas has to
+         follow both or it is the one element stuck in the old palette. */
+      var themeWatch = function () { if (wrap.open) redraw(); };
+      document.getElementById("theme").addEventListener("click", function () {
+        setTimeout(themeWatch, 0);
+      });
+      if (window.matchMedia) {
+        var mq = window.matchMedia("(prefers-color-scheme: dark)");
+        if (mq.addEventListener) mq.addEventListener("change", themeWatch);
+      }
+      window.addEventListener("resize", function () { if (wrap.open) redraw(); });
+    }
+
+    return wrap;
+  }
 
   function placeBlock(p) {
     var dist = VIEW[p.kind] || 8000;

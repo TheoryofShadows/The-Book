@@ -63,6 +63,18 @@ jobs:
       - name: Audit chapter and verse counts
         run: python3 tools/audit.py docs/data
 
+      # The map is meant to cost less than a photograph. A simplification
+      # threshold is easy to loosen by accident and the result is still a
+      # working map, just a slower one on the phone most of this is read on.
+      - name: The map stays inside its size budget
+        run: |
+          bytes=$(cat $(find docs/data/basemap -name '*.json') docs/data/mentions.json | wc -c)
+          echo "basemap + mention index: $((bytes / 1024)) KB of 250 KB"
+          if [ "$bytes" -gt 256000 ]; then
+            echo "::error::the map data is over budget at $((bytes / 1024)) KB"
+            exit 1
+          fi
+
   reader:
     name: The reader works in a browser
     runs-on: ubuntu-latest

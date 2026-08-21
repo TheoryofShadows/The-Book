@@ -77,6 +77,43 @@ filed under is drawn fainter, because it is a looser claim; a range with one
 end unstated runs off the edge rather than stopping at a year nobody named.
 The works that carry no date under a column are listed rather than dropped.
 
+### The map
+
+Every chapter offers **where this chapter happens**. It draws land and water
+and nothing else — a modern border laid across the Iron Age Levant is an
+anachronism the moment it is drawn, and this volume has no business asserting
+one. The outlines are Natural Earth, public domain, simplified by
+`tools/build_basemap.py` and committed: nothing is fetched at runtime, and the
+map works from `file://` with the rest.
+
+Which places belong to a chapter is not decided by scanning the text for
+names. *Dan* is a man, a tribe and a city; *Judah* is a man, a tribe, a kingdom
+and a region, and a pattern guessing between them would put pins on the map
+that no text supports. The gazetteer's source carries a curated verse list for
+every place — 7,394 references — and `tools/build_mentions.py` resolves each
+one against this volume's own parse, dropping anything that does not land on a
+verse the volume actually contains. Every pin is a reference somebody checked.
+
+The map draws what it knows and shows what it does not. A filled dot is an
+identified location, a dashed ring an approximate one, and a soft halo a
+region rather than a point — centred on a spot inside it, not on its middle.
+Seven famous entries the source states as flat points are demoted, because the
+dispute about them is over the identification itself rather than the
+precision: Tarshish, Sinai, Horeb, Sodom, Gomorrah, Emmaus and Ararat. A line
+of coordinates reads as a reference; a dot on a coastline reads as a finding,
+and drawing Tarshish in Spain would settle an argument this volume refuses to
+settle everywhere else.
+
+A canvas cannot be read by a screen reader, so everything on it is also on the
+page as a list of links carrying the same three grades. That list is not a
+fallback — it is what a keyboard and a screen reader use, and a test fails if
+the two ever hold different places.
+
+The frame chooses itself. 1,209 of the 1,232 places sit inside the biblical
+frame; the 23 that do not are Rome, Tarshish, Spain, Ophir and the rest of the
+horizon, so a chapter that names one of them is drawn on the world instead.
+Acts 27 gets the Mediterranean it needs; Amos gets the Levant.
+
 [How the dating was decided](#) is a page of its own: what the arrangement is
 and is not, where each date comes from, how the bars are derived, the boundary
 of every named period and the event that fixes it, and the two things the bars
@@ -289,6 +326,7 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 | `resilience` | The data failing to load, malformed data, routes that name nothing, the keyboard shortcuts, the skip link, and what a screen reader is actually told |
 | `listening` | What is spoken and in what order, which voice out of a bad drawer is picked, that the apparatus is never read out, where long passages are broken and how long the pauses are at each pace, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |
 | `offline` | The single-file build opens from `file://` and every feature in it works with no network at all |
+| `map` | Land is actually painted, the frame chooses itself from what the chapter names, every place on the canvas is also a link on the page, a disputed identification is not drawn as a settled one, panning cannot lose the map, the canvas follows the theme, and all of it works from `file://` |
 
 The unit tests and the lint run on every pull request and again before every
 deploy. The browser checks used to run on pull requests only, which meant
