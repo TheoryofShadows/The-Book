@@ -939,11 +939,11 @@
    "canons": {
     "ethiopian": "canon"
    },
-   "works": [],
-   "present": false,
-   "foldedInto": null,
-   "absentWhy": "A public-domain English translation exists: Thomas Pell Platt, The Ethiopic Didascalia, Oriental Translation Fund, London, 1834, printed with the Ge'ez facing the English. The scanned text is recoverable -- about 28,000 words of continuous English survive the OCR -- but it carries the scars of a facing-page scan, and no independent chapter and verse counts exist to audit the result against the way the biblical books are audited. It is the one of the five that could be added, and it is a decision about the standard rather than a matter of finding the text.",
-   "absentSource": "Platt 1834, archive.org/details/ethiopicdidascal00platrich"
+   "works": [
+    "the-ethiopic-didascalia"
+   ],
+   "present": true,
+   "foldedInto": null
   },
   {
    "name": "Sinodos",
@@ -1413,11 +1413,10 @@
    "distinctBooks": 85,
    "traditionalCount": 81,
    "caveat": "Usually given as 81 books, though the enumeration differs between lists. The only canon that receives 1 Enoch and Jubilees as scripture.",
-   "presentInVolume": 85,
+   "presentInVolume": 86,
    "absent": [
     "4 Baruch (Paraleipomena Jeremiou)",
     "Ethiopic Clement (Qalementos)",
-    "Ethiopic Didascalia",
     "Sinodos",
     "Book of the Covenant (Mets'hafe Kidan)"
    ]

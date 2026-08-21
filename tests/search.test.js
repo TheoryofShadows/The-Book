@@ -18,7 +18,11 @@
 const EXPECT = {
   stillSmallVoice: 1,     // 1 Kings 19:12, and nowhere else in the volume
   livingCreatures: 27,
-  caesar: 59,
+  /* 59 until the Ethiopic Didascalia was added, which quotes "Give unto
+     Caesar the things that are Caesar's" and makes 60. A count like this
+     moving is the corpus changing, and the right response is to find the
+     verse that changed it before touching the number. */
+  caesar: 60,
   mastema: 11,
   behemothLeviathan: 2
 };

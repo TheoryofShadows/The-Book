@@ -123,7 +123,7 @@ BOOKS.append(("4 Baruch (Paraleipomena Jeremiou)", "Ethiopian canon",
 BOOKS.append(("Ethiopic Clement (Qalementos)", "Ethiopian canon",
               {"ethiopian": "canon"}, []))
 BOOKS.append(("Ethiopic Didascalia", "Ethiopian canon",
-              {"ethiopian": "canon"}, []))
+              {"ethiopian": "canon"}, ["the-ethiopic-didascalia"]))
 BOOKS.append(("Sinodos", "Ethiopian canon", {"ethiopian": "canon"}, []))
 BOOKS.append(("Book of the Covenant (Mets'hafe Kidan)", "Ethiopian canon",
               {"ethiopian": "canon"}, []))
@@ -186,17 +186,6 @@ FOLDED = {
 # against a printed edition is exactly the kind of unverifiable claim the rest
 # of this repository exists to refuse.
 ABSENT_WHY = {
-    "Ethiopic Didascalia": (
-        "A public-domain English translation exists: Thomas Pell Platt, The "
-        "Ethiopic Didascalia, Oriental Translation Fund, London, 1834, "
-        "printed with the Ge'ez facing the English. The scanned text is "
-        "recoverable -- about 28,000 words of continuous English survive the "
-        "OCR -- but it carries the scars of a facing-page scan, and no "
-        "independent chapter and verse counts exist to audit the result "
-        "against the way the biblical books are audited. It is the one of the "
-        "five that could be added, and it is a decision about the standard "
-        "rather than a matter of finding the text.",
-        "Platt 1834, archive.org/details/ethiopicdidascal00platrich"),
     "4 Baruch (Paraleipomena Jeremiou)": (
         "No public-domain English translation located. The 1889 Rendel Harris "
         "edition is the Greek text with a critical introduction, not a "
