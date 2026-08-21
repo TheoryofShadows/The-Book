@@ -1329,6 +1329,20 @@
         ctx.stroke();
       }
     });
+
+    /* What the canvas actually put down, in its own words. The page claims
+       the list below is the same information as the picture above it, and a
+       claim about a canvas is otherwise unfalsifiable: pixels do not say
+       which places they are. Saying it here is what lets something check
+       that the two agree, rather than checking the list against itself.
+
+       This is what is painted *now*, so it follows the viewport: zoomed in,
+       it is a subset of the list, and that is the honest answer rather than
+       a promise the picture is not keeping. Unzoomed the two are equal, and
+       that is the claim the README makes. */
+    canvas.dataset.drawn = state.hit.map(function (h) {
+      return h.place.name;
+    }).join("\n");
   }
 
   function chapterMap(workId, chapterIdx, chapterLabel) {

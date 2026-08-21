@@ -26,6 +26,29 @@ async function openMap(page, base, route) {
   await page.waitForTimeout(500);
 }
 
+/* The places a chapter should show, read straight off the built data rather
+   than off the page. Neither the canvas nor the list is the authority here:
+   the mention index is, and this is what lets a test say so. Places whose
+   key is in the index but which carry no coordinates are dropped, because
+   the renderer drops them too (app.js filters the shard lookup by Boolean). */
+function expected(root, workId, chapterIdx) {
+  const fs = require('fs');
+  const path = require('path');
+  const data = path.join(root, 'docs', 'data');
+  const read = f => JSON.parse(fs.readFileSync(f, 'utf8'));
+
+  const keys = read(path.join(data, 'mentions.json'))[workId + '/' + chapterIdx];
+  if (!keys) throw new Error('no mention index entry for ' + workId + '/' + chapterIdx);
+
+  const shards = {};
+  for (const k of keys) {
+    const s = /^[a-z]/.test(k) ? k[0] : '0';
+    if (!shards[s]) shards[s] = read(path.join(data, 'places', s + '.json'));
+  }
+  return keys.map(k => shards[/^[a-z]/.test(k) ? k[0] : '0'][k])
+             .filter(Boolean).map(p => p.name).sort();
+}
+
 /* How many distinct colours the canvas actually put down. A canvas that threw
    halfway is still a canvas; this is how you tell it drew something. */
 const painted = page => page.evaluate(() => {
@@ -72,8 +95,30 @@ module.exports = async function map(t, ctx) {
           names.slice(0, 5).join(', '));
 
   /* ---- the canvas is not the only copy ---- */
+
+  /* This used to read `.map-place` on both sides. But `.map-place` is only
+     ever rendered inside `.map-list`, so it counted the list, compared it to
+     the list, and passed -- while the README promised a reader that the two
+     copies can never disagree. The canvas now says which places it drew, so
+     there are genuinely two sides to compare. */
+  const drawn = await page.evaluate(() =>
+    (document.querySelector('.map-canvas').dataset.drawn || '')
+      .split('\n').filter(Boolean).sort());
+  const listed = await page.evaluate(() =>
+    [...document.querySelectorAll('.map-list .map-place')]
+      .map(b => b.firstChild.textContent.trim()).sort());
+
   t.check('every place on the canvas is also a link on the page',
-          await page.locator('.map-list .map-place').count() === places);
+          drawn.length > 0 && drawn.join('|') === listed.join('|'),
+          drawn.length + ' drawn, ' + listed.length + ' listed');
+
+  /* Both sides can agree and both be wrong. The mention index on disk is the
+     thing neither the canvas nor the list is allowed to quietly disagree
+     with, so it is read here from the file rather than from the page. */
+  const onRecord = expected(ctx.root, 'amos', 2);
+  t.check('and both are the places the mention index actually records',
+          listed.join('|') === onRecord.join('|'),
+          listed.length + ' shown, ' + onRecord.length + ' on record');
 
   t.check('the canvas points a screen reader at that list',
           await page.evaluate(() => {
@@ -155,6 +200,49 @@ module.exports = async function map(t, ctx) {
   await page.locator('.map-tools .chip', { hasText: 'Reset' }).click();
   await page.waitForTimeout(300);
   t.check('reset puts it back', Math.abs(await painted(page) - before) <= 4);
+
+  /* ---- zoomed in, the picture is a subset and never an invention ----
+
+     The equality checked above is an unzoomed claim: pins outside the
+     viewport are culled, so a zoomed map really does paint fewer places
+     than the list holds. What must survive the wheel is the weaker half --
+     everything painted is still on the page. Joshua 15 is the case worth
+     using, because 161 places is enough that zooming genuinely leaves some
+     behind; Amos 2's four stay in frame however far you go, which would
+     make this a second copy of the equality check rather than a test of
+     culling. */
+  await openMap(page, ctx.base, '#/read/joshua/14');
+  const seen = () => page.evaluate(() => {
+    const drawn = (document.querySelector('.map-canvas').dataset.drawn || '')
+      .split('\n').filter(Boolean);
+    const listed = [...document.querySelectorAll('.map-list .map-place')]
+      .map(b => b.firstChild.textContent.trim());
+    return { drawn, listed, stray: drawn.filter(n => !listed.includes(n)) };
+  });
+
+  await page.locator('.map-canvas').hover();
+  let zoomed = await seen();
+  /* Zoom a step at a time until some place has actually been culled, rather
+     than guessing a wheel count: too few and nothing is culled, too many and
+     the viewport holds nothing at all, and neither proves anything. */
+  for (let i = 0; i < 12 && zoomed.drawn.length === zoomed.listed.length; i++) {
+    await page.mouse.wheel(0, -100);
+    await page.waitForTimeout(150);
+    zoomed = await seen();
+  }
+
+  t.check('zooming in really does leave some places off the canvas',
+          zoomed.drawn.length > 0 &&
+          zoomed.drawn.length < zoomed.listed.length,
+          zoomed.drawn.length + ' of ' + zoomed.listed.length + ' still painted');
+
+  t.check('and every place it still paints is on the page',
+          zoomed.stray.length === 0,
+          zoomed.stray.length ? 'not listed: ' + zoomed.stray.join(', ') : 'none stray');
+
+  /* Back to Amos, unzoomed: the theme check below samples one pixel of sea,
+     and a zoomed Joshua has land under it. */
+  await openMap(page, ctx.base, '#/read/amos/2');
 
   /* ---- the theme ---- */
   const sea = () => page.evaluate(() => {
