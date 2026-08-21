@@ -6,16 +6,19 @@ The link is case sensitive. `/The-Book/` works; `/the-book/` does not.
 
 ---
 
-Every text of the Jewish, Protestant, Catholic, Eastern Orthodox and Ethiopian
-canons — together with the pseudepigrapha, the New Testament apocrypha and the
-Apostolic Fathers — arranged by when scholars believe each was written, and
-published as a searchable, interactive reader.
+Every text of the Jewish, Protestant, Catholic and Eastern Orthodox canons, and
+all but four of the Ethiopian — together with the pseudepigrapha, the New
+Testament apocrypha and the Apostolic Fathers — arranged by when scholars
+believe each was written, and published as a searchable, interactive reader.
+
+The four that are missing are missing for a reason the accuracy report names
+and cites: no English translation of them is old enough to be public domain.
 
 It opens with the Song of the Sea, not with Genesis.
 
-**165 works · 2,249 chapters · 40,124 numbered verses · 1.13 million words**
+**166 works · 2,269 chapters · 40,124 numbered verses · 1.16 million words**
 
-Of the 165 entries, **156 carry text**. The other nine are apparatus rather
+Of the 166 entries, **157 carry text**. The other nine are apparatus rather
 than works: the Dead Sea Scrolls summaries, the Psalms of Solomon and Philo
 placeholders, four notes on manuscript discoveries, and two editorial asides.
 They are counted because they are printed and read in sequence with the rest;
@@ -59,6 +62,8 @@ translation.
 | World English Bible with Deuterocanon (eBible.org) | Old and New Testaments, full deuterocanon, wider Orthodox canon |
 | R. H. Charles, 1917 | 1 Enoch, Jubilees |
 | Ante-Nicene Fathers, ed. Roberts and Donaldson, 1885 | Apostolic Fathers, Testaments of the Twelve Patriarchs, NT apocrypha, Shepherd of Hermas, Ignatius (shorter recension) |
+| Ante-Nicene Christian Library, 1870 | Hermas Similitudes 1 and 10, Polycarp 14, the Fragments of Papias — gaps the 1885 scrape lost |
+| Thomas Pell Platt, Oriental Translation Fund, 1834 | The Ethiopic Didascalia — recovered from the scan of a facing-page printing, and **not audited** |
 
 ## Seeing the disagreement
 

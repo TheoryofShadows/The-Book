@@ -12,6 +12,9 @@ python3 tools/parse_book.py "$SRC" "$OUT"
 echo "==> repairs"
 python3 tools/build_repairs.py "$OUT" source/extra
 
+echo "==> the Ethiopic Didascalia"
+python3 tools/build_didascalia.py "$OUT" source/extra
+
 echo "==> lexicon"
 python3 tools/build_lexicon.py source/lexicon "$OUT"
 

@@ -74,9 +74,9 @@ class TheHeadline(unittest.TestCase):
 
 
 class WhatCountsAsAWork(unittest.TestCase):
-    """The headline counts 165. Nine of them are not texts.
+    """The headline counts 166. Nine of them are not texts.
 
-    Checking that 165 matches manifest.totals.works proves the arithmetic
+    Checking that the count matches manifest.totals.works proves the arithmetic
     and nothing else -- the number was never the doubtful part, the noun
     was. Two of the entries are editorial asides, four are notes on
     manuscript discoveries, and three are placeholders for material the
@@ -92,8 +92,8 @@ class WhatCountsAsAWork(unittest.TestCase):
 
     def test_the_split_between_text_and_apparatus(self):
         texts = [w for w in self.works if w.get("words")]
-        self.assertEqual(len(self.works), 165)
-        self.assertEqual(len(texts), 156)
+        self.assertEqual(len(self.works), 166)
+        self.assertEqual(len(texts), 157)
         self.assertEqual(len(self.works) - len(texts), 9)
 
     def test_the_readme_says_how_many_carry_text(self):
@@ -161,6 +161,41 @@ class WhatTheFrontMatterClaimsIsMissing(unittest.TestCase):
         for missing in ("Dead Sea Scrolls", "Psalms of Solomon", "Philo",
                         "1 Clement", "Smyrnaeans"):
             self.assertIn(missing, note)
+
+
+class TheAbsentBooks(unittest.TestCase):
+    """Four books of the Ethiopian canon are missing, and each says why.
+
+    There were five. The Ethiopic Didascalia was added from Platt's 1834
+    printing; the other four have no English translation old enough to be
+    public domain, and that is now recorded rather than left blank.
+
+    The coverage table named them and stopped, which is a gap asserted
+    without a citation -- the one move this volume says it does not make.
+    A reason that cannot be checked is no better than no reason, so each
+    carries a source too, and build_canon.py refuses to build without one.
+    """
+
+    def setUp(self):
+        with open(os.path.join(ROOT, "docs", "data", "canon.json"),
+                  encoding="utf-8") as fh:
+            self.canon = json.load(fh)
+        self.absent = [b for b in self.canon["books"] if not b["present"]]
+
+    def test_the_absent_books_are_the_ones_on_record(self):
+        self.assertEqual(
+            sorted(b["name"] for b in self.absent),
+            ["4 Baruch (Paraleipomena Jeremiou)",
+             "Book of the Covenant (Mets'hafe Kidan)",
+             "Ethiopic Clement (Qalementos)",
+             "Sinodos"])
+
+    def test_every_absence_carries_a_reason_and_a_source(self):
+        for b in self.absent:
+            self.assertTrue(b.get("absentWhy", "").strip(),
+                            f"{b['name']} is absent with no reason")
+            self.assertTrue(b.get("absentSource", "").strip(),
+                            f"{b['name']} gives no source for its reason")
 
 
 class TheGazetteer(unittest.TestCase):
