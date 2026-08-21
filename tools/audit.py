@@ -155,10 +155,30 @@ def main() -> int:
         if wid not in works:
             problems.append(("ORPHAN", wid, "position for a work not in the volume", ""))
 
+    # And the other direction, which is the one that was missing. The loop
+    # above walks the positions and asks whether each is cited. It never
+    # asked whether a work *has* a position, so a work carrying text and no
+    # dated argument at all was invisible here -- and the arrangement by
+    # composition date is the one claim this whole volume is built on. A work
+    # with no record is not undated on the page: it inherits the span of the
+    # section it is filed under, and the timeline draws it fainter to say so.
+    # That is a looser claim than a cited date, and until now nothing counted
+    # how many of them there were.
+    for wid, w in sorted(works.items()):
+        if not w.get("words"):
+            continue          # apparatus and placeholders carry no date
+        if wid not in POSITIONS:
+            problems.append(("NO-POSITION", wid, "placed by its section's era",
+                             "no dated position record"))
+
     for kind, wid, a, b in problems:
-        print(f"{kind:9s} {wid:62s} {a}  {b}")
+        print(f"{kind:11s} {wid:62s} {a}  {b}")
+    positioned = sum(1 for wid, w in works.items()
+                     if w.get("words") and wid in POSITIONS)
+    texts = sum(1 for w in works.values() if w.get("words"))
     print(f"\n{checked} works checked against reference counts; "
-          f"{len(POSITIONS)} position records checked for citations")
+          f"{len(POSITIONS)} position records checked for citations; "
+          f"{positioned} of {texts} works carrying text have one")
 
     return gate(problems)
 
