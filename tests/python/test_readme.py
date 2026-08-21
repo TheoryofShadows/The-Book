@@ -163,6 +163,47 @@ class WhatTheFrontMatterClaimsIsMissing(unittest.TestCase):
             self.assertIn(missing, note)
 
 
+class TheAbsentBooks(unittest.TestCase):
+    """Five books of the Ethiopian canon are missing, and now say why.
+
+    The coverage table named them and stopped, which is a gap asserted
+    without a citation -- the one move this volume says it does not make.
+    A reason that cannot be checked is no better than no reason, so each
+    carries a source too, and build_canon.py refuses to build without one.
+    """
+
+    def setUp(self):
+        with open(os.path.join(ROOT, "docs", "data", "canon.json"),
+                  encoding="utf-8") as fh:
+            self.canon = json.load(fh)
+        self.absent = [b for b in self.canon["books"] if not b["present"]]
+
+    def test_the_absent_books_are_the_ones_on_record(self):
+        self.assertEqual(
+            sorted(b["name"] for b in self.absent),
+            ["4 Baruch (Paraleipomena Jeremiou)",
+             "Book of the Covenant (Mets'hafe Kidan)",
+             "Ethiopic Clement (Qalementos)",
+             "Ethiopic Didascalia",
+             "Sinodos"])
+
+    def test_every_absence_carries_a_reason_and_a_source(self):
+        for b in self.absent:
+            self.assertTrue(b.get("absentWhy", "").strip(),
+                            f"{b['name']} is absent with no reason")
+            self.assertTrue(b.get("absentSource", "").strip(),
+                            f"{b['name']} gives no source for its reason")
+
+    def test_the_one_that_could_be_added_says_so(self):
+        """The Didascalia is the only one held back by judgement, not by
+        the absence of a public-domain translation. That distinction is
+        the useful part of the whole table."""
+        d = next(b for b in self.absent if b["name"] == "Ethiopic Didascalia")
+        self.assertIn("Platt", d["absentSource"])
+        self.assertIn("1834", d["absentSource"])
+        self.assertIn("public-domain English translation exists", d["absentWhy"])
+
+
 class TheGazetteer(unittest.TestCase):
 
     def test_the_number_of_curated_references(self):
