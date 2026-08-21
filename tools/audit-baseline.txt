@@ -1,0 +1,128 @@
+# Findings this volume accepts.
+#
+# tools/audit.py checks the parsed library against independent chapter and
+# verse counts. Every line it reports is either a defect or a property of the
+# printed edition, and until this file existed there was no way to tell which:
+# the script exited zero whatever it found, so a hundred and fifty lines of
+# known-good output hid the real ones. Three chapters of Ignatius and fifty-six
+# chapter openings were missing from the volume the whole time it ran.
+#
+# So: a finding not listed here fails the build. A line listed here that no
+# longer occurs also fails the build, because the file has to keep describing
+# the volume as it actually is. Nothing regenerates it -- every entry below was
+# written down with a reason, which is the standard the rest of the volume is
+# held to, and a baseline that rewrote itself would let the next regression in
+# under a passing build.
+#
+# Format: KIND | work | detail | detail. Blank lines and # are ignored.
+#
+# Regenerate the findings with:
+#     python3 tools/audit.py docs/data
+
+
+# ------------------------------------------------------------------------
+# The World English Bible follows the critical text
+#
+# The WEB is the edition printed here. It omits the verses that modern
+# critical editions judge to be later additions, and keeps the verse
+# numbers so the omission is visible rather than silent. Acts 8:37,
+# 15:34 and 24:7, and Luke 17:36, are those verses. Revelation 12 is a
+# versification difference, not an omission: the WEB ends the chapter at
+# 17 where the KJV runs to 18.
+
+V-GAP | acts | Chapter 15 | missing [34]
+V-GAP | acts | Chapter 24 | missing [7]
+V-GAP | acts | Chapter 8 | missing [37]
+V-GAP | luke | Chapter 17 | missing [36]
+VERSES | acts | expected 1007 | got 1004
+VERSES | luke | expected 1151 | got 1150
+VERSES | revelation | expected 405 | got 404
+
+# ------------------------------------------------------------------------
+# Sirach: the WEB prints the short Greek text
+#
+# The verse numbers of Sirach come from a longer recension (GII) whose
+# additional lines the WEB does not carry. The numbering is left standing,
+# so a gap here is the edition showing its work, not a parse that lost a
+# line.
+
+V-GAP | sirach-ecclesiasticus | Chapter 1 | missing [5, 7, 21]
+V-GAP | sirach-ecclesiasticus | Chapter 10 | missing [21]
+V-GAP | sirach-ecclesiasticus | Chapter 11 | missing [15, 16]
+V-GAP | sirach-ecclesiasticus | Chapter 13 | missing [14]
+V-GAP | sirach-ecclesiasticus | Chapter 16 | missing [15, 16]
+V-GAP | sirach-ecclesiasticus | Chapter 17 | missing [5, 9, 16, 18, 21]
+V-GAP | sirach-ecclesiasticus | Chapter 18 | missing [3]
+V-GAP | sirach-ecclesiasticus | Chapter 19 | missing [18, 19, 21]
+V-GAP | sirach-ecclesiasticus | Chapter 20 | missing [3]
+V-GAP | sirach-ecclesiasticus | Chapter 22 | missing [9, 10]
+V-GAP | sirach-ecclesiasticus | Chapter 24 | missing [18, 24]
+V-GAP | sirach-ecclesiasticus | Chapter 25 | missing [12]
+V-GAP | sirach-ecclesiasticus | Chapter 3 | missing [19]
+
+# ------------------------------------------------------------------------
+# Charles's Jubilees and Enoch do not number continuously
+#
+# R. H. Charles's 1913 editions transpose verses on manuscript grounds --
+# the Apocalypse of Weeks in Enoch 91 and 93 is the well-known case -- and
+# set the poetry in indented strophes whose numbers sit inside the block.
+# The result is a numbering with real holes in it. These were checked as a
+# class, not one by one; any of them that turns out to be a parse fault is
+# a defect and should be fixed rather than left here.
+
+CHAPTERS | 1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108 | expected 26 | got 25
+CHAPTERS | 1-enoch-the-astronomical-book-chapters-72-82 | expected 11 | got 10
+V-GAP | 1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108 | 1 ENOCH 100 | missing [2, 4, 10]
+V-GAP | 1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108 | 1 ENOCH 106 | missing [15, 16]
+V-GAP | 1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108 | 1 ENOCH 90 | missing [14, 15, 17, 18]
+V-GAP | 1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108 | 1 ENOCH 93 | missing [2, 11]
+V-GAP | 1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108 | 1 ENOCH 96 | missing [2]
+V-GAP | 1-enoch-the-astronomical-book-chapters-72-82 | 1 ENOCH 76 | missing [13]
+V-GAP | 1-enoch-the-astronomical-book-chapters-72-82 | 1 ENOCH 81 | missing [2]
+V-GAP | 1-enoch-the-astronomical-book-chapters-72-82 | 1 ENOCH 82 | missing [14]
+V-GAP | 1-enoch-the-book-of-parables-chapters-37-71 | 1 ENOCH 39 | missing [6, 7]
+V-GAP | 1-enoch-the-book-of-parables-chapters-37-71 | 1 ENOCH 46 | missing [3, 4]
+V-GAP | 1-enoch-the-book-of-parables-chapters-37-71 | 1 ENOCH 55 | missing [3]
+V-GAP | 1-enoch-the-book-of-parables-chapters-37-71 | 1 ENOCH 60 | missing [4, 5, 16]
+V-GAP | 1-enoch-the-book-of-the-watchers-chapters-1-36 | 1 ENOCH 10 | missing [7, 14, 16, 17, 18]
+V-GAP | 1-enoch-the-book-of-the-watchers-chapters-1-36 | 1 ENOCH 14 | missing [10]
+V-GAP | 1-enoch-the-book-of-the-watchers-chapters-1-36 | 1 ENOCH 15 | missing [10]
+V-GAP | 1-enoch-the-book-of-the-watchers-chapters-1-36 | 1 ENOCH 16 | missing [3]
+V-GAP | 1-enoch-the-book-of-the-watchers-chapters-1-36 | 1 ENOCH 18 | missing [6]
+V-GAP | 1-enoch-the-book-of-the-watchers-chapters-1-36 | 1 ENOCH 22 | missing [4]
+V-GAP | 1-enoch-the-book-of-the-watchers-chapters-1-36 | 1 ENOCH 25 | missing [2, 3]
+V-GAP | 1-enoch-the-book-of-the-watchers-chapters-1-36 | 1 ENOCH 9 | missing [3]
+V-GAP | jubilees | JUBILEES 13 | missing [3, 13, 25]
+V-GAP | jubilees | JUBILEES 17 | missing [3]
+V-GAP | jubilees | JUBILEES 2 | missing [20]
+V-GAP | jubilees | JUBILEES 22 | missing [21, 26]
+V-GAP | jubilees | JUBILEES 25 | missing [10]
+V-GAP | jubilees | JUBILEES 3 | missing [23]
+V-GAP | jubilees | JUBILEES 4 | missing [6]
+V-GAP | jubilees | JUBILEES 42 | missing [3]
+V-GAP | jubilees | JUBILEES 5 | missing [17]
+V-GAP | jubilees | JUBILEES 6 | missing [15]
+V-GAP | jubilees | JUBILEES 9 | missing [9]
+
+# ------------------------------------------------------------------------
+# Greek Esther: the additions are folded into the ten chapters
+#
+# The WEB keeps the Greek book's own arrangement rather than the Vulgate's
+# appended chapters 11-16, so Addition A opens chapter 1 and the verse
+# numbering restarts where the addition ends.
+
+V-GAP | esther-greek-version | Chapter 4 | missing [6]
+V-GAP | esther-greek-version | Chapter 9 | missing [5, 30]
+
+# ------------------------------------------------------------------------
+# Holes inherited from the printed source
+#
+# 1 Clement breaks off at chapter 59 because the 1885 Ante-Nicene Fathers
+# printing depends on Codex Alexandrinus, whose last leaf is damaged: the
+# great prayer at 59-61 and the close at 62-65 are not in it. The accuracy
+# report says so on the page. Ignatius to the Smyrnaeans loses its closing
+# chapter 13 to the scrape the source was built from -- the site furniture
+# logged in removals.json sits exactly where that chapter should be.
+
+CHAPTERS | the-epistle-of-ignatius-to-the-smyrnaeans | expected 13 | got 12
+CHAPTERS | the-first-epistle-of-clement-to-the-corinthians | expected 65 | got 59

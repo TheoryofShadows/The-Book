@@ -21,6 +21,15 @@ python3 tools/build_manuscripts.py "$OUT"
 echo "==> places"
 python3 tools/build_places.py source/places/merged.txt "$OUT"
 
+echo "==> place mentions"
+python3 tools/build_mentions.py source/places/merged.txt "$OUT"
+
+# The land outlines. Deterministic and offline: the Natural Earth source is
+# vendored under source/basemap/, and only ./tools/build_basemap.py --fetch,
+# run by hand, ever downloads anything.
+echo "==> basemap"
+python3 tools/build_basemap.py
+
 echo "==> threads"
 python3 tools/build_threads.py "$OUT"
 
@@ -30,7 +39,10 @@ python3 tools/build_canon.py "$OUT"
 echo "==> search index"
 python3 tools/build_index.py "$OUT"
 
+# The audit is a gate, not a report: it exits non-zero when a finding is not
+# in tools/audit-baseline.txt. Piping it through tail used to hide both the
+# findings and, because the exit status came from tail, the failure itself.
 echo "==> audit"
-python3 tools/audit.py "$OUT" | tail -1
+python3 tools/audit.py "$OUT"
 
 echo "==> done"

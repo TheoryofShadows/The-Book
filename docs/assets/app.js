@@ -46,15 +46,18 @@
   /* Screen readers get told about things that happen without a page change:
      saving, copying, search finishing. Without this the app is silent to
      anyone not watching the pixels. */
-  var liveRegion = null;
+  /* In the document from the first line rather than created on the first
+     announcement. A live region that appears and is filled in the same breath
+     is a region several screen readers do not announce at all -- they watch
+     for changes inside a region they already know about -- so the first thing
+     the site ever had to say was the thing most likely to be missed. */
+  var liveRegion = el("div", {
+    class: "sr-only", role: "status",
+    "aria-live": "polite", "aria-atomic": "true"
+  });
+  document.body.appendChild(liveRegion);
+
   function announce(message) {
-    if (!liveRegion) {
-      liveRegion = el("div", {
-        class: "sr-only", role: "status",
-        "aria-live": "polite", "aria-atomic": "true"
-      });
-      document.body.appendChild(liveRegion);
-    }
     liveRegion.textContent = "";
     setTimeout(function () { liveRegion.textContent = message; }, 60);
   }
@@ -78,15 +81,41 @@
 
   /* ---------------- persistent settings ---------------- */
 
+  /* Saving can fail for reasons the reader has no way to see: Safari's
+     private browsing gives every site a storage quota of zero, and a browser
+     that has been reading for a long time can simply run out. Swallowing that
+     silently is the worst of the options -- the verse is announced as saved,
+     the reader moves on, and it is gone. set() reports whether it actually
+     wrote, and the callers that promise the reader something say the true
+     thing instead. */
+  var storageWorks = true;
+
   var store = {
     get: function (k, d) {
       try { var v = localStorage.getItem("thebook:" + k); return v === null ? d : JSON.parse(v); }
       catch (e) { return d; }
     },
     set: function (k, v) {
-      try { localStorage.setItem("thebook:" + k, JSON.stringify(v)); } catch (e) {}
-    }
+      try {
+        localStorage.setItem("thebook:" + k, JSON.stringify(v));
+        storageWorks = true;
+        return true;
+      } catch (e) {
+        storageWorks = false;
+        return false;
+      }
+    },
+    /* False once a write has been refused. Read it after set(), not before:
+       a quota is only ever discovered by trying. */
+    works: function () { return storageWorks; }
   };
+
+  /* Why the write failed, in the terms that decide what the reader can do
+     about it. Quota is recoverable by removing saved items; private browsing
+     is not recoverable at all, and saying "try again" there would be a lie. */
+  var STORAGE_FAILED = "This browser is not letting the page store anything, " +
+    "so that was not kept. Private browsing usually does this, and so does a " +
+    "browser that has run out of room for this site.";
 
   /* ---------------- theme ---------------- */
 
@@ -185,7 +214,12 @@
       el("p", { html:
         'The <a href="#/accuracy">accuracy report</a> lists exactly what was ' +
         "verified against reference counts, what was corrected, and what is still " +
-        "missing from the public-domain sources." })
+        "missing from the public-domain sources. " +
+        '<a href="#/method">How the dating was decided</a> states the ' +
+        "decisions the order rests on, and " +
+        '<a href="#/timeline">the library on one axis</a> draws every work as ' +
+        "the range its position actually commits to — under either column, so " +
+        "you can watch the order change." })
     ]));
 
     var line = el("div", { class: "timeline" });
@@ -358,7 +392,25 @@
     manifest.sections.forEach(function (s) {
       s.works.forEach(function (w) { if (w.id === workId) { meta = w; section = s; } });
     });
-    if (!meta) return el("div", { class: "wrap" }, [el("p", { class: "empty", text: "No such work." })]);
+    if (!meta) {
+      return el("div", { class: "wrap" }, [
+        el("div", { class: "crumbs" }, [
+          el("a", { href: "#/", text: "Timeline" }),
+          document.createTextNode(" → "),
+          el("span", { text: "Not found" })
+        ]),
+        el("h1", { text: "No such work" }),
+        el("p", { class: "empty", text: workId
+          ? "Nothing in this volume is filed under “" + workId + "”. It may " +
+            "have been renamed, or the link may have been mistyped."
+          : "That link does not name a work to open." }),
+        el("p", {}, [
+          el("a", { class: "chip", href: "#/contents", text: "Everything in the volume" }),
+          document.createTextNode(" "),
+          el("a", { class: "chip", href: "#/search", text: "Search the text" })
+        ])
+      ]);
+    }
 
     var wrap = el("div", { class: "wrap" });
     var head = el("div", { class: "reader-head" });
@@ -586,6 +638,10 @@
         body.insertBefore(box, body.firstChild);
       }).catch(function () {});
 
+      // After the text rather than before it: the chapter is the thing, and
+      // the geography is what you turn to once you have read it.
+      body.appendChild(chapterMap(workId, idx, chapter.label));
+
       var src = manifest.sources && manifest.sources[meta.source];
       if (src) {
         body.appendChild(el("div", { class: "apparatus", html:
@@ -634,6 +690,107 @@
     wide:   "sharply divided"
   };
 
+  /* ---------------- the date card ----------------
+
+     The two positions are prose, which is the right form for the claim and
+     the wrong form for seeing how far apart they are. tools/dates.py reads a
+     numeric span out of each where the wording commits to one, and the card
+     shows the two as bars on a shared scale: on Amos they sit on top of each
+     other, on Genesis they are seven centuries apart, and the difference is
+     the thing this volume is actually about.
+
+     Where a position names a person rather than a date -- "Samuel",
+     "Moses, shortly before his death" -- there is no bar, and the card says
+     so. Drawing a plausible one would be inventing evidence. */
+
+  function yearText(y) {
+    return Math.abs(y) + (y < 0 ? " BCE" : " CE");
+  }
+
+  function spanText(sp) {
+    if (!sp) return "no date given";
+    var head = sp.approx ? "c. " : "";
+    /* One end unstated. Printing the figure alone would turn "before c. 900
+       BCE" into a claim that something was written in 900 BCE. */
+    if (sp.open) return sp.open + " " + head + yearText(sp.to);
+    if (sp.frm === sp.to) return head + yearText(sp.frm);
+    if ((sp.frm < 0) === (sp.to < 0)) {
+      return head + Math.abs(sp.frm) + "–" + yearText(sp.to);
+    }
+    return head + yearText(sp.frm) + " – " + yearText(sp.to);
+  }
+
+  /* How firm the span is, in the reader's terms rather than the parser's. */
+  var SPAN_KIND = {
+    explicit: "as dated",
+    decade: "to the decade",
+    century: "to the century",
+    period: "to the period"
+  };
+
+  function dateCard(p) {
+    var sp = p.span;
+    if (!sp || (!sp.trad && !sp.crit)) return null;
+
+    var card = el("div", { class: "datecard" });
+
+    /* One scale for both bars, padded so a single-year position is still
+       visible as something rather than as a hairline. */
+    var ends = [];
+    ["trad", "crit"].forEach(function (k) {
+      if (sp[k]) { ends.push(sp[k].frm, sp[k].to); }
+    });
+    var lo = Math.min.apply(null, ends), hi = Math.max.apply(null, ends);
+    var pad = Math.max(25, Math.round((hi - lo) * 0.08));
+    lo -= pad; hi += pad;
+    var at = function (y) { return ((y - lo) / (hi - lo)) * 100; };
+
+    var scale = el("div", { class: "datescale" });
+    [["trad", "Traditional"], ["crit", "Critical"]].forEach(function (pair) {
+      var one = sp[pair[0]];
+      var row = el("div", { class: "daterow " + pair[0] });
+      row.appendChild(el("span", { class: "datelabel", text: pair[1] }));
+
+      var track = el("div", { class: "datetrack" });
+      if (one) {
+        var bar = el("span", { class: "datebar " + one.kind });
+        bar.style.left = at(one.frm) + "%";
+        bar.style.width = Math.max(1.5, at(one.to) - at(one.frm)) + "%";
+        bar.title = spanText(one) + " (" + (SPAN_KIND[one.kind] || one.kind) + ")";
+        track.appendChild(bar);
+      } else {
+        track.appendChild(el("span", { class: "dateunknown",
+                                       text: "names a person, not a date" }));
+      }
+      row.appendChild(track);
+      row.appendChild(el("span", { class: "datespan", text: spanText(one) }));
+      scale.appendChild(row);
+    });
+    card.appendChild(scale);
+
+    /* The one number that says what the card is for. */
+    var verdict;
+    if (sp.apart === null || sp.apart === undefined) {
+      verdict = "The two positions cannot be compared as dates: one of them " +
+                "names a person rather than a time.";
+    } else if (sp.apart === 0) {
+      verdict = "The two datings overlap. This is a book the traditional and " +
+                "critical positions agree about, whatever else they differ on.";
+    } else {
+      verdict = "The two datings are " + fmt(sp.apart) + " years apart at " +
+                "their closest.";
+    }
+    card.appendChild(el("p", { class: "dateverdict", text: verdict }));
+
+    card.appendChild(el("p", { class: "datecite", html:
+      "Read from the two positions below, which carry the citations. How the " +
+      "spans are derived, and what they are not: " +
+      "<a href=\"#/method\">the dating method</a>. " +
+      "<a href=\"#/accuracy\">Accuracy report</a>." }));
+
+    return card;
+  }
+
   function positionsPanel(p) {
     var open = store.get("positions-open", false);
     var wrap = el("div", { class: "positions" + (open ? " open" : "") });
@@ -654,7 +811,11 @@
       el("span", { class: "caret", text: open ? "▲" : "▼" })
     ]);
 
-    var grid = el("div", { class: "positions-body" }, [
+    var grid = el("div", { class: "positions-body" });
+    var card = dateCard(p);
+    if (card) grid.appendChild(card);
+
+    var views = el("div", { class: "stances" }, [
       el("div", { class: "stance" }, [
         el("h3", { text: "Traditional view" }),
         el("p", { class: "claim", text: p.trad }),
@@ -668,6 +829,7 @@
         el("p", { class: "cite", text: p.critSource })
       ])
     ]);
+    grid.appendChild(views);
 
     grid.appendChild(el("p", { class: "positions-foot", html:
       "<strong>Written for this volume, not quoted from a source.</strong> " +
@@ -702,12 +864,105 @@
       item.at = Date.now();
       list.unshift(item);
     }
-    store.set("saved", list.slice(0, 500));
+    if (!store.set("saved", list.slice(0, 500))) {
+      announce(STORAGE_FAILED);
+      return wasSaved;          // nothing changed, so neither does the button
+    }
     announce(wasSaved ? "Removed from saved" : "Saved");
     return !wasSaved;
   }
 
   function verseId(ref) { return ref.work + "/" + ref.chapter + "/v" + ref.v; }
+
+  /* ---------------- citing a passage ----------------
+
+     A reader who wants to quote this has to be able to say where it came
+     from, and "a website" is not a citation. What makes a reference to this
+     volume worth anything is the two things an ordinary Bible reference
+     leaves out: which public-domain edition the text is from, and where the
+     passage sits in the composition order, which is the whole reason for
+     reading it here.
+
+     Everything below is built from the manifest the page already has. */
+
+  var SOURCE_CITE = {
+    web: "The World English Bible with Deuterocanon (eBible.org), public domain",
+    charles: "R. H. Charles, ed., The Apocrypha and Pseudepigrapha of the Old " +
+             "Testament, Oxford, 1913, public domain",
+    anf: "Ante-Nicene Fathers, ed. Alexander Roberts and James Donaldson, " +
+         "1885, public domain",
+    editorial: "Editorial summary written for this volume; no public-domain " +
+               "primary text was available"
+  };
+
+  /* The verse menu and the saved page both need to name a work's edition and
+     era, and neither of them is inside the view that loaded the manifest.
+     route() puts it here as it goes. */
+  var MANIFEST = null;
+
+  function workContext(manifest, workId) {
+    manifest = manifest || MANIFEST;
+    if (!manifest) return null;
+    var found = null;
+    manifest.sections.forEach(function (s) {
+      s.works.forEach(function (w) {
+        if (w.id === workId) found = { work: w, section: s };
+      });
+    });
+    return found;
+  }
+
+  function permalink(ref) {
+    return location.origin + location.pathname + "#/read/" + ref.work + "/" +
+           ref.chapter + (ref.v ? "/v" + ref.v : "");
+  }
+
+  /* A stable key, so two people citing the same verse produce the same one. */
+  function bibKey(ctx, ref) {
+    var stem = (ctx ? ctx.work.id : ref.work).replace(/[^a-z0-9]+/gi, "");
+    return "thebook:" + stem + (ref.chapter + 1) + (ref.v ? "." + ref.v : "");
+  }
+
+  function citation(manifest, ref, style) {
+    var ctx = workContext(manifest, ref.work);
+    if (!ctx) return permalink(ref);
+    var title = titleCase(ctx ? ctx.work.title : ref.work);
+    var where = title + " " + ref.label + (ref.v ? ":" + ref.v : "");
+    var edition = SOURCE_CITE[ctx && ctx.work.source] || "";
+    var era = ctx ? (ctx.section.name || ctx.section.title) : "";
+    var eraDates = ctx ? ctx.section.dates : "";
+    var url = permalink(ref);
+    var today = new Date().toISOString().slice(0, 10);
+
+    if (style === "bibtex") {
+      return "@incollection{" + bibKey(ctx, ref) + ",\n" +
+        "  title     = {" + where + "},\n" +
+        "  booktitle = {The Book in Order: Every Text in the Order It Was Written},\n" +
+        "  edition   = {" + edition + "},\n" +
+        (era ? "  series    = {" + titleCase(era) +
+               (eraDates ? ", " + eraDates : "") + "},\n" : "") +
+        "  url       = {" + url + "},\n" +
+        "  urldate   = {" + today + "}\n" +
+        "}";
+    }
+
+    /* Plain, for pasting into anything that is not a bibliography. */
+    return where + ". " + edition + ". " +
+           (era ? "Arranged under " + titleCase(era) +
+                  (eraDates ? ", " + eraDates : "") + ". " : "") +
+           url + " (accessed " + today + ").";
+  }
+
+  function copyText(text, button, said) {
+    var done = function () {
+      var was = button.textContent;
+      button.textContent = "Copied";
+      announce(said);
+      setTimeout(function () { button.textContent = was; }, 1600);
+    };
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, done);
+    else done();
+  }
 
   var menu = null;
   function closeMenu() {
@@ -754,14 +1009,27 @@
     node.appendChild(el("button", {
       role: "menuitem", text: "🔗  Copy link to this verse",
       onclick: function (e) {
-        var url = location.href.split("#")[0] +
-                  "#/read/" + ref.work + "/" + ref.chapter + "/v" + ref.v;
-        var done = function () {
-          e.currentTarget.textContent = "🔗  Link copied";
-          announce("Link copied");
-        };
-        if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, done);
-        else done();
+        copyText(permalink(ref), e.currentTarget, "Link copied");
+      }
+    }));
+
+    /* A reference to this volume is worth having only if it says which
+       public-domain edition the text is from and where the passage sits in
+       the composition order. Both are in the manifest; neither is in the
+       reference a reader would otherwise type. */
+    node.appendChild(el("button", {
+      role: "menuitem", text: "❝  Copy a citation",
+      onclick: function (e) {
+        copyText(citation(MANIFEST, ref, "plain"), e.currentTarget,
+                 "Citation copied");
+      }
+    }));
+
+    node.appendChild(el("button", {
+      role: "menuitem", text: "📚  Copy as BibTeX",
+      onclick: function (e) {
+        copyText(citation(MANIFEST, ref, "bibtex"), e.currentTarget,
+                 "BibTeX copied");
       }
     }));
 
@@ -840,11 +1108,6 @@
     return out;
   }
 
-  function normTerm(s) {
-    return s.toLowerCase().replace(/[’']/g, "")
-            .replace(/[^a-z0-9 ]+/g, "").trim();
-  }
-
   function lookup(term) {
     var key = normTerm(term);
     if (!key) return Promise.resolve(null);
@@ -890,6 +1153,81 @@
   /* How far back to stand, by what kind of thing it is. A region needs the
      camera much higher than a village, and pretending otherwise would show a
      confident pin on a territory. */
+  /* ================================================================
+     THE MAP -- where the chapter happens
+     ------------------------------------------------------------------
+     The gazetteer has given every place its coordinates since the start,
+     and a pair of coordinates is a number the reader has to imagine. This
+     draws them.
+
+     What it draws is land and water and nothing else. A modern border laid
+     over the Iron Age Levant is an anachronism the moment it is drawn, and
+     this volume has no business asserting one. Natural Earth's land
+     outlines are public domain, which is why they can be carried offline
+     with everything else.
+
+     Which places belong to a chapter is not decided here by scanning the
+     text for names. "Dan" is a man, a tribe and a city; a regex guessing
+     between them would put pins on the map that no text supports. The
+     gazetteer's source carries a curated verse list per place, and
+     tools/build_mentions.py resolves those against this volume's own
+     parse. Every pin on this map is a reference somebody checked.
+
+     A canvas cannot be read by a screen reader, so everything the canvas
+     shows is also on the page as a list of links. That list is not a
+     fallback -- it is the same information, and it is what the keyboard
+     and the screen reader actually use.
+     ================================================================ */
+
+  /* The frame the biblical material sits in: 1,209 of the 1,232 places. The
+     23 outside it are Rome, Tarshish, Spain, Ophir and the rest of the
+     western and eastern horizon, and they are why the world layer exists. */
+  var LEVANT = { w: 20, s: 12, e: 55, n: 42 };
+
+  function inFrame(p, f) {
+    return p.lon >= f.w && p.lon <= f.e && p.lat >= f.s && p.lat <= f.n;
+  }
+
+  /* Equirectangular, with longitude stretched by the cosine of the middle
+     latitude so the Mediterranean is not squashed into an oval. Enough for a
+     frame this size, and it is four lines rather than a projection library. */
+  function projector(frame, w, h) {
+    var midlat = (frame.n + frame.s) / 2 * Math.PI / 180;
+    var kx = Math.cos(midlat);
+    var spanX = (frame.e - frame.w) * kx;
+    var spanY = frame.n - frame.s;
+    var scale = Math.min(w / spanX, h / spanY);
+    var offX = (w - spanX * scale) / 2;
+    var offY = (h - spanY * scale) / 2;
+    return {
+      x: function (lon) { return offX + (lon - frame.w) * kx * scale; },
+      y: function (lat) { return offY + (frame.n - lat) * scale; },
+      scale: scale
+    };
+  }
+
+  /* Canvas colours cannot be CSS variables, so they are read from the page
+     at draw time. Reading them each draw rather than once is what makes the
+     map follow the theme instead of being the one element that ignores it. */
+  function inkOf(el) {
+    var cs = getComputedStyle(document.documentElement);
+    var pick = function (n, fallback) {
+      return (cs.getPropertyValue(n) || "").trim() || fallback;
+    };
+    return {
+      sea: pick("--paper", "#f2eee5"),
+      land: pick("--paper-2", "#e8e2d6"),
+      /* The fill between land and sea is a few points of lightness in either
+         theme, and in the dark one it is almost nothing. The coastline is
+         what actually makes the shape readable, so it is drawn in the text
+         colour rather than the rule colour, which is near-invisible on a
+         dark ground. */
+      coast: pick("--ink-faint", "#857c8a"),
+      pin: pick("--accent", "#6b2d5b"),
+      faint: pick("--ink-faint", "#857c8a")
+    };
+  }
+
   var VIEW = {
     point: 4000, within: 3000, approximate: 25000, region: 400000
   };
@@ -900,6 +1238,337 @@
     approximate: "Approximate location",
     region: "A region, not a point"
   };
+
+  /* One canvas, drawn from a frame, a set of rings and a set of places.
+     Returns a redraw function; everything that changes -- theme, zoom, the
+     frame -- goes through it, so there is one drawing path and not three. */
+  function drawMap(canvas, state) {
+    var ctx = canvas.getContext("2d");
+    var box = canvas.getBoundingClientRect();
+    var w = Math.max(1, Math.round(box.width));
+    var h = Math.max(1, Math.round(box.height));
+
+    /* Without this the map is blurry on every phone made since 2014. */
+    var dpr = window.devicePixelRatio || 1;
+    if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    var ink = inkOf(canvas);
+    var f = state.view;
+    var pr = projector(f, w, h);
+
+    ctx.fillStyle = ink.sea;
+    ctx.fillRect(0, 0, w, h);
+
+    /* Every ring in one path, filled even-odd, so a lake enclosed by land is
+       drawn as water rather than as ground. */
+    ctx.beginPath();
+    state.rings.forEach(function (ring) {
+      for (var i = 0; i < ring.length; i += 2) {
+        var x = pr.x(ring[i]), y = pr.y(ring[i + 1]);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+    });
+    ctx.fillStyle = ink.land;
+    ctx.fill("evenodd");
+    ctx.strokeStyle = ink.coast;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.55;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    /* Jerusalem is named 719 times and Jabbok seven. Linear sizing makes one
+       a blot and the other invisible, so the count is taken as a logarithm:
+       the difference stays legible without the big ones swallowing the map. */
+    state.hit = [];
+    state.places.forEach(function (p) {
+      var x = pr.x(p.lon), y = pr.y(p.lat);
+      if (x < -20 || y < -20 || x > w + 20 || y > h + 20) return;
+      var r = 2.2 + Math.log(1 + (p.mentions || 1)) * 1.15;
+      state.hit.push({ x: x, y: y, r: Math.max(r, 7), place: p });
+
+      ctx.beginPath();
+      if (p.kind === "region") {
+        /* A region is not a pin. It gets a soft halo centred on the point
+           the source gives, which is a point inside it, not its middle. */
+        var g = ctx.createRadialGradient(x, y, 0, x, y, r * 3.2);
+        g.addColorStop(0, ink.pin);
+        g.addColorStop(1, "transparent");
+        ctx.globalAlpha = 0.28;
+        ctx.fillStyle = g;
+        ctx.arc(x, y, r * 3.2, 0, 6.284);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      } else if (p.kind === "approximate") {
+        /* Open, because the ring says "somewhere here" and a filled dot
+           would say "here". */
+        ctx.arc(x, y, r, 0, 6.284);
+        ctx.strokeStyle = ink.pin;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([2, 2]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      } else {
+        ctx.arc(x, y, r, 0, 6.284);
+        ctx.fillStyle = ink.pin;
+        ctx.fill();
+        ctx.strokeStyle = ink.sea;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      if (p === state.chosen) {
+        ctx.beginPath();
+        ctx.arc(x, y, r + 4, 0, 6.284);
+        ctx.strokeStyle = ink.pin;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    });
+  }
+
+  function chapterMap(workId, chapterIdx, chapterLabel) {
+    var wrap = el("details", { class: "chapter-map" });
+    wrap.appendChild(el("summary", { text: "Where this chapter happens" }));
+
+    var body = el("div", { class: "map-body" });
+    wrap.appendChild(body);
+
+    var loaded = false;
+    wrap.addEventListener("toggle", function () {
+      if (!wrap.open || loaded) return;
+      loaded = true;
+      body.appendChild(el("p", { class: "loading", text: "Loading the map…" }));
+
+      getJSON("mentions.json").then(function (table) {
+        var keys = table[workId + "/" + chapterIdx] || [];
+        if (!keys.length) {
+          body.innerHTML = "";
+          body.appendChild(el("p", { class: "empty", text:
+            "No place in the gazetteer is recorded as named in this chapter. " +
+            "The gazetteer covers the books of the Hebrew Bible and the New " +
+            "Testament; a chapter outside them, or one that names no place, " +
+            "has nothing to draw." }));
+          return;
+        }
+
+        var shards = {};
+        keys.forEach(function (k) {
+          shards[/^[a-z]/.test(k) ? k[0] : "0"] = true;
+        });
+        var names = Object.keys(shards);
+        return Promise.all(names.map(function (s) {
+          return getJSON("places/" + s + ".json").catch(function () { return {}; });
+        })).then(function (loadedShards) {
+          var all = {};
+          loadedShards.forEach(function (t) {
+            Object.keys(t).forEach(function (k) { all[k] = t[k]; });
+          });
+          var places = keys.map(function (k) { return all[k]; })
+                           .filter(Boolean);
+          if (!places.length) {
+            body.innerHTML = "";
+            body.appendChild(el("p", { class: "empty",
+              text: "The places named here have no coordinates on record." }));
+            return;
+          }
+
+          /* World or Levant is not a preference, it is whether the chapter
+             fits. Acts 27 sails to Rome; opening it on the Levant frame
+             would show a reader an empty sea. */
+          var needsWorld = places.some(function (p) {
+            return !inFrame(p, LEVANT);
+          });
+          var frame = needsWorld
+            ? { w: -25, s: -40, e: 100, n: 62 }
+            : LEVANT;
+
+          return getJSON("basemap/" + (needsWorld ? "world" : "levant") + ".json")
+            .then(function (base) {
+              body.innerHTML = "";
+              build(body, places, base.rings, frame, needsWorld);
+            });
+        });
+      }).catch(function (e) {
+        body.innerHTML = "";
+        body.appendChild(el("p", { class: "empty",
+          text: "The map could not be loaded. " + String(e.message) }));
+      });
+    });
+
+    function build(root, places, rings, frame, isWorld) {
+      var state = {
+        rings: rings, places: places, home: frame, view: frame,
+        chosen: null, hit: []
+      };
+
+      var canvas = el("canvas", {
+        class: "map-canvas",
+        /* The canvas itself is decoration; the list below it is the content,
+           and pointing at it by id is what keeps that claim honest. */
+        role: "img",
+        "aria-describedby": "map-list-" + workId + "-" + chapterIdx
+      });
+      var stage = el("div", { class: "map-stage" }, [canvas]);
+
+      /* Give the box the frame's own proportions. Left to fill whatever width
+         it is given, a frame taller than it is wide sits in the middle of a
+         letterbox with empty margins either side -- and the Levant layer is
+         clipped to the frame, so those margins really are empty rather than
+         showing the next country along. */
+      var midlat = (frame.n + frame.s) / 2 * Math.PI / 180;
+      var aspect = ((frame.e - frame.w) * Math.cos(midlat)) / (frame.n - frame.s);
+      stage.style.setProperty("--map-aspect", aspect.toFixed(3));
+      root.appendChild(stage);
+
+      var redraw = function () { drawMap(canvas, state); };
+
+      var detail = el("div", { class: "map-detail", hidden: true });
+
+      function choose(p) {
+        state.chosen = p;
+        detail.innerHTML = "";
+        detail.hidden = false;
+        detail.appendChild(el("h3", { class: "map-detail-name", text: p.name }));
+        detail.appendChild(placeBlock(p));
+        redraw();
+        announce(p.name + ", " + (KIND_LABEL[p.kind] || "location"));
+      }
+
+      canvas.addEventListener("click", function (ev) {
+        var b = canvas.getBoundingClientRect();
+        var x = ev.clientX - b.left, y = ev.clientY - b.top;
+        var best = null, bestD = Infinity;
+        state.hit.forEach(function (h) {
+          var d = Math.pow(h.x - x, 2) + Math.pow(h.y - y, 2);
+          if (d < h.r * h.r && d < bestD) { best = h.place; bestD = d; }
+        });
+        if (best) choose(best);
+      });
+
+      /* Wheel zoom and drag pan, clamped so the frame cannot be dragged off
+         into empty ocean and lost. */
+      function clamp(v) {
+        var home = state.home;
+        var wSpan = Math.min(v.e - v.w, home.e - home.w);
+        var hSpan = Math.min(v.n - v.s, home.n - home.s);
+        if (v.w < home.w) { v.w = home.w; v.e = home.w + wSpan; }
+        if (v.e > home.e) { v.e = home.e; v.w = home.e - wSpan; }
+        if (v.s < home.s) { v.s = home.s; v.n = home.s + hSpan; }
+        if (v.n > home.n) { v.n = home.n; v.s = home.n - hSpan; }
+        return v;
+      }
+
+      function zoomBy(factor, fx, fy) {
+        var v = state.view;
+        var cw = (v.e - v.w), ch = (v.n - v.s);
+        var nw = cw * factor, nh = ch * factor;
+        var maxW = state.home.e - state.home.w;
+        if (nw > maxW) { nw = maxW; nh = (state.home.n - state.home.s); }
+        if (nw < maxW / 25) return;
+        var ax = v.w + cw * fx, ay = v.n - ch * fy;
+        state.view = clamp({
+          w: ax - nw * fx, e: ax + nw * (1 - fx),
+          n: ay + nh * fy, s: ay - nh * (1 - fy)
+        });
+        redraw();
+      }
+
+      canvas.addEventListener("wheel", function (ev) {
+        ev.preventDefault();
+        var b = canvas.getBoundingClientRect();
+        zoomBy(ev.deltaY > 0 ? 1.18 : 0.85,
+               (ev.clientX - b.left) / b.width,
+               (ev.clientY - b.top) / b.height);
+      }, { passive: false });
+
+      var dragging = null;
+      canvas.addEventListener("pointerdown", function (ev) {
+        dragging = { x: ev.clientX, y: ev.clientY, moved: false };
+        canvas.setPointerCapture(ev.pointerId);
+      });
+      canvas.addEventListener("pointermove", function (ev) {
+        if (!dragging) return;
+        var b = canvas.getBoundingClientRect();
+        var v = state.view;
+        var dx = (ev.clientX - dragging.x) / b.width * (v.e - v.w);
+        var dy = (ev.clientY - dragging.y) / b.height * (v.n - v.s);
+        if (Math.abs(ev.clientX - dragging.x) > 3 ||
+            Math.abs(ev.clientY - dragging.y) > 3) dragging.moved = true;
+        state.view = clamp({ w: v.w - dx, e: v.e - dx, n: v.n + dy, s: v.s + dy });
+        dragging.x = ev.clientX; dragging.y = ev.clientY;
+        redraw();
+      });
+      var endDrag = function () { dragging = null; };
+      canvas.addEventListener("pointerup", endDrag);
+      canvas.addEventListener("pointercancel", endDrag);
+
+      var tools = el("div", { class: "map-tools" }, [
+        el("button", { class: "chip", text: "Reset", onclick: function () {
+          state.view = state.home; state.chosen = null;
+          detail.hidden = true; redraw();
+          announce("Map reset");
+        } })
+      ]);
+      root.appendChild(tools);
+      root.appendChild(detail);
+
+      /* The list is the accessible copy of the canvas, and the only thing a
+         keyboard can use. It carries the same places in the same order. */
+      var list = el("ul", {
+        class: "map-list",
+        id: "map-list-" + workId + "-" + chapterIdx
+      });
+      places.slice().sort(function (a, b) {
+        return (b.mentions || 0) - (a.mentions || 0);
+      }).forEach(function (p) {
+        var b = el("button", {
+          class: "map-place map-" + p.kind,
+          text: p.name,
+          onclick: function () { choose(p); }
+        });
+        b.appendChild(el("span", { class: "map-place-kind",
+                                   text: KIND_LABEL[p.kind] || "Location" }));
+        list.appendChild(el("li", {}, [b]));
+      });
+
+      root.appendChild(el("p", { class: "map-caption", html:
+        "<strong>" + fmt(places.length) + "</strong> " +
+        (places.length === 1 ? "place is" : "places are") + " recorded as " +
+        "named in " + esc(chapterLabel || "this chapter") + ". " +
+        (isWorld ? "Shown on the world, because this chapter names somewhere " +
+                   "outside the biblical frame. " : "") +
+        "A filled dot is an identified location, a dashed ring an approximate " +
+        "one, and a soft halo a region rather than a point — centred on a " +
+        "spot inside it, not on its middle. Land outlines from Natural Earth, " +
+        "public domain. No borders are drawn: there are none to draw." }));
+      root.appendChild(list);
+
+      canvas.setAttribute("aria-label",
+        "Map of " + places.length + " places named in this chapter. " +
+        "The same places are listed below as links.");
+
+      redraw();
+
+      /* The theme is a button and a system setting, and the canvas has to
+         follow both or it is the one element stuck in the old palette. */
+      var themeWatch = function () { if (wrap.open) redraw(); };
+      document.getElementById("theme").addEventListener("click", function () {
+        setTimeout(themeWatch, 0);
+      });
+      if (window.matchMedia) {
+        var mq = window.matchMedia("(prefers-color-scheme: dark)");
+        if (mq.addEventListener) mq.addEventListener("change", themeWatch);
+      }
+      window.addEventListener("resize", function () { if (wrap.open) redraw(); });
+    }
+
+    return wrap;
+  }
 
   function placeBlock(p) {
     var dist = VIEW[p.kind] || 8000;
@@ -1017,6 +1686,13 @@
       var reader = e.target.closest(".reader");
       if (!reader) { closeSheet(); return; }
       if (e.target.closest("a")) return;          // let verse links work
+      // The verse menu is rendered inside the verse it belongs to, so every
+      // click on one of its buttons landed here as well and looked up
+      // whatever word was under the cursor. On a screen reader that turned
+      // "Saved" into "No dictionary entry for verse": the menu's own
+      // announcement was overwritten by the answer to a question nobody had
+      // asked. The number that opens the menu is the same case.
+      if (e.target.closest(".vmenu, .vnum")) return;
       if (window.getSelection && String(window.getSelection())) return;
 
       var hit = wordAt(e.clientX, e.clientY);
@@ -1066,10 +1742,64 @@
      SEARCH
      ================================================================ */
 
+  /* ---------------- folding text into keys ------------------------------
+
+     Search tokens, lexicon headwords and place names are all keys. They are
+     built here, and built again by tools/textnorm.py when the data files are
+     made. The two copies have to agree exactly, or the key a reader arrives
+     at is not the key the entry was filed under -- and that failure is
+     silent. The search answers that no text contains a word that is on the
+     page; the definition of a word the volume does have an entry for does
+     not open.
+
+     They did part company, twice. Accented letters were being deleted rather
+     than folded, so "Mastêmâ" went into the index as "mast" and "m" and
+     "Cæsar" as "c" and "sar" -- 163 word-forms that no spelling could reach.
+     And this file derived its lexicon key by deleting anything outside
+     [a-z0-9 ] while the builder decomposed first, so the same word gave
+     "mastm" here and "mastema" there.
+
+     The region between the markers below is lifted out and run against the
+     Python one by tests/python/test_tokeniser_agreement.py. Keep the two in
+     step; the step order is part of the rule.
+     ------------------------------------------------------------------- */
+  /* --8<-- fold: start --8<-- */
   var TOKEN = /[a-z0-9]+/g;
-  function tokenise(s) {
-    return (s.toLowerCase().replace(/[’‘]/g, "'").match(TOKEN) || []);
+
+  /* NFKD leaves these alone -- they are letters in their own right, not
+     accented forms of anything -- so without expanding them by hand a reader
+     typing "Caesar" never meets "Cæsar". */
+  var LIGATURES = {
+    "æ": "ae", "œ": "oe", "ß": "ss", "ð": "d", "þ": "th",
+    "ø": "o", "đ": "d", "ł": "l", "ħ": "h", "ŋ": "ng"
+  };
+  var LIGATURE_RE = /[æœßðþøđłħŋ]/g;
+  var CURLY_RE = /[‘’ʼʻ]/g;
+  var COMBINING_RE = /[\u0300-\u036f]/g;
+
+  function fold(s) {
+    return String(s)
+      .toLowerCase()
+      .replace(CURLY_RE, "'")
+      .replace(LIGATURE_RE, function (c) { return LIGATURES[c]; })
+      .normalize("NFKD")
+      .replace(COMBINING_RE, "");
   }
+
+  /* The words the index files, and the words a query is looked up as. */
+  function tokenise(s) {
+    return (fold(s).match(TOKEN) || []);
+  }
+
+  /* The key a lexicon entry or a place is filed under. Unlike a search token
+     this keeps the spaces, because the headwords are phrases, and drops the
+     apostrophe rather than splitting on it, so "Rachel's tomb" and "Rachels
+     tomb" are one entry. */
+  function normTerm(s) {
+    return fold(s).replace(/'/g, "")
+            .replace(/[^a-z0-9 ]+/g, "").replace(/\s+/g, " ").trim();
+  }
+  /* --8<-- fold: end --8<-- */
 
   function viewSearch(manifest, initialQuery) {
     var wrap = el("div", { class: "wrap" });
@@ -1112,7 +1842,10 @@
 
       var phrase = null;
       var m = query.match(/^\s*"(.+)"\s*$/);
-      if (m) phrase = m[1].toLowerCase().replace(/\s+/g, " ").trim();
+      // Folded, because the verses it will be compared against are folded:
+      // a phrase typed as "Caesar's household" has to meet "Cæsar's" on the
+      // page, and the index has already filed that chapter under "caesar".
+      if (m) phrase = fold(m[1]).replace(/\s+/g, " ").trim();
 
       var terms = tokenise(phrase || query);
       if (!terms.length) { status.textContent = ""; return; }
@@ -1137,15 +1870,39 @@
         var tbl = ctx.tbl, lookup = ctx.lookup;
 
         // Narrow to candidate chapters using the selective terms only.
+        //
+        // The narrowing has to use the same rule the verse test below uses,
+        // and that rule is a prefix: "jubilee" is meant to find "jubilees",
+        // and does, once the chapter is being read. The index files whole
+        // words, so asking it for the exact token and then prefix-matching
+        // inside whatever came back returns only the verses that happen to
+        // sit beside the exact spelling. Searching for "caesar" found 44 of
+        // the 59 verses that mention him: the other 15 say "Caesarea", which
+        // is a token of its own and so never made it into the candidates.
+        //
+        // Every token in the shard that starts with the term contributes its
+        // chapters instead. The largest shard holds about two thousand
+        // tokens, so this is a scan of a few thousand strings once per term.
         var candidate = null;
         var unknown = [];
         terms.forEach(function (t) {
           var k = /^[a-z]/.test(t) ? t[0] : "0";
-          var post = lookup[k] ? lookup[k][t] : undefined;
-          if (post === undefined) { unknown.push(t); return; }
-          if (post === 0) return;                 // too common to narrow with
-          var set = {};
-          post.forEach(function (c) { set[c] = 1; });
+          var table = lookup[k];
+          if (!table) { unknown.push(t); return; }
+
+          var set = null, matched = false, common = false;
+          for (var token in table) {
+            if (token.lastIndexOf(t, 0) !== 0) continue;      // startsWith
+            matched = true;
+            if (table[token] === 0) { common = true; break; } // no narrowing
+            if (set === null) set = {};
+            var post = table[token];
+            for (var i = 0; i < post.length; i++) set[post[i]] = 1;
+          }
+
+          if (!matched) { unknown.push(t); return; }
+          if (common || set === null) return;   // too common to narrow with
+
           if (candidate === null) candidate = set;
           else {
             var next = {};
@@ -1211,9 +1968,14 @@
 
               units.forEach(function (u) {
                 if (found >= LIMIT) return;
-                var low = u.t.toLowerCase();
+                // The same fold the index was built with. Comparing the
+                // raw text here would undo it: the index narrows to the
+                // chapter that has "Cæsar" in it and this test then throws
+                // every one of those verses away, so the search reports no
+                // match for a word it just located.
+                var low = fold(u.t).replace(/\s+/g, " ");
                 var ok = phrase
-                  ? low.replace(/\s+/g, " ").indexOf(phrase) !== -1
+                  ? low.indexOf(phrase) !== -1
                   : terms.every(function (t) { return new RegExp("\\b" + t, "i").test(low); });
                 if (!ok) return;
                 found++;
@@ -1400,7 +2162,7 @@
      ACCURACY
      ================================================================ */
 
-  function viewAccuracy(findings, removals) {
+  function viewAccuracy(findings, removals, splices) {
     var wrap = el("div", { class: "wrap" });
     wrap.appendChild(el("h1", { text: "Accuracy report" }));
     wrap.appendChild(el("p", { class: "lede", text: findings.summary }));
@@ -1447,6 +2209,45 @@
     table.appendChild(tb);
     wrap.appendChild(el("div", { class: "scroller" }, [table]));
 
+    if (splices && splices.length) {
+      wrap.appendChild(el("hr", { class: "rule" }));
+      wrap.appendChild(el("h2", { text: "Chapter boundaries repaired" }));
+      wrap.appendChild(el("p", { class: "muted", text:
+        "The Ante-Nicene Fathers print a heading above each chapter. Preparing " +
+        "the source turned those headings into chapter markers, except where " +
+        "the scan had misread the full stop as a comma — “CHAP, IV.—” rather " +
+        "than “CHAP. IV.—”. Those headings stayed in the running text, the " +
+        "chapters they opened were folded into the chapter before, and the " +
+        "heading itself was read out as though it were scripture. The " +
+        "boundaries below are put back by the parser, and the heading dropped, " +
+        "as it is in every other chapter of these works." }));
+
+      var stable = el("table", { class: "grid" });
+      stable.appendChild(el("thead", {}, [el("tr", {}, [
+        el("th", { text: "As printed" }), el("th", { text: "Chapter restored" }),
+        el("th", { text: "Heading removed" })
+      ])]));
+      var sb = el("tbody");
+      splices.forEach(function (sp) {
+        sb.appendChild(el("tr", {}, [
+          el("td", { class: "tiny", text: "CHAP. " + sp.numeral + ".—" }),
+          el("td", { text: String(sp.chapter) }),
+          el("td", { class: "muted", text: sp.heading })
+        ]));
+      });
+      stable.appendChild(sb);
+      wrap.appendChild(el("div", { class: "scroller" }, [stable]));
+    }
+
+    wrap.appendChild(el("hr", { class: "rule" }));
+    wrap.appendChild(el("h2", { text: "How the order was decided" }));
+    wrap.appendChild(el("p", { html:
+      "This page is about the text. The arrangement is a separate set of " +
+      "decisions, and they are written down too: " +
+      "<a href=\"#/method\">how the dating was decided</a> — what the two " +
+      "columns on every work are, where each date comes from, how the bars " +
+      "on a date card are derived, and the two things they cannot tell you." }));
+
     wrap.appendChild(el("hr", { class: "rule" }));
     wrap.appendChild(el("h2", { text: "How to check this yourself" }));
     wrap.appendChild(el("p", { html:
@@ -1462,6 +2263,314 @@
   /* ================================================================
      THREADS -- one question, traced across the collection
      ================================================================ */
+
+  /* ================================================================
+     TIMELINE -- the whole library on one axis, under either dating
+     ------------------------------------------------------------------
+     The home page is the arrangement as a reader walks it: era by era, in
+     order. This is the same library seen side-on, every work a bar on a
+     shared scale, and it exists to make two things visible that a list
+     cannot.
+
+     The first is how much of the library is a guess about a range rather
+     than a date. A bar that runs three centuries is not a book we know less
+     about than its neighbour; it is a book whose position says three
+     centuries, and reading that as a point is the mistake this view is meant
+     to stop.
+
+     The second is what happens when you switch the dating. Under the
+     traditional column the Torah moves eight hundred years and lands on top
+     of everything else. That is the disagreement this volume is about, and
+     it is worth being able to see rather than read.
+     ================================================================ */
+
+  /* Where a bar comes from, in the reader's terms. A work with a position
+     record of its own is placed by it; the rest are placed by the era they
+     are filed under, which is a looser claim and is drawn as one. */
+  var PLACED = {
+    own: "from this work's own dated position",
+    section: "from the era it is filed under, no dated position of its own"
+  };
+
+  function timelineRows(manifest, mode) {
+    var rows = [];
+    manifest.sections.forEach(function (s) {
+      s.works.forEach(function (w) {
+        var own = w.positions && w.positions.span && w.positions.span[mode];
+        var sp = own || s.span || null;
+        rows.push({
+          id: w.id, title: w.title, section: s, span: sp,
+          placed: own ? "own" : (s.span ? "section" : null),
+          words: w.words
+        });
+      });
+    });
+    return rows;
+  }
+
+  function viewTimeline(manifest) {
+    var wrap = el("div", { class: "wrap-wide" });
+    wrap.appendChild(el("h1", { text: "The library on one axis" }));
+    wrap.appendChild(el("p", { class: "lede", text:
+      "Every work in the volume, drawn against time. A bar is a range, not a " +
+      "date: its length is how much the position it comes from actually " +
+      "commits to." }));
+
+    var mode = store.get("timeline-mode", "crit");
+    var body = el("div");
+
+    var seg = el("div", { class: "seg" });
+    [["crit", "Critical dating"], ["trad", "Traditional dating"]].forEach(function (p) {
+      seg.appendChild(el("button", {
+        "aria-pressed": mode === p[0] ? "true" : "false",
+        text: p[1],
+        onclick: function () {
+          mode = p[0];
+          store.set("timeline-mode", mode);
+          Array.prototype.forEach.call(seg.children, function (b) {
+            b.setAttribute("aria-pressed",
+                           b.textContent === p[1] ? "true" : "false");
+          });
+          announce(p[1] + ": the order is redrawn");
+          render();
+        }
+      }));
+    });
+    wrap.appendChild(el("div", { class: "toolbar" }, [seg]));
+    wrap.appendChild(body);
+
+    function render() {
+      body.innerHTML = "";
+      var rows = timelineRows(manifest, mode);
+      var dated = rows.filter(function (r) { return r.span; });
+      var undated = rows.filter(function (r) { return !r.span; });
+
+      if (!dated.length) {
+        body.appendChild(el("p", { class: "empty", text:
+          "No work in the volume carries a date under this column." }));
+        return;
+      }
+
+      /* Sorted by where the bar starts, so switching the column really does
+         reorder the library rather than recolouring it. */
+      dated.sort(function (a, b) {
+        return a.span.frm - b.span.frm || a.span.to - b.span.to;
+      });
+
+      var lo = Math.min.apply(null, dated.map(function (r) { return r.span.frm; }));
+      var hi = Math.max.apply(null, dated.map(function (r) { return r.span.to; }));
+      var pad = Math.round((hi - lo) * 0.03) || 25;
+      lo -= pad; hi += pad;
+      var at = function (y) { return ((y - lo) / (hi - lo)) * 100; };
+
+      /* A ruler the eye can hold: round centuries, thinned so the labels
+         never collide on a phone. */
+      var axis = el("div", { class: "tl-axis" });
+      var step = (hi - lo) > 1600 ? 400 : (hi - lo) > 700 ? 200 : 100;
+      var first = Math.ceil(lo / step) * step;
+      for (var y = first; y <= hi; y += step) {
+        /* There is no year zero: the tick that lands there is the boundary
+           between the eras, not a date, and saying "0 CE" would be wrong. */
+        var tick = el("span", { class: "tl-tick",
+                                text: y === 0 ? "BCE | CE" : yearText(y) });
+        tick.style.left = at(y) + "%";
+        axis.appendChild(tick);
+      }
+      body.appendChild(axis);
+
+      var list = el("div", { class: "tl-rows" });
+      dated.forEach(function (r) {
+        var row = el("a", {
+          class: "tl-row placed-" + r.placed,
+          href: "#/read/" + r.id + "/0"
+        });
+        row.appendChild(el("span", { class: "tl-name", text: titleCase(r.title) }));
+
+        var track = el("span", { class: "tl-track" });
+        var bar = el("span", {
+          class: "tl-bar " + r.span.kind + (r.span.open ? " open-" + r.span.open : "")
+        });
+        var left = r.span.open === "before" ? 0 : at(r.span.frm);
+        var right = r.span.open === "after" ? 100 : at(r.span.to);
+        bar.style.left = left + "%";
+        bar.style.width = Math.max(0.8, right - left) + "%";
+        track.appendChild(bar);
+        row.appendChild(track);
+
+        row.appendChild(el("span", { class: "tl-when", text: spanText(r.span) }));
+        row.title = titleCase(r.title) + " — " + spanText(r.span) + "\n" +
+                    PLACED[r.placed];
+        list.appendChild(row);
+      });
+      body.appendChild(list);
+
+      var byOwn = dated.filter(function (r) { return r.placed === "own"; }).length;
+      body.appendChild(el("p", { class: "tl-note", html:
+        "<strong>" + fmt(byOwn) + "</strong> of these " + fmt(dated.length) +
+        " are placed by the work's own dated position, each with its citation " +
+        "on the work itself. The rest are placed by the era they are filed " +
+        "under, which is a looser claim, and are drawn fainter. " +
+        "<a href=\"#/method\">How the dating was decided</a>." }));
+
+      if (undated.length) {
+        body.appendChild(el("details", { class: "tl-undated" }, [
+          el("summary", { text: fmt(undated.length) +
+            " works carry no date under this column" }),
+          el("p", { class: "muted", text:
+            "Nothing here is a gap in the data. Under the traditional column " +
+            "many positions name a person rather than a time, and the later " +
+            "collections — the Testaments, the Apostolic Fathers, the " +
+            "Shepherd — are filed after the numbered eras and have no era " +
+            "range to fall back on." }),
+          el("div", { class: "tl-undated-list" }, undated.map(function (r) {
+            return el("a", { class: "chip", href: "#/read/" + r.id + "/0",
+                             text: titleCase(r.title) });
+          }))
+        ]));
+      }
+    }
+
+    render();
+    return wrap;
+  }
+
+  /* ================================================================
+     METHOD -- how the order was decided, stated so it can be argued with
+     ================================================================ */
+
+  function viewMethod(manifest) {
+    var wrap = el("div", { class: "wrap" });
+    wrap.appendChild(el("h1", { text: "How the dating was decided" }));
+    wrap.appendChild(el("p", { class: "lede", text:
+      "This volume puts the texts in the order they were written. That order " +
+      "is a series of decisions, and a reader who cannot see the decisions " +
+      "has been handed a verdict. Here they are." }));
+
+    function part(title, paras) {
+      wrap.appendChild(el("hr", { class: "rule" }));
+      wrap.appendChild(el("h2", { text: title }));
+      paras.forEach(function (p) {
+        wrap.appendChild(el("p", typeof p === "string" ? { text: p } : p));
+      });
+    }
+
+    part("What the arrangement is, and is not", [
+      "The arrangement follows the critical dating: the date a book reached " +
+      "something like its present form, as argued from its language, the " +
+      "events it knows about, and its relation to the books around it.",
+      { html: "<strong>That is a decision about order, not a verdict about " +
+        "truth.</strong> Every work carries the traditional position beside " +
+        "the critical one, in the same size type, each with its citation. " +
+        "Where they disagree the volume shows the disagreement rather than " +
+        "resolving it. The order had to be <em>some</em> order; this one is " +
+        "the one that makes the development of an idea visible, which is the " +
+        "one thing this arrangement can do that a canonical Bible cannot." },
+      "Nothing here is a claim to have settled a question scholars have not."
+    ]);
+
+    part("Where each date comes from", [
+      "Neither column is quoted from a single authority, because no single " +
+      "authority covers this range of texts. Each is a summary of the " +
+      "majority position as it stands, written for this volume and " +
+      "referenced so it can be checked: the traditional column cites the " +
+      "text or the received attribution it rests on, and the critical column " +
+      "cites the argument or the scholar the position is associated with.",
+      { html: "A position with no citation is a build failure, not a warning. " +
+        "<code>tools/audit.py</code> refuses to finish if any of the seven " +
+        "fields on any of the " + fmt(52) + " position records is empty. " +
+        "That rule exists because an editorial claim sitting beside verse " +
+        "counts that were audited against independent references borrows " +
+        "their authority without having earned it." }
+    ]);
+
+    part("How the bars are drawn", [
+      "The positions are prose. The bars on each work's date card are read " +
+      "out of that prose by a parser, and are arithmetic on what the position " +
+      "already says — nothing is added.",
+      { html: "Four forms are recognised. <strong>A year or a span of " +
+        "years</strong> is taken as written. <strong>A century</strong> is " +
+        "taken as its hundred years, so the 8th century BCE is 800–701 BCE. " +
+        "<strong>A decade</strong> likewise. <strong>A named period</strong> " +
+        "is the one case where boundaries are imposed that the position did " +
+        "not state, so each is fixed by the event that fixes it, and a bar " +
+        "drawn from one is hatched to mark it as the looser kind." },
+      { html: "<strong>Where a position names a person rather than a time, " +
+        "there is no bar and the card says so.</strong> “Samuel”, “Moses, " +
+        "shortly before his death” — these are not dates, and drawing a " +
+        "plausible-looking bar for them would be inventing evidence. About " +
+        "two in five traditional positions have no bar for this reason. That " +
+        "is a fact about the tradition, not a gap in the data." }
+    ]);
+
+    var table = el("table", { class: "grid" });
+    table.appendChild(el("thead", {}, [el("tr", {}, [
+      el("th", { text: "Period" }), el("th", { text: "Taken as" }),
+      el("th", { text: "Fixed by" })
+    ])]));
+    var tb = el("tbody");
+    (PERIOD_TABLE).forEach(function (row) {
+      tb.appendChild(el("tr", {}, [
+        el("td", { text: titleCase(row[0]) }), el("td", { text: row[1] }),
+        el("td", { class: "muted", text: row[2] })
+      ]));
+    });
+    table.appendChild(tb);
+    wrap.appendChild(el("div", { class: "scroller" }, [table]));
+    wrap.appendChild(el("p", { class: "muted", text:
+      "Where a boundary is itself argued, the span is drawn wide rather than " +
+      "picking a side." }));
+
+    part("The two things the bars cannot tell you", [
+      { html: "<strong>A composite book has one bar and several dates.</strong> " +
+        "Genesis is not a book written between 500 and 400 BCE; it is a book " +
+        "assembled then out of material centuries older. The bar shows when " +
+        "the critical position puts the form we have, and the prose beside " +
+        "it says the rest. Any single date for a composite work is a " +
+        "simplification, and this one is no exception." },
+      { html: "<strong>Overlapping bars are not agreement.</strong> They mean " +
+        "the two positions admit a common date. Amos is dated the same way " +
+        "by both columns and they still differ about whether the last five " +
+        "verses are his." }
+    ]);
+
+    part("Seeing it", [
+      { html: "<a href=\"#/timeline\">The library on one axis</a> draws every " +
+        "work as a bar, under either column. Switching the column reorders " +
+        "the whole library: under the traditional dating the Torah moves " +
+        "eight hundred years and lands on top of everything else. A bar " +
+        "placed by a work's own dated position is drawn solid; one placed by " +
+        "the era it is filed under is drawn fainter, because it is a looser " +
+        "claim." }
+    ]);
+
+    part("Arguing with it", [
+      { html: "The source text is in <code>source/</code>, the positions in " +
+        "<code>tools/positions.py</code>, the parser that reads the spans in " +
+        "<code>tools/dates.py</code>, and the audit in " +
+        "<code>tools/audit.py</code>. Every figure on this site can be " +
+        "reproduced by running <code>./tools/build.sh</code>." },
+      { html: "If a date here is wrong, the fix is a citation. Open an issue " +
+        "with one and the position changes. That is the whole standard: " +
+        "<a href=\"#/accuracy\">the accuracy report</a> lists what is known " +
+        "to be imperfect, and this page lists how the rest was decided." }
+    ]);
+
+    return wrap;
+  }
+
+  /* Kept beside the method page it documents, and mirrored from PERIODS in
+     tools/dates.py -- if one changes the other has to. */
+  var PERIOD_TABLE = [
+    ["monarchic", "1020–586 BCE", "Saul to the fall of Jerusalem"],
+    ["exilic", "597–538 BCE", "the first deportation to the edict of Cyrus"],
+    ["post-exilic", "538–332 BCE", "the return under Cyrus to Alexander"],
+    ["persian period", "539–332 BCE", "the fall of Babylon to Alexander"],
+    ["hellenistic", "332–63 BCE", "Alexander to Pompey's capture of Jerusalem"],
+    ["maccabean", "167–63 BCE", "the revolt to Pompey"],
+    ["hasmonean", "140–63 BCE", "Simon's rule to Pompey"],
+    ["second temple", "516 BCE – 70 CE", "the rebuilt temple to its destruction"],
+    ["roman period", "63 BCE – 324 CE", "Pompey to Constantine"]
+  ];
 
   function viewThreads(threads) {
     var wrap = el("div", { class: "wrap" });
@@ -1488,8 +2597,20 @@
 
   function viewThread(threads, id) {
     var t = threads.filter(function (x) { return x.id === id; })[0];
-    if (!t) return el("div", { class: "wrap" },
-                      [el("p", { class: "empty", text: "No such thread." })]);
+    if (!t) {
+      return el("div", { class: "wrap" }, [
+        el("div", { class: "crumbs" }, [
+          el("a", { href: "#/threads", text: "Threads" })
+        ]),
+        el("h1", { text: "No such thread" }),
+        el("p", { class: "empty", text:
+          "There is no thread by that name. The ones there are are listed " +
+          "on the threads page." }),
+        el("p", {}, [
+          el("a", { class: "chip", href: "#/threads", text: "Every thread" })
+        ])
+      ]);
+    }
 
     var wrap = el("div", { class: "wrap" });
     wrap.appendChild(el("div", { class: "crumbs" }, [
@@ -1566,8 +2687,14 @@
           });
         }
       });
-      store.set("saved", merged);
-      store.set("bookmarks", []);
+      // Order matters, and it used to be wrong: clearing the old key after a
+      // failed write threw the reader's bookmarks away to save nothing. The
+      // old copy is only released once the new one is known to be on disk.
+      if (store.set("saved", merged)) store.set("bookmarks", []);
+    }
+
+    if (!store.works()) {
+      wrap.appendChild(el("p", { class: "empty", text: STORAGE_FAILED }));
     }
 
     var items = savedItems();
@@ -1586,23 +2713,41 @@
       verses.length + " of them individual verses. Most recent first, stored " +
       "in this browser only." }));
 
+    /* Three ways out, because saved verses are working notes and the next
+       place they go is different every time: a document, a bibliography, or
+       a file that outlives this browser. Everything here lives in local
+       storage only, so being able to get it out is not a convenience. */
+    var asText = function () {
+      return items.map(function (i) {
+        var ref = titleCase(i.workTitle || i.work) + " " + i.label +
+                  (i.v ? ":" + i.v : "");
+        return i.t ? "“" + i.t + "”\n— " + ref +
+                     (i.note ? "\nNote: " + i.note : "") : ref;
+      }).join("\n\n");
+    };
+
+    var asCitations = function (style) {
+      return items.map(function (i) {
+        var one = citation(MANIFEST, i, style);
+        return i.note && style !== "bibtex" ? one + "\nNote: " + i.note : one;
+      }).join(style === "bibtex" ? "\n\n" : "\n\n");
+    };
+
     var tools = el("div", { class: "toolbar" }, [
       el("button", {
         class: "chip", text: "Copy all as text",
-        onclick: function (e) {
-          var text = items.map(function (i) {
-            var ref = titleCase(i.workTitle || i.work) + " " + i.label +
-                      (i.v ? ":" + i.v : "");
-            return i.t ? "“" + i.t + "”\n— " + ref +
-                         (i.note ? "\nNote: " + i.note : "") : ref;
-          }).join("\n\n");
-          var done = function () {
-            e.currentTarget.textContent = "Copied";
-            announce("All saved items copied");
-          };
-          if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, done);
-          else done();
-        }
+        onclick: function (e) { copyText(asText(), e.currentTarget,
+                                         "All saved items copied"); }
+      }),
+      el("button", {
+        class: "chip", text: "Copy as citations",
+        onclick: function (e) { copyText(asCitations("plain"), e.currentTarget,
+                                         "Citations copied"); }
+      }),
+      el("button", {
+        class: "chip", text: "Copy as BibTeX",
+        onclick: function (e) { copyText(asCitations("bibtex"), e.currentTarget,
+                                         "BibTeX copied"); }
       })
     ]);
     wrap.appendChild(tools);
@@ -1632,8 +2777,7 @@
       note.addEventListener("change", function () {
         var all = savedItems();
         all.forEach(function (s) { if (s.id === item.id) s.note = note.value; });
-        store.set("saved", all);
-        announce("Note saved");
+        announce(store.set("saved", all) ? "Note saved" : STORAGE_FAILED);
       });
       row.appendChild(note);
 
@@ -1641,9 +2785,8 @@
         class: "chip", text: "Remove",
         "aria-label": "Remove " + (item.workTitle || item.work) + " " + item.label,
         onclick: function () {
-          store.set("saved", savedItems().filter(function (s) {
-            return s.id !== item.id;
-          }));
+          var kept = savedItems().filter(function (s) { return s.id !== item.id; });
+          if (!store.set("saved", kept)) { announce(STORAGE_FAILED); return; }
           row.remove();
           announce("Removed from saved");
         }
@@ -1987,13 +3130,43 @@
      beat a person reading aloud would take, the chapter heading a longer
      one, and a sentence that was cut only because it was too long gets none
      at all: that seam is the one place a pause would be a lie. */
+  /* How long the silences are.
+
+     The default is speech: the pauses a reader would leave, and no more. That
+     is wrong for the half of this library that is verse. A psalm read at
+     conversational pacing is a list of sentences; the line is the unit, and
+     the silence after it is part of the line.
+
+     This is a control rather than something the volume decides, because the
+     volume does not classify its books by genre and has no business
+     pretending to. Job is verse inside a prose frame, the prophets move
+     between the two mid-chapter, and Ecclesiastes is argued about. A reader
+     can hear which one they are in; a hand-written list of "the poetry books"
+     would be an editorial claim with no citation behind it, which is the one
+     thing the rest of this volume refuses to do. */
+  var PACE = {
+    natural:    { rest: 1,   line: 1,   label: "Pace: natural" },
+    measured:   { rest: 1.8, line: 2.2, label: "Measured" },
+    liturgical: { rest: 3,   line: 4,   label: "Liturgical" }
+  };
+
+  function pace() {
+    return PACE[store.get("listen-pace", "natural")] || PACE.natural;
+  }
+
   function restAfter(item, next) {
     if (!next) return 0;
-    if (item.unit === "heading") return 550;
+    var p = pace();
+    if (item.unit === "heading") return Math.round(550 * p.rest);
     var ends = /[.!?]["'’”)\]]?\s*$/.test(item.text);
     var moved = next.verse !== item.verse || next.el !== item.el;
+
+    /* At a slower pace the break between verses is the break between lines
+       and takes the longer silence. A sentence broken only for the engine's
+       length limit still takes none, at any pace, or the words come apart. */
     if (!ends && !moved) return 0;
-    return moved ? 260 : 170;
+    if (moved) return Math.round(260 * p.line);
+    return Math.round(170 * p.rest);
   }
 
   function speakFrom(i) {
@@ -2391,6 +3564,21 @@
       onclick: function () { previewVoice(); }
     });
 
+    var paceSel = el("select", {
+      "aria-label": "Pace",
+      title: "How long the silences are. Slower suits verse, where the line " +
+             "is the unit and the pause after it is part of it.",
+      onchange: function (e) {
+        store.set("listen-pace", e.target.value);
+        announce(e.target.value === "natural"
+          ? "Natural pace" : PACE[e.target.value].label + " pace");
+      }
+    });
+    var nowPace = store.get("listen-pace", "natural");
+    ["natural", "measured", "liturgical"].forEach(function (k) {
+      paceSel.appendChild(option(k, PACE[k].label, k === nowPace));
+    });
+
     var sleep = el("select", {
       "aria-label": "Sleep timer",
       onchange: function (e) {
@@ -2443,7 +3631,7 @@
           onclick: function () { stopListening("Stopped reading aloud"); }
         })
       ]),
-      el("div", { class: "player-line player-opts" }, [rate, voiceSel, tryIt, sleep]),
+      el("div", { class: "player-line player-opts" }, [rate, paceSel, voiceSel, tryIt, sleep]),
       hintEl
     ]);
     document.body.appendChild(player);
@@ -2662,6 +3850,7 @@
     main.appendChild(el("p", { class: "loading", text: "Loading…" }));
 
     getJSON("manifest.json").then(function (manifest) {
+      MANIFEST = manifest;
       var node;
       if (view === "read") {
         setNav("");
@@ -2698,6 +3887,20 @@
           window.scrollTo(0, 0);
         });
       }
+      if (view === "timeline") {
+        setNav("");
+        main.innerHTML = "";
+        main.appendChild(viewTimeline(manifest));
+        window.scrollTo(0, 0);
+        return;
+      }
+      if (view === "method") {
+        setNav("accuracy");
+        main.innerHTML = "";
+        main.appendChild(viewMethod(manifest));
+        window.scrollTo(0, 0);
+        return;
+      }
       if (view === "saved") {
         setNav("saved");
         main.innerHTML = "";
@@ -2707,10 +3910,11 @@
       }
       if (view === "accuracy") {
         setNav("accuracy");
-        return Promise.all([getJSON("findings.json"), getJSON("removals.json")])
+        return Promise.all([getJSON("findings.json"), getJSON("removals.json"),
+                            getJSON("splices.json").catch(function () { return []; })])
           .then(function (r) {
             main.innerHTML = "";
-            main.appendChild(viewAccuracy(r[0], r[1]));
+            main.appendChild(viewAccuracy(r[0], r[1], r[2]));
             window.scrollTo(0, 0);
           });
       }

@@ -54,6 +54,77 @@ translation.
 | R. H. Charles, 1917 | 1 Enoch, Jubilees |
 | Ante-Nicene Fathers, ed. Roberts and Donaldson, 1885 | Apostolic Fathers, Testaments of the Twelve Patriarchs, NT apocrypha, Shepherd of Hermas, Ignatius (shorter recension) |
 
+## Seeing the disagreement
+
+Every work with a position record carries a **date card**: the traditional and
+the critical dating drawn as two bars on one scale, so how far apart they are
+is a thing you see rather than a thing you work out. On Amos the bars sit on
+top of each other. On Genesis they are seven centuries apart.
+
+The bars are read out of the prose positions by `tools/dates.py`, and it
+refuses to guess. Where a position names a person rather than a time — "Samuel",
+"Moses, shortly before his death" — there is no bar and the card says why.
+About two in five traditional positions have none, which is a fact about the
+tradition rather than a gap in the data. A span read from a century or a named
+period is drawn as the looser claim it is.
+
+**The library on one axis** draws every work as a bar against time, under
+either column. Switching the column reorders the whole library: under the
+traditional dating the Torah moves eight hundred years and lands on top of
+everything else, which is the disagreement this volume is about. A bar placed
+by a work's own dated position is drawn solid; one placed by the era it is
+filed under is drawn fainter, because it is a looser claim; a range with one
+end unstated runs off the edge rather than stopping at a year nobody named.
+The works that carry no date under a column are listed rather than dropped.
+
+### The map
+
+Every chapter offers **where this chapter happens**. It draws land and water
+and nothing else — a modern border laid across the Iron Age Levant is an
+anachronism the moment it is drawn, and this volume has no business asserting
+one. The outlines are Natural Earth, public domain, simplified by
+`tools/build_basemap.py` and committed: nothing is fetched at runtime, and the
+map works from `file://` with the rest.
+
+Which places belong to a chapter is not decided by scanning the text for
+names. *Dan* is a man, a tribe and a city; *Judah* is a man, a tribe, a kingdom
+and a region, and a pattern guessing between them would put pins on the map
+that no text supports. The gazetteer's source carries a curated verse list for
+every place — 7,394 references — and `tools/build_mentions.py` resolves each
+one against this volume's own parse, dropping anything that does not land on a
+verse the volume actually contains. Every pin is a reference somebody checked.
+
+The map draws what it knows and shows what it does not. A filled dot is an
+identified location, a dashed ring an approximate one, and a soft halo a
+region rather than a point — centred on a spot inside it, not on its middle.
+Seven famous entries the source states as flat points are demoted, because the
+dispute about them is over the identification itself rather than the
+precision: Tarshish, Sinai, Horeb, Sodom, Gomorrah, Emmaus and Ararat. A line
+of coordinates reads as a reference; a dot on a coastline reads as a finding,
+and drawing Tarshish in Spain would settle an argument this volume refuses to
+settle everywhere else.
+
+A canvas cannot be read by a screen reader, so everything on it is also on the
+page as a list of links carrying the same three grades. That list is not a
+fallback — it is what a keyboard and a screen reader use, and a test fails if
+the two ever hold different places.
+
+The frame chooses itself. 1,209 of the 1,232 places sit inside the biblical
+frame; the 23 that do not are Rome, Tarshish, Spain, Ophir and the rest of the
+horizon, so a chapter that names one of them is drawn on the world instead.
+Acts 27 gets the Mediterranean it needs; Amos gets the Levant.
+
+[How the dating was decided](#) is a page of its own: what the arrangement is
+and is not, where each date comes from, how the bars are derived, the boundary
+of every named period and the event that fixes it, and the two things the bars
+cannot tell you — that a composite book has one bar and several dates, and that
+overlapping bars are not agreement.
+
+Any verse can be copied out as a citation or a BibTeX entry that names the
+public-domain edition and where the passage sits in the composition order,
+which is the part an ordinary reference leaves out and the part this
+arrangement exists for.
+
 ## What the audit found
 
 Verified correct:
@@ -206,33 +277,69 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | `tools/build_canon.py` | Builds canon membership and checks coverage claims |
 | `tools/build_index.py` | Builds the sharded search index |
 | `tools/build_standalone.py` | Inlines the whole library into one HTML file that runs offline |
-| `tools/test.sh` | Runs the browser checks in `tests/` |
+| `tools/textnorm.py` | The one rule that folds text into a search token or a lookup key |
+| `tools/dates.py` | Reads a numeric span out of a position statement, and refuses to where there is none |
+| `tools/lint.sh` | Everything parses, and every data file is the JSON it claims to be |
+| `tools/test.sh` | Runs the unit tests and the browser checks in `tests/` |
 
 The audit is the point: if a count on the site is wrong, `tools/audit.py` will
-say so. Findings are stated so they can be falsified.
+say so, and the build will stop. Findings are stated so they can be falsified.
+
+`tools/audit-baseline.txt` is what makes that a gate rather than a report.
+Every finding the audit produces is either a defect or a known property of the
+printed edition — the World English Bible really does omit Luke 17:36 — and the
+baseline is where the second kind is written down, in groups, each with a
+reason. A finding that is not in it fails the build; so does a baseline entry
+that no longer occurs. Nothing regenerates the file by itself: a baseline that
+rewrote itself would let the next regression through under a passing build.
+
+Until that existed the audit collected 157 findings and returned zero
+regardless. Three chapters of Ignatius and fifty-six chapter openings were
+missing from the volume the whole time it was running.
 
 ## Checking it
 
-The audit checks the text. The browser checks check the reader — that it
-renders, that it fits a phone, and that reading aloud says the right words in
-the right order.
+Three layers, cheapest first.
 
 ```bash
-./tools/test.sh                     # everything
-./tools/test.sh listening           # one suite
+./tools/lint.sh                     # everything parses (seconds)
+python3 -m unittest discover -s tests/python -t tests/python
+./tools/test.sh                     # both of the above, then the browser
+./tools/test.sh listening           # one browser suite
 ```
 
-The site itself still has no dependencies. These need Node, and install
-Playwright and a Chromium into `tests/node_modules` on first run; set
-`CHROME_PATH` to use a browser already on the machine instead. Both the audit
-and the browser checks run on every pull request.
+The unit tests cover the build scripts — the layer that decides what the text
+of the volume actually is — and need nothing installed beyond Python, for the
+same reason the site ships no dependencies. The browser checks need Node, and
+install Playwright and a Chromium into `tests/node_modules` on first run; set
+`CHROME_PATH` to use a browser already on the machine instead.
 
 | Suite | Checks |
 | --- | --- |
+| `tests/python` | The parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. One of them runs the reader's own copy of the folding rule against the Python one, because the two are written in different languages and a divergence between them is silent |
 | `routes` | Every page renders, search returns verses, a saved verse survives a reload, nothing throws |
 | `layout` | At 320–430px every nav link is on screen, nothing scrolls sideways, the bar tucks away as you read, desktop is unchanged |
-| `listening` | What is spoken and in what order, which voice out of a bad drawer is picked, that the apparatus is never read out, where long passages are broken and how long the pauses are, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |
+| `dating` | The date card against the spans the parser read, the method page, and that a citation names the edition and the era rather than just a URL |
+| `search` | Result counts against known answers rather than "more than zero": phrases against their words, several terms meaning all of them, the three different ways a search can end with nothing, and that an accented or ligatured spelling on the page is reachable by an ordinary one |
+| `words` | Turning a word on the page into an entry — by selection, by keyboard, by alias — what a missing entry says, and the places panel |
+| `keeping` | Saving, unsaving, notes, the migration from the old bookmarks key, and what happens when the browser refuses to store anything at all |
+| `resilience` | The data failing to load, malformed data, routes that name nothing, the keyboard shortcuts, the skip link, and what a screen reader is actually told |
+| `listening` | What is spoken and in what order, which voice out of a bad drawer is picked, that the apparatus is never read out, where long passages are broken and how long the pauses are at each pace, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |
 | `offline` | The single-file build opens from `file://` and every feature in it works with no network at all |
+| `map` | Land is actually painted, the frame chooses itself from what the chapter names, every place on the canvas is also a link on the page, a disputed identification is not drawn as a settled one, panning cannot lose the map, the canvas follows the theme, and all of it works from `file://` |
+
+The unit tests and the lint run on every pull request and again before every
+deploy. The browser checks used to run on pull requests only, which meant
+anything pushed straight to `main` went live without a browser having opened
+the site; they now gate the deploy as well.
+
+The player also offers a **pace** — natural, measured, liturgical — which sets
+how long the silences are. Conversational pauses are wrong for verse, where
+the line is the unit and the silence after it is part of the line. It is the
+reader's control rather than something the volume decides: there is no genre
+data here, Job is verse inside a prose frame, the prophets move between the two
+mid-chapter, and a hand-written list of "the poetry books" would be an
+editorial claim with no citation behind it.
 
 **What they cannot check: whether a voice actually sounds right.** A headless
 browser has no speech engine — the one these run in reports zero voices and
@@ -254,8 +361,10 @@ and scanned for exact verses. Quote a phrase to match it exactly.
 
 ## Deploying
 
-`.github/workflows/pages.yml` rebuilds the data from source, fails the build if
-`docs/data` has drifted, and publishes `docs/`.
+`.github/workflows/pages.yml` runs the lint and the unit tests, rebuilds the
+data from source, fails the build if `docs/data` has drifted or the audit finds
+anything not in the baseline, runs the browser checks, and only then publishes
+`docs/`.
 
 **One manual step is required before the site can go live:** open
 **Settings → Pages** and set **Source: GitHub Actions**. The workflow cannot do

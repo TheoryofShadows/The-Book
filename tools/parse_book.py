@@ -30,6 +30,7 @@ import unicodedata
 from collections import OrderedDict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import dates  # noqa: E402
 from positions import POSITIONS  # noqa: E402
 
 SRC = sys.argv[1] if len(sys.argv) > 1 else "THE_BOOK_COMPLETE.txt"
@@ -199,8 +200,73 @@ def decontaminate(text: str, where: str) -> str:
     return text
 
 
+# --------------------------------------------------------------------------
+# Chapter headings spliced into the running text.
+#
+# The Apostolic Fathers source was prepared by turning the Ante-Nicene Fathers
+# chapter headings into "[ Chapter n ]" marker lines. Three headings survived
+# that pass because the scan had misread their full stop as a comma --
+# "CHAP, IV.--" and "CHAPTER IX,--" rather than "CHAP. IV.--" -- so they were
+# left sitting mid-sentence in the prose. The chapters they open were absorbed
+# into the chapter before, and the ANF heading was read out as scripture.
+#
+# Rewriting them into ordinary marker lines before the structural scan puts
+# the boundary back. Each one is logged, so the accuracy report can show that
+# the volume repaired the text rather than quietly restructuring it.
+SPLICED_HEADING = re.compile(
+    r"\bCHAP(?:TER)?[.,]?\s+([IVXLCDM]+)[.,]?\s*--\s*"      # CHAP, IV.--
+    r"([A-Z][A-Z0-9\s,'\[\]()-]*?)\.\s+"                    # ALL-CAPS title.
+    r"(?=[A-Z])"                                              # prose resumes
+)
+
+ROMAN = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
+
+SPLICES: list[dict] = []
+
+
+def from_roman(numeral: str) -> int | None:
+    """Read a Roman numeral, or None if it is not one."""
+    total = prev = 0
+    for ch in reversed(numeral.upper()):
+        if ch not in ROMAN:
+            return None
+        val = ROMAN[ch]
+        total = total - val if val < prev else total + val
+        prev = max(prev, val)
+    return total or None
+
+
+def unsplice(raw: str) -> str:
+    """Turn headings left inside the prose back into chapter marker lines.
+
+    The heading itself is dropped rather than kept: every other chapter in
+    these works had its ANF heading removed when the source was prepared, and
+    keeping these three would put editorial titles in the text of three
+    chapters and no others.
+    """
+    def repair(m: re.Match) -> str:
+        num = from_roman(m.group(1))
+        if num is None:
+            return m.group(0)
+        SPLICES.append({
+            "numeral": m.group(1),
+            "chapter": num,
+            "heading": " ".join(m.group(2).split()),
+            "reason": "ANF chapter heading left in the running text by the "
+                      "source preparation; the chapter boundary is restored "
+                      "here and the heading dropped, as in every other chapter",
+        })
+        return f"\n\n[ Chapter {num} ]\n\n"
+
+    return SPLICED_HEADING.sub(repair, raw)
+
+
 WEB_VERSE = re.compile(r"(?:(?<=\s)|^)(\d{1,3})\s\s+")
-CHARLES_VERSE = re.compile(r"(?:(?<=\s)|^)(\d{1,3})\.\s+")
+# The stray "V" is a single typo in the source -- Jubilees 6 opens "V1." where
+# every other chapter opens "1." -- and without it that chapter's first verse
+# is not recognised as a marker at all. "V?" cannot swallow a Roman numeral:
+# a digit has to follow immediately, so "VII." is still prose.
+CHARLES_VERSE = re.compile(r"(?:(?<=\s)|^)V?(\d{1,3})\.\s+")
 
 
 def split_verses(paras: list[str]) -> tuple[list[dict], str]:
@@ -222,6 +288,19 @@ def split_verses(paras: list[str]) -> tuple[list[dict], str]:
         if len(kept) < 2:
             continue
         verses = []
+
+        # Text standing in front of the first marker is the opening verse,
+        # printed without its number. Charles does this throughout Jubilees
+        # and Enoch: the chapter numeral carries verse one and the numbering
+        # visibly starts at "2.". Dropping that text, which is what slicing
+        # from the first marker does, deleted 56 chapter openings from this
+        # volume -- about twelve thousand characters of Jubilees and Enoch --
+        # and left the chapters starting at verse two with no sign anything
+        # had gone. It is emitted here under the number it must have.
+        head = re.sub(r"\s+", " ", body[:kept[0][0]]).strip()
+        if head and kept[0][2] > 1:
+            verses.append({"v": kept[0][2] - 1, "t": head})
+
         for idx, (start, end, num) in enumerate(kept):
             stop = kept[idx + 1][0] if idx + 1 < len(kept) else len(body)
             text = re.sub(r"\s+", " ", body[end:stop]).strip()
@@ -233,7 +312,7 @@ def split_verses(paras: list[str]) -> tuple[list[dict], str]:
 
 
 def parse(path: str) -> dict:
-    raw = open(path, encoding="utf-8").read()
+    raw = unsplice(open(path, encoding="utf-8").read())
     lines = raw.split("\n")
     n = len(lines)
 
@@ -381,6 +460,11 @@ def main() -> None:
             "roman": section["roman"],
             "name": section["name"],
             "dates": section["dates"],
+            # The section heading's own range, read the same way a position
+            # is. It places the works that carry no position record of their
+            # own, which is most of them, and the timeline says which of the
+            # two a bar came from rather than blurring them together.
+            "span": dates.span(section["dates"] or ""),
             "intro": section["intro"],
             "works": [],
         }
@@ -398,7 +482,10 @@ def main() -> None:
             total_words += words
             src = source_for(work["id"], section["id"], nch > 0)
             work["source"] = src
-            stance = POSITIONS.get(work["id"])
+            # The prose position is what the volume asserts; the span is
+            # arithmetic on it, so the reader can be shown how far apart the
+            # two datings are without the page having to parse English.
+            stance = dates.enrich(POSITIONS.get(work["id"]))
             if stance:
                 work["positions"] = stance
             entry["works"].append({
@@ -432,8 +519,12 @@ def main() -> None:
     with open(os.path.join(OUT, "removals.json"), "w", encoding="utf-8") as fh:
         json.dump(REMOVALS, fh, ensure_ascii=False, indent=1)
 
+    with open(os.path.join(OUT, "splices.json"), "w", encoding="utf-8") as fh:
+        json.dump(SPLICES, fh, ensure_ascii=False, indent=1)
+
     print(json.dumps(manifest["totals"], indent=2))
     print(f"contamination removals logged: {len(REMOVALS)}")
+    print(f"spliced chapter headings repaired: {len(SPLICES)}")
 
 
 if __name__ == "__main__":

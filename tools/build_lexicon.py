@@ -33,6 +33,9 @@ import sys
 import unicodedata
 from collections import defaultdict
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import textnorm  # noqa: E402
+
 RAW = sys.argv[1] if len(sys.argv) > 1 else "source/lexicon"
 OUT = sys.argv[2] if len(sys.argv) > 2 else "docs/data"
 
@@ -49,9 +52,12 @@ DATED_PATTERNS = [
      "traditional and critical positions side by side."),
 ]
 
+# The plural is the common form -- Easton writes "five hundred cubits" far
+# more often than "a cubit" -- and matching only the singular left 31 entries
+# quoting ancient measures with no note saying whose figures they are.
 MEASURE = re.compile(
     r"\b(cubit|homer|ephah|omer|shekel|talent|denarius|mina|log|hin|bath|"
-    r"seah|kab|firkin|stadia|furlong|farthing|mite|drachm)\b", re.I)
+    r"seah|kab|firkin|stadia|furlong|farthing|mite|drachm)s?\b", re.I)
 
 # Words so common that offering a Bible-dictionary gloss is noise, not help.
 STOP = {
@@ -65,10 +71,12 @@ STOP = {
 
 
 def norm(term: str) -> str:
-    """Lookup key: lowercase, unaccented, no punctuation."""
-    term = unicodedata.normalize("NFKD", term)
-    term = term.encode("ascii", "ignore").decode("ascii").lower()
-    return re.sub(r"[^a-z0-9 ]+", "", term).strip()
+    """Lookup key: lowercase, unaccented, no punctuation.
+
+    Shared with the gazetteer and with the reader, which has to derive the
+    same key from a word the reader selected on the page.
+    """
+    return textnorm.lookup_key(term)
 
 
 def clean(text: str) -> str:
