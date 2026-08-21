@@ -13,7 +13,7 @@ published as a searchable, interactive reader.
 
 It opens with the Song of the Sea, not with Genesis.
 
-**165 works · 2,246 chapters · 40,070 numbered verses · 1.13 million words**
+**165 works · 2,249 chapters · 40,124 numbered verses · 1.13 million words**
 
 ---
 
