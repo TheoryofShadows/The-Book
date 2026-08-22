@@ -2439,6 +2439,11 @@
         var link = el("td");
         if (!b.present) {
           link.appendChild(el("span", { class: "muted", text: "not here" }));
+        } else if (b.partialWhy) {
+          b.works.forEach(function (id, i) {
+            if (i) link.appendChild(document.createTextNode(" · "));
+            link.appendChild(el("a", { href: "#/read/" + id + "/0", text: i === 0 && b.works.length === 1 ? "read the part here" : String(i + 1) }));
+          });
         } else {
           b.works.forEach(function (id, i) {
             if (i) link.appendChild(document.createTextNode(" · "));
@@ -2446,10 +2451,23 @@
           });
         }
 
+        // Why a book is missing, or which part of it is here, has been in
+        // canon.json since it was first written down and has never been on
+        // the page. A table that says "not here" and nothing else is the
+        // kind of unsourced editorial claim this volume refuses everywhere
+        // else, and one that says "read" over half a book is worse.
+        var why = b.present ? b.partialWhy : b.absentWhy;
+        var whySource = b.present ? b.partialSource : b.absentSource;
+
         tb.appendChild(el("tr", {}, [
           el("td", {}, [
             el("strong", { text: b.name }),
-            b.foldedInto ? el("div", { class: "tiny", text: "counted inside " + b.foldedInto }) : null
+            b.foldedInto ? el("div", { class: "tiny", text: "counted inside " + b.foldedInto }) : null,
+            why ? el("details", { class: "tiny why" }, [
+              el("summary", { text: b.present ? "here in part — what is and is not" : "why it is not here" }),
+              el("p", { text: why }),
+              whySource ? el("p", { class: "muted", text: whySource }) : null
+            ]) : null
           ])
         ].concat(canon.canons.map(function (c) {
           return cell(b.canons[c]);

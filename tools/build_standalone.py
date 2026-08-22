@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from urllib.parse import quote
 
 DOCS = sys.argv[1] if len(sys.argv) > 1 else "docs"
 OUT = sys.argv[2] if len(sys.argv) > 2 else "dist/the-book.html"
@@ -42,6 +43,8 @@ def main() -> int:
     css = open(os.path.join(DOCS, "assets", "app.css"), encoding="utf-8").read()
     js = open(os.path.join(DOCS, "assets", "app.js"), encoding="utf-8").read()
     html = open(os.path.join(DOCS, "index.html"), encoding="utf-8").read()
+    icon = open(os.path.join(DOCS, "assets", "favicon.svg"),
+                encoding="utf-8").read()
 
     bundle = collect()
     # </script> inside the payload would close the tag early.
@@ -51,8 +54,14 @@ def main() -> int:
     body = html.split("<body>", 1)[1].split("</body>", 1)[0]
     body = body.replace('<script src="assets/app.js"></script>', "")
 
+    # Only the body survives the split above, so the tab icon has to be put
+    # back by hand or the offline copy is the one place the mark is missing.
+    # There is nowhere to fetch it from at file://, so it is inlined.
+    href = "data:image/svg+xml," + quote(icon, safe="")
+
     page = (
         "<title>The Book in Order</title>\n"
+        f'<link rel="icon" href="{href}" type="image/svg+xml">\n'
         f"<style>\n{css}\n</style>\n"
         f"{body}\n"
         f'<script id="book-data">window.__BOOK__={payload};</script>\n'

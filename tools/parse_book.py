@@ -93,6 +93,46 @@ SOURCES = {
         "detail": "Written for this volume. No primary text was available from a "
                   "public-domain source.",
     },
+    # The four texts recovered from scans, which arrive from
+    # tools/build_didascalia.py and tools/build_ethiopian.py rather than
+    # from the source file. Their labels belong here all the same: the
+    # reader's apparatus is drawn from this table, and a work whose key
+    # is missing from it is shown with no statement of where its text
+    # came from at all -- which for a recovered text is the one thing
+    # that most needs saying.
+    "platt": {
+        "label": "Thomas Pell Platt, Oriental Translation Fund, 1834",
+        "detail": "Public domain by age, recovered from the scan of a "
+                  "facing-page printing of the Ge'ez with Platt's English "
+                  "beside it. Not audited: no independent reference counts "
+                  "exist for this text, so there is nothing to check it "
+                  "against but the scan.",
+    },
+    "horner": {
+        "label": "The Rev. G. Horner, The Statutes of the Apostles, 1904",
+        "detail": "Public domain by age. Horner's English of the Ge'ez "
+                  "Sinodos he prints in the same volume, recovered from the "
+                  "scan by the word coordinates rather than by its plain "
+                  "OCR. Not audited: no independent reference counts exist "
+                  "for this text. His own numbering is kept, including the "
+                  "two statutes he numbers 40.",
+    },
+    "issaverdens": {
+        "label": "Jacques Issaverdens, Venice, 1901",
+        "detail": "Public domain by age. The Armenian recension made from "
+                  "the Greek, in Issaverdens's English, recovered from the "
+                  "scan by the word coordinates. It is a witness to the "
+                  "work the Ethiopian canon receives, not to the Ge'ez text "
+                  "of it, and no public-domain English of the Ge'ez exists. "
+                  "Not audited.",
+    },
+    "james": {
+        "label": "Montague Rhodes James, The Apocryphal New Testament, 1924",
+        "detail": "Public domain by age. James's English of the Ethiopic "
+                  "published by Guerrier, recovered from the scan by the "
+                  "word coordinates. His section numbers are the ones "
+                  "printed. Not audited.",
+    },
 }
 
 

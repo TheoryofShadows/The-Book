@@ -65,6 +65,75 @@ POSITIONS: dict[str, dict] = {
                "again to the Ge'ez version this volume prints.",
     },
 
+    "the-sinodos": {
+        "trad": "c. 50 CE",
+        "tradWhy": "The book opens by naming the assembly it claims to be: the "
+                   "apostles gathered \u201cwith the knowledge of our Lord Jesus "
+                   "Christ, our Saviour\u201d, and told to divide the earth "
+                   "between them and to set the orders of the Church. Statute 1 "
+                   "lists them by name, and the Ethiopian church receives the "
+                   "collection on those terms, through Clement.",
+        "tradSource": "The text's own first statute, Horner 1904, p. 127",
+        "crit": "4th-6th century CE",
+        "critWhy": "The Statutes are a compilation rather than a composition. "
+                   "Their first part is the Apostolic Church Order, their second "
+                   "the church order that also stands behind the eighth book of "
+                   "the Apostolic Constitutions, and Horner published the "
+                   "Ethiopic, Arabic and Saidic together precisely to argue about "
+                   "which came first. The Ge'ez itself is later again, reaching "
+                   "Ethiopia through Arabic, and its manuscripts are medieval.",
+        "critSource": "G. Horner, The Statutes of the Apostles, or Canones "
+                      "Ecclesiastici, London, 1904, introduction, pp. vii-xxxix",
+        "gap": "Three centuries at least between the apostolic council the book "
+               "claims and the compilation that produced it, and a thousand years "
+               "more to the Ge'ez manuscripts it survives in.",
+    },
+
+    "the-rest-of-the-words-of-baruch": {
+        "trad": "c. 586 BCE",
+        "tradWhy": "The book sets itself at the fall of Jerusalem and tells its "
+                   "story through Jeremiah, Baruch his scribe and Abimelech the "
+                   "Ethiopian; it presents itself as the rest of what Baruch "
+                   "wrote, and is received under his name.",
+        "tradSource": "The text's own opening, and its closing sentence: "
+                      "\u201cAnd the rest of the sayings of Jeremiah ... are not "
+                      "written in the letter of Baruch\u201d",
+        "crit": "c. 100-150 CE",
+        "critWhy": "Abimelech sleeps sixty-six years, which is the interval from "
+                   "the fall of Jerusalem in 70 CE to the crushing of the Bar "
+                   "Kokhba revolt in 136 rather than any interval of the Babylonian "
+                   "exile; Harris read the number as the book's own date. The "
+                   "closing chapter, in which Jeremiah is stoned for preaching "
+                   "Christ, is Christian work over a Jewish story.",
+        "critSource": "J. Rendel Harris, The Rest of the Words of Baruch: A "
+                      "Christian Apocalypse of the Year 136 A.D., London, 1889, "
+                      "introduction",
+        "gap": "About seven centuries: the book is set in the exile and was "
+               "written after the second Jewish revolt.",
+    },
+
+    "the-book-of-the-covenant": {
+        "trad": "c. 30-40 CE",
+        "tradWhy": "The eleven write in their own names \u2014 \u201cWe, John, "
+                   "Thomas, Peter, Andrew, James, Philip, Bartholomew, Matthew, "
+                   "Nathanael, Judas Zelotes, and Cephas\u201d \u2014 and say "
+                   "they set down what the risen Lord revealed to them, having "
+                   "seen and heard and touched him. That places it in the years "
+                   "after the resurrection.",
+        "tradSource": "The text's own sections 1 and 2, James 1924, pp. 485-486",
+        "crit": "c. 140-160 CE",
+        "critWhy": "The letter argues against Simon and Cerinthus by name and "
+                   "answers a docetic reading of the resurrection, which is a "
+                   "second-century quarrel; its calculation of the Lord's return "
+                   "and its Easter discipline belong there too. Schmidt, who "
+                   "edited the Coptic, Ethiopic and Latin together, placed it in "
+                   "Asia Minor about 160.",
+        "critSource": "C. Schmidt, 1919, as reported by M. R. James, The "
+                      "Apocryphal New Testament, Oxford, 1924, p. 485",
+        "gap": "About a century and a quarter between the apostolic voice the "
+               "letter writes in and the controversy it was written for.",
+    },
+
 
     # ---- Torah -----------------------------------------------------------
     "genesis": {

@@ -13,7 +13,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from manuscripts import (  # noqa: E402
-    WITNESSES, WORKS, NT_SECTION_WITNESSES, HERMAS_WITNESSES)
+    WITNESSES, WORKS, NT_SECTION_WITNESSES, NT_SECTION_EXCEPT,
+    HERMAS_WITNESSES)
 
 OUT = sys.argv[1] if len(sys.argv) > 1 else "docs/data"
 
@@ -44,7 +45,7 @@ def main() -> int:
 
     # Whole-collection witnesses, applied by section.
     for wid, sid in section_of.items():
-        if sid == NT_SECTION:
+        if sid == NT_SECTION and wid not in NT_SECTION_EXCEPT:
             mapping.setdefault(wid, []).extend(NT_SECTION_WITNESSES)
         elif sid == HERMAS_SECTION:
             mapping.setdefault(wid, []).extend(HERMAS_WITNESSES)
