@@ -74,7 +74,7 @@ class TheHeadline(unittest.TestCase):
 
 
 class WhatCountsAsAWork(unittest.TestCase):
-    """The headline counts 169. Nine of them are not texts.
+    """The headline counts 172. Nine of them are not texts.
 
     Checking that the count matches manifest.totals.works proves the arithmetic
     and nothing else -- the number was never the doubtful part, the noun
@@ -92,8 +92,8 @@ class WhatCountsAsAWork(unittest.TestCase):
 
     def test_the_split_between_text_and_apparatus(self):
         texts = [w for w in self.works if w.get("words")]
-        self.assertEqual(len(self.works), 169)
-        self.assertEqual(len(texts), 160)
+        self.assertEqual(len(self.works), 172)
+        self.assertEqual(len(texts), 163)
         self.assertEqual(len(self.works) - len(texts), 9)
 
     def test_the_readme_says_how_many_carry_text(self):
@@ -164,14 +164,16 @@ class WhatTheFrontMatterClaimsIsMissing(unittest.TestCase):
 
 
 class TheAbsentBooks(unittest.TestCase):
-    """One book of the Ethiopian canon is missing, and it says why.
+    """Four books of the Ethiopian canon are missing, and each says why.
 
-    There were five. The Didascalia came from Platt's 1834 printing, the
-    Sinodos from Horner's of 1904, the Book of the Covenant from M. R.
-    James's 1924 English of the Ethiopic, and the Rest of the Words of
-    Baruch from Issaverdens's Armenian of 1901. Ethiopic Clement has no
-    public-domain English translation of more than a fraction of itself,
-    and that is recorded rather than left blank.
+    Not the four anyone expected. Five books were listed as missing and
+    all five are now here in whole or in part -- the Didascalia from
+    Platt's 1834 printing, the Sinodos from Horner's of 1904 and
+    Schodde's of 1885, the Book of the Covenant from Cooper and Maclean's
+    Syriac and James's Ethiopic, the Rest of the Words of Baruch from
+    Issaverdens's Armenian, and the one piece of Ethiopic Clement James
+    translated. The four now absent are the ones the table never listed:
+    three Meqabyan and Josippon.
 
     The coverage table used to name the absences and stop, which is a gap
     asserted without a citation -- the one move this volume says it does
@@ -188,6 +190,7 @@ class TheAbsentBooks(unittest.TestCase):
 
     RECOVERED = ("4 Baruch (Paraleipomena Jeremiou)",
                  "Book of the Covenant (Mets'hafe Kidan)",
+                 "Ethiopic Clement (Qalementos)",
                  "Sinodos")
 
     def setUp(self):
@@ -199,7 +202,8 @@ class TheAbsentBooks(unittest.TestCase):
     def test_the_absent_books_are_the_ones_on_record(self):
         self.assertEqual(
             sorted(b["name"] for b in self.absent),
-            ["Ethiopic Clement (Qalementos)"])
+            ["1 Meqabyan", "2 Meqabyan", "3 Meqabyan",
+             "Josippon (Zena Ayhud)"])
 
     def test_every_absence_carries_a_reason_and_a_source(self):
         for b in self.absent:

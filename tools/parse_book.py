@@ -126,6 +126,24 @@ SOURCES = {
                   "of it, and no public-domain English of the Ge'ez exists. "
                   "Not audited.",
     },
+    "schodde": {
+        "label": "George H. Schodde, Journal of the Society of Biblical "
+                 "Literature and Exegesis, 1885",
+        "detail": "Public domain by age. Schodde's English of the Ge'ez "
+                  "Apostolic Canons, recovered from the scan by the word "
+                  "coordinates. His roman numbering is the one printed; two "
+                  "of his headings did not survive the scan and their canons "
+                  "read on inside the canon before them. Not audited.",
+    },
+    "cooper": {
+        "label": "James Cooper and Arthur John Maclean, Edinburgh, 1902",
+        "detail": "Public domain by age. The Testamentum Domini from the "
+                  "Syriac, recovered from the scan by the word coordinates. "
+                  "This is not the Ge'ez: the Ethiopic version of this work "
+                  "was unpublished when they wrote and has no public-domain "
+                  "English still. Their chapter numbers are the ones "
+                  "printed. Not audited.",
+    },
     "james": {
         "label": "Montague Rhodes James, The Apocryphal New Testament, 1924",
         "detail": "Public domain by age. James's English of the Ethiopic "
