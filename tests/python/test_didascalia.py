@@ -186,7 +186,11 @@ class TheWordsTheScanBroke(unittest.TestCase):
             cls.log = json.load(fh)
 
     def test_no_broken_word_is_left_in_the_text(self):
-        bad = re.compile(r"(fii|\b[Hh][kfb]|vv|vd|vm|iiljbr|oiir|yoixng|eveiy)")
+        # The caret belongs here: "I^ord Jesus Christ" was on the live page,
+        # and the tokeniser that was meant to repair it did not treat ^ as
+        # part of a word, so the entry in the table never fired.
+        bad = re.compile(
+            r"(fii|\b[Hh][kfb]|vv|vd|vm|\^|[a-z]U[a-z]|iiljbr|oiir|yoixng|eveiy|aiad)")
         found = sorted({t for t in re.findall(r"[A-Za-z']+", self.body)
                         if bad.search(t)})
         self.assertEqual(found, [], "the scan's damage is back in the text")
@@ -215,6 +219,106 @@ class TheWordsTheScanBroke(unittest.TestCase):
         """"lawful for" scanned as one ruined token in Platt's eleventh
         section heading, which is why the repairs handle phrases too."""
         self.assertIn("not lawful for Christians to enter", self.body)
+
+
+class TheSectionsAreCutOnPlattsHeadings(unittest.TestCase):
+    """Cut on his headings, not on the page each section opens on.
+
+    The first version divided by page number, which is only accurate to the
+    page: a section beginning halfway down one opened with the tail of the
+    section before it. "Of Widows" began "runner. But if thou be not
+    slothful" -- a page of sloth before the first widow -- and that went out
+    to the live site.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        with open(WORK, encoding="utf-8") as fh:
+            cls.work = json.load(fh)
+
+    def test_every_numbered_section_opens_on_its_own_heading(self):
+        """The defect this replaced, stated as a rule."""
+        for c in self.work["chapters"]:
+            if not c.get("numeral"):
+                continue          # the unnumbered preamble
+            opening = c["paras"][0][:90]
+            self.assertTrue(opening.startswith(c["numeral"] + "."),
+                            f"section {c['n']} opens {opening!r}")
+
+    def test_the_preamble_opens_the_work(self):
+        first = self.work["chapters"][0]
+        self.assertIsNone(first.get("numeral"))
+        self.assertTrue(first["paras"][0].startswith("We the Twelve Apostles"))
+
+    def test_the_numerals_run_forward(self):
+        seen = [c["numeral"] for c in self.work["chapters"] if c.get("numeral")]
+        order = list(bd.TITLES)
+        self.assertEqual(seen, sorted(seen, key=order.index))
+
+    def test_each_heading_phrase_occurs_exactly_once(self):
+        """An ambiguous phrase cuts in the wrong place.
+
+        "Of Widows" was tried and dropped for this reason: the only match
+        the scan left is running text about the observance of widows, and
+        cutting there put a boundary mid-sentence.
+        """
+        body = " ".join(p for c in self.work["chapters"] for p in c["paras"])
+        for numeral, phrase in bd.HEADINGS:
+            found = len(re.findall(re.escape(phrase), body, re.I))
+            self.assertEqual(found, 1, f"{numeral}: {phrase!r} occurs {found}x")
+
+    def test_the_headings_that_did_not_survive_are_named(self):
+        note = " ".join(self.work["note"])
+        for numeral in ("XII", "XV", "XVII"):
+            self.assertIn(numeral, note)
+
+
+class NoGeezReachedTheEnglish(unittest.TestCase):
+    """One line of scanned Ge'ez got through and shipped.
+
+    It cleared both of the original tests by a hair -- five of its fragments
+    looked like words, and it came to 0.802 letters against a threshold of
+    0.80 -- and dropped a run of noise into the middle of a sentence about
+    bloody assemblies. The colon is the Ge'ez separator and the tell.
+    """
+
+    def test_a_geez_line_that_once_passed_is_now_refused(self):
+        self.assertFalse(bd.english(
+            "fl^  :  Yian  :  Viof-I'  :  \"S^A  :  lni>  :  AiffV  :  AOA  "
+            ":  I^flf  :  HHaA-T  ::  COrS^oxfi"))
+
+    def test_english_with_one_colon_is_still_kept(self):
+        self.assertTrue(bd.english(
+            "For thus saith the prophet: Woe unto them that join house to house"))
+
+    def test_no_colon_run_survives_in_the_built_text(self):
+        with open(WORK, encoding="utf-8") as fh:
+            work = json.load(fh)
+        body = " ".join(p for c in work["chapters"] for p in c["paras"])
+        self.assertEqual(re.findall(r"\S+\s*:\s*\S+\s*:\s*\S+\s*:", body), [])
+
+
+class TheWholeTextSurvivesTheCut(unittest.TestCase):
+    """The guard that three failed attempts at this needed and did not have.
+
+    Cutting the body into sections is pure partition: every word recovered
+    from the scan lands in exactly one section. Getting it wrong is silent
+    -- one attempt lost 1,400 words to an off-by-one on the section index,
+    another duplicated 19,000 by matching a title in several places -- and
+    the work still built, still rendered, and still read plausibly.
+    """
+
+    def test_the_sections_hold_every_word_the_scan_gave_and_no_more(self):
+        with open(WORK, encoding="utf-8") as fh:
+            work = json.load(fh)
+        with open(SCAN, encoding="utf-8", errors="replace") as fh:
+            page = bd.pages(fh.read())
+        raw = bd.WORD.findall(
+            " ".join(bd.prose(page[n]) for n in sorted(page) if page[n]))
+        built = bd.WORD.findall(
+            " ".join(p for c in work["chapters"] for p in c["paras"]))
+        self.assertEqual(len(built), len(raw),
+                         "the cut lost or duplicated text")
 
 
 class TheExtractionIsReproducible(unittest.TestCase):
