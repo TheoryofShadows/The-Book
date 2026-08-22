@@ -115,17 +115,21 @@ V-GAP | esther-greek-version | Chapter 4 | missing [6]
 V-GAP | esther-greek-version | Chapter 9 | missing [5, 30]
 
 # ------------------------------------------------------------------------
-# Holes inherited from the printed source
+# Two holes that used to be listed here, and are not holes any more
 #
-# 1 Clement breaks off at chapter 59 because the 1885 Ante-Nicene Fathers
-# printing depends on Codex Alexandrinus, whose last leaf is damaged: the
-# great prayer at 59-61 and the close at 62-65 are not in it. The accuracy
-# report says so on the page. Ignatius to the Smyrnaeans loses its closing
-# chapter 13 to the scrape the source was built from -- the site furniture
-# logged in removals.json sits exactly where that chapter should be.
-
-CHAPTERS | the-epistle-of-ignatius-to-the-smyrnaeans | expected 13 | got 12
-CHAPTERS | the-first-epistle-of-clement-to-the-corinthians | expected 65 | got 59
+# 1 Clement broke off at chapter 59, because the 1885 Ante-Nicene Fathers
+# printing depends on Codex Alexandrinus, whose last leaf is damaged: 57.7
+# to 63.4 is not in it, and the great intercessory prayer is inside that.
+# The gap was never a gap in the public domain -- Bryennios found the whole
+# letter in 1873 and Lightfoot printed it in English in 1891 -- and
+# tools/build_lightfoot.py recovers those six chapters from the scan of that
+# printing, so the letter now runs to 65 as every edition of the complete
+# text does.
+#
+# Ignatius to the Smyrnaeans had not lost its thirteenth chapter at all. The
+# chapter was in the volume, printed as the second half of chapter 12,
+# behind the ANF heading that opens it: the single word CONCLUSION, left
+# standing in the running text. The boundary is restored.
 
 # ------------------------------------------------------------------------
 # Works placed by their section rather than by a dated argument

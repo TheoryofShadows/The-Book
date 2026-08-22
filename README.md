@@ -34,7 +34,7 @@ them is old enough to be public domain.
 
 It opens with the Song of the Sea, not with Genesis.
 
-**172 works · 2,530 chapters · 40,124 numbered verses · 1.22 million words**
+**172 works · 2,537 chapters · 40,124 numbered verses · 1.22 million words**
 
 Of the 172 entries, **163 carry text**. The other nine are apparatus rather
 than works: the Dead Sea Scrolls summaries, the Psalms of Solomon and Philo
@@ -87,6 +87,7 @@ translation.
 | M. R. James, The Apocryphal New Testament, 1924 | The second book of the Book of the Covenant, and the Apocalypse of Peter out of the Ethiopic Books of Clement — **not audited** |
 | G. H. Schodde, Journal of the Society of Biblical Literature, 1885 | The fifty-seven Apostolic Canons, the second part of the Sinodos — **not audited** |
 | J. Cooper and A. J. Maclean, 1902 | The Testamentum Domini, the Book of the Covenant's church order — **not audited**, and from the Syriac |
+| J. B. Lightfoot and J. R. Harmer, 1891 | 1 Clement 58–63, the six chapters the damaged last leaf of Codex Alexandrinus took with it — recovered from the scan, and checked at both seams against the volume's own translation of the chapters either side |
 
 ## Seeing the disagreement
 
@@ -187,6 +188,37 @@ Verified correct:
 - The Catholic canon of 73 and the Eastern Orthodox additions are complete.
 - No duplicate chapters, no empty chapters, no broken verse sequences.
 
+Closed since, from editions the source compilation did not use:
+
+- **1 Clement's great intercessory prayer**, and the five other chapters
+  around it. The 1885 printing follows Codex Alexandrinus, whose last leaf is
+  damaged: 57:7–63:4 went with it, which is why this letter used to run 1–59
+  where every complete edition runs 1–65. That was never a hole in the public
+  domain — Bryennios found the whole letter in a Constantinople manuscript in
+  1873 and Lightfoot printed it in English in 1891 — so the six chapters are
+  recovered from the scan of that printing by their word coordinates, and the
+  last two chapters are renumbered 64 and 65, as they are everywhere else.
+  Two translators in one letter is stated on the work's own page rather than
+  smoothed over, and the join is held under test from both sides.
+- **Ignatius to the Smyrnaeans 13**, which turned out not to be missing at
+  all. It was printed as the second half of chapter 12, behind the single
+  word *CONCLUSION* — the printing's heading for it, left standing in the
+  running text. The same chapter had the scrape's fingerprints on it twice
+  more: Ignatius greeted Troas twice, and one *and* was doubled.
+- **Twenty-three chapter headings** across 1 Clement, Barnabas and two
+  letters of Ignatius, each of them the second line of a two-line heading
+  that the source preparation cut at the line break and left at the head of
+  its own chapter. 1 Clement 24 opened *"resurrection."* and Ignatius to the
+  Philadelphians 10 opened *"PERSECUTION."* Which openings those are is not
+  guessed: the 1870 edition prints the headings in full, and a chapter
+  opening is taken off only when it is the end of its own printed heading
+  and the text resumes at a sentence after it — so Barnabas 19, which is
+  headed *The way of light* and opens *"The way of light, then, is as
+  follows"*, keeps its first words.
+- **The opening of Ignatius to the Magnesians 15**, where the cut that was
+  meant to take the heading off took the first nine words of the chapter with
+  it. It began *"you), who are here for the glory of God"*.
+
 Corrected in this edition:
 
 - **~31,000 characters of website furniture** were embedded in the scripture
@@ -215,12 +247,8 @@ Corrected claims:
 
 Gaps inherited from the source editions, left honest rather than invented:
 
-- **1 Clement is missing its great intercessory prayer.** The 1885 printing
-  followed Codex Alexandrinus, which has a lacuna at roughly 57:7–63:4, so the
-  chapters run 1–59 rather than 1–65.
-- Ignatius to the Smyrnaeans lacks chapter 13; Polycarp to the Philippians
-  breaks off mid-sentence in chapter 14.
-- The Shepherd of Hermas is missing Similitudes 1 and 10.
+- Polycarp to the Philippians breaks off mid-sentence in chapter 14, where
+  the Greek does; the Latin carries on and this volume does not print it.
 - The Psalms of Solomon and Philo are described but have no text.
 - The Dead Sea Scrolls appear as summaries — every English translation of the
   1947-and-later finds is under copyright.
@@ -332,6 +360,9 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | Tool | Does |
 | --- | --- |
 | `tools/parse_book.py` | Turns the source text into structured JSON, logging every removal |
+| `tools/fetch_scans.py` | The only script that touches the network: pulls the scans this volume recovers text from, run by hand, output committed |
+| `tools/scans.py` | Reads a scan by its word coordinates — running heads, marginal numbers and footnotes taken off by where they sit on the leaf |
+| `tools/build_lightfoot.py` | Splices 1 Clement's six recovered chapters in, and restores Smyrnaeans 13 |
 | `tools/audit.py` | Checks chapter and verse counts against reference figures |
 | `tools/build_canon.py` | Builds canon membership and checks coverage claims |
 | `tools/build_index.py` | Builds the sharded search index |
@@ -375,7 +406,7 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 
 | Suite | Checks |
 | --- | --- |
-| `tests/python` | The parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. One of them runs the reader's own copy of the folding rule against the Python one, because the two are written in different languages and a divergence between them is silent |
+| `tests/python` | The parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. One of them runs the reader's own copy of the folding rule against the Python one, because the two are written in different languages and a divergence between them is silent. Another holds the seam where 1 Clement changes translator: the six recovered chapters are checked against the volume's own text of the chapters either side of them, because a splice made one chapter out of step would still read as English |
 | `routes` | Every page renders, search returns verses, a saved verse survives a reload, nothing throws |
 | `layout` | At 320–430px every nav link is on screen, nothing scrolls sideways, the bar tucks away as you read, desktop is unchanged |
 | `dating` | The date card against the spans the parser read, the method page, and that a citation names the edition and the era rather than just a URL |

@@ -1,0 +1,144 @@
+{
+ "note": "Chapter headings from the 1885 printing left standing at the head of the chapter they name, and read as scripture. Each was the second line of a two-line heading; the source preparation cut the heading at the line break and kept what followed. Recognised against the same headings as printed in the 1870 edition, and removed.",
+ "source": "source/extra/77576.txt",
+ "removed": [
+  {
+   "work": "the-first-epistle-of-clement-to-the-corinthians",
+   "chapter": "Chapter 1",
+   "removed": "forth of schism among them.",
+   "opens": "The Church of God which sojourns at Rome, to the Church of G…"
+  },
+  {
+   "work": "the-first-epistle-of-clement-to-the-corinthians",
+   "chapter": "Chapter 3",
+   "removed": "it from envy and emulation.",
+   "opens": "Every kind of honour and happiness was bestowed upon you, an…"
+  },
+  {
+   "work": "the-first-epistle-of-clement-to-the-corinthians",
+   "chapter": "Chapter 5",
+   "removed": "times. The martyrdom of Peter and Paul.",
+   "opens": "But not to dwell upon ancient examples, let us come to the m…"
+  },
+  {
+   "work": "the-first-epistle-of-clement-to-the-corinthians",
+   "chapter": "Chapter 15",
+   "removed": "merely pretend to do so.",
+   "opens": "Let us cleave, therefore, to those who cultivate peace with…"
+  },
+  {
+   "work": "the-first-epistle-of-clement-to-the-corinthians",
+   "chapter": "Chapter 22",
+   "removed": "proclaims the misery of sinful conduct.",
+   "opens": "Now the faith which is in Christ confirms all these [admonit…"
+  },
+  {
+   "work": "the-first-epistle-of-clement-to-the-corinthians",
+   "chapter": "Chapter 24",
+   "removed": "resurrection.",
+   "opens": "Let us consider, beloved, how the Lord continually proves to…"
+  },
+  {
+   "work": "the-first-epistle-of-clement-to-the-corinthians",
+   "chapter": "Chapter 27",
+   "removed": "omnipotent and omniscient God.",
+   "opens": "Having then this hope, let our souls be bound to Him who is…"
+  },
+  {
+   "work": "the-first-epistle-of-clement-to-the-corinthians",
+   "chapter": "Chapter 30",
+   "removed": "hates, that we may be blessed.",
+   "opens": "Seeing, therefore, that we are the portion of the Holy One,…"
+  },
+  {
+   "work": "the-first-epistle-of-clement-to-the-corinthians",
+   "chapter": "Chapter 33",
+   "removed": "God Himself is an example to us of good works.",
+   "opens": "What shall we do, then, brethren? Shall we become slothful i…"
+  },
+  {
+   "work": "the-first-epistle-of-clement-to-the-corinthians",
+   "chapter": "Chapter 34",
+   "removed": "harmony, let us implore that reward from Him.",
+   "opens": "The good servant receives the bread of his labour with confi…"
+  },
+  {
+   "work": "the-first-epistle-of-clement-to-the-corinthians",
+   "chapter": "Chapter 38",
+   "removed": "exalt himself above another.",
+   "opens": "Let our whole body, then, be preserved in Christ Jesus; and…"
+  },
+  {
+   "work": "the-first-epistle-of-clement-to-the-corinthians",
+   "chapter": "Chapter 43",
+   "removed": "priestly dignity.",
+   "opens": "And what wonder is it if those in Christ who were entrusted…"
+  },
+  {
+   "work": "the-first-epistle-of-clement-to-the-corinthians",
+   "chapter": "Chapter 44",
+   "removed": "contention respecting the priestly office.",
+   "opens": "Our apostles also knew, through our Lord Jesus Christ, and t…"
+  },
+  {
+   "work": "the-first-epistle-of-clement-to-the-corinthians",
+   "chapter": "Chapter 47",
+   "removed": "in the times of Paul.",
+   "opens": "Take up the epistle of the blessed Apostle Paul. What did he…"
+  },
+  {
+   "work": "the-first-epistle-of-clement-to-the-corinthians",
+   "chapter": "Chapter 54",
+   "removed": "restored to the Church.",
+   "opens": "Who then among you is noble-minded? who compassionate? who f…"
+  },
+  {
+   "work": "the-first-epistle-of-clement-to-the-corinthians",
+   "chapter": "Chapter 59",
+   "removed": "peace has been restored. The benediction.",
+   "opens": "Send back speedily to us in peace and with joy these our mes…"
+  },
+  {
+   "work": "the-epistle-of-barnabas",
+   "chapter": "Chapter 1",
+   "removed": "communicate to his brethren something of that which he had himself received.",
+   "opens": "All hail, ye sons and daughters, in the name of our Lord Jes…"
+  },
+  {
+   "work": "the-epistle-of-barnabas",
+   "chapter": "Chapter 5",
+   "removed": "our salvation, but to the Jews' destruction.",
+   "opens": "For to this end the Lord endured to deliver up His flesh to…"
+  },
+  {
+   "work": "the-epistle-of-barnabas",
+   "chapter": "Chapter 6",
+   "removed": "the prophets.",
+   "opens": "When, therefore, He has fulfilled the commandment, what sait…"
+  },
+  {
+   "work": "the-epistle-of-barnabas",
+   "chapter": "Chapter 10",
+   "removed": "different kinds of food.",
+   "opens": "Now, wherefore did Moses say, \"Thou shalt not eat the swine,…"
+  },
+  {
+   "work": "the-epistle-of-barnabas",
+   "chapter": "Chapter 14",
+   "removed": "broke.",
+   "opens": "Yes [it is even so]; but let us inquire if the Lord has real…"
+  },
+  {
+   "work": "the-epistle-of-ignatius-to-the-ephesians",
+   "chapter": "Chapter 13",
+   "removed": "GOD.",
+   "opens": "Take heed, then, often to come together to give thanks to Go…"
+  },
+  {
+   "work": "the-epistle-of-ignatius-to-the-philadelphians",
+   "chapter": "Chapter 10",
+   "removed": "PERSECUTION.",
+   "opens": "Since, according to your prayers, and the compassion which y…"
+  }
+ ]
+}

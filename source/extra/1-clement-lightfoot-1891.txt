@@ -1,0 +1,401 @@
+Source: J. B. Lightfoot and J. R. Harmer, The Apostolic Fathers: revised texts with short introductions and English translations. London: Macmillan, 1891, pages 76-85: the translation of the Epistle of S. Clement to the Corinthians, chapters 44 to 65.
+Public domain by age. Scanned by the Internet Archive; archive.org/details/apostolicfathers00ligh
+
+Lightfoot's English of a text that had six chapters the Ante-Nicene Fathers could not print. The 1885 printing follows Codex Alexandrinus, whose last leaf is damaged: everything from 57.7 to 63.4 is gone with it, and the great intercessory prayer is inside that hole. Bryennios found the gap filled in a Constantinople manuscript in 1873, and Lightfoot prints the whole letter. Ten leaves are taken rather than the four the missing chapters occupy: the running head has to repeat before it can be recognised as one, and the leaves on either side are what let tools/build_lightfoot.py check that the chapters it cuts out sit where the volume already has 57 and 64.
+
+Recovered from the scan's word coordinates by tools/scans.py, run from tools/fetch_scans.py: the running heads, the marginal line-numbers and the footnotes are taken off by where they sit on the leaf. Each [page n] below is the scan's own image number, so any line here can be put beside the leaf it came from. Lines are the printed lines. A blank line means a paragraph opens on the line after it; the page markers carry no blank line of their own, so that a paragraph broken by a page turn stays one paragraph.
+------------------------------------------------------------------------------
+
+[page 91]
+
+44. And our Apostles knew through our Lord Jesus Christ that
+there would be strife over the name of the bishop’s office. For this
+cause therefore, having received complete foreknowledge, they ap-
+pointed the aforesaid persons, and afterwards they provided a con-
+tinuance, that if these should fall asleep, other approved men should
+succeed to their ministration. ‘Those therefore who were appointed by
+them, or afterward by other men of repute with the consent of the
+whole Church, and have ministered unblameably to the flock of Christ
+in lowliness of mind, peacefully and with all modesty, and for long
+time have borne a good report with all—these men we consider to be
+unjustly thrust out from their ministration. For it will be no light sin
+for us, if we thrust out those who have offered the gifts of the bishop’s
+office unblameably and holily. Blessed are those presbyters who have
+gone before, seeing that their departure was fruitful and ripe: for they
+have no fear lest any one should remove them from their appointed
+place. For we see that ye have displaced certain persons, though they
+were living honourably, from the ministration which thad been re-
+spected by themt blamelessly.
+
+45. Be ye contentious, brethren, and jealous about the things that
+pertain unto salvation. Ye have searched the scriptures, which are
+true, which were given through the Holy Ghost; and ye know that
+nothing unrighteous or counterfeit is written in them. Ye will not find
+that righteous persons have been thrust out by holy men. Righteous
+men were persecuted, but it was by the lawless; they were imprisoned,
+but it was by the unholy. ‘They were stoned by transgressors: they
+were slain by those who had conceived a detestable and unrighteous
+jealousy. Suffering these things, they endured nobly. For what must
+we say, brethren? Was Daniel cast into the lions’ den by them that
+feared God? Or were Ananias and Azarias and Misael shut up in the
+furnace of fire by them that professed the excellent and glorious worship
+of the Most High? Far be this from our thoughts. Who then were
+they that did these things? Abominable men and full of all wickedness
+were stirred up to such a pitch of wrath, as to bring cruel suffering
+upon them that served God in a holy and blameless purpose, not
+knowing that the Most High is the champion and protector of them
+that in a pure conscience serve His excellent Name: unto whom be
+the glory for ever and ever. Amen. But they that endured patiently in
+confidence inherited glory and honour; they were exalted, and had their
+names recorded by God in their memorial for ever and ever. Amen.
+[page 92]
+46. To such examples as these therefore, brethren, we also ought
+to cleave. For it is written; Cleave unto the saints, for they that cleave
+unto them shall be sanctified. And again He saith in another place;
+With the guiltless man thou shalt be guiltless, and with the elect thou
+shalt be elect, and with the crooked thou shalt deal crookedly. Let us
+therefore cleave to the guiltless and righteous: and these are the elect
+of God. Wherefore are there strifes and wraths and factions and
+divisions and war among you? Have we not one God and one Christ
+and one Spirit of grace that was shed upon us? And is there not one
+calling in Christ? Wherefore do we tear and rend asunder the members
+of Christ, and stir up factions against our own body, and reach such a
+pitch of folly, as to forget that we are members one of another? Re-
+member the words of Jesus our Lord: for He said, Woe unto that man;
+it were good for him if he had not been born, rather than that he should
+offend one of Mine elect. It were better for him that a mill-stone were
+hanged about him, and he cast into the sea, than that he should pervert
+one of Mine elect. Your division hath perverted many; it hath brought
+many to despair, many to doubting, and all of us to sorrow. And your
+sedition still continueth.
+
+47. Take up the epistle of the blessed Paul the Apostle. What
+wrote he first unto you in the beginning of the Gospel? Of a truth he
+charged you in the Spirit concerning himself and Cephas and Apollos,
+because that even then ye had made parties. Yet that making of
+parties brought less sin upon you; for ye were partisans of Apostles
+that were highly reputed, and of a man approved in their sight. But
+now mark ye, who they are that have perverted you and diminished the
+glory of your renowned love for the brotherhood. It is shameful,
+dearly beloved, yes, utterly shameful and unworthy of your conduct in
+Christ, that it should be reported that the very stedfast and ancient
+Church of the Corinthians, for the sake of one or two persons, maketh
+sedition against its presbyters. And this report hath reached not only
+us, but them also which differ from us, so that ye even heap blasphemies
+on the Name of the Lord by reason of your folly, and moreover create
+peril for yourselves.
+
+48. Let us therefore root this out quickly, and let us fall down
+before the Master and entreat Him with tears, that He may show Him-
+self propitious and be reconciled unto us, and may restore us to the
+seemly and pure conduct which belongeth to our love of the brethren.
+For this is a gate of righteousness opened unto life, as it is written;
+[page 93]
+Open me the gates of righteousness, that I may enter in thereby and pratse
+the Lord. This ts the gate of the Lord; the righteous shall enter in
+thereby. Seeing then that many gates are opened, this is that gate
+which is in righteousness, even that which is in Christ, whereby all are
+blessed that have entered in and direct their path in holiness and
+righteousness, performing all things without confusion. Let a man be
+faithful, let him be able to expound a deep saying, let him be wise in
+the discernment of words, let him be strenuous in deeds, let him be
+pure; for so much the more ought he to be lowly in mind, in pro-
+portion as he seemeth to be the greater; and he ought to seek the
+common advantage of all, and not his own.
+
+49. Let him that hath love in Christ fulfil the commandments of
+Christ. Who can declare the bond of the love of God? Who is
+sufficient to tell the majesty of its beauty? The height, whereunto love
+exalteth, is unspeakable. Love joineth us unto God; Jove covereth a
+multitude of sins ; love endureth all things, is long-suffering in all things.
+There is nothing coarse, nothing arrogant in love. Love hath no di-
+visions, love maketh no seditions, love doeth all things in concord. In
+love were all the elect of God made perfect ; without love nothing is
+well-pleasing to God: in love the Master took us unto Himself; for the
+love which He had toward us, Jesus Christ our Lord hath given His
+blood for us by the will of God, and His flesh for our flesh and His life
+for our lives.
+
+50. Ye see, dearly beloved, how great and marvellous a thing is
+love, and there is no declaring its perfection. Who is sufficient to be
+found therein, save those to whom God shall vouchsafe it? Let us
+therefore entreat and ask of His mercy, that we may be found blameless
+in love, standing apart from the factiousness of men. All the gene-
+rations from Adam unto this day have passed away: but they that by
+God’s grace were perfected in love dwell in the abode of the pious; and
+they shall be made manifest in the visitation of the Kingdom of God.
+For it is written; Luter into the closet for a very little while, until Mine
+anger and My wrath shall pass away, and I will remember a good day
+and will raise you from your tombs. Blessed were we, dearly beloved,
+if we should be doing the commandments of God in concord of love, to
+the end that our sins may through love be forgiven us. For it is
+written ; Blessed are they whose iniguities are forgiven, and whose sins are
+covered. Blessed ts the man to whom the Lord shall impute no sin, neither
+zs gutle in his mouth. This declaration of blessedness was pronounced
+[page 94]
+upon them that have been elected by God through Jesus Christ our
+Lord, to whom be the glory for ever and ever. Amen.
+
+51. For all our transgressions which we have committed through
+any of the wiles of the adversary, let us entreat that we may obtain
+forgiveness. Yea and they also, who set themselves up as leaders of
+faction and division, ought to look to the common ground of hope.
+For such as walk in fear and love desire that they themselves should
+fall into suffering rather than their neighbours; and they pronounce
+condemnation against themselves rather than against the harmony
+which hath been handed down to us nobly and nghteously. For it is
+good for a man to make confession of his trespasses rather than to
+harden his heart, as the heart of those was hardened who made
+sedition against Moses the servant of God; whose condemnation was
+clearly manifest, for they went down to hades alive, and Death shall be
+their shepherd. Pharaoh and his host and all the rulers of Egypt, their
+chartots and their horsemen, were overwhelmed in the depths of the Red
+Sea, and perished for none other reason but because their foolish hearts
+were hardened after that the signs and the wonders had been wrought
+in the land of Egypt by the hand of Moses the servant of God.
+
+52. The Master, brethren, hath need of nothing at all. He
+desireth not anything of any man, save to confess unto Him. For the
+elect David saith; 7 w#l/ confess unto the Lord, and it shall please Him
+more than a young calf that groweth horns and hoofs. Let the poor see tt,
+and rejoice. And again He saith; Sacrifice to God a sacrifice of praise,
+and pay thy vows to the Most High: and call upon Me in the day of thine
+affiction, and I will deliver thee, and thou shalt glorify Me. For a
+sacrifice unto God is a broken spirit.
+
+53. For ye know, and know well, the sacred scriptures, dearly
+beloved, and ye have searched into the oracles of God. We write these
+things therefore to put you in remembrance. When Moses went up
+into the mountain and had spent forty days and forty nights in fasting
+and humiliation, God said unto him; JZoses, Moses, come down quickly
+hence, for My people whom thou leddest forth from the land of Egypt have
+wrought iniguity: they have transgressed quickly out of the way which
+thou didst command unto them; they have made for themselves molten
+images. And the Lord said unto him; I have spoken unto thee once and
+twice, saying, I have seen this people, and behold tt ts stiff-necked. Let Me
+destroy them utterly, and I will blot out their name from under heaven,
+and I will make of thee a nation great and wonderful and numerous more
+[page 95]
+than this. And Moses said; (Vay, not so, Lord. Forgive this people
+their sin, or blot me also out of the book of the living. O mighty love! O
+unsurpassable perfection! ‘The servant is bold with his Master; he
+asketh forgiveness for the multitude, or he demandeth that himself also
+be blotted out with them.
+
+54. Who therefore is noble among you? Who is compassionate?
+I do that which is ordered by the people: only let the flock of Christ
+be at peace with its duly appointed presbyters. He that shall have
+done this, shall win for himself great renown in Christ, and every place
+will receive him: for the earth is the Lord’s and the fulness thereof.
+Thus have they done and will do, that live as citizens of that kingdom
+of God which bringeth no regrets.
+
+55. But, to bring forward examples of Gentiles also; many kings
+and rulers, when some season of pestilence pressed upon them, being
+taught by oracles have delivered themselves over to death, that they
+might rescue their fellow citizens through their own blood. Many have
+retired from their own cities, that they might have no more seditions. -
+We know that many among ourselves have delivered themselves to
+bondage, that they might ransom others. Many have sold themselves
+to slavery, and receiving the price paid for themselves have fed others.
+Many women being strengthened through the grace of God have
+performed many manly deeds. The blessed Judith, when the city
+was beleaguered, asked of the elders that she might be suffered to go
+forth into the camp of the aliens. So she exposed herself to peril and
+went forth for love of her country and of her people which were
+beleaguered ; and the Lord delivered Holophernes into the hand of a
+woman. To no less peril did Esther also, who was perfect in faith,
+expose herself, that she might deliver the twelve tribes of Israel, when
+they were on the point to perish. For through her fasting and her
+humiliation she entreated the all-seeing Master, the God of the ages ;
+and He, seeing the humility of her soul, delivered the people for whose
+sake she encountered the peril.
+
+56. Therefore let us also make intercession for them that are in
+any transgression, that forbearance and humility may be given them, to
+the end that they may yield not unto us, but unto the will of God. For
+so shall the compassionate remembrance of them with God and the
+saints be fruitful unto them, and perfect. Let us accept chastisement,
+[page 96]
+whereat no man ought to be vexed, dearly beloved. ‘The admonition
+which we give one to another is good and exceeding useful; for it
+joineth us unto the will of God. For thus saith the holy word; Ze
+Lord hath indeed chastened me, and hath not delivered me over unto death.
+For whom the Lord loveth He chasteneth, and scourgeth every son whom
+He receiveth. For the righteous, it 1s said, shall chasten me in mercy and
+shall reprove me, but let not the + mercyt of sinners anoint my head. And
+again He saith; Blessed is the man whom the Lord hath reproved, and
+refuse not thou the admonition of the Almighty. For He causeth pain,
+and He restoreth again: He hath smitten, and His hands have healed.
+Six times shall He rescue thee from affiictions: and at the seventh no evil
+shall touch thee. In famine He shall deliver thee from death, and in war
+Fe shall release thee from the arm of the sword. And from the scourge of
+the tongue shall He hide thee, and thou shalt not be afratd when evils
+approach. Thou shalt laugh at the unrighteous and wicked, and of the
+wild beasts thou shalt not be afraid. For wild beasts shall be at peace
+with thee. Then shalt thou know that thy house shall be at peace: and
+the abode of thy tabernacle shall not go wrong, and thou shalt know that
+thy seed ts many, and thy children as the plenteous herbage of the field.
+And thou shalt come to the grave as ripe corn reaped in due season, or as
+the heap of the threshing floor gathered together at the right time. Ye see,
+dearly beloved, how great protection there is for them that are chastened
+by the Master: for being a kind father He chasteneth us to the end
+that we may obtain mercy through His holy chastisement.
+
+57. Ye therefore that laid the foundation of the sedition, submit
+yourselves unto the presbyters and receive chastisement unto repentance,
+bending the knees of your heart. Learn to submit yourselves, laying
+aside the arrogant and proud stubbornness of your tongue. For it is
+better for you to be found little in the flock of Christ and to have your ©
+name on God’s roll, than to be had in exceeding honour and yet be
+cast out from the hope of Him. For thus saith the All-virtuous
+Wisdom ; Behold I will pour out for you a saying of My breath, and I
+will teach you My word. Because I called and ye obeyed not, and I held
+out words and ye heeded not, but made My counsels of none effect, and were
+disobedient unto My reproofs; therefore I also will laugh at your
+destruction, and will rejoice over you when ruin cometh upon you, and
+when confusion overtaketh you suddenly, and your overthrow is at hand
+like a whirlwind, or when anguish and beleaguerment come upon you.
+Lor it shall be, when ye call upon Me, yet will I not hear you. Evil men
+[page 97]
+shall seek Me and shall not find Me: for they hated wisdom, and chose
+not the fear of the Lord, neither would they give heed unto My counsels,
+but mocked at My reproofs. Therefore they shall eat the fruits of their
+own way, and shall be filled with their own ungodliness. For because they
+wronged babes, they shall be slain, and inquisition shall destroy the ungodly.
+But he that heareth Me shall dwell safely trusting in hope, and shall be
+quiet from fear of all evil.
+
+58. Let us therefore be obedient unto His most holy and glorious
+Name, thereby escaping the threatenings which were spoken of old by
+the mouth of Wisdom against them which disobey, that we may dwell
+safely, trusting in the most holy Name of His majesty. Receive our
+counsel, and ye shall have no occasion of regret. For as God liveth,
+and the Lord Jesus Christ liveth, and the Holy Spirit, who are the faith
+and the hope of the elect, so surely shall he, who with lowliness of mind
+and instant in gentleness hath without regretfulness performed the
+ordinances and commandments that are given by God, be enrolled and
+have a name among the number of them that are saved through Jesus
+Christ, through whom is the glory unto Him for ever and ever. Amen.
+59. But if certain persons should be disobedient unto the words
+spoken by Him through us, let them understand that they will entangle
+themselves in no slight transgression and danger; but we shall be
+guiltless of this sin. And we will ask, with instancy of prayer and
+supplication, that the Creator of the universe may guard intact unto
+the end the number that hath been numbered of His elect throughout
+the whole world, through His beloved Son Jesus Christ, through whom
+He called us from darkness to light, from ignorance to the full know-
+ledge of the glory of His Name.
+
+[Grant unto us, Lord,]that we may set our hope on Thy Name which
+is the primal source of all creation, and open the eyes of our hearts,
+that we may know Thee, who alone adidest Highest in the lofty, Holy
+in the holy; who layest low the insolence of the proud, who scatterest the
+imaginings of nations; who settest the lowly on high, and bringest the
+lofty low; who makest rich and makest poor; who killest and makest
+alive ; whoralone art the Benefactor of spirits and the God of all flesh ;
+who Jlookest into the abysses, who scannest the works of man; the
+Succour of them that are in peril, the Saviour of them that are in
+despair; the Creator and Overseer of every spirit; who multipliest the
+nations upon earth, and hast chosen out from all men those that love
+Thee through Jesus Christ, Thy beloved Son, through whom Thou didst
+[page 98]
+instruct us, didst sanctify us, didst honour us. We beseech Thee, Lord
+and Master, to be our help and succour. Save those among us who
+are in tribulation; have mercy on the lowly; lift up the fallen; show
+Thyself unto the needy; heal the ungodly; convert the wanderers of
+Thy people; feed the hungry; release our prisoners; raise up the
+weak ; comfort the faint-hearted. ef all the Gentiles know that Thou
+art God alone, and Jesus Christ is Thy Son, and we ave Thy people and
+the sheep of Thy pasture.
+
+60. Thou through Thine operations didst make manifest the ever-
+lasting fabric of the world. Thou, Lord, didst create the earth. Thou
+that art faithful throughout all generations, righteous in Thy judgments,
+marvellous in strength and excellence, Thou that art wise in creating
+and prudent in establishing that which Thou hast made, that art good
+in the things which are seen and faithful with them that trust on Thee,
+pitiful and compassionate, forgive us our iniquities and our unrighteous-
+nesses and our transgressions and shortcomings. Lay not to our account
+every sin of Thy servants and Thine handmaids, but cleanse us with
+the cleansing of Thy truth, and guzde our steps to walk in holiness and
+righteousness and singleness of heart and ¢o do such things as are good
+and well-pleasing in Thy sight and in the sight of our rulers. Yea,
+Lord, make Thy face to shine upon us in peace for our good, that we
+may be sheltered 4y Zhy mighty hand and delivered from every sin dy
+Thine uplifted arm. And deliver us from them that hate us wrongfully.
+Give concord and peace to us and to all that dwell on the earth, as
+Thou gavest to our fathers, when they called on Thee in faith and truth
+with holiness, [that we may be saved,] while we render obedience to
+Thine almighty and most excellent Name, and to our rulers and governors
+upon the earth.
+
+61. Thou, Lord and Master, hast given them the power of sovereignty
+through Thine excellent and unspeakable might, that we knowing the
+glory and honour which Thou hast given them may submit ourselves
+unto them, in nothing resisting Thy will. Grant unto them therefore,
+O Lord, health, peace, concord, stability, that they may administer the
+government which Thou hast given them without failure. For Thou, O
+heavenly Master, King of the ages, givest to the sons of men glory and
+honour and power over all things that are upon the earth. Do Thou,
+Lord, direct their counsel according to that which is good and well-
+pleasing in Thy sight, that, administering in peace and gentleness with
+godliness the power which Thou hast given them, they may obtain Thy
+6—2
+[page 99]
+favour. O Thou, who alone art able to do these things and things far
+more exceeding good than these for us, we praise Thee through the
+High-priest and Guardian of our souls, Jesus Christ, through whom
+be the glory and the majesty unto Thee both now and for all genera-
+tions and for ever and ever. Amen.
+
+62. As touching those things which befit our religion and are most
+useful for a virtuous life to such as would guide [their steps]in holiness
+and righteousness, we have written fully unto you, brethren. For con-
+cerning faith and repentance and genuine love and temperance and
+sobriety and patience we have handled every argument, putting you in
+remembrance, that ye ought to please Almighty God in righteousness
+and truth and long-suffering with holiness, laying aside malice and pur-
+suing concord in love and peace, being instant in gentleness; even as
+our fathers, of whom we spake before, pleased Him, being lowly-
+minded towards their Father and God and Creator and towards all
+men. And we have put you in mind of these things the more gladly,
+since we knew well that we were writing to men who are faithful and
+highly accounted and have diligently searched into the oracles of the
+teaching of God.
+
+63. Therefore it is right for us to give heed to so great and so
+many examples and to submit the neck and occupying the place of
+obedience to take our side with them that are the leaders of our souls,
+that ceasing from this foolish dissension we may attain unto the goal
+which lieth before us in truthfulness, keeping aloof from every fault.
+For ye will give us great joy and gladness, if ye render obedience unto
+the things written by us through the Holy Spirit, and root out the un-
+righteous anger of your jealousy, according to the entreaty which we
+have made for peace and concord in this letter. And we have also
+sent faithful and prudent men that have walked among us from youth
+unto old age unblameably, who shall also be witnesses between you
+and us. And this we have done that ye might know that we have
+had, and still have, every solicitude that ye should be speedily at
+peace.
+
+64. Finally may the All-seeing God and Master of spirits and Lord
+of all flesh, who chose the Lord Jesus Christ, and us through Him for a
+peculiar people, grant unto every soul that is called after His excellent
+and holy Name faith, fear, peace, patience, long-suffering, temperance,
+chastity and soberness, that they may be well-pleasing unto His Name
+through our High-priest and Guardian Jesus Christ, through whom
+[page 100]
+unto Him be glory and majesty, might and honour, both now and for
+ever and ever. Amen.
+
+65. Nowsend ye back speedily unto us our messengers Claudius
+Ephebus and Valerius Bito, together with Fortunatus also, in peace
+and with joy, to the end that they may the more quickly report the
+peace and concord which is prayed for and earnestly desired by us,
+that we also may the more speedily rejoice over your good order.
+
+The grace of our Lord Jesus Christ be with you and with all men
+in all places who have been called by God and through Him, through
+whom be glory and honour, power and greatness and eternal dominion,
+unto Him, from the ages past and for ever and ever. Amen.

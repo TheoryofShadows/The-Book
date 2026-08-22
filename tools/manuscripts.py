@@ -70,11 +70,13 @@ WITNESSES = {
         "date": "5th century CE",
         "found": "Given to Charles I in 1627",
         "holds": "Most of the Greek Bible, and 1 and 2 Clement.",
-        "why": "The manuscript this volume's 1 Clement ultimately depends on, "
-               "and the reason its great intercessory prayer is missing: the "
-               "codex has a lacuna across those chapters. The Jerusalem "
-               "manuscript found in 1873 fills the hole, but the public-domain "
-               "edition used here predates that discovery.",
+        "why": "The manuscript this volume's 1 Clement mostly depends on, and "
+               "the reason six of its chapters had to come from somewhere "
+               "else: the codex has a lacuna from 57.7 to 63.4, and the great "
+               "intercessory prayer is inside it. Bryennios found the whole "
+               "letter in a Constantinople manuscript in 1873; Lightfoot "
+               "printed it in English in 1891, and chapters 58 to 63 here are "
+               "recovered from a scan of that printing.",
         "url": "https://www.bl.uk/collection-items/codex-alexandrinus",
         "where": "British Library, London",
         "rights": "© British Library. Viewable online; not reproduced here.",

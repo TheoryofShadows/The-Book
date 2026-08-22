@@ -17,9 +17,12 @@ they sit on the leaf rather than by what the scanner made of them -- and
 it is written with the scan's own page numbers beside it, so any line of
 it can be checked against the page image it came from.
 
-The four sources are the four Ethiopian canon books this volume was
-missing, and one of them is missing still; see tools/build_ethiopian.py
-for what each one is and what it is not.
+Five of the sources are the Ethiopian canon books this volume was
+missing; see tools/build_ethiopian.py for what each one is and what it
+is not. The sixth is Lightfoot's translation of 1 Clement, which carries
+the six chapters the Ante-Nicene Fathers could not print because the
+manuscript that has them was not found until 1873; see
+tools/build_lightfoot.py.
 """
 
 from __future__ import annotations
@@ -47,6 +50,9 @@ OUT = "source/extra"
 #           for a printing that sets none
 # head      what the running head must look like for the leaf to belong
 #           to this work, where the volume runs another work on from it
+# least     how few recovered lines mean the range is wrong. Default 200,
+#           which is about five leaves of these printings; a range that
+#           is deliberately only a few leaves long says so
 SOURCES = {
     "sinodos": {
         "item": "statutesapostle00unkngoog",
@@ -141,6 +147,28 @@ SOURCES = {
                 "leaves and is not part of the text; tools/build_ethiopian.py "
                 "cuts it off at the opening of section 1.",
     },
+    "clement": {
+        "item": "apostolicfathers00ligh",
+        "frm": 91, "to": 101, "margin": 0, "head": None,
+        "file": "1-clement-lightfoot-1891.txt",
+        "cite": "J. B. Lightfoot and J. R. Harmer, The Apostolic Fathers: "
+                "revised texts with short introductions and English "
+                "translations. London: Macmillan, 1891, pages 76-85: the "
+                "translation of the Epistle of S. Clement to the "
+                "Corinthians, chapters 44 to 65.",
+        "note": "Lightfoot's English of a text that had six chapters the "
+                "Ante-Nicene Fathers could not print. The 1885 printing "
+                "follows Codex Alexandrinus, whose last leaf is damaged: "
+                "everything from 57.7 to 63.4 is gone with it, and the "
+                "great intercessory prayer is inside that hole. Bryennios "
+                "found the gap filled in a Constantinople manuscript in "
+                "1873, and Lightfoot prints the whole letter. Ten leaves "
+                "are taken rather than the four the missing chapters "
+                "occupy: the running head has to repeat before it can be "
+                "recognised as one, and the leaves on either side are what "
+                "let tools/build_lightfoot.py check that the chapters it "
+                "cuts out sit where the volume already has 57 and 64.",
+    },
 }
 
 META = "https://archive.org/metadata/{item}"
@@ -186,7 +214,7 @@ def write(key: str, spec: dict, xml: str) -> int:
                      margin_len=spec["margin"],
                      head=re.compile(spec["head"]) if spec["head"] else None)
     lines = sum(len(p.lines) for p in got)
-    if lines < 200:
+    if lines < spec.get("least", 200):
         print(f"  ERROR: {key} recovered only {lines} lines")
         return 1
 
