@@ -329,6 +329,113 @@ module.exports = async function listening(t, ctx) {
           JSON.stringify(gaps.seams));
   await page.close();
 
+  /* ---- the other printings' apparatus ----
+     The scans this volume recovers texts from bring an apparatus of their
+     own, and a bigger one: Cooper and Maclean, Horner and Issaverdens all
+     set their footnote references as superscript symbols, and the scanning
+     engine read those as whatever glyph they resembled. There are 373 of
+     them in the Testament of our Lord alone, and every one of them used to
+     be spoken -- "registered trademark", "degrees", "section" -- about once
+     every other sentence. */
+  page = await open(ctx, '#/read/the-testament-of-our-lord/0', workingEngine(12));
+  await page.locator('[data-listen]').click();
+  await page.waitForFunction(() => window.__spoken.length >= 10);
+  const MARKS = /[®©™°§•¢£¥$#%*«»^¬■|\\_&]/;
+  t.check("the scan's footnote marks are still on the page",
+          await page.evaluate(
+            () => /[®»°¢]/.test(document.querySelector('.reader').textContent)));
+  t.check('and none of them is handed to the voice',
+          await page.evaluate(
+            re => !window.__spoken.some(s => new RegExp(re).test(s.text)),
+            MARKS.source),
+          JSON.stringify((await page.evaluate(
+            re => window.__spoken.map(s => s.text)
+                    .filter(x => new RegExp(re).test(x)),
+            MARKS.source)).slice(0, 2)));
+  await page.close();
+
+  /* ---- Charles's chapter numbers are numbers ----
+     He prints them in the running text, so two hundred roman numerals stand
+     inside the prose of Enoch, Jubilees and the Didascalia. An engine reads
+     LXXVI as letters, and the reader hears the alphabet in the middle of a
+     sentence about the winds. */
+  page = await open(ctx, '#/read/jubilees/7', workingEngine(12));
+  await page.locator('[data-listen]').click();
+  await page.waitForFunction(() => window.__spoken.length >= 3);
+  t.check('the roman numeral is still printed on the page',
+          await page.evaluate(
+            () => /\bVII\./.test(document.querySelector('.reader .v').textContent)));
+  const numeral = await page.evaluate(
+    () => window.__spoken.map(s => s.text)
+            .filter(x => x.indexOf('A.M.') !== -1)[0] || '');
+  t.check('but the voice is given the number',
+          /A\.M\. 7\./.test(numeral) && numeral.indexOf('VII') === -1,
+          JSON.stringify(numeral));
+  t.check('padded back to its printed length, so the highlight still lands',
+          await page.evaluate(said => {
+            const printed = document.querySelector('.reader .v')
+                              .lastChild.textContent;
+            return printed.indexOf('VII.') === said.indexOf('7.') &&
+                   printed.slice(0, said.length).length === said.length;
+          }, numeral),
+          JSON.stringify(numeral));
+  await page.close();
+
+  /* ---- the reading speed decides how long a piece may be ----
+     Chrome's cut-off is fifteen seconds, which is a duration. A fixed
+     character limit is only the same thing at one speed, and at the two slow
+     speeds this player offers a 220-character piece runs well past it -- so
+     the passage stops mid-sentence, which is the exact failure the cutting
+     exists to prevent, at the setting a reader of the Psalms is most likely
+     to be using. */
+  const piecesAt = async (rate) => {
+    const p = ctx.tally.watch(await ctx.browser.newPage(), 'rate:' + rate);
+    await p.addInitScript(workingEngine(8));
+    await p.addInitScript({ content:
+      `try { localStorage.setItem('thebook:listen-rate', '${rate}'); } catch (e) {}` });
+    await p.goto(ctx.base + '#/read/the-testament-of-issachar/0');
+    await p.waitForSelector('.reader p');
+    await p.locator('[data-listen]').click();
+    await p.waitForFunction(() => window.__spoken.length >= 4);
+    const out = await p.evaluate(() => ({
+      longest: Math.max.apply(null, window.__spoken.map(s => s.text.length)),
+      rate: window.__spoken[0].rate,
+      whole: window.__spoken.slice(1).map(s => s.text).join('')
+    }));
+    const para = await p.evaluate(
+      () => document.querySelector('.reader p').textContent);
+    await p.close();
+    return Object.assign(out, { para });
+  };
+
+  const slow = await piecesAt(0.7);
+  const fast = await piecesAt(2);
+  t.check('at 0.7x no piece is more than thirteen seconds of speech',
+          slow.longest <= Math.round(13 * 15 * 0.7), slow.longest + ' characters');
+  t.check('at 2x the pieces are allowed to be longer',
+          fast.longest > slow.longest, slow.longest + ' -> ' + fast.longest);
+  t.check('and at either speed the pieces still reassemble into the paragraph',
+          slow.para.indexOf(slow.whole) === 0 && fast.para.indexOf(fast.whole) === 0);
+
+  /* Changing the speed re-cuts the queue, so the index the reader is on
+     stops meaning what it meant. The place has to survive that. */
+  page = await open(ctx, '#/read/the-testament-of-issachar/0', workingEngine(40));
+  await page.locator('[data-listen]').click();
+  await page.waitForFunction(() => window.__spoken.length >= 2);
+  await page.locator('.player-play').click();
+  await page.waitForTimeout(settle);
+  const wasAt = await page.evaluate(() => window.__spoken[window.__spoken.length - 1].text);
+  await page.selectOption('select[aria-label="Reading speed"]', '0.7');
+  await page.waitForTimeout(settle);
+  await page.locator('.player-play').click();
+  await page.waitForFunction(n => window.__spoken.length > n,
+                             await page.evaluate(() => window.__spoken.length));
+  const nowAt = await page.evaluate(() => window.__spoken[window.__spoken.length - 1].text);
+  t.check('slowing down picks up where it was, not somewhere else in the chapter',
+          wasAt.indexOf(nowAt.slice(0, 25)) === 0 || nowAt.indexOf(wasAt.slice(0, 25)) === 0,
+          JSON.stringify([wasAt.slice(0, 40), nowAt.slice(0, 40)]));
+  await page.close();
+
   /* ---- pace ----
      Conversational pauses are wrong for verse: the line is the unit and the
      silence after it is part of the line. The volume does not decide which

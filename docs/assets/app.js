@@ -3148,8 +3148,25 @@
      stops. The usual workaround is a pause/resume heartbeat, which clips
      words; instead every passage is cut into pieces short enough that no
      one utterance ever reaches the limit. Verses are already about this
-     length, so only the long paragraph works are really affected. */
-  var MAX_CHARS = 220;
+     length, so only the long paragraph works are really affected.
+
+     Fifteen seconds is a duration, not a length, so the limit has to be read
+     in characters through the reading speed. Engines land near fifteen
+     characters a second at rate 1, and the budget below is thirteen seconds
+     of that with the rest left as margin — 195 characters at rate 1, 136 at
+     0.7, 390 at 2. A fixed 220 was over the cut-off at both of the slow
+     speeds this player offers, which is the one place the truncation it
+     exists to prevent was still happening, and the place a reader is most
+     likely to be when a passage stops mid-sentence: liturgical pace and a
+     slow voice is how you read the Psalms. Capped, because a very long
+     utterance also coarsens the transport and delays the first word
+     highlight. */
+  var SECONDS = 13, PER_SECOND = 15, CAP = 400, FLOOR = 110;
+
+  function maxChars(rate) {
+    var n = Math.round(SECONDS * PER_SECOND * (rate || 1));
+    return Math.max(FLOOR, Math.min(CAP, n));
+  }
 
   /* The Charles editions print their apparatus in the running text: daggers
      round a corrupt reading, angle brackets round a restoration, plus signs
@@ -3162,11 +3179,68 @@
      Blanked rather than deleted: each mark becomes a space, so the text
      handed to the engine is the same length as the text on the page, and the
      word highlight — which is drawn from character offsets into it — still
-     lands on the right word. */
-  var EDITORIAL = /[†+<>\[\]]/g;
+     lands on the right word. Everything below obeys that rule, which is why
+     none of it is a rewrite of the text: it is the page's own characters
+     with the ones that are not words taken out of the voice's way.
+
+     The nineteenth-century printings recovered from scans bring a second set
+     of marks, and a larger one: their footnote references. Cooper and
+     Maclean, Horner and Issaverdens all set them as superscript symbols, and
+     the scanning engine read those as whatever glyph they most resembled —
+     ® 270 times, then », °, §, •, ¢, £, ¥, ™, © and the rest. On the page
+     they are what the printing has and they stay. Spoken, they were
+     "registered trademark" and "degrees" and "section" scattered through the
+     Testament of our Lord about once every other sentence.
+
+     The set is not a guess at what a scan might contain: it is every
+     character in this volume that is neither a letter, a digit, nor ordinary
+     punctuation, and tests/python/test_narration.py fails if the volume ever
+     grows one that is not listed here. */
+  var EDITORIAL = /[†‡+<>[\]{}®©™°§¶•¢£¥€$#%*«»^¬■|\\_&]/g;
+
+  /* Charles numbers his chapters in the running text, so Enoch, Jubilees,
+     the Apostolic Canons and the Didascalia carry two hundred roman numerals
+     inside the prose. An engine does not read those as numbers. It reads
+     LXXXIX as five or six letters, and the reader hears the alphabet in the
+     middle of a sentence about Noah.
+
+     Converted rather than blanked, because the number is not apparatus — it
+     is what the sentence says. The full stop after it is required, which is
+     what keeps an ordinary capitalised word made only of numeral letters out
+     of this, and the arabic form is padded back out to the length of the
+     roman one so the character offsets the highlight runs on do not move. A
+     numeral that would grow — CD is 400 — is left alone rather than padded
+     negatively. */
+  var ROMAN = /\b(?=[MDCLXVI]{2,}\b)M{0,3}(?:CM|CD|D?C{0,3})(?:XC|XL|L?X{0,3})(?:IX|IV|V?I{0,3})\b\./g;
+  var ROMAN_VALUE = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 };
+  var PAD = "          ";
+
+  function fromRoman(text) {
+    var total = 0, highest = 0;
+    for (var i = text.length - 1; i >= 0; i--) {
+      var v = ROMAN_VALUE[text.charAt(i)];
+      total = v < highest ? total - v : total + v;
+      if (v > highest) highest = v;
+    }
+    return total;
+  }
+
+  /* The Ante-Nicene Fathers set their dashes as a pair of hyphens, and the
+     source kept them: 162 of them, most in Hermas. Engines disagree about
+     what to do with "--" and several read it as nothing at all, so the
+     sentence runs through the break without one. A comma and a space is two
+     characters, the same as the pair it replaces, and it is what the dash
+     was there to ask for. */
+  var DOUBLE_DASH = /--/g;
 
   function speakable(text) {
-    return text.replace(EDITORIAL, " ");
+    return text.replace(EDITORIAL, " ")
+               .replace(DOUBLE_DASH, ", ")
+               .replace(ROMAN, function (m) {
+                 var said = String(fromRoman(m.slice(0, -1))) + ".";
+                 if (said.length > m.length) return m;
+                 return said + PAD.slice(0, m.length - said.length);
+               });
   }
 
   var NO_VOICE =
@@ -3204,20 +3278,25 @@
      back to the nearest word boundary when a clause runs past the limit by
      itself. */
   var CLAUSE_END = /[,;:—–)]["'’”]?\s*$/;
-  var MIN_PIECE = 90;
 
-  function splitLong(span) {
+  /* A piece has to be worth the pause it ends on. Kept proportional to the
+     budget rather than fixed, so that at a slow speed -- where the budget is
+     small -- the rule does not demand a piece longer than the budget allows
+     and give up on clause breaks altogether. */
+  function minPiece(limit) { return Math.round(limit * 0.45); }
+
+  function splitLong(span, limit) {
     var re = /\S+\s*/g, m, toks = [];
     while ((m = re.exec(span.text))) toks.push({ text: m[0], at: m.index });
     if (!toks.length) return [span];
 
     var out = [], i = 0;
     while (i < toks.length) {
-      var len = 0, j = i, clause = -1;
-      while (j < toks.length && (len === 0 || len + toks[j].text.length <= MAX_CHARS)) {
+      var len = 0, j = i, clause = -1, least = minPiece(limit);
+      while (j < toks.length && (len === 0 || len + toks[j].text.length <= limit)) {
         len += toks[j].text.length;
         j++;
-        if (len >= MIN_PIECE && CLAUSE_END.test(toks[j - 1].text)) clause = j;
+        if (len >= least && CLAUSE_END.test(toks[j - 1].text)) clause = j;
       }
       // The tail of a sentence already ends where the sentence does; only a
       // piece with more coming after it is worth pulling back to a pause.
@@ -3230,18 +3309,19 @@
     return out;
   }
 
-  function chunk(text) {
+  function chunk(text, limit) {
     var out = [], cur = null;
+    limit = limit || maxChars(1);
 
     function flush() { if (cur) { out.push(cur); cur = null; } }
 
     sentenceSpans(text).forEach(function (s) {
-      if (s.text.length > MAX_CHARS) {
+      if (s.text.length > limit) {
         flush();
-        splitLong(s).forEach(function (p) { out.push(p); });
+        splitLong(s, limit).forEach(function (p) { out.push(p); });
         return;
       }
-      if (cur && cur.text.length + s.text.length <= MAX_CHARS) cur.text += s.text;
+      if (cur && cur.text.length + s.text.length <= limit) cur.text += s.text;
       else { flush(); cur = { start: s.start, text: s.text }; }
     });
     flush();
@@ -3384,6 +3464,7 @@
 
   var nar = {
     items: [],      // one utterance-sized piece each
+    passages: [],   // what they were cut from, for when the speed changes
     at: 0,
     ctx: null,      // which chapter these belong to
     on: false,      // the player is open
@@ -3416,10 +3497,10 @@
   /* Build the speakable queue from what was actually rendered, so the thing
      being highlighted is the thing on the page rather than a second copy of
      the text held somewhere else. */
-  function buildItems(passages) {
+  function buildItems(passages, limit) {
     var items = [];
     passages.forEach(function (p, pi) {
-      chunk(p.text).forEach(function (c) {
+      chunk(p.text, limit).forEach(function (c) {
         items.push({
           el: p.el, node: p.node, start: c.start, text: c.text,
           verse: p.verse, unit: p.unit, ordinal: pi + 1
@@ -3429,13 +3510,45 @@
     return items;
   }
 
+  /* Changing the speed changes how many characters fit in an utterance, so
+     the queue has to be cut again. Where the reader had got to is a place in
+     the chapter, not an index into a list that no longer exists, so it is
+     carried across as the passage and the character offset inside it and
+     looked up again in the new queue. Without that, slowing down in the
+     middle of Jeremiah would put you somewhere else in Jeremiah. */
+  function rebuildQueue() {
+    if (!nar.passages || !nar.passages.length) return;
+    var here = nar.items[nar.at];
+    nar.items = buildItems(nar.passages, maxChars(store.get("listen-rate", 1)));
+    if (!here) { nar.at = Math.min(nar.at, nar.items.length - 1); return; }
+    var best = 0;
+    for (var i = 0; i < nar.items.length; i++) {
+      var it = nar.items[i];
+      if (it.el !== here.el) continue;
+      if (it.start <= here.start) best = i;
+      else break;
+    }
+    nar.at = best;
+  }
+
   /* Engines land near 165 words a minute at rate 1 — about fifteen characters
      a second. This is not a duration, it is the difference between a psalm
-     you can hear now and a chapter of Jeremiah you cannot. */
+     you can hear now and a chapter of Jeremiah you cannot.
+
+     The silences count too, and at the slow paces they are most of the
+     difference. Psalm 119 is 176 verses; at liturgical pace the pause after
+     each of them is just over a second, so a reading the arithmetic below
+     used to call ten minutes is thirteen. A time left that is wrong by three
+     minutes on the longest chapter in the volume is worse than no time left
+     at all, because it is believed. */
   function minutesLeft() {
-    var chars = 0;
-    for (var i = nar.at; i < nar.items.length; i++) chars += nar.items[i].text.length;
-    return chars / (15 * (store.get("listen-rate", 1) || 1)) / 60;
+    var chars = 0, rest = 0;
+    for (var i = nar.at; i < nar.items.length; i++) {
+      chars += nar.items[i].text.length;
+      rest += restAfter(nar.items[i], nar.items[i + 1]);
+    }
+    var speaking = chars / (15 * (store.get("listen-rate", 1) || 1));
+    return (speaking + rest / 1000) / 60;
   }
 
   function timeLabel(min) {
@@ -3867,7 +3980,11 @@
       "aria-label": "Reading speed",
       onchange: function (e) {
         store.set("listen-rate", parseFloat(e.target.value));
+        // The speed decides how long a piece may be as well as how fast it
+        // is read, so the queue is cut again before anything is spoken.
+        rebuildQueue();
         if (nar.playing) speakFrom(nar.at);   // rate only applies to a new utterance
+        else updatePlayer();
       }
     });
     var current = store.get("listen-rate", 1);
@@ -4022,7 +4139,8 @@
   function attachListening(ctx, passages, controls) {
     if (!SPEECH_OK || !passages.length) return;
 
-    nar.items = buildItems(passages);
+    nar.passages = passages;
+    nar.items = buildItems(passages, maxChars(store.get("listen-rate", 1)));
     nar.ctx = ctx;
     if (!player) buildPlayer();
 

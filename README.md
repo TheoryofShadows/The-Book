@@ -264,7 +264,9 @@ chapter, or `l`.
   the browser supports the Custom Highlight API.
 - Speed, voice, time remaining and a sleep timer are in the player, and **♪**
   reads a sentence in the selected voice so a chapter is not the way you find
-  out what it sounds like.
+  out what it sounds like. The time remaining counts the silences as well as
+  the words, which at liturgical pace is three minutes of the thirteen that
+  Psalm 119 takes.
 - It announces each chapter, then runs on: to the next chapter, and at the end
   of a work into the work written next, stepping over the entries that carry no
   text. Left alone it plays the library in composition order. The toggle in the
@@ -317,13 +319,37 @@ voice and download its Enhanced or Premium version. That single download does
 more for how this sounds than everything else here put together, and nothing a
 web page does can substitute for it: the audio is the operating system's.
 
-Three other things were making the reading sound mechanical whatever voice was
-doing it, and are fixed:
+Several other things were making the reading sound mechanical whatever voice
+was doing it, and are fixed:
 
 - **The apparatus was being read out.** Charles prints his in the running text
   — daggers round a corrupt reading, angle brackets round a restoration, plus
   signs round an emendation. The eye steps over them; an engine says "dagger".
   They are blanked before speaking and left standing on the page.
+- **So was the other printings' apparatus, and there is far more of it.** The
+  nineteenth-century volumes recovered from scans set their footnote
+  references as superscript symbols, and the scanner read each as whatever
+  glyph it most resembled: ® 270 times, then », °, §, •, ¢, £, ¥, ™, © and the
+  rest. The Testament of our Lord carries one about every other sentence, and
+  every one of them was spoken. The blanked set is now every character in the
+  volume that is neither a letter, a digit nor ordinary punctuation, and a
+  unit test fails if the volume ever grows one that is not on the list — which
+  is the only way to notice, since nobody is listening to 1.22 million words
+  to find out.
+- **Roman numerals were read as letters.** Charles numbers his chapters inside
+  the running text, so two hundred of them stand in the prose of Enoch,
+  Jubilees, the Apostolic Canons and the Didascalia. *LXXXIX* came out as the
+  alphabet in the middle of a sentence about Noah. They are spoken as numbers
+  and printed as numerals, and the spoken form is padded back to the printed
+  length so the word highlight still lands where it should.
+- **Long passages were being cut off at the slow speeds.** Chrome stops an
+  utterance at about fifteen seconds, which is a duration; the limit that
+  guards against it was a fixed number of characters, which is only the same
+  thing at one speed. At 0.85× and 0.7× a full-length piece ran past the
+  cut-off and the rest of it was simply not spoken — the exact failure the
+  cutting exists to prevent, at the setting a reader of the Psalms is most
+  likely to be using. The budget is now read through the reading speed, and
+  changing the speed cuts the queue again and keeps your place in it.
 - **Long verses were cut mid-clause.** Chrome stops a single utterance at about
   fifteen seconds, so long passages have to be broken up — and an engine drops
   its pitch and takes a breath at the end of every utterance, so a break inside
