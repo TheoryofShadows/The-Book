@@ -929,11 +929,13 @@
    "canons": {
     "ethiopian": "canon"
    },
-   "works": [],
-   "present": false,
+   "works": [
+    "the-apocalypse-of-peter"
+   ],
+   "present": true,
    "foldedInto": null,
-   "absentWhy": "Public domain in parts only, and the parts do not add up to the book. The second of its seven books circulates separately as the Ethiopic Apocalypse of Peter, and M. R. James translated the Ethiopic of that in 1924 — but only as far as the point where he judged the rest of it late, saying so and stopping. The other six books have no public-domain English translation at all. Part of a seventh of a book, printed as the book, would be worse than the gap.",
-   "absentSource": "M. R. James, The Apocryphal New Testament, Oxford, 1924, pp. 505-521"
+   "partialWhy": "One piece of one of its seven books. The Apocalypse of Peter survives embedded in the Ethiopic Books of Clement and M. R. James translated that Ethiopic in 1924 — but only as far as the point where he judged the rest of it late, saying so and stopping. The other six books have no public-domain English translation at all. What is here is worth reading and is not the book.",
+   "partialSource": "M. R. James, The Apocryphal New Testament, Oxford, 1924, pp. 505-521"
   },
   {
    "name": "Ethiopic Didascalia",
@@ -954,12 +956,13 @@
     "ethiopian": "canon"
    },
    "works": [
-    "the-sinodos"
+    "the-sinodos",
+    "the-apostolic-canons"
    ],
    "present": true,
    "foldedInto": null,
-   "partialWhy": "The Statutes of the Apostles, which is the largest part of the Ethiopic Sinodos and not the whole of it: the Sinodos is a body of canon law, and Horner printed and translated this part of it. Seventy-two statutes and thirteen prayers, complete as he has them.",
-   "partialSource": "G. Horner, The Statutes of the Apostles, or Canones Ecclesiastici, London, 1904, pp. 127-232"
+   "partialWhy": "Two of its parts, both from the Ge'ez: Horner's Statutes of the Apostles — seventy-two statutes and thirteen prayers — and Schodde's fifty-seven Apostolic Canons. The Sinodos is a body of canon law that Ethiopian lists divide into four books, and the remaining material has no public-domain English translation.",
+   "partialSource": "G. Horner, The Statutes of the Apostles, London, 1904, pp. 127-232; G. H. Schodde, Journal of the Society of Biblical Literature and Exegesis 5 (1885), pp. 61-72"
   },
   {
    "name": "Book of the Covenant (Mets'hafe Kidan)",
@@ -968,12 +971,61 @@
     "ethiopian": "canon"
    },
    "works": [
+    "the-testament-of-our-lord",
     "the-book-of-the-covenant"
    ],
    "present": true,
    "foldedInto": null,
-   "partialWhy": "The second of its two books, the discourse of the risen Lord to the eleven, from the Ethiopic Guerrier published. The first, sixty sections of church order, has no public-domain English translation of any version and is not here.",
-   "partialSource": "M. R. James, The Apocryphal New Testament, Oxford, 1924, pp. 485-503"
+   "partialWhy": "Both of its books, and neither of them from the Ge'ez in full. The second, the discourse of the risen Lord, is James's English of the Ethiopic Guerrier published. The first, the church order, is here as the Syriac Testamentum Domini in Cooper and Maclean's English: the same work in another version, because the Ethiopic of it was unpublished when they wrote and has no public-domain English now.",
+   "partialSource": "M. R. James, The Apocryphal New Testament, Oxford, 1924, pp. 485-503; J. Cooper and A. J. Maclean, The Testament of Our Lord, Edinburgh, 1902, pp. 47-138"
+  },
+  {
+   "name": "1 Meqabyan",
+   "division": "Ethiopian canon",
+   "canons": {
+    "ethiopian": "canon"
+   },
+   "works": [],
+   "present": false,
+   "foldedInto": null,
+   "absentWhy": "No public-domain English translation. These are three works composed in Ge'ez and found in no other canon, and the first English of them is twenty-first century: D. P. Curtin released the first chapter of 1 Meqabyan to the public domain and no more, and the complete translations that exist are under copyright or under a share-alike licence, which is not the same thing as public domain and is not the rule this volume prints under.",
+   "absentSource": "D. P. Curtin, First Book of Ethiopian Maccabees, 2018, chapter 1, released to the public domain; en.wikisource.org/wiki/First_Book_of_Ethiopian_Maccabees"
+  },
+  {
+   "name": "2 Meqabyan",
+   "division": "Ethiopian canon",
+   "canons": {
+    "ethiopian": "canon"
+   },
+   "works": [],
+   "present": false,
+   "foldedInto": null,
+   "absentWhy": "No public-domain English translation. These are three works composed in Ge'ez and found in no other canon, and the first English of them is twenty-first century: D. P. Curtin released the first chapter of 1 Meqabyan to the public domain and no more, and the complete translations that exist are under copyright or under a share-alike licence, which is not the same thing as public domain and is not the rule this volume prints under.",
+   "absentSource": "D. P. Curtin, First Book of Ethiopian Maccabees, 2018, chapter 1, released to the public domain; en.wikisource.org/wiki/First_Book_of_Ethiopian_Maccabees"
+  },
+  {
+   "name": "3 Meqabyan",
+   "division": "Ethiopian canon",
+   "canons": {
+    "ethiopian": "canon"
+   },
+   "works": [],
+   "present": false,
+   "foldedInto": null,
+   "absentWhy": "No public-domain English translation. These are three works composed in Ge'ez and found in no other canon, and the first English of them is twenty-first century: D. P. Curtin released the first chapter of 1 Meqabyan to the public domain and no more, and the complete translations that exist are under copyright or under a share-alike licence, which is not the same thing as public domain and is not the rule this volume prints under.",
+   "absentSource": "D. P. Curtin, First Book of Ethiopian Maccabees, 2018, chapter 1, released to the public domain; en.wikisource.org/wiki/First_Book_of_Ethiopian_Maccabees"
+  },
+  {
+   "name": "Josippon (Zena Ayhud)",
+   "division": "Ethiopian canon",
+   "canons": {
+    "ethiopian": "canon"
+   },
+   "works": [],
+   "present": false,
+   "foldedInto": null,
+   "absentWhy": "No public-domain English of the Ge'ez. The Ethiopic Zena Ayhud is a recension of the Hebrew Josippon, which reached English in 1558 in Peter Morwyng's translation and was reprinted into the eighteenth century — but that is the Hebrew, and the Ethiopic is an abridgement made through Arabic and differs from it substantially. Printing one as the other would be a bigger claim than this volume makes anywhere else.",
+   "absentSource": "Peter Morwyng, The Wonderful and Most Deplorable History of the Latter Times of the Jews, London, 1558 and later editions"
   },
   {
    "name": "Matthew",
@@ -1415,13 +1467,16 @@
    "absent": []
   },
   "ethiopian": {
-   "units": 90,
-   "distinctBooks": 85,
+   "units": 94,
+   "distinctBooks": 89,
    "traditionalCount": 81,
    "caveat": "Usually given as 81 books, though the enumeration differs between lists. The only canon that receives 1 Enoch and Jubilees as scripture.",
-   "presentInVolume": 89,
+   "presentInVolume": 90,
    "absent": [
-    "Ethiopic Clement (Qalementos)"
+    "1 Meqabyan",
+    "2 Meqabyan",
+    "3 Meqabyan",
+    "Josippon (Zena Ayhud)"
    ]
   }
  }

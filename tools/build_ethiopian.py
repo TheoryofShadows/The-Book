@@ -92,29 +92,81 @@ LOOKALIKE = str.maketrans({
 
 def numeral(text: str) -> int | None:
     """What the scanner's reading of a printed numeral comes to."""
-    cleaned = re.sub(r"[^0-9A-Za-z|]", "", text).translate(LOOKALIKE)
+    cleaned = arabic_clean(text)
     return int(cleaned) if cleaned.isdigit() else None
 
 
-def resembles(printed: str, expected: int) -> bool:
+def arabic_clean(text: str) -> str:
+    return re.sub(r"[^0-9A-Za-z|]", "", text).translate(LOOKALIKE)
+
+
+# Schodde numbers his canons in roman, so the same machinery has to read
+# roman. The lookalikes differ: what a scanner makes of an I is not what
+# it makes of a 1.
+ROMAN_LOOKALIKE = str.maketrans({
+    "1": "I", "|": "I", "!": "I", "J": "I", "T": "I",
+    "0": "O", "U": "V", "Y": "V",
+})
+ROMAN_VALUES = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100}
+
+
+def roman_clean(text: str) -> str:
+    return re.sub(r"[^0-9A-Za-z|!]", "", text).upper().translate(ROMAN_LOOKALIKE)
+
+
+def roman(text: str) -> int | None:
+    """The value of a roman numeral, or None if it is not one."""
+    cleaned = roman_clean(text)
+    if not cleaned or any(c not in ROMAN_VALUES for c in cleaned):
+        return None
+    total = 0
+    for i, c in enumerate(cleaned):
+        value = ROMAN_VALUES[c]
+        after = [ROMAN_VALUES[d] for d in cleaned[i + 1:]]
+        total += -value if after and max(after) > value else value
+    return total or None
+
+
+def to_roman(value: int) -> str:
+    out = []
+    for figure, letters in ((100, "C"), (90, "XC"), (50, "L"), (40, "XL"),
+                            (10, "X"), (9, "IX"), (5, "V"), (4, "IV"),
+                            (1, "I")):
+        while value >= figure:
+            out.append(letters)
+            value -= figure
+    return "".join(out)
+
+
+# How a printing numbers its divisions: how to read one, how to write the
+# one that is expected, and how to strip a reading down to the characters
+# the two can be compared on.
+ARABIC = (numeral, str, arabic_clean)
+ROMAN = (roman, to_roman, roman_clean)
+
+
+def resembles(printed: str, expected: int, style=ARABIC) -> bool:
     """Is this the expected numeral, allowing for one bad character?
 
-    The order of the divisions is the authority -- Horner printed them in
+    The order of the divisions is the authority -- they were printed in
     order and the scan cannot reorder them -- so the printed numeral is a
     check on the reading rather than the source of it. Accepting a
     one-character difference is what lets "88" be read as the 38 it is
     without pretending the scan said 38.
     """
-    got = numeral(printed)
-    if got == expected:
+    read, write, clean = style
+    if read(printed) == expected:
         return True
-    want, seen = str(expected), re.sub(r"[^0-9A-Za-z|]", "", printed)
-    if len(seen) != len(want):
+    seen, want = clean(printed), write(expected)
+    # One character out of one is not a misreading, it is a different
+    # number: "4" would otherwise be accepted as the 3 that went missing
+    # before it, and every division after would be labelled wrong.
+    if len(want) < 2 or len(seen) != len(want):
         return False
-    return sum(a != b for a, b in zip(seen.translate(LOOKALIKE), want)) <= 1
+    return sum(a != b for a, b in zip(seen, want)) <= 1
 
 
-def divisions(paragraphs, pattern, expect, report):
+def divisions(paragraphs, pattern, expect, report, style=ARABIC, gaps=0):
     """Find the printed divisions in order, and cut the prose on them.
 
     `expect` yields the numeral each division should carry. A candidate
@@ -122,22 +174,44 @@ def divisions(paragraphs, pattern, expect, report):
     shape is a footnote mark standing in the running text, and in Horner
     it is a chapter reference. Reading the sequence rather than the shape
     is what tells them apart.
+
+    `gaps` is how many expected divisions may be passed over at once. The
+    scanner lost two of Schodde's headings outright -- there is no
+    "Canon XXX" anywhere in the leaf -- and their text runs on inside the
+    canon before them, exactly as three of Platt's do in the Didascalia.
+    Passing over one is only allowed when the *next* heading is found, so
+    a lost heading costs a division and never a word; which ones were
+    lost comes back so the work can say so.
     """
     flat = "\n\n".join(paragraphs)
     wanted = list(expect)
-    found, i = [], 0
+    found, missing, i = [], [], 0
     for m in pattern.finditer(flat):
         if i >= len(wanted):
             break
-        if resembles(m.group(1), wanted[i]):
-            if numeral(m.group(1)) != wanted[i]:
-                report.append((m.group(1), wanted[i]))
-            found.append((m.start(), wanted[i], m.end() - m.start()))
-            i += 1
+        exact = style[0](m.group(1))
+        # A reading that is itself a number still to come is taken at its
+        # word and never mended. "12" differs from "11" by one character
+        # and is the twelfth chapter, not a misprint of the eleventh; the
+        # mending is for "88", which is no chapter at all.
+        ahead = exact is not None and exact in wanted[i:]
+        for j in range(i, min(i + 1 + gaps, len(wanted))):
+            if exact == wanted[j] or (not ahead
+                                      and resembles(m.group(1), wanted[j],
+                                                    style)):
+                if exact != wanted[j]:
+                    report.append((m.group(1), wanted[j]))
+                missing.extend(wanted[i:j])
+                found.append((m.start(), wanted[j], m.end() - m.start()))
+                i = j + 1
+                break
     if i < len(wanted):
-        raise SystemExit(f"  ERROR: found {i} of {len(wanted)} divisions; "
-                         f"the first missing is {wanted[i]}")
-    return flat, found
+        missing.extend(wanted[i:])
+    if len(found) < len(wanted) - 3 * (gaps + 1):
+        raise SystemExit(f"  ERROR: found {len(found)} of {len(wanted)} "
+                         f"divisions; the first missing is "
+                         f"{missing[0] if missing else '?'}")
+    return flat, found, missing
 
 
 SMALL_WORDS = {"of", "for", "the", "a", "an", "and"}
@@ -192,7 +266,8 @@ def sinodos(report):
     paragraphs, pages = scans.read_recovered(
         os.path.join(RAW, "sinodos-horner-1904.txt"))
     prose = scans.prose(paragraphs, report["hyphens"])
-    flat, found = divisions(prose, STATUTE, STATUTES, report["numerals"])
+    flat, found, _missing = divisions(prose, STATUTE, STATUTES,
+                                      report["numerals"])
 
     chapters = []
 
@@ -288,7 +363,8 @@ def covenant(report):
     # James's own introduction stands above the text on the same leaf.
     flat = flat[flat.index(COVENANT_OPENS):]
 
-    _, found = divisions([flat], COVENANT, range(1, 52), report["numerals"])
+    _, found, _missing = divisions([flat], COVENANT, range(1, 52),
+                                   report["numerals"])
     chapters = []
     for i, (at, number, head_len) in enumerate(found):
         end = found[i + 1][0] if i + 1 < len(found) else len(flat)
@@ -396,6 +472,129 @@ def repair(text: str, words: set, confusions, report) -> str:
     return TOKEN.sub(one, text)
 
 
+# ---- the Apostolic Canons, the second part of the Sinodos -------------
+
+CANON = re.compile(r"\bCanon\s+([IVXLC][IVXLC0-9.,]*)")
+CANONS_OPEN = "In the name of the Father and the Son"
+CANONS = list(range(1, 58))
+
+
+def canons(report):
+    paragraphs, pages = scans.read_recovered(
+        os.path.join(RAW, "apostolic-canons-schodde-1885.txt"))
+    prose = scans.prose(paragraphs, report["hyphens"])
+    flat = "\n\n".join(prose)
+    # Schodde's own introduction stands above his translation.
+    flat = flat[flat.index(CANONS_OPEN):]
+
+    _, found, missing = divisions([flat], CANON, CANONS, report["numerals"],
+                                  style=ROMAN, gaps=3)
+    report["missing"] = [to_roman(n) for n in missing]
+    report["pages"] = pages
+
+    chapters = []
+
+    def add(raw, numeral_, chunk):
+        paras = paragraphs_of(chunk)
+        if not paras:
+            return
+        chapters.append({
+            "label": f"Section {len(chapters) + 1}",
+            "n": len(chapters) + 1,
+            "raw": raw,
+            "numeral": numeral_,
+            "paras": paras,
+            "style": "prose",
+        })
+
+    add("The Synod of the Christian Church, which the Apostles gave "
+        "through the hand of Clemens", None, flat[:found[0][0]])
+    for i, (at, number, head_len) in enumerate(found):
+        end = found[i + 1][0] if i + 1 < len(found) else len(flat)
+        chunk = flat[at:end]
+        rest = chunk[head_len:].lstrip(" .,*\n")
+        head = TITLED.match(rest)
+        raw = f"Canon {to_roman(number)}"
+        if head:
+            title = head.group(0).rstrip(" .,;")
+            if len(title) <= 170:
+                raw = f"{raw}. {title}"
+        add(raw, number, chunk)
+    return chapters
+
+
+# ---- the church order of the Book of the Covenant ---------------------
+
+CHAPTER = re.compile(r"\bCHAPTER\s+(\S+)")
+TESTAMENT_OPEN = "Ir came to pass, after our Lord rose from the dead"
+TESTAMENT_SECOND = "THE SECOND BOOK OF CLEMENT"
+
+
+def testament(report):
+    paragraphs, pages = scans.read_recovered(
+        os.path.join(RAW, "testament-of-our-lord-cooper-maclean-1902.txt"))
+    prose = scans.prose(paragraphs, report["hyphens"])
+    flat = "\n\n".join(prose)
+    flat = flat[flat.index(TESTAMENT_OPEN):]
+    at = flat.index(TESTAMENT_SECOND)
+    books = [("I", flat[:at], 47), ("II", flat[at:], 27)]
+
+    chapters, missing = [], []
+    for book, text, last in books:
+        _, found, gone = divisions([text], CHAPTER, range(1, last + 1),
+                                   report["numerals"], gaps=3)
+        missing += [f"{book}. {n}" for n in gone]
+        head = text[:found[0][0]] if found else text
+        if paragraphs_of(head):
+            chapters.append({
+                "label": f"{book}. opening",
+                "n": len(chapters) + 1,
+                "raw": f"Book {book}, and what stands before its first chapter",
+                "numeral": None,
+                "paras": paragraphs_of(head),
+                "style": "prose",
+            })
+        for i, (start, number, head_len) in enumerate(found):
+            end = found[i + 1][0] if i + 1 < len(found) else len(text)
+            chapters.append({
+                "label": f"{book}. {number}",
+                "n": len(chapters) + 1,
+                "raw": None,
+                "numeral": number,
+                "paras": paragraphs_of(text[start + head_len:end]),
+                "style": "prose",
+            })
+    report["missing"] = missing
+    report["pages"] = pages
+    return chapters
+
+
+# ---- the Apocalypse of Peter, out of the Books of Clement -------------
+
+CLEMENT_OPEN = "The Second Coming of Christ and Resurrection of the Dead"
+CLEMENT_END = "There is a great deal more of the Ethiopic text"
+
+
+def clement(report):
+    paragraphs, pages = scans.read_recovered(
+        os.path.join(RAW, "ethiopic-clement-james-1924.txt"))
+    prose = scans.prose(paragraphs, report["hyphens"])
+    flat = "\n\n".join(prose)
+    # James prints his study of the book, then the Greek fragment, then
+    # this. Only the last of the three is the Ethiopic.
+    flat = flat[flat.index(CLEMENT_OPEN):flat.index(CLEMENT_END)]
+    report["pages"] = pages
+    return [{
+        "label": "The whole",
+        "n": 1,
+        "raw": "The Second Coming of Christ and Resurrection of the Dead, "
+               "which Christ revealed unto Peter",
+        "numeral": None,
+        "paras": paragraphs_of(flat),
+        "style": "prose",
+    }]
+
+
 # ---- the three works --------------------------------------------------
 
 RECOVERED = (
@@ -431,6 +630,82 @@ WORKS = [
             "Horner numbers two consecutive statutes 40. That is his edition, "
             "not a fault in this reading of it, and it is kept so that a "
             "citation of him still lands where he put it.",
+            RECOVERED,
+        ],
+    },
+    {
+        "id": "the-apostolic-canons",
+        "title": "THE APOSTOLIC CANONS",
+        "section": "the-apostolic-fathers",
+        "source": "schodde",
+        "build": canons,
+        "confusions": [],
+        "note": [
+            "The second part of the Sinodos this volume has. Schodde "
+            "translated the Ge'ez of the fifty-seven Apostolic Canons for "
+            "the Society of Biblical Literature in 1885 and said in his "
+            "introduction what they are: “The Canons constitute a "
+            "part of the so-called Synodus of this church, which is for "
+            "them virtually a Corpus Juris Ecclesiastici.”",
+            "Canon LV is the Ethiopian church's own list of its "
+            "scriptures, and it names the three books of Kufalé — "
+            "Jubilees — among them. A canon list inside a canon book, "
+            "in a volume arranged around the question of who counts what.",
+            RECOVERED,
+        ],
+    },
+    {
+        "id": "the-testament-of-our-lord",
+        "title": "THE TESTAMENT OF OUR LORD",
+        "section": "the-apostolic-fathers",
+        "source": "cooper",
+        "build": testament,
+        "confusions": [],
+        "note": [
+            "The church order that in Ge'ez is the first book of the "
+            "Mets'hafe Kidan, the Book of the Covenant of the Ethiopian "
+            "canon: the risen Lord, before his ascension, laying down how "
+            "the church is to be built, who may be ordained, how the "
+            "eucharist and baptism are to be done, and what a bishop owes "
+            "the poor. It opens with an apocalypse and closes with the "
+            "apostles sending copies out of Jerusalem.",
+            "This is not the Ge'ez. Cooper and Maclean translated the "
+            "Syriac, and say in the same book that the Ethiopic version was "
+            "then unpublished; it has no public-domain English now either. "
+            "What is printed here is a witness to the same work in another "
+            "version, which is a different thing from the version the "
+            "Ethiopian church reads, and this paragraph exists to say so.",
+            "The chapters are theirs, in the two books they print.",
+            RECOVERED,
+        ],
+    },
+    {
+        "id": "the-apocalypse-of-peter",
+        "title": "THE APOCALYPSE OF PETER",
+        "section": "new-testament-apocrypha",
+        "before": "the-gospel-of-pseudo-matthew",
+        "source": "james",
+        "build": clement,
+        "confusions": [],
+        "note": [
+            "The Ethiopic Apocalypse of Peter, which survives inside "
+            "Qalementos — the Ethiopic Books of Clement, one of the "
+            "five books of the Ethiopian canon this volume listed as "
+            "absent. Peter asks the Lord on the Mount of Olives for the "
+            "signs of his coming and is shown the end of the world, the "
+            "punishments of hell and the garden of the righteous. It was "
+            "read as scripture in Rome in the second century, and the "
+            "Muratorian Canon lists it beside the Apocalypse of John.",
+            "It is a part of Qalementos and not the book. Six of the seven "
+            "books of the Ethiopic Clement have no public-domain English "
+            "translation at all, and James took even this one only as far "
+            "as the point where he judged the rest of the Ethiopic late, "
+            "saying so and stopping. The canon table counts the book as "
+            "here in part for that reason, and says which part.",
+            "Where the text carries a section number from the Greek "
+            "fragment rather than from the Ethiopic, James set it as a "
+            "label in the margin — “Gr. 22.” and so on — and "
+            "those are his and are left where he put them.",
             RECOVERED,
         ],
     },
@@ -497,7 +772,7 @@ WORKS = [
 
 def build(spec, words):
     report = {"hyphens": [], "numerals": [], "repairs": {}, "unmended": {},
-              "pages": []}
+              "pages": [], "missing": []}
     chapters = spec["build"](report)
     for chapter in chapters:
         chapter["paras"] = [repair(p, words, spec["confusions"], report)
@@ -506,7 +781,7 @@ def build(spec, words):
     note = list(spec["note"])
     left = sum(report["unmended"].values())
     mended = sum(report["repairs"].values())
-    if mended or left:
+    if mended:
         note.append(
             f"The scanner's reading was mended in {mended} places. A word "
             "is only mended when this volume's own million and a half words "
@@ -514,12 +789,23 @@ def build(spec, words):
             "scanner is known to make, and when exactly one such change "
             "turns it into a word the volume does know. Two candidates and "
             "it is left as it is, because a visible misprint is better than "
-            f"a confident guess. A further {left} words here appear nowhere "
-            "else in this volume and were left exactly as the scan has them. "
-            "Most of those are not mistakes at all — they are words this "
-            "library simply never uses elsewhere, and the Ge'ez forms of "
-            "names — and the rest are the scanner's worst pages, left "
+            "a confident guess.")
+    if left:
+        note.append(
+            f"{left} words here appear nowhere else in this volume and were "
+            "left exactly as the scan has them"
+            + (", mended or not." if mended else ", and nothing was mended.")
+            + " Most of them are not mistakes at all — they are words "
+            "this library simply never uses elsewhere, and the Ge'ez forms "
+            "of names — and the rest are the scanner's worst pages, left "
             "visible rather than smoothed over.")
+    if report.get("missing"):
+        note.append(
+            "The scan lost " + str(len(report["missing"]))
+            + " of the printed headings outright, so "
+            + ", ".join(str(m) for m in report["missing"])
+            + " get no division of their own and their text reads on inside "
+              "the one before. The words are all here; the breaks are not.")
     if report["numerals"]:
         note.append(
             "The scan misread " + ", ".join(

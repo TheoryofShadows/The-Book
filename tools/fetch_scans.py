@@ -29,6 +29,8 @@ import json
 import os
 import re
 import sys
+import time
+import urllib.error
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -79,6 +81,51 @@ SOURCES = {
                 "before it, printed against each other; the running head "
                 "is what separates them, and what selects this one.",
     },
+    "canons": {
+        "item": "sim_journal-of-biblical-literature_june-and-december-1885_5",
+        "frm": 62, "to": 74, "margin": 0, "head": None,
+        "file": "apostolic-canons-schodde-1885.txt",
+        "cite": "George H. Schodde, \u201cThe Apostolic Canons, translated "
+                "from the Ethiopic\u201d, Journal of the Society of Biblical "
+                "Literature and Exegesis 5 (1885), pages 61-72.",
+        "note": "The eighty-five Apostolic Canons in Schodde's English of "
+                "the Ge\u2019ez, and the second part of the Sinodos this "
+                "volume has. Schodde says in his own introduction what they "
+                "are: \u201cThe Canons constitute a part of the so-called "
+                "Synodus of this church.\u201d The leaves carry two running "
+                "heads, his and the journal's, and both repeat.",
+    },
+    "testament": {
+        "item": "cu31924029296170",
+        "frm": 66, "to": 158, "margin": 0, "head": None,
+        "file": "testament-of-our-lord-cooper-maclean-1902.txt",
+        "cite": "James Cooper and Arthur John Maclean, The Testament of Our "
+                "Lord, translated into English from the Syriac. Edinburgh: "
+                "T. & T. Clark, 1902, pages 47-138.",
+        "note": "The Testamentum Domini, the church order whose Ge\u2019ez "
+                "version is the first book of the Mets'hafe Kidan. This is "
+                "the Syriac, not the Ge\u2019ez: Cooper and Maclean say the "
+                "Ethiopic was unpublished when they wrote, and it is still "
+                "not in public-domain English. Every leaf carries a head; "
+                "the versos repeat and the rectos name their own page, so "
+                "the printed page number is what takes them off.",
+    },
+    "clement": {
+        "item": "JAMESApocryphalNewTestament1924",
+        "frm": 531, "to": 546, "margin": 0,
+        "head": r"APOCALYPSE\s+OF\s+PETER",
+        "file": "ethiopic-clement-james-1924.txt",
+        "cite": "Montague Rhodes James, The Apocryphal New Testament. "
+                "Oxford: Clarendon Press, 1924, pages 505-520: the Ethiopic "
+                "text of the Apocalypse of Peter.",
+        "note": "The Apocalypse of Peter as it stands inside the Ethiopic "
+                "Books of Clement \u2014 Qalementos \u2014 in James's "
+                "English of Gr\u00e9baut's Ethiopic. James prints his own "
+                "study of the book, then the Greek fragment, then this; "
+                "tools/build_ethiopian.py cuts the other two off. The "
+                "cross-references to the Greek are set as hanging labels "
+                "and are his.",
+    },
     "covenant": {
         "item": "JAMESApocryphalNewTestament1924",
         "frm": 510, "to": 529, "margin": 0,
@@ -100,10 +147,20 @@ META = "https://archive.org/metadata/{item}"
 FILE = "https://archive.org/download/{item}/{name}"
 
 
-def get(url: str) -> bytes:
-    with urllib.request.urlopen(url, timeout=300) as fh:
-        raw = fh.read()
-    return gzip.decompress(raw) if raw[:2] == b"\x1f\x8b" else raw
+def get(url: str, tries: int = 4) -> bytes:
+    """Fetch, retrying: these are ten-megabyte files off a busy archive."""
+    for attempt in range(tries):
+        try:
+            with urllib.request.urlopen(url, timeout=300) as fh:
+                raw = fh.read()
+            return gzip.decompress(raw) if raw[:2] == b"\x1f\x8b" else raw
+        except (urllib.error.URLError, OSError) as exc:   # noqa: PERF203
+            if attempt == tries - 1:
+                raise
+            wait = 2 ** (attempt + 1)
+            print(f"    {exc}; retrying in {wait}s")
+            time.sleep(wait)
+    raise AssertionError("unreachable")
 
 
 def fetch(item: str) -> str:

@@ -27,7 +27,18 @@ decide by luck:
                      stands at the top of other leaves too. Type size
                      alone will not do it: Horner's heads are set
                      smaller than his text and James's are set larger.
-                     Repetition is what a running head is
+                     Repetition is what a running head is -- except
+                     where it is not: Cooper and Maclean give each recto
+                     a head naming that page alone, and no two of them
+                     are alike. What those have instead is the printed
+                     page number, so a first line carrying a number one
+                     more than the leaf before it, or one less than the
+                     leaf after, is a running head too. Between the two
+                     signals every leaf of these five books is covered,
+                     and a section title -- which repeats nowhere and
+                     carries no page number -- is left standing, which
+                     matters because dropping one would take the title
+                     of a book off the book
 
     footnotes        trailing lines set smaller than the body and
                      opening after a gap wider than the page's own line
@@ -35,6 +46,14 @@ decide by luck:
                      of short letters measures small anywhere -- some of
                      Issaverdens's do -- and a rule that could reach the
                      middle of a page would eventually eat some text.
+                     A run of three or more needs no gap: Cooper sets
+                     his notes hard against the text with no more air
+                     than a line of it, and three consecutive lines
+                     smaller than the body are already a block. The run
+                     may also step over a single line the scanner
+                     measured wrong, so long as smaller lines carry on
+                     above it, which is what keeps ten notes from being
+                     read as six.
                      Both distances are measured between baselines,
                      because the top of a line moves with whether its
                      first word happens to have an ascender and the
@@ -43,7 +62,12 @@ decide by luck:
     paragraphs       a line indented past the block, following a line
                      that ended short. Either signal alone misfires --
                      the scans put spurious indents on continuation
-                     lines -- and together they do not
+                     lines -- and together they do not. A line that
+                     starts well *left* of the block opens one too: that
+                     is a hanging label, which is how James sets the
+                     cross-references running through his Apocalypse of
+                     Peter, and it needs no second signal because
+                     nothing else on the leaf begins out there
 
 What comes out is the printed lines, in order, page by page, with
 nothing added. Joining them into prose is the caller's business, because
@@ -77,6 +101,7 @@ WORD = re.compile(
 OUTSIDE = 0.5
 INDENT = 0.7
 SHORT = 2.0
+OUTDENT = 2.0
 
 # A trailing line set below this fraction of the page's body type, and
 # opening after a gap this much wider than the page's line pitch, is a
@@ -88,6 +113,10 @@ SHORT = 2.0
 # more.
 SMALL = 0.96
 GAP = 1.08
+
+# How many smaller-than-body lines make a foot on their own, with no gap
+# to prove it. Cooper's notes open a line below his text and no more.
+RUN = 3
 
 # How many leaves must open with the same line before it is a running
 # head rather than a coincidence, and how alike two readings of one head
@@ -171,11 +200,13 @@ def read(xml: str, frm: int, to: int, margin_len: int = 3, head=None):
             leaves.append((index, raw))
 
     running = _running_heads(leaves)
+    numbered = _numbered_heads(leaves)
 
     out = []
     previous = None
-    for index, raw in leaves:
-        page = _page(index, raw, previous, margin_len, running)
+    for position, (index, raw) in enumerate(leaves):
+        page = _page(index, raw, previous, margin_len, running,
+                     position in numbered)
         if page is None:
             continue
         if head is not None and page.heads and not any(
@@ -209,6 +240,31 @@ def _running_heads(leaves) -> list:
     return sorted(k for k, n in seen.items() if n >= REPEATS)
 
 
+NUMBER = re.compile(r"\d{1,4}")
+LETTERS = re.compile(r"[A-Za-z]")
+
+
+def _numbered_heads(leaves) -> set:
+    """Leaves whose first line carries the printed page number.
+
+    Read as a sequence across leaves rather than as a shape: the number
+    on this leaf is one more than the number on the leaf before it. A
+    title carries no such number, and a line of the text that happens to
+    contain one is not also one more than its neighbour's.
+    """
+    seen = []
+    for _index, raw in leaves:
+        seen.append({int(n) for n in NUMBER.findall(raw[0].text)
+                     if int(n) >= 3})
+    out = set()
+    for i, here in enumerate(seen):
+        before = seen[i - 1] if i else set()
+        after = seen[i + 1] if i + 1 < len(seen) else set()
+        if any(v - 1 in before or v + 1 in after for v in here):
+            out.add(i)
+    return out
+
+
 def _is_head(text: str, running) -> bool:
     key = _key(text)
     if len(key) < 8:
@@ -216,10 +272,15 @@ def _is_head(text: str, running) -> bool:
     return bool(difflib.get_close_matches(key, running, n=1, cutoff=CLOSE))
 
 
-def _page(number: int, raw, previous, margin_len: int, running: set):
+def _page(number: int, raw, previous, margin_len: int, running: set,
+          numbered: bool = False):
     if not raw:
         return None
 
+    # Everything is measured against this leaf's own type and leading.
+    # Horner's leaves are not all scanned at one size -- one of them
+    # comes through at a quarter of the rest -- and a threshold taken
+    # from the book as a whole stops fitting the odd one out.
     median = statistics.median(line.height for line in raw)
     bases = [line.base for line in raw]
     pitch = statistics.median(
@@ -228,15 +289,23 @@ def _page(number: int, raw, previous, margin_len: int, running: set):
     lo, hi = 0, len(raw)
     heads, notes = [], []
     while lo < hi:
-        if _is_head(raw[lo].text, running):
+        if _is_head(raw[lo].text, running) or (numbered and lo == 0):
             heads.append(raw[lo].text)
             lo += 1
             continue
-        # A page number the scanner read as a line of its own, sitting
-        # above the head it was printed beside. Only ever taken with the
-        # head, never on its own.
-        if (lo + 1 < hi and len(_key(raw[lo].text)) < 8
-                and _is_head(raw[lo + 1].text, running)):
+        # A page number the scanner read as a line of its own, printed
+        # beside the head and broken away from it -- above it on one
+        # leaf and below it on the next, because the number changes
+        # side with the leaf. Only ever taken together with the head,
+        # never on its own, and never when it carries a letter: the
+        # section numbers running through James's text sit in the same
+        # position and are the text.
+        short = len(_key(raw[lo].text)) < 8
+        if short and lo + 1 < hi and _is_head(raw[lo + 1].text, running):
+            heads.append(raw[lo].text)
+            lo += 1
+            continue
+        if short and heads and not LETTERS.search(raw[lo].text):
             heads.append(raw[lo].text)
             lo += 1
             continue
@@ -247,12 +316,26 @@ def _page(number: int, raw, previous, margin_len: int, running: set):
     # set smaller, so the run is found by type size and then the gap is
     # asked about the line that opens it -- asking it of the last line
     # on the leaf would only ever find a one-line note.
-    foot = hi
-    while foot - 1 > lo and raw[foot - 1].height < SMALL * median:
-        foot -= 1
+    foot, stepped = hi, False
+    while foot - 1 > lo:
+        if raw[foot - 1].height < SMALL * median:
+            foot -= 1
+            continue
+        # One line the scanner measured as body, with smaller lines
+        # still above it, is a misreading inside a block rather than the
+        # end of one. Only once, and only once a block is already in
+        # hand: a rule that steps over the very first line it dislikes
+        # will walk up off the top of the leaf on the strength of a
+        # signature mark, and it did.
+        if (not stepped and hi - foot >= 2 and foot - 2 > lo
+                and raw[foot - 2].height < SMALL * median):
+            foot -= 2
+            stepped = True
+            continue
+        break
     if foot < hi and pitch:
         gap = raw[foot].base - raw[foot - 1].base
-        if gap > GAP * pitch:
+        if hi - foot >= RUN or gap > GAP * pitch:
             notes = [l.text for l in raw[foot:hi]]
             hi = foot
 
@@ -262,6 +345,7 @@ def _page(number: int, raw, previous, margin_len: int, running: set):
     left = statistics.median(l.x0 for l in body)
     right = statistics.median(l.x1 for l in body)
     outside, indent, short = OUTSIDE * median, INDENT * median, SHORT * median
+    outdent = OUTDENT * median
 
     kept, margins = [], []
     for line in raw[lo:hi]:
@@ -280,8 +364,10 @@ def _page(number: int, raw, previous, margin_len: int, running: set):
         if not ws:
             continue
         made = Line(ws)
-        made.starts_para = (made.x0 > left + indent
-                            and (previous is None or previous.x1 < right - short))
+        made.starts_para = (
+            (made.x0 > left + indent
+             and (previous is None or previous.x1 < right - short))
+            or made.x0 < left - outdent)
         kept.append(made)
         previous = made
 

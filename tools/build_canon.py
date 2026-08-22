@@ -121,13 +121,27 @@ BOOKS.append(("Jubilees", "Ethiopian canon", {"ethiopian": "canon"}, ["jubilees"
 BOOKS.append(("4 Baruch (Paraleipomena Jeremiou)", "Ethiopian canon",
               {"ethiopian": "canon"}, ["the-rest-of-the-words-of-baruch"]))
 BOOKS.append(("Ethiopic Clement (Qalementos)", "Ethiopian canon",
-              {"ethiopian": "canon"}, []))
+              {"ethiopian": "canon"}, ["the-apocalypse-of-peter"]))
 BOOKS.append(("Ethiopic Didascalia", "Ethiopian canon",
               {"ethiopian": "canon"}, ["the-ethiopic-didascalia"]))
 BOOKS.append(("Sinodos", "Ethiopian canon", {"ethiopian": "canon"},
-              ["the-sinodos"]))
+              ["the-sinodos", "the-apostolic-canons"]))
 BOOKS.append(("Book of the Covenant (Mets'hafe Kidan)", "Ethiopian canon",
-              {"ethiopian": "canon"}, ["the-book-of-the-covenant"]))
+              {"ethiopian": "canon"},
+              ["the-testament-of-our-lord", "the-book-of-the-covenant"]))
+
+# Books of the Ethiopian canon this table did not name at all. A coverage
+# table that leaves a canon's own books off it is not reporting a gap, it
+# is hiding one: the count came out flattering because the books nobody
+# could supply were never counted. The three Meqabyan are not the Greek
+# Maccabees under another spelling -- they are three separate works,
+# composed in Ge'ez, that exist in no other canon -- and Josippon stands
+# in the Ethiopian Old Testament as its forty-sixth book.
+BOOKS.append(("1 Meqabyan", "Ethiopian canon", {"ethiopian": "canon"}, []))
+BOOKS.append(("2 Meqabyan", "Ethiopian canon", {"ethiopian": "canon"}, []))
+BOOKS.append(("3 Meqabyan", "Ethiopian canon", {"ethiopian": "canon"}, []))
+BOOKS.append(("Josippon (Zena Ayhud)", "Ethiopian canon",
+              {"ethiopian": "canon"}, []))
 
 # ---- New Testament -------------------------------------------------------
 for n, w, d in [("Matthew", "matthew", "Gospels"), ("Mark", "mark", "Gospels"),
@@ -190,34 +204,66 @@ FOLDED = {
 # what they found. Translating the Ge'ez here instead remains not an option:
 # a translation nobody can check against a printed edition is exactly the
 # kind of unverifiable claim the rest of this repository exists to refuse.
+# All three Meqabyan share one reason, so it is written once.
+_MEQABYAN = (
+    "No public-domain English translation. These are three works composed "
+    "in Ge'ez and found in no other canon, and the first English of them "
+    "is twenty-first century: D. P. Curtin released the first chapter of "
+    "1 Meqabyan to the public domain and no more, and the complete "
+    "translations that exist are under copyright or under a share-alike "
+    "licence, which is not the same thing as public domain and is not the "
+    "rule this volume prints under.",
+    "D. P. Curtin, First Book of Ethiopian Maccabees, 2018, chapter 1, "
+    "released to the public domain; en.wikisource.org/wiki/"
+    "First_Book_of_Ethiopian_Maccabees")
+
 ABSENT_WHY = {
-    "Ethiopic Clement (Qalementos)": (
-        "Public domain in parts only, and the parts do not add up to the "
-        "book. The second of its seven books circulates separately as the "
-        "Ethiopic Apocalypse of Peter, and M. R. James translated the "
-        "Ethiopic of that in 1924 \u2014 but only as far as the point where he "
-        "judged the rest of it late, saying so and stopping. The other six "
-        "books have no public-domain English translation at all. Part of a "
-        "seventh of a book, printed as the book, would be worse than the gap.",
-        "M. R. James, The Apocryphal New Testament, Oxford, 1924, pp. 505-521"),
+    "1 Meqabyan": _MEQABYAN,
+    "2 Meqabyan": _MEQABYAN,
+    "3 Meqabyan": _MEQABYAN,
+    "Josippon (Zena Ayhud)": (
+        "No public-domain English of the Ge'ez. The Ethiopic Zena Ayhud is "
+        "a recension of the Hebrew Josippon, which reached English in 1558 "
+        "in Peter Morwyng's translation and was reprinted into the "
+        "eighteenth century \u2014 but that is the Hebrew, and the Ethiopic "
+        "is an abridgement made through Arabic and differs from it "
+        "substantially. Printing one as the other would be a bigger claim "
+        "than this volume makes anywhere else.",
+        "Peter Morwyng, The Wonderful and Most Deplorable History of the "
+        "Latter Times of the Jews, London, 1558 and later editions"),
 }
 
 # A book that is here, but not all of it. Each says what is printed, what is
 # not, and where the boundary comes from.
 PARTIAL = {
     "Sinodos": (
-        "The Statutes of the Apostles, which is the largest part of the "
-        "Ethiopic Sinodos and not the whole of it: the Sinodos is a body of "
-        "canon law, and Horner printed and translated this part of it. "
-        "Seventy-two statutes and thirteen prayers, complete as he has them.",
-        "G. Horner, The Statutes of the Apostles, or Canones Ecclesiastici, "
-        "London, 1904, pp. 127-232"),
+        "Two of its parts, both from the Ge'ez: Horner's Statutes of the "
+        "Apostles \u2014 seventy-two statutes and thirteen prayers \u2014 "
+        "and Schodde's fifty-seven Apostolic Canons. The Sinodos is a body "
+        "of canon law that Ethiopian lists divide into four books, and the "
+        "remaining material has no public-domain English translation.",
+        "G. Horner, The Statutes of the Apostles, London, 1904, pp. 127-232; "
+        "G. H. Schodde, Journal of the Society of Biblical Literature and "
+        "Exegesis 5 (1885), pp. 61-72"),
+    "Ethiopic Clement (Qalementos)": (
+        "One piece of one of its seven books. The Apocalypse of Peter "
+        "survives embedded in the Ethiopic Books of Clement and M. R. James "
+        "translated that Ethiopic in 1924 \u2014 but only as far as the "
+        "point where he judged the rest of it late, saying so and stopping. "
+        "The other six books have no public-domain English translation at "
+        "all. What is here is worth reading and is not the book.",
+        "M. R. James, The Apocryphal New Testament, Oxford, 1924, "
+        "pp. 505-521"),
     "Book of the Covenant (Mets'hafe Kidan)": (
-        "The second of its two books, the discourse of the risen Lord to the "
-        "eleven, from the Ethiopic Guerrier published. The first, sixty "
-        "sections of church order, has no public-domain English translation "
-        "of any version and is not here.",
-        "M. R. James, The Apocryphal New Testament, Oxford, 1924, pp. 485-503"),
+        "Both of its books, and neither of them from the Ge'ez in full. The "
+        "second, the discourse of the risen Lord, is James's English of the "
+        "Ethiopic Guerrier published. The first, the church order, is here "
+        "as the Syriac Testamentum Domini in Cooper and Maclean's English: "
+        "the same work in another version, because the Ethiopic of it was "
+        "unpublished when they wrote and has no public-domain English now.",
+        "M. R. James, The Apocryphal New Testament, Oxford, 1924, "
+        "pp. 485-503; J. Cooper and A. J. Maclean, The Testament of Our "
+        "Lord, Edinburgh, 1902, pp. 47-138"),
     "4 Baruch (Paraleipomena Jeremiou)": (
         "Whole, but not from the Ge'ez. No public-domain English translation "
         "of the Ge'ez exists; what is printed is the Armenian recension made "

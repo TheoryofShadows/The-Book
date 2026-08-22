@@ -89,6 +89,77 @@ POSITIONS: dict[str, dict] = {
                "more to the Ge'ez manuscripts it survives in.",
     },
 
+    "the-apostolic-canons": {
+        "trad": "c. 50 CE",
+        "tradWhy": "The collection opens and closes by naming itself the "
+                   "Synod of the Apostles, sent out \u201cwith Clemens\u201d, "
+                   "and every canon in it is framed as their own ruling. The "
+                   "Ethiopian church receives it on those terms, as part of "
+                   "the Sinodos.",
+        "tradSource": "The text's own opening and closing sentences, Schodde "
+                      "1885, pp. 63 and 72",
+        "crit": "4th century CE",
+        "critWhy": "These are the canons appended to the eighth book of the "
+                   "Apostolic Constitutions, which is Syrian work of the "
+                   "later fourth century; Schodde says so in the "
+                   "introduction to the translation printed here, and "
+                   "distinguishes them from the older Apostolic Church "
+                   "Order. The Ge'ez is later again, reaching Ethiopia "
+                   "through the Coptic.",
+        "critSource": "G. H. Schodde, \u201cThe Apostolic Canons, translated "
+                      "from the Ethiopic\u201d, Journal of the Society of "
+                      "Biblical Literature and Exegesis 5 (1885), "
+                      "pp. 61-62",
+        "gap": "Three centuries between the apostolic council the canons "
+               "claim and the compilation that produced them.",
+    },
+
+    "the-testament-of-our-lord": {
+        "trad": "c. 30-40 CE",
+        "tradWhy": "The book is the risen Lord speaking to the apostles, and "
+                   "its closing sentence names the men who wrote it down and "
+                   "sent it out: \u201cJohn and Peter and Matthew wrote this "
+                   "Testament, and sent it in copies from Jerusalem\u201d.",
+        "tradSource": "The text's own last chapter, Cooper and Maclean 1902, "
+                      "p. 138",
+        "crit": "4th-5th century CE",
+        "critWhy": "Cooper and Maclean weigh the evidence at length and "
+                   "settle on the middle of the fourth century or a little "
+                   "later: the church order it describes is too developed "
+                   "for the second century and its apocalyptic prelude "
+                   "answers a persecution rather than a Roman peace. The "
+                   "Syriac they translate says of itself that it was turned "
+                   "out of Greek in the year 998 of the Greeks, which is "
+                   "687 CE, so even the version is centuries younger than "
+                   "the book.",
+        "critSource": "J. Cooper and A. J. Maclean, The Testament of Our "
+                      "Lord, Edinburgh, 1902, introduction \u00a7vi",
+        "gap": "Three centuries or more between the Jerusalem the book "
+               "writes from and the church it actually describes.",
+    },
+
+    "the-apocalypse-of-peter": {
+        "trad": "c. 30-40 CE",
+        "tradWhy": "Peter receives the vision from the Lord on the Mount of "
+                   "Olives, in answer to the disciples' question about the "
+                   "signs of his coming, and writes it for the church. It "
+                   "was read as Peter's in Rome: the Muratorian Canon lists "
+                   "it beside the Apocalypse of John.",
+        "tradSource": "The text's own opening, James 1924, p. 510; the "
+                      "Muratorian Canon",
+        "crit": "c. 125-150 CE",
+        "critWhy": "Clement of Alexandria quotes it as scripture, which puts "
+                   "it well before 200; its parable of the fig-tree, read as "
+                   "the house of Israel with a false messiah among its "
+                   "shoots, is generally taken for the Bar Kokhba revolt of "
+                   "132-135. That places it in the second quarter of the "
+                   "second century, a generation after the apostle.",
+        "critSource": "M. R. James, The Apocryphal New Testament, Oxford, "
+                      "1924, pp. 505-506",
+        "gap": "About a century between the Mount of Olives the vision is "
+               "set on and the revolt it appears to answer.",
+    },
+
     "the-rest-of-the-words-of-baruch": {
         "trad": "c. 586 BCE",
         "tradWhy": "The book sets itself at the fall of Jerusalem and tells its "

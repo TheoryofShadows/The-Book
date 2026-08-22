@@ -36,11 +36,27 @@ TOKEN = re.compile(r"[A-Za-z][A-Za-z'-]*")
 # the work's title, and James's own introduction, which is not text.
 SCANS = {
     "the-sinodos": ("sinodos-horner-1904.txt", None),
+    "the-apostolic-canons": ("apostolic-canons-schodde-1885.txt",
+                             ethiopian.CANONS_OPEN),
+    "the-testament-of-our-lord": (
+        "testament-of-our-lord-cooper-maclean-1902.txt",
+        ethiopian.TESTAMENT_OPEN),
+    "the-apocalypse-of-peter": ("ethiopic-clement-james-1924.txt",
+                                ethiopian.CLEMENT_OPEN),
     "the-rest-of-the-words-of-baruch": ("4-baruch-issaverdens-1901.txt",
                                         ethiopian.BARUCH_OPENS),
     "the-book-of-the-covenant": ("book-of-the-covenant-james-1924.txt",
                                  ethiopian.COVENANT_OPENS),
 }
+
+# The Apocalypse of Peter is the one work cut at both ends: James prints
+# his own study of the book after it as well as before it.
+TAILS = {"the-apocalypse-of-peter": ethiopian.CLEMENT_END}
+
+# Words a build drops because they are the division marker itself. Cooper
+# heads each chapter "CHAPTER 27"; the number becomes the label and the
+# word goes with it. Nothing else may go.
+MARKERS = {"the-testament-of-our-lord": {"CHAPTER"}}
 
 
 def tokens(text):
@@ -63,7 +79,7 @@ class TheVendoredScans(unittest.TestCase):
         claim that it can is worthless."""
         for name, _ in SCANS.values():
             paragraphs, pages = scans.read_recovered(os.path.join(RAW, name))
-            self.assertGreater(len(pages), 15, name)
+            self.assertGreater(len(pages), 10, name)
             self.assertEqual(pages, sorted(pages), name)
             self.assertEqual(len(pages), len(set(pages)), name)
             self.assertGreater(len(paragraphs), 20, name)
@@ -144,6 +160,7 @@ class NothingIsLost(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        ethiopian.RAW = RAW
         cls.words = ethiopian.vocabulary(
             os.path.join(ROOT, "source", "THE_BOOK_COMPLETE.txt"))
 
@@ -158,11 +175,16 @@ class NothingIsLost(unittest.TestCase):
                                     for p in c["paras"]))
 
             cut = tokens(source[:source.index(opens)] if opens else "")
+            tail = TAILS.get(spec["id"])
+            if tail:
+                cut += tokens(source[source.index(tail):])
             mended = collections.Counter()
             for (was, _now), n in report["repairs"].items():
                 mended[was] += n
 
             unexplained = tokens(source) - built - cut - mended
+            for marker in MARKERS.get(spec["id"], ()):
+                unexplained.pop(marker, None)
             self.assertEqual(sum(unexplained.values()), 0,
                              f"{spec['id']} dropped {dict(unexplained)}")
 
@@ -173,6 +195,31 @@ class TheDivisionsAreThePrintedOnes(unittest.TestCase):
         with open(os.path.join(DATA, "works", work_id + ".json"),
                   encoding="utf-8") as fh:
             return json.load(fh)
+
+    def test_the_canons_run_in_schodde_s_roman_numbering(self):
+        got = self.work("the-apostolic-canons")
+        numerals = [c["numeral"] for c in got["chapters"] if c["numeral"]]
+        self.assertEqual(numerals, sorted(numerals))
+        self.assertEqual(numerals[0], 1)
+        self.assertEqual(numerals[-1], 57)
+        # The two the scan lost outright, which the work says it lost.
+        self.assertEqual(set(range(1, 58)) - set(numerals), {30, 42})
+        self.assertTrue(any("XXX, XLII" in n for n in got["note"]))
+
+    def test_the_testament_keeps_cooper_s_two_books(self):
+        got = self.work("the-testament-of-our-lord")
+        labels = [c["label"] for c in got["chapters"]]
+        self.assertTrue(any(l.startswith("I. ") for l in labels))
+        self.assertTrue(any(l.startswith("II. ") for l in labels))
+        firsts = [i for i, l in enumerate(labels) if l.endswith("opening")]
+        self.assertEqual(len(firsts), 2, "each book keeps its own opening")
+
+    def test_the_apocalypse_stops_where_james_stopped(self):
+        got = self.work("the-apocalypse-of-peter")
+        self.assertEqual(len(got["chapters"]), 1)
+        text = " ".join(got["chapters"][0]["paras"])
+        self.assertIn("book of life", text[-400:])
+        self.assertNotIn("great deal more of the Ethiopic", text)
 
     def test_the_sinodos_has_horner_s_statutes_and_his_prayers(self):
         got = self.work("the-sinodos")
@@ -253,13 +300,27 @@ class WhatTheseWorksSayAboutThemselves(unittest.TestCase):
                           f"cannot resolve, so its page says nothing about "
                           f"where its text came from")
 
-    def test_the_one_that_is_not_here_says_why(self):
+    def test_the_ones_that_are_not_here_say_why(self):
         with open(os.path.join(DATA, "canon.json"), encoding="utf-8") as fh:
             canon = json.load(fh)
         absent = [b for b in canon["books"] if not b["present"]]
-        self.assertEqual([b["name"] for b in absent],
-                         ["Ethiopic Clement (Qalementos)"])
-        self.assertIn("seven books", absent[0]["absentWhy"])
+        self.assertEqual(sorted(b["name"] for b in absent),
+                         ["1 Meqabyan", "2 Meqabyan", "3 Meqabyan",
+                          "Josippon (Zena Ayhud)"])
+
+    def test_the_canon_names_the_books_it_used_to_leave_off(self):
+        """A count is only as honest as the list it counts.
+
+        The table reported 89 of 90 Ethiopian units while four books of
+        that canon were not on it at all. Naming them makes the number
+        worse and makes it true.
+        """
+        with open(os.path.join(DATA, "canon.json"), encoding="utf-8") as fh:
+            canon = json.load(fh)
+        names = {b["name"] for b in canon["books"]}
+        for missed in ("1 Meqabyan", "2 Meqabyan", "3 Meqabyan",
+                       "Josippon (Zena Ayhud)"):
+            self.assertIn(missed, names)
 
 
 if __name__ == "__main__":
