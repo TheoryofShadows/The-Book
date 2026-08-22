@@ -31,13 +31,23 @@ What *was* checked, because it is the failure that would matter most:
     failed; the pages did not. tests/python/test_didascalia.py holds that
     check so it cannot quietly stop being true.
 
-CHAPTERS
+SECTIONS
 
-Platt's own table of contents divides the work into sections and gives the
-page each begins on. Those page numbers are the divisions used here. One
-heading -- that Christians may not enter the assemblies of the heathen --
-has no legible page number in the scan, so it is not used as a division
-rather than being guessed at; its text sits inside the section before it.
+Platt set each section's heading in the running text, as a roman numeral and
+a title, and those headings are the divisions used here. Cutting on them is
+exact.
+
+The first attempt cut on the page each section opens on, taken from his table
+of contents, and that is only accurate to the page: a section beginning
+halfway down one opened with the tail of the section before it. "Of Widows"
+began "runner. But if thou be not slothful" -- a page of sloth before the
+first widow -- and it went out to the live site that way.
+
+Three of his headings did not survive the scan and get no division: XII "Of
+Widows", XV, and XVII "Concerning Orphans". Their text reads on inside the
+section before. The numerals themselves needed repair before the cut could
+be made -- he set "VII." and the scan read "VIL" -- which is why the repairs
+below run first.
 """
 
 from __future__ import annotations
@@ -62,8 +72,90 @@ WORD = re.compile(r"\b[A-Za-z][a-z]{2,}\b")
 # A page number sits alone on its line, sometimes behind a signature mark.
 PAGE = re.compile(r"^\s*(?:[a-z0-9]{1,3}\s+)?(\d{1,3})\s*$")
 
-# Platt's sections, with the page each opens on, read from his table of
-# contents. The titles are his; the wording is left as he set it.
+PREAMBLE = "Of the Apostles' ordinance, and the degrees of the Church"
+
+# A distinctive phrase out of each of Platt's section headings, as the scan
+# left it. Each is checked to occur exactly once in the recovered text.
+HEADINGS = [
+    ("I", "the duty of the Rich to search"),
+    ("II", "the duty of Women to obey"),
+    ("III", "Concerning the Bishop, the Priest, and the Deacon"),
+    ("IV", "Concerning the duty of Bishops to receive the repentance"),
+    ("V", "not lawful for us to enforce discipline"),
+    ("VI", "the duty of the people to bring offerings"),
+    ("VII", "not lawful for the Deacon to do any thing"),
+    ("VIII", "the duty of the Bishop to try and inquire"),
+    ("IX", "Christians ought to forgive the trespasses"),
+    ("X", "Bishops to be peace-makers"),
+    ("XI", "not lawful for Christians to enter into the assemblies"),
+    # XII, "Of Widows", is absent too: the only "Of Widows" the scan left is
+    # running text about the observance of widows, and cutting there put a
+    # section boundary in the middle of a sentence.
+    # "not lawful for Women to baptize" alone appears twice -- the heading
+    # and a restatement a page later. The capital W pins the heading.
+    ("XIII", "not lawful for Women to baptize. Behold"),
+    ("XIV", "not lawful for the Layman to do any work"),
+    ("XVI", "do evil against your neighbours"),
+    # XVI, "Concerning Orphans", is absent: its heading did not survive the
+    # scan, so its text reads on inside the section before it.
+    ("XVIII", "provide for Widows and Orphans"),
+    ("XIX", "Unmarried Women, and Widows"),
+    ("XX", "discreet in receiving offerings"),
+    ("XXI", "Fathers to keep their Children"),
+    ("XXII", "Servants that they be subject"),
+]
+
+TITLES = {
+    "I": "That it is the duty of the Rich to search into the profit of the Scriptures at all times",
+    "II": "That it is the duty of Women to obey their Husbands, and to walk in wisdom and virtue",
+    "III": "Of Bishops, Priests, and Deacons",
+    "IV": "Concerning the duty of Bishops to receive the repentance of those who turn, in love and meekness",
+    "V": "That it is not lawful for us to enforce discipline against any man, unless testimony be established against him",
+    "VI": "Concerning the duty of the people to bring offerings to the Church, according to their ability",
+    "VII": "That it is not lawful for the Deacon to do any thing but by authority of the Bishop",
+    "VIII": "That it is the duty of the Bishop to try and inquire into every matter in justice and uprightness",
+    "IX": "That Christians ought to forgive the trespasses of their neighbours",
+    "X": "It is the duty of Bishops to be peace-makers, merciful, pardoning him who hath transgressed against them",
+    "XI": "That it is not lawful for Christians to enter into the assemblies of the Heathen",
+    "XII": "Of Widows",
+    "XIII": "That it is not lawful for Women to baptize",
+    "XIV": "That it is not lawful for the Layman to do any work belonging to the Priesthood",
+    "XVI": "That it is not lawful that ye should do evil against your neighbours",
+    "XVII": "Concerning Orphans",
+    "XV": "a title the scan did not preserve either",
+    "XII": "Of Widows",
+    "XVIII": "That it is required of Bishops to provide for Widows and Orphans",
+    "XIX": "That it is required of the Unmarried Women, and Widows, that they receive that which is bestowed upon them thankfully",
+    "XX": "That it is required of Bishops to be discreet in receiving offerings from those only who are worthy",
+    "XXI": "That it is required of Fathers to keep their Children under discipline",
+    "XXII": "That it is required of Servants that they be subject unto their Masters in all purity",
+}
+
+# Platt's table of contents, by his own numbering. Used only to report which
+# of his headings the scan failed to preserve -- the divisions themselves are
+# cut from the headings in the text, not from this.
+TOC = [
+    ("I", "the duty of the Rich"), ("II", "the duty of Women"),
+    ("III", "Bishops, Priests, and Deacons"),
+    ("IV", "Bishops to receive the repentance"),
+    ("V", "not lawful to enforce discipline"),
+    ("VI", "the people to bring offerings"), ("VII", "not lawful for the Deacon"),
+    ("VIII", "the Bishop to try and inquire"),
+    ("IX", "Christians ought to forgive"), ("X", "Bishops to be peace-makers"),
+    ("XI", "not lawful to enter the assemblies of the Heathen"),
+    ("XII", "Of Widows"), # "not lawful for Women to baptize" alone appears twice -- the heading
+    # and a restatement a page later. The capital W pins the heading.
+    ("XIII", "not lawful for Women to baptize. Behold"),
+    ("XIV", "not lawful for the Layman"), ("XV", "not to do evil against your neighbours"),
+    ("XVI", "Concerning Orphans"), ("XVII", "provide for Widows and Orphans"),
+    ("XVIII", "the Unmarried Women and Widows"),
+    ("XIX", "Bishops to be discreet in receiving offerings"),
+    ("XX", "Fathers to keep their Children under discipline"),
+    ("XXI", "Servants subject unto their Masters"),
+    ("XXII", "Servants subject unto their Masters"),
+]
+
+# Kept for the page fallback and for the record of where each section opens.
 SECTIONS = [
     (1, "Of the Apostles' ordinance, and the degrees of the Church"),
     (8, "That it is the duty of the Rich to search into the profit of the "
@@ -104,6 +196,19 @@ SECTIONS = [
 ]
 
 
+ROMAN = {"I": 1, "V": 5, "X": 10}
+
+
+def roman(text: str) -> int:
+    """Platt numbers his sections I to XXII. Zero-based, to index SECTIONS."""
+    total = prev = 0
+    for ch in reversed(text.upper()):
+        v = ROMAN.get(ch, 0)
+        total += -v if v < prev else v
+        prev = max(prev, v)
+    return total - 1
+
+
 def english(line: str) -> bool:
     """Platt's English, as against a line of OCR'd Ge'ez.
 
@@ -113,6 +218,15 @@ def english(line: str) -> bool:
     """
     s = line.strip()
     if len(s) < 20 or len(WORD.findall(s)) < 4:
+        return False
+    # The colon is the Ge'ez separator, and the scan keeps it even where it
+    # loses everything else. One line of Ge'ez cleared both tests above --
+    # five of its fragments looked like words and it came to 0.802 letters
+    # against a threshold of 0.80 -- and landed a run of noise in the middle
+    # of a sentence about bloody assemblies. English prose uses at most one
+    # colon in a line; that Ge'ez line carried eleven. Of the 2,323 English
+    # lines in the translation, 134 use a colon and exactly one uses two.
+    if s.count(":") > 1:
         return False
     return sum(c.isalpha() or c.isspace() for c in s) / len(s) > 0.80
 
@@ -183,10 +297,52 @@ REPAIRS = {
     # is a table of words and not a table of letter substitutions.
     "vmderstand": "understand", "vmto": "unto", "likevdse": "likewise",
     "vnse": "wise", "vdse": "wise", "vdzards": "wizards", "vddow": "widow",
+    # ll set as U, found on the live page rather than in the build.
+    "aU": "all", "aUke": "alike", "coUyrium": "collyrium", "dweUing": "dwelling",
+    "enUghtened": "enlightened", "foUoweth": "followeth", "fooUsh": "foolish",
+    "hireUng": "hireling", "humiUty": "humility", "unbeUever": "unbeliever",
+    "unbeUevers": "unbelievers", "wiU": "will",
+    "Uvest": "livest", "Ups": "lips",
+    # L set as I^, w as vp or vs^, and the ff ligature as fF or lFF.
+    "I^ord": "Lord", "vporks": "works", "vpritten": "written",
+    "ofFering": "offering", "oflFer": "offer",
+    # Single-word wrecks, each read in context before being written down.
+    "maiTiage": "marriage", "meiTy": "merry", "waJketh": "walketh",
+    # Platt's roman numerals, scanned with a trailing L where he set "I."
+    # These are repaired before the sections are cut, because the cut looks
+    # for the numeral.
+    "VIL": "VII.", "XVL": "XVI.", "XXL": "XXI.", "Thai": "That",
+    "tnist": "trust", "Widotos": "Widows", "LaAV": "Law",
+    "I^ord": "Lord", "aiad": "and",
+    # Both wrecks at once: w read as vm, and the comma after it read as a
+    # caret. Listed whole because the tokeniser sees it as one word.
+    "vmtten^": "written,",
 }
 # One break spans two words: the heading of Platt's eleventh section, where
 # "lawful for" was scanned as a single ruined token.
-PHRASES = {"law/iiljbr": "lawful for"}
+PHRASES = {
+    "law/iiljbr": "lawful for",
+    "th«?ir": "their",
+    "any thing hut by authority": "any thing but by authority",
+    "written^ saying": "written, saying",
+    # Platt's own note that his manuscript is defective here. It is his
+    # editorial voice, not the text, and it is worth keeping legible.
+    "L' ^ Leaf is here lost from the MS. ]": "[ Leaf is here lost from the MS. ]",
+    "^'the Lord": "the Lord",
+    "vs^hich": "which",
+    "repe?itance": "repentance",
+    # Platt's own section heads, printed in the running text and scanned
+    # badly. They are repaired before the sections are cut, because the cut
+    # is made on them.
+    "XXn. That it is required of' Servants that they he sulked":
+        "XXII. That it is required of Servants that they be subject",
+    "bejaitliful": "be faithful",
+    "XIII, That it is not lawful": "XIII. That it is not lawful",
+    # A run of scanned Ge'ez that reached the English before the colon test
+    # above existed. Kept here as well so the repaired text is correct even
+    # if the line is ever admitted again.
+    "fl^: Yian: Viof-I': \"S^A: lni>: AiffV: AOA: I^flf: HHaA-T:: COrS^oxfi ": "",
+}
 
 repaired: dict[str, int] = {}
 
@@ -206,7 +362,10 @@ def repair(text: str) -> str:
         repaired[bad] = repaired.get(bad, 0) + 1
         return good
 
-    return re.sub(r"[A-Za-z‟']+", one, text)
+    # The caret has to be inside the token class: the scan reads Platt's L
+    # as I^, and a tokeniser that stops at the caret splits "I^ord" into two
+    # pieces that match nothing and leaves "I^ord Jesus Christ" on the page.
+    return re.sub(r"[A-Za-z‟'^]+", one, text)
 
 
 def prose(lines: list[str]) -> str:
@@ -235,26 +394,73 @@ def main() -> int:
         return 1
 
     numbers = sorted(page)
+
+    # Lay the whole translation out as one repaired string, remembering
+    # where each printed page begins in it. The page offsets are the
+    # fallback; Platt's own headings are the first choice.
+    body = ""
+    at_page = {}
+    for n in numbers:
+        if not page[n]:
+            continue
+        at_page[n] = len(body)
+        body += ("" if not body else " ") + prose(page[n])
+
+    # Platt set each section's heading in the running text, as a roman
+    # numeral and the title. Cutting there is exact. Cutting on the page a
+    # section opens on is only accurate to the page, and a section that
+    # begins halfway down one opens with the tail of the section before it:
+    # "Of Widows" began "runner. But if thou be not slothful", a page of
+    # sloth before the first widow. The headings are repaired above, because
+    # some of them are damaged and the cut is made on them.
+    # Cut on Platt's headings, located by an explicit phrase each.
+    #
+    # Three attempts at deriving these with a pattern went wrong in three
+    # different ways -- a numeral mapped onto the wrong list index, a fuzzy
+    # title match that fired in several places, and a regex whose matches
+    # swallowed the heading after them -- costing thousands of words each
+    # time, once by loss and once by duplication. The phrases below are
+    # checked to occur exactly once, in ascending order, by
+    # tests/python/test_didascalia.py. An explicit table cannot drift.
+    starts = []
+    for num, phrase in HEADINGS:
+        m = re.search(re.escape(phrase), body, re.I)
+        if m is None:
+            continue
+        # Back up to the roman numeral that introduces the heading, so a
+        # section opens on its own title rather than partway through it.
+        window = body[max(0, m.start() - 130):m.start()]
+        lead = None
+        for r in re.finditer(r"(?<![A-Za-z])[IVX]{1,6}\.\s", window):
+            lead = max(0, m.start() - 130) + r.start()
+        starts.append((lead if lead is not None else m.start(), num, phrase))
+    starts.sort()
+
     chapters = []
-    unsplit = []
-    for i, (first, title) in enumerate(SECTIONS):
-        last = SECTIONS[i + 1][0] - 1 if i + 1 < len(SECTIONS) else numbers[-1]
-        body = [prose(page[n]) for n in numbers if first <= n <= last and page[n]]
-        if not body:
-            # The page this section opens on carries no legible number, so
-            # its text was gathered under the next mark instead. Nothing is
-            # lost -- it reads on inside the following section -- but the
-            # division cannot be made, and saying so is better than dropping
-            # one of Platt's headings without a word.
-            unsplit.append((first, title))
+    spans = [(0, starts[0][0] if starts else len(body), None, PREAMBLE)]
+    for i, (pos, num, phrase) in enumerate(starts):
+        end = starts[i + 1][0] if i + 1 < len(starts) else len(body)
+        spans.append((pos, end, num, TITLES[num]))
+
+    for start, end, num, title in spans:
+        text = body[start:end].strip()
+        if not text:
             continue
         chapters.append({
             "label": f"Section {len(chapters) + 1}",
             "n": len(chapters) + 1,
             "raw": title,
-            "paras": body,
+            "numeral": num,
+            "paras": [text],
             "style": "prose",
         })
+
+    # What Platt numbered, against what the scan preserved. Derived from the
+    # full table of titles rather than from the headings actually located,
+    # or the ones that went missing would go unmentioned as well as unused.
+    found = {n for _, n, _ in starts}
+    unsplit = [(n, TITLES[n]) for n in TITLES if n not in found]
+    unsplit.sort(key=lambda e: roman(e[0]))
 
     if len(chapters) < 15:
         print(f"  ERROR: only {len(chapters)} sections recovered")
@@ -274,17 +480,16 @@ def main() -> int:
             "Recovered from the scan of that printing, and not audited. "
             "Every biblical book here is checked verse for verse against "
             "independent reference counts; none exist for this text, so "
-            "there is nothing to check it against but the scan itself. The "
-            "section divisions are Platt's own, taken from his table of "
-            "contents. Read it as a text recovered rather than as a text "
-            "verified.",
+            "there is nothing to check it against but the scan itself. "
+            "The sections are Platt's own, cut at the headings he set in "
+            "the running text and carrying the numerals he printed. Read it "
+            "as a text recovered rather than as a text verified.",
         ] + ([
-            "One of Platt's headings could not be given a division of its "
-            "own: " + "; ".join(f"“{t}” (his p. {p})"
-                                for p, t in unsplit)
-            + ". That page's number did not survive the scan, so its text "
-            "was gathered under the following one and reads on inside the "
-            "section after it. The words are all here; the break is not."
+            "Three of Platt's headings did not survive the scan, so they "
+            "get no division of their own and their text reads on inside "
+            "the section before: " + "; ".join(f"{n}, “{t}”"
+                                               for n, t in unsplit)
+            + ". The words are all here; the breaks are not."
         ] if unsplit else []),
         "chapters": chapters,
         "source": "platt",
