@@ -277,11 +277,15 @@ class AgainstTheWholeVolume(unittest.TestCase):
 
     def test_no_span_lands_somewhere_impossible(self):
         # The volume runs from the earliest identifiable material to the
-        # Apostolic Fathers. Anything outside that is a misparse, not a date.
+        # Apostolic Fathers, and one book past them: the Ethiopic Sinodos
+        # is a compilation rather than a composition, and the critical
+        # position dates the compiling rather than the canons in it. The
+        # ceiling is set to hold that and nothing looser. Anything outside
+        # these bounds is a misparse, not a date.
         for wid, field, text, sp in self.parsed:
             if sp:
                 self.assertGreater(sp["frm"], -2000, f"{wid}.{field}: {text}")
-                self.assertLess(sp["to"], 400, f"{wid}.{field}: {text}")
+                self.assertLess(sp["to"], 650, f"{wid}.{field}: {text}")
 
     def test_every_statement_that_names_an_era_is_read(self):
         # If the text says BCE or CE, a date is being asserted and the parser

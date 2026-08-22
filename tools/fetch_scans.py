@@ -145,7 +145,10 @@ def write(key: str, spec: dict, xml: str) -> int:
         "line-numbers and the footnotes are taken off by where they sit on "
         "the leaf. Each [page n] below is the scan's own image number, so "
         "any line here can be put beside the leaf it came from. Lines are "
-        "the printed lines; a blank line is an indented paragraph opening.",
+        "the printed lines. A blank line means a paragraph opens on the "
+        "line after it; the page markers carry no blank line of their "
+        "own, so that a paragraph broken by a page turn stays one "
+        "paragraph.",
         "-" * 78,
         "",
     ]
@@ -155,7 +158,6 @@ def write(key: str, spec: dict, xml: str) -> int:
             if line.starts_para:
                 out.append("")
             out.append(line.text)
-        out.append("")
 
     os.makedirs(OUT, exist_ok=True)
     path = os.path.join(OUT, spec["file"])

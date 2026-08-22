@@ -119,14 +119,15 @@ BOOKS.append(("1 Enoch", "Ethiopian canon", {"ethiopian": "canon"},
                "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108"]))
 BOOKS.append(("Jubilees", "Ethiopian canon", {"ethiopian": "canon"}, ["jubilees"]))
 BOOKS.append(("4 Baruch (Paraleipomena Jeremiou)", "Ethiopian canon",
-              {"ethiopian": "canon"}, []))
+              {"ethiopian": "canon"}, ["the-rest-of-the-words-of-baruch"]))
 BOOKS.append(("Ethiopic Clement (Qalementos)", "Ethiopian canon",
               {"ethiopian": "canon"}, []))
 BOOKS.append(("Ethiopic Didascalia", "Ethiopian canon",
               {"ethiopian": "canon"}, ["the-ethiopic-didascalia"]))
-BOOKS.append(("Sinodos", "Ethiopian canon", {"ethiopian": "canon"}, []))
+BOOKS.append(("Sinodos", "Ethiopian canon", {"ethiopian": "canon"},
+              ["the-sinodos"]))
 BOOKS.append(("Book of the Covenant (Mets'hafe Kidan)", "Ethiopian canon",
-              {"ethiopian": "canon"}, []))
+              {"ethiopian": "canon"}, ["the-book-of-the-covenant"]))
 
 # ---- New Testament -------------------------------------------------------
 for n, w, d in [("Matthew", "matthew", "Gospels"), ("Mark", "mark", "Gospels"),
@@ -168,48 +169,63 @@ FOLDED = {
     "Bel and the Dragon": "Daniel",
 }
 
-# Why each absent book is absent.
+# Why each absent book is absent, and what is missing from each book that is
+# here in part.
 #
-# Five books of the Ethiopian canon are not in this volume, and until now the
-# coverage table named them and stopped there. A gap with no reason beside it
-# is an editorial claim without a citation, which is the one thing this volume
-# says it does not do. Each entry below says what was looked for, what was
-# found, and what would close it -- so that a reader can check the claim, and
-# so that the next person to try does not repeat the search.
+# Five books of the Ethiopian canon were absent from this volume, and the
+# coverage table used to name them and stop there. A gap with no reason
+# beside it is an editorial claim without a citation, which is the one thing
+# this volume says it does not do, so each entry says what was looked for and
+# what was found. Four of the five are now here, and the same rule applies to
+# them in reverse: a book printed in part must say which part, in the place a
+# reader is being told it is present.
 #
-# The common thread is not copyright. Ge'ez texts of all five are public
-# domain by age many times over. What is scarce is a *published English
+# The common thread was never copyright. Ge'ez texts of all five have been
+# public domain for centuries. What is scarce is a *published English
 # translation* old enough to be public domain: the standard modern editions
-# are twentieth-century and in copyright, and the nineteenth-century work
-# stopped after the Didascalia. Translating the Ge'ez here instead is not an
-# option that was passed over for effort -- a translation nobody can check
-# against a printed edition is exactly the kind of unverifiable claim the rest
-# of this repository exists to refuse.
+# are twentieth-century and in copyright. What was wrong was the belief that
+# the nineteenth-century work stopped after Platt's Didascalia. It did not --
+# Horner in 1904, Issaverdens in 1901 and James in 1924 between them cover
+# three more -- and tools/fetch_scans.py and tools/build_ethiopian.py print
+# what they found. Translating the Ge'ez here instead remains not an option:
+# a translation nobody can check against a printed edition is exactly the
+# kind of unverifiable claim the rest of this repository exists to refuse.
 ABSENT_WHY = {
-    "4 Baruch (Paraleipomena Jeremiou)": (
-        "No public-domain English translation located. The 1889 Rendel Harris "
-        "edition is the Greek text with a critical introduction, not a "
-        "translation, and the standard English versions are twentieth-century "
-        "and in copyright.",
-        "Harris 1889, archive.org/details/restwordsbaruch01harrgoog"),
     "Ethiopic Clement (Qalementos)": (
-        "Public domain in parts only. The second of its seven books circulates "
-        "separately as the Ethiopic Apocalypse of Peter and has been "
-        "translated; the remaining six have no public-domain English "
-        "translation. Printing a seventh of a book as the book would be worse "
-        "than the gap.",
-        "Ethiopian Orthodox canon lists; see the coverage note above"),
+        "Public domain in parts only, and the parts do not add up to the "
+        "book. The second of its seven books circulates separately as the "
+        "Ethiopic Apocalypse of Peter, and M. R. James translated the "
+        "Ethiopic of that in 1924 \u2014 but only as far as the point where he "
+        "judged the rest of it late, saying so and stopping. The other six "
+        "books have no public-domain English translation at all. Part of a "
+        "seventh of a book, printed as the book, would be worse than the gap.",
+        "M. R. James, The Apocryphal New Testament, Oxford, 1924, pp. 505-521"),
+}
+
+# A book that is here, but not all of it. Each says what is printed, what is
+# not, and where the boundary comes from.
+PARTIAL = {
     "Sinodos": (
-        "No public-domain English translation. It is a large collection of "
-        "canons, prayers and church order ascribed to Clement of Rome, and "
-        "the scholarly editions of it are modern.",
-        "Ethiopian Orthodox canon lists; see the coverage note above"),
+        "The Statutes of the Apostles, which is the largest part of the "
+        "Ethiopic Sinodos and not the whole of it: the Sinodos is a body of "
+        "canon law, and Horner printed and translated this part of it. "
+        "Seventy-two statutes and thirteen prayers, complete as he has them.",
+        "G. Horner, The Statutes of the Apostles, or Canones Ecclesiastici, "
+        "London, 1904, pp. 127-232"),
     "Book of the Covenant (Mets'hafe Kidan)": (
-        "Public domain in part only. Its second part, the discourse of the "
-        "risen Lord to the disciples, corresponds to the Epistle of the "
-        "Apostles and has a public-domain English translation; the first "
-        "part, sections 1-60 on church order, does not.",
-        "Ethiopian Orthodox canon lists; see the coverage note above"),
+        "The second of its two books, the discourse of the risen Lord to the "
+        "eleven, from the Ethiopic Guerrier published. The first, sixty "
+        "sections of church order, has no public-domain English translation "
+        "of any version and is not here.",
+        "M. R. James, The Apocryphal New Testament, Oxford, 1924, pp. 485-503"),
+    "4 Baruch (Paraleipomena Jeremiou)": (
+        "Whole, but not from the Ge'ez. No public-domain English translation "
+        "of the Ge'ez exists; what is printed is the Armenian recension made "
+        "from the Greek that the Ge'ez also descends from, in Issaverdens's "
+        "English. A witness to the work in another version.",
+        "J. Issaverdens, The Uncanonical Writings of the Old Testament found "
+        "in the Armenian MSS. of the Library of St. Lazarus, Venice, 1901, "
+        "pp. 282-304"),
 }
 
 # The number each tradition actually uses for itself, with the caveat that
@@ -255,6 +271,8 @@ def main() -> int:
                 print(f"UNCITED  {name}: absent with no reason recorded")
                 return 1
             books[-1]["absentWhy"], books[-1]["absentSource"] = why
+        elif name in PARTIAL:
+            books[-1]["partialWhy"], books[-1]["partialSource"] = PARTIAL[name]
         if missing:
             print(f"BAD-REF  {name}: work ids not in data: {missing}")
 

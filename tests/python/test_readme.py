@@ -74,7 +74,7 @@ class TheHeadline(unittest.TestCase):
 
 
 class WhatCountsAsAWork(unittest.TestCase):
-    """The headline counts 166. Nine of them are not texts.
+    """The headline counts 169. Nine of them are not texts.
 
     Checking that the count matches manifest.totals.works proves the arithmetic
     and nothing else -- the number was never the doubtful part, the noun
@@ -92,8 +92,8 @@ class WhatCountsAsAWork(unittest.TestCase):
 
     def test_the_split_between_text_and_apparatus(self):
         texts = [w for w in self.works if w.get("words")]
-        self.assertEqual(len(self.works), 166)
-        self.assertEqual(len(texts), 157)
+        self.assertEqual(len(self.works), 169)
+        self.assertEqual(len(texts), 160)
         self.assertEqual(len(self.works) - len(texts), 9)
 
     def test_the_readme_says_how_many_carry_text(self):
@@ -164,17 +164,31 @@ class WhatTheFrontMatterClaimsIsMissing(unittest.TestCase):
 
 
 class TheAbsentBooks(unittest.TestCase):
-    """Four books of the Ethiopian canon are missing, and each says why.
+    """One book of the Ethiopian canon is missing, and it says why.
 
-    There were five. The Ethiopic Didascalia was added from Platt's 1834
-    printing; the other four have no English translation old enough to be
-    public domain, and that is now recorded rather than left blank.
+    There were five. The Didascalia came from Platt's 1834 printing, the
+    Sinodos from Horner's of 1904, the Book of the Covenant from M. R.
+    James's 1924 English of the Ethiopic, and the Rest of the Words of
+    Baruch from Issaverdens's Armenian of 1901. Ethiopic Clement has no
+    public-domain English translation of more than a fraction of itself,
+    and that is recorded rather than left blank.
 
-    The coverage table named them and stopped, which is a gap asserted
-    without a citation -- the one move this volume says it does not make.
-    A reason that cannot be checked is no better than no reason, so each
-    carries a source too, and build_canon.py refuses to build without one.
+    The coverage table used to name the absences and stop, which is a gap
+    asserted without a citation -- the one move this volume says it does
+    not make. A reason that cannot be checked is no better than no reason,
+    so each carries a source too, and build_canon.py refuses to build
+    without one.
+
+    The same rule now runs the other way. Three of the four recovered
+    books are here in part or in another version, and a table that says
+    "read" over half a book is making the same unsourced claim in the
+    opposite direction, so each of those carries its own reason and
+    source as well.
     """
+
+    RECOVERED = ("4 Baruch (Paraleipomena Jeremiou)",
+                 "Book of the Covenant (Mets'hafe Kidan)",
+                 "Sinodos")
 
     def setUp(self):
         with open(os.path.join(ROOT, "docs", "data", "canon.json"),
@@ -185,10 +199,7 @@ class TheAbsentBooks(unittest.TestCase):
     def test_the_absent_books_are_the_ones_on_record(self):
         self.assertEqual(
             sorted(b["name"] for b in self.absent),
-            ["4 Baruch (Paraleipomena Jeremiou)",
-             "Book of the Covenant (Mets'hafe Kidan)",
-             "Ethiopic Clement (Qalementos)",
-             "Sinodos"])
+            ["Ethiopic Clement (Qalementos)"])
 
     def test_every_absence_carries_a_reason_and_a_source(self):
         for b in self.absent:
@@ -196,6 +207,31 @@ class TheAbsentBooks(unittest.TestCase):
                             f"{b['name']} is absent with no reason")
             self.assertTrue(b.get("absentSource", "").strip(),
                             f"{b['name']} gives no source for its reason")
+
+    def test_the_recovered_books_really_carry_text(self):
+        by_name = {b["name"]: b for b in self.canon["books"]}
+        for name in self.RECOVERED:
+            book = by_name[name]
+            self.assertTrue(book["present"], f"{name} lost its text")
+            for work in book["works"]:
+                path = os.path.join(ROOT, "docs", "data", "works",
+                                    work + ".json")
+                with open(path, encoding="utf-8") as fh:
+                    got = json.load(fh)
+                words = sum(len(" ".join(c.get("paras", [])).split())
+                            for c in got["chapters"])
+                self.assertGreater(words, 3000, f"{work} is nearly empty")
+                self.assertFalse(got["verified"],
+                                 f"{work} is not audited and must not say it is")
+
+    def test_a_book_here_in_part_says_which_part(self):
+        by_name = {b["name"]: b for b in self.canon["books"]}
+        for name in self.RECOVERED:
+            book = by_name[name]
+            self.assertTrue(book.get("partialWhy", "").strip(),
+                            f"{name} is here in part and does not say so")
+            self.assertTrue(book.get("partialSource", "").strip(),
+                            f"{name} gives no source for what is here")
 
 
 class TheGazetteer(unittest.TestCase):

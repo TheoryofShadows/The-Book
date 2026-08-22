@@ -3,7 +3,7 @@ Public domain by age. Scanned by the Internet Archive; archive.org/details/statu
 
 Horner's English of the Ge'ez Sinodos whose text he prints on pages 1-88 of the same volume. The work names itself in its first sentence: “This is the Sinodos of the fathers, the Apostles.” Horner set a line-number in the margin every five lines, in the outer margin, so it changes side with the leaf.
 
-Recovered from the scan's word coordinates by tools/scans.py, run from tools/fetch_scans.py: the running heads, the marginal line-numbers and the footnotes are taken off by where they sit on the leaf. Each [page n] below is the scan's own image number, so any line here can be put beside the leaf it came from. Lines are the printed lines; a blank line is an indented paragraph opening.
+Recovered from the scan's word coordinates by tools/scans.py, run from tools/fetch_scans.py: the running heads, the marginal line-numbers and the footnotes are taken off by where they sit on the leaf. Each [page n] below is the scan's own image number, so any line here can be put beside the leaf it came from. Lines are the printed lines. A blank line means a paragraph opens on the line after it; the page markers carry no blank line of their own, so that a paragraph broken by a page turn stays one paragraph.
 ------------------------------------------------------------------------------
 
 [page 173]
@@ -28,7 +28,6 @@ seat of Presbyters, and the works of Deacons, and
 the intelligence of Readers, and blameless Widows ;
 and the work on which the foundations of the Church
 9
-
 [page 174]
 may be confirmed, and by which they may make a
 pattern of that which is in the heavens ; and that they
@@ -61,7 +60,6 @@ prophets, O my beloved.
 Statute 3. Said Matewos : All that thou dost not
 wish that they should do to thee, thou shalt not do to
 thy neighbour. This means, that that which thou
-
 [page 175]
 hatest for thyself, thou shalt not do to thy neighbour.
 And do thou, O Patros my brother, teach them with
@@ -94,7 +92,6 @@ because anger leads to murder; because anger is an
 evil demon. And thou shalt not be envious or irascible
 or a lover of fighting, because this depraves and causes
 to inherit evil
-
 [page 176]
 
 Statute 6. Said Filepos: O my son, thou shalt not
@@ -129,7 +126,6 @@ wizard or a charmer, or a chooser of hours, or a chooser
 of days, or a star-gazer, or a magician, or of men who deal
 with omens ; nor shalt thou desire to be acquainted with
 them ; because all this is for thee idolatry.
-
 [page 177]
 
 Statute 9* Said Natnael : O my son, thou shalt not be
@@ -164,7 +160,6 @@ will become holy like them. And honour them as
 much as thou canst : both with thy toil and the work of
 thy hands sustain them : since God has made thee
 worthy to find from them sustenance spiritual and that of
-
 [page 178]
 the body, and eternal life, it is proper for thee to give
 them the perishable food of this world ; because * the
@@ -197,7 +192,6 @@ corruptible.
 
 Statute 1 3. Said Bartalomewos : I beseech you, O
 our brethren, while ye have good time and are indeed
-
 [page 179]
 able to do good to all, neglect not to give while ye have
 aught to give ; because the day of God is near, and all
@@ -230,7 +224,6 @@ shall live with her. *And he should be one who shares in
 good doctrine, and who can expound the Scriptures ; and
 if he should be one who cannot expound the Scriptures,
 he should be humble and abound in love to all men.
-
 [page 180]
 That the bishop may be condemned in nothing whatever,
 nor let him be reproved in anything, y
@@ -264,7 +257,6 @@ ordained after he has been first tried. He shall not be
 of many words, nor a drunkard, nor a scoffer. And he
 shall be of good character, and a lover of the good ; one
 who is quick to go every day to the church, who remem-
-
 [page 181]
 bers there the judgment ; and he shall be obedient, and
 one who reads well, and who knows the duty (lit. place) of
@@ -295,7 +287,6 @@ they shall reprove and some they shall console. As for
 the rejected, they shall also expel them at once, and they
 shall know that those who oppose, the revilers, the re-
 jected, are those who are your adversaries. ,
-
 [page 182]
 
 Statute 17. Concerning the Widow. Said KefaS:
@@ -329,7 +320,6 @@ Statute 1 9. Concerning the statute of the Lay people.
 Said Filepos : The lay people shall do the commandment
 which is told to them with cheerfulness ; and they shall
 obey those who devote themselves to the altar; and
-
 [page 183]
 they shall all of them please God in that which is given
 to them and ordered them. And ye shall not learn
@@ -363,7 +353,6 @@ earth. Said Ya'ekob : How can they order for women a
 ministry of the Mystery, but only this ministry that they
 should help the needy ? Said Filepos : O brethren,
 concerning the charitable action which a man does, (in
-
 [page 184]
 doing it) he gathers for himself a good treasure in the
 kingdom of the heavens ; for the good deed is reckoned
@@ -397,7 +386,6 @@ of thy grace; thou who foreordainedst originally a
 family of righteous men ; from Abreham thou ordainedst
 judges and priests ; and thou didst not leave thy
 sanctuary without ministers ; and ever since the creation
-
 [page 185]
 of the world thou hast desired to be glorified in the
 (place) which thou chosest. And now pour out from
@@ -430,7 +418,6 @@ tion ; and he then having laid his hand upon the Oblation
 with all the holy ones and the presbyters shall say, thus
 gfiving thanks : The Lord (be) with you all. And the
 people shall say : Perfectly with thy Spirit may he be.
-
 [page 186]
 And the bishop shall say : Lift up your hearts. And all
 the people shall say : We have (them) with the Lord
@@ -464,7 +451,6 @@ take and drink of it: and when ye do this, make a
 memorial of me. Remembering therefore thy death and
 thy resurrection, we offer to thee this bread and this cup,
 giving thanks to thee because thou hast made us worthy
-
 [page 187]
 to Stand before thee and minister as priests to thee. We
 pray to thee, Lord, and we beseech thee to send thy Holy
@@ -495,7 +481,6 @@ holy Mystery ; and that he may not condemn any of us,
 but cause worthiness in all them who take the reception
 of the holy Mystery, the Body and the Blood of Christ,
 Almighty Lord, our God.
-
 [page 188]
 
 The deacon shall say : Pray ye. And the bishop shall
@@ -531,7 +516,6 @@ souls, in order that their sin may be remitted.
 The prayer after that they have communicated : God,
 almighty, the Father of the Lord and our Saviour Jesus
 Christ, we give thee thanks, because thou hast imparted
-
 [page 189]
 to US the reception of the holy Mystery : let it not be for
 guilt or condemnation, but for the renewal of soul and
@@ -566,7 +550,6 @@ touch him and shall pray over him. In the form which
 we said before he shall pray, saying : My God, the
 Father of our Lord and our Saviour Jesus Christ, look
 down upon this thy servant, and impart to him the spirit
-
 [page 190]
 of grace and the gift of holiness, that he may be able to
 direct thy people with pure heart : as thou lookedst
@@ -599,7 +582,6 @@ but to be one who will think of what is proper (to be
 done) and will inform the bishop. And he was not
 ordained to acquire the great Spirit of which the pres-
 byters partake, but to occupy himself with that which is
-
 [page 191]
 proper, that the bishop may trust him, and that he may
 acquaint the bishop with that which is fitting (for him to
@@ -630,7 +612,6 @@ our Lord, through whom to thee with him (be) glory and
 might and power and praise with the Holy Spirit now, etc.
 Statute 25. Concerning those who confessed and were
 condemned for the name of our Lord Jesus Christ. If
-
 [page 192]
 the confessor has been in the place of punishment, in
 chains for the name of Christ, they shall not lay hand on
@@ -661,7 +642,6 @@ a widow is ordained she shall not be sealed, but be made
 by the name. And if it was one whose husband died a
 long time, she shall be ordained. And if it was one
 whose husband had lately died, she shall not be trusted.
-
 [page 193]
 But even if she is aged, she shall be tried many days,
 because lust will contend with those who are ordained to a
@@ -693,7 +673,6 @@ baptised, and concerning the occupations which they
 ought to leave off. New persons who are to be baptised
 in order that they may hear the word, shall be brought
 to the teachers before all the people come in ; and they
-
 [page 194]
 shall a^ tiiem for what reason tfaev soi^t the Faith.
 And thejr who broi^t them shall be witness for them
@@ -726,7 +705,6 @@ by which he may live, he shall be excused. And let
 him who causes to go to idolatrous sacrifices leave
 off or be rejected. And if there is one who hunts or
 teaches hunting, or who teaches fighting, or war, or
-
 [page 195]
 a driver of horses, let him leave off or be rejected. And
 if it was a priest of the gods or a guardian of the gods,
@@ -759,7 +737,6 @@ of the man and if she has brought up her children, and if
 she did not come near another man beside him, they
 shall receive her, but if she had been near another man,
 she shall be rejected. And a man who has a concubine
-
 [page 196]
 let him desist or marry according to law ; and if he is
 not willing to desist let him be rejected. And if there
@@ -792,7 +769,6 @@ Statute 33. Concerning the laying hand upon the
 catechumen. And after the prayer, when the teacher
 has laid his hand upon the catechumen he shall pray,
 and dismiss them. And if it was one belonging to the
-
 [page 197]
 church who teaches, or a layman, he shall do likewise.
 And if a catechumen was arrested for the name of our Lord
@@ -824,7 +800,6 @@ week (sabbath) ; and if there was a menstruous woman
 among them, she shall be put aside, that she may be
 baptised on another day. And those who desire to
 be baptised shall fast on Friday, and the bishop shall
-
 [page 198]
 assemble all those who shall be baptised on Saturday into
 one place, and shall command all of them (to make)
@@ -857,7 +832,6 @@ wards they shall baptise the grown-up men. And after-
 wards all the women shall loose their hair ; and they
 shall be forbidden to wear their ornaments and their
 gold, when they are baptised, and none of them shall go
-
 [page 199]
 down having anything alien with them into the water.
 And whenever they baptise, the bishop shall give thanks
@@ -888,7 +862,6 @@ again thus : Yea, I believe. And thus he shall baptise
 him and lay his hand upon him, and upon him who
 answers for him. And he shall dip him three times;
 and he who is baptised shall make declaration every
-
 [page 200]
 single time that he is dipped, and afterwards he shall say
 to him again : Dost thou believe in the name of our
@@ -921,7 +894,6 @@ Father and the Son and the Holy Spirit in the holy
 Church henceforth unto age of age. And afterwards the
 presbyter, having poured into his hand the mystic oil,
 shall pour on the head of them all, saying : I anoint
-
 [page 201]
 thee with holy oil in the name of God the Father
 almighty and in Christ Jesus his only Son and the Holy
@@ -952,7 +924,6 @@ by the sweetness of his word. All this the bishop shall
 go through to those who are baptised. And the water
 also of the Oblation he shall show in ^ the bread like the
 inward part of man, who * is soul as well as body. And
-
 [page 202]
 all this explanation is what the bishop shall give to all
 who are baptised. And the bishop therefore having
@@ -983,7 +954,6 @@ are communicated. And they shall accept (it), and none
 shall know it except the believers, but only after they
 have communicated. And they shall first receive this
 holy blessing,^ which Yuhanes speaks of that there was
-
 [page 203]
 written upon it a new name (which) no one knows except
 him who receives the blessing.^ And on the sabbath
@@ -1015,7 +985,6 @@ is bread of blessing, and not the Oblation as the 'Body
 of our Lord Christ.
 
 Statute 37. Concerning the time at which it is seemly
-
 [page 204]
 to eat It is not proper for the catechumens to eat with
 the believers. Before any taste and drink anything
@@ -1048,7 +1017,6 @@ eat what ye leave, and he shall say this meat is the
 leavings of the holy ones. And they shall rejoice at
 your coming as they eat : and further, those who are
 invited shall eat without conversing, but when the bishop
-
 [page 205]
 allows, they shall speak, and ask what is suitable, and
 they shall answer. And when (one) has finished saying
@@ -1086,7 +1054,6 @@ to give thanks, the bishop shall first give the salutation,
 II
 
 !>-
-
 [page 206]
 thus saying: The Lord (be) with you all. And the
 people also shall say : With thy spirit. And the bishop
@@ -1119,7 +1086,6 @@ them as he recites the psalms shall say Hale luya, which
 is to say : We praise him who is God most high :
 glorified and praised is he who founded all the world
 with one word. And likewise, the psalm having been
-
 [page 207]
 completed, he shall give thanks over the cup, and shall
 give of the fragments to all the Faithful. And as they
@@ -1152,7 +1118,6 @@ who have been invited, he shall give to them food
 and wine, and having given then send them away
 immediately, and each of them shall do as they wish
 (with it) in their houses.
-
 [page 208]
 
 Statute 40. Concerning the ordinance of the gift
@@ -1184,7 +1149,6 @@ shall be baptised, and thus he who is sponsor shall know
 that he shall give account at the day of judgment for
 it And they shall cause therefore * the prayer to follow
 after the examination, saying thus: [The prayer con-
-
 [page 209]
 cerning those who gave their names] Lover of man and
 merciful author of blessing, merciful and whose habit is
@@ -1217,7 +1181,6 @@ of the truth : blot out all the vestige of error from
 their thought; place thy law and thy commandment
 within their heart : and give to them knowledge which
 is seemly, impart to them, both men and women, the
-
 [page 210]
 washing of regeneration for the forgiveness of sin ; make
 them the temple of the Holy Spirit, through our Lord
@@ -1253,7 +1216,6 @@ take him, and having turned him then to the west, with
 ^ Reading the variant oibcde.
 
 A
-
 [page 211]
 his right hand or both his hands outstretched, and his
 face opposite towards the east without fear — -'and if he
@@ -1288,7 +1250,6 @@ and change it and sanctify it and bless it and set it against.,
 all that opposes, cause it to be against all divination and
 potions, both those which are drunk, and those which are
 sprinkled, or (used) in any other way ; cause it to be for
-
 [page 212]
 healing and for life to him who shall receive of it in faith,
 and in the glory of thy only beloved Son, for to thee is
@@ -1322,7 +1283,6 @@ little sons and daughters of the holy name ; and purify
 them and wash them with water and instruct them with
 the Holy Spirit, through the coming of our Lord Christ
 with the Holy Spirit May it be to all who shall be
-
 [page 213]
 baptised in it a washing of regeneratioa for cleansing
 from all sin. And prqare tlio% whom the Holy Spirit
@@ -1353,7 +1313,6 @@ each name of the Holy Trinity he pours forth once,
 and not afterwards as to alL' And after they have
 clothed him with the baptismal (robe), the Chief Priest
 shall make prayer for the men, and if not, the priest
-
 [page 214]
 before the unction with the chrism of him who was thus
 sanctified.
@@ -1387,7 +1346,6 @@ knowledge, through, etc.
 
 The prayer of the holy oil for unction with the chrism
 of those who are baptised. Thus in giving thanks
-
 [page 215]
 shall the bishop speak and say : The Lord (be) with you
 all. And the people who stand by shall say : With
@@ -1420,7 +1378,6 @@ it be to them redemption and sure grace and a holy seal
 of unction and communion of their nature with the Holy
 Spirit ; and cause that they may be named (his) temple,
 through the name of our Lord and our Saviour Jesus
-
 [page 216]
 Christ, through whom to thee with him and with the
 Holy Spirit (be) glory and might from before the age
@@ -1455,7 +1412,6 @@ unction against every adversary, operate for grafting
 into thine own good olive tree, the Church, and
 work blessing. And he shall answer and say : Amen.
 And if it is a man (this is done) by him who ministers.
-
 [page 217]
 or by the priest who is there ; or (if) a woman, by a
 female believer who is perpetually virgin.
@@ -1490,7 +1446,6 @@ longs to consecrate the chrism, having taken it, and
 standing in front carefully, shall offer up the prayer
 and say the invocation of the coming of the Holy
 Spirit, [the bishop] thus saying: Right it is and just
-
 [page 218]
 We praise thee and glorify thee and confess thee
 and give thanks to thee in all that thou hast done
@@ -1524,7 +1479,6 @@ baptismal (robe); and then he proceeds to pray, and
 having finished the prayer of the holy oil, they cause
 three little children to come near to him, and their
 elders likewise, and having turned them towards the
-
 [page 219]
 west, first they shall anathematise Satan, saying thus :
 I anathematise thee, Satan, and all thy wicked angels
@@ -1558,7 +1512,6 @@ almighty, the Father of our Lord and our Saviour Jesus
 Christ, to whom thy servants and handmaids have
 humbled themselves ; and to thee they have subdued
 the hardness of heart and flesh, look down from the
-
 [page 220]
 heaven thy sanctuary, stretch out thine invisible hand
 upon them. Lord of heaven and earth, who through
@@ -1593,7 +1546,6 @@ he shall look toward the east, (being) in the proper vest-
 ment    And the clergy also standing in their orders,
 The presbyter shall first baptise the children, and further,
 the Chief Priest being down in the Yurdanos shall
-
 [page 221]
 baptise, laying his hand upon him whom he baptises and
 saying thus : I baptise thee, N or M, in the name of the
@@ -1629,7 +1581,6 @@ say : Amen. And if it is a presbyter who baptises, let
 him take the chrism from the bishop and anoint them,
 after they have been clothed with the baptismal (robe).
 12
-
 [page 222]
 And then (comes) the order {lit. sequence) of the
 Presfora.^
@@ -1663,7 +1614,6 @@ and further he shall say ; Those who are not admitted
 to communion depart. And then further, the deacon
 shall say to the people : Kiss one another with a kiss
 of holiness. And then when they have severally given
-
 [page 223]
 the salutation, the chief deacon shall say : Shut the
 doors, O subdeacons. This indeed as it was said at
@@ -1695,7 +1645,6 @@ flows from the holy Church, our mother, who caused us
 to grow by her breasts, which were sanctified by thee.
 O Lord, bless it with blessing and sanctify it with sancti-
 fying,  that it may become to them who partake of it
-
 [page 224]
 incorruptible communion, nourishment and washing ; let
 it be for instruction ^ in thy fear and in soberness, and
@@ -1728,7 +1677,6 @@ thanks to thee, God, and we present to thee the first
 fruit of that which thou hast g^ven to us as good things,
 having been pleased and by thy word hast commanded
 the earth to bear its various fruit, for satiety of food
-
 [page 225]
 for men and all the animals, that we may glorify thee,
 O God, in all the profit which thou causest to all creation
@@ -1761,7 +1709,6 @@ omit (to fast), and having returned from his journey he
 shall do it knowing the certainty.
 
 Statute 42. Concerning that it is seemly for the deacons
-
 [page 226]
 to wait upon the bishop. And every one of the deacons
 with the subdeacons shall turn to the bishop and tell
@@ -1794,7 +1741,6 @@ poured from the cup ; but everyone shall be most care-
 ful lest any beside believers receive of the Mystery ; and
 that none of it fall or be thrown away ; because it is the
 Body of Christ : and all believers shall eat of it, and it is
-
 [page 227]
 not proper to neglect it : [because] it is not seemly that
 any should be poured from the cup ; because the cup was
@@ -1827,7 +1773,6 @@ hired man who digs, and to him who guards that place,
 and to him who has the care of those things. And the
 bishop shall sustain him with what they offer to the
 churches.
-
 [page 228]
 
 Statute 48. Concerning the times at which it is seemly
@@ -1861,7 +1806,6 @@ there is a day on which there is no instruction, every
 one shall stay in his house, and shall take the holy
 Scripture and read as well as he can, for it is good
 And if thou wast in thy house, pray at the third hour
-
 [page 229]
 and glorify God : and if thou wast in another place, and
 if that hour has come to thee, pray in thy heart to God ;
@@ -1894,7 +1838,6 @@ at midnight having risen from thy bed, and having
 washed thy hand with water, pray. And if thou hast
 a wife, both of you pray. And if she has not yet
 become a believer, go aside from her and pray alone.
-
 [page 230]
 and return again into thy bed. Because thou art
 bound by marriage thou shalt not leave off praying;
@@ -1927,7 +1870,6 @@ light, and while we hope for the resurrection of the
 dead. All of you of the Faithful therefore doing all
 this, and looking forward and reminding one another,
 teach ye this wisdom to the catechumens, having
-
 [page 231]
 first built up (their faith) ; and ye shall not go astray
 or be lost while ye always remember Christ And
@@ -1958,7 +1900,6 @@ all, He ^ who keeps the teaching of the Apostles will
 not be hindered by any heretics. Those are the
 perverse who went astray and corrupted the teaching of
 the Apostles. And if men come to them they teach
-
 [page 232]
 them in this manner : and these heretics increased,
 and of course they who listened to them are not
@@ -1989,7 +1930,6 @@ with tongues, and they shall take serpents with their
 hands, and if they drink any deadly thing it shall not
 affect them, and upon the sick they shall lay their hand
 and they shall recover.^
-
 [page 233]
 
 And this grace, then, was first given to us, the Apostles,
@@ -2024,7 +1964,6 @@ the prophet worked so many signs and miracles, nor did
 the Jews, through their malice, believe him, though our
 Lord Christ for the Jews like Moses healed all infirmity
 and all sickness among them. Nor again did it put those
-
 [page 234]
 to shame, nor did they believe in it, when the rod became
 transformed as a serpent, nor the hand when it was made
@@ -2058,7 +1997,6 @@ was buried and rose the third day, and after the resurrec-
 tion from the dead (for forty days) having been with the
 Apostles, and having made an end of all his ordinance
 (to them), he ascended in their presence to him
-
 [page 235]
 who sent him, God the Father. To know this in truth
 then, not vaguely but as certain, he received a grace from
@@ -2092,7 +2030,6 @@ of a miracle. Neither did Elyassa despise Abdeyu keep-
 ing the law and fearing God, and he did no signs. And
 Elesewon did not neglect his assistant when he was
 afraid of the enemy, but attended to him. And Daniel
-
 [page 236]
 again, the wise, who was twice saved from the mouth of the
 lions; and the three children who went forth from the
@@ -2124,7 +2061,6 @@ the constitution of the assembly ; nor shall they say :
 The bishops and presbyters are taken out of the
 people. And to be Christians is of ourselves, but (to
 be) Aposde or bishop or whatever other (order) there
-
 [page 237]
 may be is not of ourselves but of God who gives grace.
 As much as this then we ourselves say concerning those
@@ -2157,7 +2093,6 @@ by man. Like Ananyas and Samyas in Israel ; and
 Sedekyas and Akiya, who were false prophets in Babilon.
 And Bala'am indeed the diviner was punished with
 punishment for corrupting the people of Israel with Be'el
-
 [page 238]
 Fegor ; and Kayafa at last was a self-murderer ; and
 the sons of Askeva also, devising to expel demons, having
@@ -2190,7 +2125,6 @@ magnify themselves above men, but they kept their own
 measure. Therefore amongst you also, whether they
 are men or women, and they obtained any such g^ace,
 let them humble themselves, that God may delight in
-
 [page 239]
 them, for he indeed said : To whom shall I look except
 to the humble and gentle and quiet one, and who
@@ -2229,7 +2163,6 @@ shall examine him.
 
 And ye shall receive everyone who comes to you in
 the name of our Lord, and then having proved him ye
-
 [page 240]
 shall know, for ye have wisdom, and so (to speak) on the
 right hand and on the left. If he is a passer-by, help him
@@ -2264,7 +2197,6 @@ but as the Lord commanded in the Gospel.
 And in your churches, ye presbyters and deacons, and
 all the congregation (on) the sabbaths, make a place for
 the brethren, having ordered it with all diligence and care.
-
 [page 241]
 If one is found sitting out of his order he shall be rebuked,
 because he has spoiled the holy Church, the dwelling of
@@ -2299,7 +2231,6 @@ which is concerning God, or while thou hearest or
 readest, thou shalt not respect persons, nor leave thy
 ministering to command places for them, but remain
 quiet, for the brethren shall receive them, and if they
-
 [page 242]
 have no plax:e (for them) the lover of brothers or of
 sisters,^ having risen, will leave place for them.
@@ -2333,7 +2264,6 @@ And now the word will guide us to that which is better
 for the ordinance of the Church : that ye indeed, the
 bishops whom we ordained and sent from ourselves by
 the commandment of our Lord Jesus Christ — if ye know
-
 [page 243]
 this ordinance from us — that ye might do all and not
 neglect anything, as our Lord Jesus Christ commanded,
@@ -2365,7 +2295,6 @@ life in truth ? Has nothing been found against him ?
 And if all of them should answer together and say : Yes,
 thus (it is) in truth and not in partiality, and God the
 Father and Christ his Son and Holy Spirit, the Spirit of
-
 [page 244]
 righteousness, the Paraklltos, (being) judge of all ; he shall
 ask them again even a third time, and say : Is this one
@@ -2394,7 +2323,6 @@ cry and say : Let not any stand here except the Faithful.
 Likewise when the bishop has finished all the prayer which
 it is proper for him to say for the sick (and) the rest, the
 deacon shall say to them : Kiss one another with a holy
-
 [page 245]
 kiss. And all the priests shall kiss the bishop : and of
 the lay people, man shall kiss man, and woman shall
@@ -2428,7 +2356,6 @@ this work. And after this the deacon shall bring the
 bread of the sacrifice to the bishop into the house of the
 sanctuary, and the presbyters shall stand on the left hand,
 as the likeness of the Apostles who stood with their
-
 [page 246]
 Teacher. The deacons shall stand on either side at the
 altar, and they shall hold the flabella made of anything
@@ -2461,7 +2388,6 @@ wards they shall administer to the women. And after
 the singers have finished singing the psalms, then the
 deacon shall chant, saying : We have received of the
 precious Body which is the Body^ of Christ, and we
-
 [page 247]
 thank him that he makes us worthy to partake of the
 precious and holy Mystery. After this the bishop shall
@@ -2494,7 +2420,6 @@ the deacons stand by.
 
 Concerning the Deaconesses and Subdeaconesses and
 female Readers, we have already spoken concerning them.
-
 [page 248]
 Statute 55. Concerning those who confessed. The
 confessor shall not be ordained. This is a thing ^ of his
@@ -2524,7 +2449,6 @@ if her husband was dead a short time, and not long, she
 shall not be trusted nor put into the Order of Widows,
 but shall remain a long time, with good works, with
 fasting and prayer, keeping apart, that she may subdue
-
 [page 249]
 herself patiently. The horse indeed and the mule are
 not controlled except by a strong rein.
@@ -2558,7 +2482,6 @@ Statute 58. The bishop shall bless, and they shall not
 bless him. And (the bishop) shall bless the first-fruits
 himself. And he shall ordain men. And he shall offer
 the Oblation, and he shall administer the Eulogia
-
 [page 250]
 (awlogiya) and take it from a bishop, never from a
 presbyter.
@@ -2594,7 +2517,6 @@ women, for this is that which is proper for them.
 
 The deacon shall inhibit the subdeacon and the readers
 and the singers and the deaconesses. Thus indeed it
-
 [page 251]
 is suitable for him, if the presbyter is not present. It is
 not suitable for the subdeacons to inhibit either the
@@ -2626,7 +2548,6 @@ ordinance in the good and honourable (manner) in which
 it should be done.^
 
 Statute 62. Concerning him who desires to partake of
-
 [page 252]
 the Holy Mystery. He who desires to partake of the
 mysteries of holiness, which are of the service of God,
@@ -2662,7 +2583,6 @@ taught not to commit adultery, but to be married accord-
 ing to law. If his master is a believer, and if he knows
 that his slave or his handmaid commits adultery, he shall
 give them in marriage according to law, and if he does
-
 [page 253]
 not give in marriage according to law that servant and
 that handmaid, that master of slaves shall be rejected
@@ -2702,7 +2622,6 @@ Or the circus-men who play in the circus ; and in like
 manner if there is a witch, or woman who guides to
 fornication, or makes sport, or a piper, or a dancer, or
 14
-
 [page 254]
 I
 a singer, or teacher of this kind, she shall leave off or be
@@ -2739,7 +2658,6 @@ for him, or (divines) by what he sees or hears, or in
 suspicion he will not do what is known to be good.
 Because all this is of the profane and fraudulent and
 impious. And they have writings, and they are like
-
 [page 255]
 those who know concerning life and death, and they shall
 not be received into our law, until they have examined
@@ -2774,7 +2692,6 @@ who has spiritual gift and goodness and purity, he shall
 be received (sooner), because this thing shall not be
 quickly (or slowly) in its time, but it shall be (a matter)
 of good mind and devotion and prudence.
-
 [page 256]
 
 And if there is a layman who teaches men aright, he
@@ -2810,7 +2727,6 @@ for instruction in religion of God, and the teaching of the
 Holy Spirit, which gives inheritance of the kingdom of
 the heavens in the world which is to come, and which
 in the present world keeps them in much honour and
-
 [page 257]
 blessings, on them who fear God, and those who honour
 his sabbaths and rest on them.
@@ -2846,7 +2762,6 @@ honoured it and blessed it, and it was instituted as a
 rest for man and beast, and chiefly for a memorial of
 his glory and his work, that he might be known that he
 is the maker and creator of aU. And he said : Keep my
-
 [page 258]
 sabbath, because it is my sign between me and you
 and your children, that ye may know that I am he who
@@ -2881,7 +2796,6 @@ the Christian people and not concerning Esrael alone.
 And therefore observe both for our Lord Christ and
 honour both with great care. And having fulfilled all the
 law, ye shall find honour and glories and blessings which
-
 [page 259]
 God has prepared for them that love him in this world
 and in that also which is to come.
@@ -2914,7 +2828,6 @@ Divinity of our Lord Christ was shown, and the Father
 bore testimony to his Son in the baptismal place, and
 the Holy Spirit descended upon him like the form of a
 dove, and he was shown before all the people ; and those
-
 [page 260]
 who Stood by bore testimony to him, saying : This is
 God in truth, the Son of God in truth. And further,
@@ -2948,7 +2861,6 @@ and they could not look upon the mocking of the Lord.
 And also at the time of evening let us give thanks
 because he has given rest to us at night from the toil
 of the day. And also at cock-crow, because at that
-
 [page 261]
 hour he announces the coming of the day to do the work
 of the day.
@@ -2983,7 +2895,6 @@ have fallen asleep. The third day shall be observed with
 psalms and prayers, because of the resurrection of our
 Lord the third day. Further, they shall observe seven
 days for a memorial of the living and the dead. And
-
 [page 262]
 further, they shall observe the completion of a month in
 likeness of the old ordinance, even as the people mourned
@@ -3020,7 +2931,6 @@ Son our Lord Jesus Christ are the presbyters and the
 deacons, and the powers of the church.
 
 And we say this, not forbidding them to drink wine,
-
 [page 263]
 because we cannot despise what God has created for the
 joy of man, but that they should not drink for drunken-
@@ -3054,7 +2964,6 @@ own, but that of God the Father, for he said : He who
 heard you heard me, and he who heard me heard him
 who sent me. And he who rejected you rejected me,
 and he who rejected me rejected him who sent me.
-
 [page 264]
 
 Do not those created things which have no soul keep
@@ -3089,7 +2998,6 @@ not his judgpnent which is prepared for them who do this
 thing, and the carelessness which they commit with regard
 to the Oblation, and the bread of the Blessing, whenever
 they are offered by those who are not worthy, who
-
 [page 265]
 think to do the honourable work of the priesthood, which
 is in the likeness of the great Chief Priest, Christ ; and
@@ -3124,7 +3032,6 @@ anointing with which he anointed him to be king.
 
 And God has made known to us by the declaration of
 the great thing which happened to king 'Ozyan. Not long
-
 [page 266]
 tarried the vengeance for the perverseness with which he
 acted, and made him an alien from his kingdom, because
@@ -3155,7 +3062,6 @@ worthy (of anything) beside his Order. For God is not
 a God of confusion, so that the inferiors may not grasp
 (at office) with audacity. What work then will be com-
 pleted by the imperfect } And they make a new law to
-
 [page 267]
 their own destruction, and do not know that it is a small
 thing which is in their power {lit. with them) ; and they
@@ -3186,9 +3092,6 @@ by faith and love of Jesus Christ our Lord, so much that
 he gave his life up for his sake ; and the wicked Jews, the
 murderers of the Lord, stoned him with stones for his
 name and killed him. But he was a man of such fervent
-* This reading is probably the corrected Ethiopic, which translated th«
-unpointed Arabic 'send' instead of * describe.'
-
 [page 268]
 spirit that he saw our Lord Christ at the right hand of
 God, and he saw the open gates of the heavens. And it
@@ -3222,7 +3125,6 @@ the knowledge of the truth, that throughout the day also
 he may cause us to be in all peace and health, and pro-
 tect his people with the power of his angels, who has
 authority over all work of blessing, the Lord our God.
-
 [page 269]
 The deacon shall say : Pray.
 
@@ -3262,7 +3164,6 @@ Physician of the soul and physician of the body, thou
 art the overseer of all flesh, and of those who are troubled
 with unclean spirits; deliver every tormented and
 IS
-
 [page 270]
 oppressed soul, give health and give rest, drive away all
 disease from this house, and from those who call upon
@@ -3301,7 +3202,6 @@ PRAYER FOR RAINS
 And again we beseech the almighty God, the Father,
 etc, for rains, that he may send his rain into the place
 where it is needed, the almighty Lord our God.
-
 [page 271]
 
 The deacon shall say : Pray.
@@ -3339,7 +3239,6 @@ The deacon shall say : Let us all say.
 The people shall say : O Lord, have mercy upon us.
 For the poor of thy people and for all who call upon
 thy holy and blessed name, through, etc.
-
 [page 272]
 
 PRAYER FOR THE WATERS OF THE
@@ -3379,7 +3278,6 @@ ness, the almighty Lord our God.
 The deacon shall say : Pray for the king.
 
 Lord our God the almighty, we pray thee and we
-
 [page 273]
 beseech thee for the king of this land, the lover of God,
 our king, lyasu, and grant to him what is useful for him.
@@ -3414,7 +3312,6 @@ offering.
 God the almighty, we pray thee and we beseech thee
 for those who offer an offering to the holy, one, catholic
 Church, to the honour of thy name, an offering and a
-
 [page 274]
 thanksgiving of first-fruits and of tithes, of much and of
 little, of secret and of open. And as for those who have
@@ -3451,7 +3348,6 @@ In proper time (impart to them) the washing of
 regeneration for the forgiveness of sin. Make them the
 shrine of the Holy Spirit, through our Lord and our
 Saviour Jesus Christ, through whom, etc.
-
 [page 275]
 PRAYER FOR THOSE WHO HAVE FALLEN
 ASLEEP
@@ -3484,7 +3380,6 @@ thou, God, art good and the lover of man ; for there is
 none pure from uncleanness before thee, even though he
 lived one hour upon the earth. Do thou grant passings
 to their soul freely, without hindrance. Send the Spirit
-
 [page 276]
 of the Comforter, and who gives consolation to their
 people. Comfort them, cause them to rejoice in Christ,
@@ -3522,7 +3417,6 @@ And again we beseech the almighty God, the Father,
 etc., for the congregation, this as well as all our congre-
 gations, that he may grant that it may be according to
 his holy will, the almighty Lord our God.
-
 [page 277]
 
 The deacon shall say : Pray for our congregation.
@@ -3558,7 +3452,6 @@ him by thee, together with all the bishops, presbyters,
 and deacons, and with all the fulness of the holy, one,
 catholic Church. And the prayer which they make for
 us and for all thy people hear (it), and accept them ; and
-
 [page 278]
 open to them the treasury of thy clemency ; and further,
 pour down upon him abundantly thy grace of thy Holy

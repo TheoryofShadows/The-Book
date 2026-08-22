@@ -32,9 +32,13 @@ decide by luck:
     footnotes        trailing lines set smaller than the body and
                      opening after a gap wider than the page's own line
                      pitch. Both signals, and only at the foot: a line
-                     of short letters measures small anywhere, and a
-                     rule that could reach the middle of a page would
-                     eventually eat some text
+                     of short letters measures small anywhere -- some of
+                     Issaverdens's do -- and a rule that could reach the
+                     middle of a page would eventually eat some text.
+                     Both distances are measured between baselines,
+                     because the top of a line moves with whether its
+                     first word happens to have an ascender and the
+                     baseline does not
 
     paragraphs       a line indented past the block, following a line
                      that ended short. Either signal alone misfires --
@@ -76,10 +80,14 @@ SHORT = 2.0
 
 # A trailing line set below this fraction of the page's body type, and
 # opening after a gap this much wider than the page's line pitch, is a
-# footnote. Horner's notes measure 0.81 of his text and James's 0.91, so
-# the cut is above both; body lines measure between 0.96 and 1.05.
-SMALL = 0.95
-GAP = 1.2
+# footnote. Horner's notes measure 0.81 of his text and James's 0.92 to
+# 0.95, so the size cut has to sit high -- above some perfectly ordinary
+# lines -- and the gap is what keeps it off them. Measured between
+# baselines, a body line opens between 0.97 and 1.03 of the pitch on
+# every leaf of all three of these books, and a footnote at 1.13 or
+# more.
+SMALL = 0.96
+GAP = 1.08
 
 # How many leaves must open with the same line before it is a running
 # head rather than a coincidence, and how alike two readings of one head
@@ -96,6 +104,7 @@ class Line:
         self.x0 = min(w[0] for w in words)
         self.x1 = max(w[2] for w in words)
         self.height = statistics.median(w[1] - w[3] for w in words)
+        self.base = statistics.median(w[1] for w in words)
         self.starts_para = False
 
     @property
@@ -212,9 +221,9 @@ def _page(number: int, raw, previous, margin_len: int, running: set):
         return None
 
     median = statistics.median(line.height for line in raw)
-    tops = sorted(line.words[0][3] for line in raw)
+    bases = [line.base for line in raw]
     pitch = statistics.median(
-        [b - a for a, b in zip(tops, tops[1:])]) if len(tops) > 1 else 0
+        [b - a for a, b in zip(bases, bases[1:])]) if len(bases) > 1 else 0
 
     lo, hi = 0, len(raw)
     heads, notes = [], []
@@ -242,7 +251,7 @@ def _page(number: int, raw, previous, margin_len: int, running: set):
     while foot - 1 > lo and raw[foot - 1].height < SMALL * median:
         foot -= 1
     if foot < hi and pitch:
-        gap = raw[foot].words[0][3] - raw[foot - 1].words[0][3]
+        gap = raw[foot].base - raw[foot - 1].base
         if gap > GAP * pitch:
             notes = [l.text for l in raw[foot:hi]]
             hi = foot
@@ -280,53 +289,46 @@ def _page(number: int, raw, previous, margin_len: int, running: set):
 
 
 # ---- turning printed lines back into prose ---------------------------
+#
+# This half runs offline, from the text committed under source/extra, and
+# knows nothing about scans. Joining printed lines into prose is a
+# question about words, and the answer has to be checkable from the file
+# in the repository rather than from a page image nobody has.
 
 HYPHEN = re.compile(r"[A-Za-z]-$")
-EDGE = ".,;:!?()[]'\"«»"
+EDGE = ".,;:!?()[]'\"\u00ab\u00bb"
 
 
-def paragraphs(pages_, hyphens=None):
-    """The pages' lines as paragraphs, with breaks and hyphens closed.
+def prose(paragraphs, hyphens=None):
+    """Paragraphs of printed lines, joined into paragraphs of prose.
 
-    A word broken across a line break is rejoined. Whether the join keeps
-    the hyphen is decided by the rest of the book rather than by a rule:
-    if the closed-up form occurs elsewhere in these pages the break was
+    A word broken across a line break is put back together. Whether the
+    join keeps the hyphen is decided by the rest of the work rather than
+    by a rule: if the closed-up form occurs elsewhere in it the break was
     the compositor's and the hyphen goes; if only the hyphenated form
-    occurs, the hyphen is the translator's and it stays. Neither, and it
-    closes up, which is the commoner case. `hyphens` collects every
-    decision so a caller can print or test them.
+    occurs, the hyphen is the translator's and it stays; if neither does,
+    it closes up, which is the commoner case by far. `hyphens` collects
+    every decision, so the caller can print or test them.
     """
-    lines = [line.text for page in pages_ for line in page.lines]
-    breaks = [i for i, line in enumerate(
-        [l for page in pages_ for l in page.lines]) if line.starts_para]
-
+    if hyphens is None:
+        hyphens = []
     vocabulary = set()
-    for line in lines:
-        for word in line.split():
-            vocabulary.add(word.strip(EDGE).lower())
+    for para in paragraphs:
+        for line in para:
+            for word in line.split():
+                vocabulary.add(word.strip(EDGE).lower())
 
-    text = _dehyphenate(lines, vocabulary, hyphens if hyphens is not None else [])
-
-    out, current = [], []
-    for i, line in enumerate(text):
-        if i in breaks and current:
-            out.append(" ".join(current))
-            current = []
-        if line:
-            current.append(line)
-    if current:
-        out.append(" ".join(current))
-    return [re.sub(r"\s+", " ", p).strip() for p in out if p.strip()]
+    out = []
+    for para in paragraphs:
+        joined = _dehyphenate(list(para), vocabulary, hyphens)
+        text = re.sub(r"\s+", " ", " ".join(joined)).strip()
+        if text:
+            out.append(text)
+    return out
 
 
 def _dehyphenate(lines, vocabulary, hyphens):
-    """Close every hyphenated line break, in place, returning the lines.
-
-    The word that was broken is put back on the line it started on, so
-    the line indices the paragraph breaks refer to still mean what they
-    meant.
-    """
-    lines = list(lines)
+    """Close every hyphenated line break, returning the lines."""
     for i in range(len(lines) - 1):
         line = lines[i].rstrip()
         if not HYPHEN.search(line):
@@ -349,4 +351,33 @@ def _dehyphenate(lines, vocabulary, hyphens):
             lines[i] = stem + head
             hyphens.append((started + tail, "closed"))
         lines[i + 1] = rest
-    return [l.strip() for l in lines]
+    return [l.strip() for l in lines if l.strip()]
+
+
+def read_recovered(path):
+    """A file written by tools/fetch_scans.py, as paragraphs of lines.
+
+    The page markers are transparent -- a paragraph runs across a leaf
+    the way it does in the book -- and a blank line is what says a
+    paragraph opens. That is why the markers carry no blank line of
+    their own: the two would be indistinguishable, and every paragraph
+    broken by a page turn would come apart.
+    """
+    with open(path, encoding="utf-8") as fh:
+        text = fh.read()
+    body = text.split("-" * 78, 1)[1]
+
+    paragraphs, current, pages = [], [], []
+    for line in body.split("\n"):
+        if line.startswith("[page "):
+            pages.append(int(line[6:-1]))
+            continue
+        if not line.strip():
+            if current:
+                paragraphs.append(current)
+                current = []
+            continue
+        current.append(line.strip())
+    if current:
+        paragraphs.append(current)
+    return paragraphs, pages

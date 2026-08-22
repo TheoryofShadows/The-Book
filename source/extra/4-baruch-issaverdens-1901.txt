@@ -3,7 +3,7 @@ Public domain by age. Scanned by the Internet Archive; archive.org/details/uncan
 
 The fullest of the three Armenian recensions Issaverdens prints of the work the Ethiopian canon receives as The Rest of the Words of Baruch, and the one he says was made from the Greek. The two shorter ones stand on the leaves before it, printed against each other; the running head is what separates them, and what selects this one.
 
-Recovered from the scan's word coordinates by tools/scans.py, run from tools/fetch_scans.py: the running heads, the marginal line-numbers and the footnotes are taken off by where they sit on the leaf. Each [page n] below is the scan's own image number, so any line here can be put beside the leaf it came from. Lines are the printed lines; a blank line is an indented paragraph opening.
+Recovered from the scan's word coordinates by tools/scans.py, run from tools/fetch_scans.py: the running heads, the marginal line-numbers and the footnotes are taken off by where they sit on the leaf. Each [page n] below is the scan's own image number, so any line here can be put beside the leaf it came from. Lines are the printed lines. A blank line means a paragraph opens on the line after it; the page markers carry no blank line of their own, so that a paragraph broken by a page turn stays one paragraph.
 ------------------------------------------------------------------------------
 
 [page 307]
@@ -36,7 +36,6 @@ mv chosen. »
 «.
 
 And Jeremiah spake, saying : « 0 Lord,
-
 [page 308]
 Almighty ! Thou deliverest up this Thy
 chosen city, into the hands of the Chaldeans !
@@ -70,7 +69,6 @@ And when Baruch saw that he had put
 ashes upon his head, and had rent his gar-
 ments, he cried out with a loud voice, saying:
 « Jeremiah, my father, what has happened
-
 [page 309]
 unto thee, or what sin have the people
 committed ? »
@@ -106,7 +104,6 @@ as the Lord had commanded Jeremiah,
 they, together, Jeremiah and Baruch, went
 up to the wall of the city. And lo, a voice
 was heard like the sound of a flute, and
-
 [page 310]
 angels came down from heaven, and in their
 hands were lamps, and they placed them
@@ -140,7 +137,6 @@ burv it under the earth, and sav unto her:
 thv Creator, — and let the icater, tchick
 has sealed up the seventh epoch, and there-
 after   shall take away thine ornament, be a
-
 [page 311]
 tvitness^ ^ — keep the furniture of the altar
 until the coming of the Beloved One. ' »
@@ -170,7 +166,6 @@ And Jeremiah and Baruch went into the
 sanctuary, and they took the furniture of
 the altar and buried it under the earth, as
 the Lord spake unto them, and the earth
-
 [page 312]
 swallowed it up, and they sat down to-
 gether and wept*
@@ -205,7 +200,6 @@ And Jeremiah wept and went after the
 people, whom the king of the Babylonians
 carried into Babylon. And Baruch also put
 ashes upon his head and wept, and wont
-
 [page 313]
 his way sighing and saying : « Jerusalem
 was defiled because the people were prone to
@@ -238,7 +232,6 @@ this he awoke out of his sleep and said : -
 « I sweetly slept a while, bat my head is
 hea\ y, for my sleep has not refreshed me. »
 Then he beheld the figs, the milk of which
-
 [page 314]
 was dropping down, and said : « I would
 sleep yet a little more ; but I fear if I l>e
@@ -271,7 +264,6 @@ them, and said : <c Blessed be God, I foel
 greatly afi-aid. » Then he departed from
 the citv, iifrieved in his heart, and not
 19
-
 [page 315]
 knowing which way to go, he put down
 the basket, saying : « I will sit down here
@@ -307,7 +299,6 @@ a man of God, I would greiitly laugh at thee
 for thy saying that Jeremiah is in Babylon
 with the people. Even if the windows of
 heaven were opened upon this town, they
-
 [page 316]
 could not carry away captive them that
 <lwell therein. And how sayest thou that
@@ -339,7 +330,6 @@ thee this fear. Behold, for sixty-six years
 the people have been captive in Babylon;
 and believe me, my son, that what I say
 unto thee is true. (Jo back to the village
-
 [page 317]
 and obsen'e the fig-trees and see that the
 time of figs is not yet. w
@@ -373,7 +363,6 @@ exult in thy dwelling— place, and say unto
 thine earthly home, thy grief shall be chang-
 ed into Joy when the Almighty shall come
 und take thee out of thy dwelling-place,
-
 [page 318]
 for there has not been found sin in thee.
 Come out of thy dwelling-place, and in
@@ -406,7 +395,6 @@ unto Jeremiah in Babylon. )>
 And while Baruch was praying and say-
 ing, all these things, the Counsellor of light
 provided the means for sending to Jeremiah.
-
 [page 319]
 And He said unto them : a At the break
 of day, an eagle shall come unto you; go
@@ -439,7 +427,6 @@ us and considered our tears, and remember-
 ed the covenant that He had made with
 our fathers, with Abraham, Isaac and Ja-
 cob.   He sent unto me his angfel and told
-
 [page 320]
 me this thing which I now write unto thee*
 The Lord God of Israel, who took us out
@@ -474,7 +461,6 @@ has sent me that I should carrv thv ffood
 news into Babvlon. »
 
 Baruch said unto him : « Art thou able
-
 [page 321]
 to carry these good tidings to Jeremiah in
 Babvlon ? »
@@ -507,7 +493,6 @@ manner go thy way through the power of
 God: and mav the jrlorv of the Lord be
 with thee in the way that thou art going. »
 Then the eagle took his flight, having
-
 [page 322]
 the letter tied upon his neck, and went unto
 Babylon. And there he rested upon a pillar
@@ -539,8 +524,9 @@ And all the people wondered at the sign,
 and they said : <( This is the God of our
 fathers, who through Moses appeared in the
 wilderness, and now He hath appeared unto
-
+us. w
 [page 323]
+
 And the eagle said : « I bid thee, Jere-
 miah, come and untie this letter and read
 it before the people. »
@@ -572,7 +558,6 @@ depart from here, for we declare unto you
 that all the time we live here thev make
 us to sutler, saying : ' Sing* us one of your
 sonofs of 8ion. ' And we answer them:
-
 [page 324]
 How can we sing the Lord's song in a
 strange land ? »
@@ -608,7 +593,6 @@ that listen not unto thee and pass not over
 Jordan, brinir them not thither. »
 
 And Jeremiah spake these things unto
-
 [page 325]
 the people, and they arose and came unto
 \Tordan to pass over it. And Jeremiah made
@@ -644,7 +628,6 @@ Then they returned and came unto a place
 in the desert, far off from Jerusalem ; and
 there they built a city and called its name
 Samaria.
-
 [page 326]
 
 And Jeremiah sent unto them, savhi*?:
@@ -678,7 +661,6 @@ of God, has left us and is gone from us. »
 And all the peoi)le heard their w.eeping,
 and ran unto them: and Jeremiah was
 Ivino^ like a dead. And thev rent their
-
 [page 327]
 clothes, and put ashes upon their heads^
 and wept bitterly. And afterwards they
@@ -710,7 +692,6 @@ haughty and said, * We caused our tops
 to reach the clouds, ' He shall smite
 them and bring down their lofty branches.
 He, the everlasting Tree ! The crimson He
-
 [page 328]
 shall make white like wool, and destroy
 the whiteness of the snow, and cause sweet
@@ -745,7 +726,6 @@ what I have seen. »
 
 Then he said : w Bring hither a stone
 and set it up. »
-
 [page 329]
 
 And he prayed : a Kternal Light, com-

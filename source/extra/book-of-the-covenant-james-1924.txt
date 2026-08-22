@@ -3,7 +3,7 @@ Public domain by age. Scanned by the Internet Archive; archive.org/details/JAMES
 
 James's English of the Ethiopic that Guerrier published as the Testament of our Lord in Galilee, which is the second book of the Mets'hafe Kidan, the Book of the Covenant. James's own introduction stands at the head of these leaves and is not part of the text; tools/build_ethiopian.py cuts it off at the opening of section 1.
 
-Recovered from the scan's word coordinates by tools/scans.py, run from tools/fetch_scans.py: the running heads, the marginal line-numbers and the footnotes are taken off by where they sit on the leaf. Each [page n] below is the scan's own image number, so any line here can be put beside the leaf it came from. Lines are the printed lines; a blank line is an indented paragraph opening.
+Recovered from the scan's word coordinates by tools/scans.py, run from tools/fetch_scans.py: the running heads, the marginal line-numbers and the footnotes are taken off by where they sit on the leaf. Each [page n] below is the scan's own image number, so any line here can be put beside the leaf it came from. Lines are the printed lines. A blank line means a paragraph opens on the line after it; the page markers carry no blank line of their own, so that a paragraph broken by a page turn stays one paragraph.
 ------------------------------------------------------------------------------
 
 [page 510]
@@ -72,7 +72,6 @@ unto them, for there is in them deceit wherewith they bring men
 to destruction. (The book hath been written) that ye may be
 steadfast and not flinch nor be troubled, and depart not from
 the word of the Gospel which ye have heard. Like as we heard
-
 [page 511]
 it, we keep it in remembrance and have written it for the whole
 world. We commend you our sons and our daughters in joy <to
@@ -122,7 +121,6 @@ story quoted by Irenaeus (see above, Gospel of Thomas, p. 15).
 The story is in our texts of the Gospel of Thomas, and runs through
 all the Infancy Gospels). This thing which then came to pass is
 true and of verity.
-
 [page 512]
 
 487
@@ -176,7 +174,6 @@ Here begins the Coptic text
 
 7 Cerinthus and Simon are come to go to and fro in the world,
 but they are enemies of our Lord Jesus Christ, for they do pervert
-
 [page 513]
 the word and the true thing, even (faith in) Jesus Christ. Keep
 yourselves therefore far from them, for death is in them, and great
@@ -226,7 +223,6 @@ wound of the spear in my side; but thou, Andrew, look on my
 feet and see whether they press the earth; for it is written in the
 prophet: 1 A phantom of a devil maketh no footprint on the
 earth.
-
 [page 514]
 
 489
@@ -280,7 +276,6 @@ After my return to the Father, and run on).
 (Easter, pascha) cometh, one of you shall be cast into prison for
 my name's sake; and he will be in grief and sorrow, because ye
 keep the Easter while he is in prison and separated from you, for
-
 [page 515]
 he will be sorrowful because he keepeth not Easter with you.
 And I will send my power in the form of mine angel Gabriel, and
@@ -326,7 +321,6 @@ and said unto us: Know ye not, then, that like as until now
 I have been here, so also was I there, with him that sent me?
 And we said to him: Lord, is it then possible that thou shouldest
 be both here and there? But he answered us: I am wholly in
-
 [page 516]
 491
 the Father and the Father in me, 1 because of (in regard of) the
@@ -379,10 +373,6 @@ Copt, begins again : words are missing.
 He answered us: Ye shall behold a light, more excellent than
 that which shineth ... (shineth more brightly than the light, and is
 more perfect than perfection. And the Son shall become perfect
-1 Coptic resumes.
-
-• The Lord’s day considered as the eighth day of the week.
-
 [page 517]
 through the Father who is Light, for the Father is perfect which
 bringeth to pass death and resurrection, and ye shall see a per¬
@@ -442,7 +432,6 @@ give us leave. And he said unto us: I know that ye pay heed,
 and that your heart is well-pleased when ye hear me: now
 concerning that which ye desire, I will speak good words unto you.
 21 For verily I say unto you: Like as my Father hath raised me
-
 [page 518]
 403
 from the dead, so shall ye also rise (in the flesh, Eth.) and be taken
@@ -497,7 +486,6 @@ But what ye will, tell it me, and I myself will tell you without
 grudging: only keep ye my commandments and do that which
 I bid you, and turn not away vour face from any man, that I turn
 not my face away from you, but without shrinking and fear and
-
 [page 519]
 without respect of persons, minister ye in the way that is direct
 and narrow and strait. So shall my Father himself rejoice
@@ -551,7 +539,6 @@ commandments.
 
 28 But so much the more have I redeemed you, the children
 of light, from all evil and from the authority of the rulers (archons).
-
 [page 520]
 495
 and every one that believeth on me by your means. For that
@@ -607,7 +594,6 @@ life eternal. And unto the others also will I give my power, that
 they may teach the residue of the peoples.
 
 (Six leaves lost in Copt .; Eth . continues.)
-
 [page 521]
 
 31 And behold a man shall meet you, whose name is Saul,
@@ -661,7 +647,6 @@ you; and he shall come quickly: and he shall become strong in
 the faith, that the word of the prophet may be fulfilled, which
 saith: Behold, out of Syria will I begin to call together a new
 Jerusalem, and Sion will I subdue unto me, and it shall be taken.
-
 [page 522]
 407
 and the place which is childless shall be called the son and
@@ -715,9 +700,6 @@ their life.
 And we asked him: What of them that trust in thee ? He
 answered and said unto us : Ye are yet slow of heart; and how
 long ? Verily I say unto you, as the prophet David spake of me
-1 Here begins the parallel text in the prophecy ( Testament in Galilee)
-which is prefixed, in the Ethiopic version, to the Epistle: see above.
-
 [page 523]
 and of my people, so shall it be (?) for them also that believe on me.
 But they that are deceivers in the world and enemies of righteous¬
@@ -769,7 +751,6 @@ my name and yet follow after evil and spread vain doctrine.
 And men shall follow after them and their riches, and be subject
 unto their pride, and lust for drink, and bribery, and there shall
 be respect of persons among them.
-
 [page 524]
 
 499
@@ -824,7 +805,6 @@ yet denied me? hath not every man power to live and to die?
 Whoso then hath kept my commandments shall be a son of the
 light, that is, of the Father that is in me. But because of them
 that corrupt my words am I come down from heaven. I am the
-
 [page 525]
 word: I became flesh, and I wearied myself (or, suffered) and
 taught, saying : The heavy laden shall be saved, and they that
@@ -878,7 +858,6 @@ the kingdom of heaven.
 
 And we said unto him: Lord, even if every one of us had ten
 thousand tongues to speak withal, we could not thank thee, for
-
 [page 526]
 501
 that thou promisest such things unto us. Then answered he us,
@@ -932,7 +911,6 @@ shall men remain without): notwithstanding, they that watched
 were with thee the Lord and bridegroom, even though they
 rejoiced not because of them that slumbered (yet will they have
 no pleasure, because of, Eth,), He said unto us: They will
-
 [page 527]
 indeed rejoice that they have entered in with the bridegroom,
 the Lord; and they are sorrowful because of them that slum¬
@@ -987,7 +965,6 @@ division, jealousy, confusion, hatred, and envy? For thou
 sayest: They shall find fault with one another and respect the
 person of them that sin, and hate them that rebuke them. And
 he answered and said unto us: How then shall the judgement
-
 [page 528]
 503
 come about, that the corn should be gathered into the garner

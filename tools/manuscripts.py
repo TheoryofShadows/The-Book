@@ -140,3 +140,18 @@ WORKS = {
 # New Testament section, and Sinaiticus additionally to Hermas.
 NT_SECTION_WITNESSES = ["sinaiticus", "vaticanus"]
 HERMAS_WITNESSES = ["sinaiticus"]
+
+# Except that the section is arranged by date rather than by canon, and it
+# holds two works these Greek codices do not contain. Attaching a witness
+# to a work it does not carry is the plainest kind of false citation, and
+# the shortcut was making one: 2 Esdras survives in Latin, Syriac and
+# Ge'ez and is in no Greek Bible at all, and 4 Baruch is a separate work
+# again, printed here from the Armenian.
+NT_SECTION_EXCEPT = {
+    "2-esdras-4-ezra":
+        "Survives in Latin, Syriac, Ethiopic and Armenian; the Greek is "
+        "lost and it stands in neither codex.",
+    "the-rest-of-the-words-of-baruch":
+        "A separate work from the Baruch of the canon, and in neither "
+        "codex.",
+}

@@ -13,18 +13,22 @@ The link is case sensitive. `/The-Book/` works; `/the-book/` does not.
 ---
 
 Every text of the Jewish, Protestant, Catholic and Eastern Orthodox canons, and
-all but four of the Ethiopian — together with the pseudepigrapha, the New
+all but one of the Ethiopian — together with the pseudepigrapha, the New
 Testament apocrypha and the Apostolic Fathers — arranged by when scholars
 believe each was written, and published as a searchable, interactive reader.
 
-The four that are missing are missing for a reason the accuracy report names
-and cites: no English translation of them is old enough to be public domain.
+There were five missing. Four of them are here now, recovered from
+nineteenth- and early twentieth-century scans by their word coordinates
+rather than by their optical character recognition, and each says on its own
+page which version it is a witness to and what has not been checked about it.
+The one still missing is missing for a reason the canon table names and
+cites: no English translation of it is old enough to be public domain.
 
 It opens with the Song of the Sea, not with Genesis.
 
-**166 works · 2,269 chapters · 40,124 numbered verses · 1.16 million words**
+**169 works · 2,408 chapters · 40,124 numbered verses · 1.19 million words**
 
-Of the 166 entries, **157 carry text**. The other nine are apparatus rather
+Of the 169 entries, **160 carry text**. The other nine are apparatus rather
 than works: the Dead Sea Scrolls summaries, the Psalms of Solomon and Philo
 placeholders, four notes on manuscript discoveries, and two editorial asides.
 They are counted because they are printed and read in sequence with the rest;
@@ -70,6 +74,9 @@ translation.
 | Ante-Nicene Fathers, ed. Roberts and Donaldson, 1885 | Apostolic Fathers, Testaments of the Twelve Patriarchs, NT apocrypha, Shepherd of Hermas, Ignatius (shorter recension) |
 | Ante-Nicene Christian Library, 1870 | Hermas Similitudes 1 and 10, Polycarp 14, the Fragments of Papias — gaps the 1885 scrape lost |
 | Thomas Pell Platt, Oriental Translation Fund, 1834 | The Ethiopic Didascalia — recovered from the scan of a facing-page printing, and **not audited** |
+| G. Horner, The Statutes of the Apostles, 1904 | The Ethiopic Sinodos, from his English of the Ge'ez he prints beside it — **not audited** |
+| J. Issaverdens, Venice, 1901 | The Rest of the Words of Baruch, in the Armenian recension made from the Greek — **not audited**, and not the Ge'ez |
+| M. R. James, The Apocryphal New Testament, 1924 | The second book of the Book of the Covenant, from the Ethiopic Guerrier published — **not audited** |
 
 ## Seeing the disagreement
 
@@ -184,9 +191,16 @@ Corrected in this edition:
 Corrected claims:
 
 - The source states *"Every book in every one of these canons is printed in full
-  in this volume."* That does not hold for the Ethiopian Orthodox Tewahedo
-  canon: 1 Enoch and Jubilees are here, but 4 Baruch, Ethiopic Clement, the
-  Didascalia, the Sinodos and the Book of the Covenant are not.
+  in this volume."* That did not hold for the Ethiopian Orthodox Tewahedo
+  canon: five of its books were absent. Four have since been recovered — the
+  Didascalia from Platt's 1834 printing, the Sinodos from Horner's of 1904,
+  the Book of the Covenant from M. R. James's 1924 English of the Ethiopic,
+  and the Rest of the Words of Baruch from Issaverdens's Armenian of 1901 —
+  and the claim still does not hold, because Ethiopic Clement is not here, the
+  Sinodos is here as the Statutes rather than as the whole collection, the
+  Book of the Covenant is here as its second book only, and the Rest of the
+  Words of Baruch is a witness in another version rather than the Ge'ez. The
+  canon table says which, book by book, where it says a book is here.
 
 Gaps inherited from the source editions, left honest rather than invented:
 
@@ -203,7 +217,7 @@ Gaps inherited from the source editions, left honest rather than invented:
 ## Listening to it
 
 Every chapter can be read aloud. There is no audiobook of these translations
-in the public domain and 1.13 million words cannot be recorded, so the reading
+in the public domain and 1.19 million words cannot be recorded, so the reading
 is done by the speech engine already in the browser: press **Listen** in any
 chapter, or `l`.
 

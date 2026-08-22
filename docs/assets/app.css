@@ -195,6 +195,12 @@ h3 { font-size: 1.1rem; margin: 1.6rem 0 .4rem; }
 
 .rule { border: 0; border-top: 1px solid var(--rule); margin: 2.4rem 0; }
 
+/* The canon table's own footnotes: why a book is absent, or which part of
+   one is here. Closed by default -- the table is a table first. */
+.why { margin-top: .3rem; max-width: 34rem; }
+.why > summary { cursor: pointer; color: var(--accent); }
+.why p { margin: .35rem 0 0; }
+
 /* ---------- home ---------- */
 
 .hero { padding: 1rem 0 .5rem; }

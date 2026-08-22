@@ -29,7 +29,9 @@ import zlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from logo import ACCENT, BOX, PAPER, radius, rects, svg_paths  # noqa: E402
 
-OUT = sys.argv[1] if len(sys.argv) > 1 else "docs/assets"
+# Read in main() rather than here, so importing this module cannot pick
+# up the arguments of whatever imported it.
+OUT = "docs/assets"
 
 # The tile: the mark inset in a square. 1/8 of the square on every side is
 # the padding Apple's own icons use, and it survives the corner rounding
@@ -124,6 +126,9 @@ def hexc(rgb: tuple[int, int, int]) -> str:
 
 
 def main() -> int:
+    global OUT
+    if len(sys.argv) > 1:
+        OUT = sys.argv[1]
     os.makedirs(OUT, exist_ok=True)
 
     written = []
