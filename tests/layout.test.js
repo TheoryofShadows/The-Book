@@ -105,6 +105,41 @@ module.exports = async function layout(t, ctx) {
   }
   await page.close();
 
+  /* A table head that covers its own first row is a table that lies about
+     what it contains, and the first row is the one that gets hidden: the
+     contents opened on The Song of the Sea and showed the header instead.
+     Checked at the widths where the wrapper does and does not scroll, since
+     the bug came from the wrapper. */
+  const heads = ctx.tally.watch(
+    await ctx.browser.newPage({ viewport: { width: 1280, height: 900 } }), 'table heads');
+  for (const width of [360, 760, 1280]) {
+    await heads.setViewportSize({ width, height: 900 });
+    for (const route of ['#/contents', '#/canons', '#/accuracy', '#/method']) {
+      await heads.goto(ctx.base + route);
+      await heads.waitForSelector('table.grid tbody tr');
+      const covered = await heads.evaluate(() => {
+        const bad = [];
+        document.querySelectorAll('table.grid').forEach((table, i) => {
+          const th = table.querySelector('thead th');
+          const td = table.querySelector('tbody tr td');
+          if (!th || !td) return;
+          const head = th.getBoundingClientRect();
+          const row = td.getBoundingClientRect();
+          // Touching is right -- the head sits on the row's top edge. Any
+          // further down and it is printed over the first line of data.
+          if (head.bottom > row.top + 1)
+            bad.push('table ' + i + ': head reaches ' + Math.round(head.bottom) +
+                     ', row "' + td.textContent.trim().slice(0, 24) +
+                     '" starts at ' + Math.round(row.top));
+        });
+        return bad;
+      });
+      t.check(`${width}px: ${route} shows the first row of every table`,
+              covered.length === 0, covered.join('; '));
+    }
+  }
+  await heads.close();
+
   /* The player is fixed to the bottom; the page has to give that space back. */
   const reader = ctx.tally.watch(
     await ctx.browser.newPage({ viewport: { width: 390, height: 780 } }), 'player');

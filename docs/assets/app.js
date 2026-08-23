@@ -189,8 +189,13 @@
         "Follow one question across eight hundred years of writing. Every " +
         "passage is the text itself; every reference is checked when the site " +
         "is built." }));
+      // Six is what the front page can hold before the threads push the
+      // library itself off the bottom of it. The rest are one link away,
+      // and the count says how many there are rather than implying six is
+      // all of them.
+      var SHOWN = 6;
       var grid = el("div", { class: "thread-cards" });
-      threads.forEach(function (t) {
+      threads.slice(0, SHOWN).forEach(function (t) {
         grid.appendChild(el("a", { class: "thread-card", href: "#/thread/" + t.id }, [
           el("h3", { text: t.title }),
           el("p", { text: t.question }),
@@ -198,6 +203,12 @@
         ]));
       });
       box.appendChild(grid);
+      if (threads.length > SHOWN) {
+        box.appendChild(el("p", { class: "muted" }, [
+          el("a", { href: "#/threads", text:
+            "All " + threads.length + " threads" })
+        ]));
+      }
       // Directly under the hero. The argument comes before the statistics.
       var anchor = wrap.querySelector(".stats");
       if (anchor) wrap.insertBefore(box, anchor);
