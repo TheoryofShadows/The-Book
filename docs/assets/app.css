@@ -1,35 +1,65 @@
 /* ------------------------------------------------------------------ *
    The Book — chronological reader
-   Light theme is warm paper; dark theme is deep ink. Both are defined
-   as complete palettes so neither depends on the other.
+   Light is a leaf of vellum on a table; dark is the same room unlit.
+   Both are defined as complete palettes so neither depends on the other.
  * ------------------------------------------------------------------ */
 
-/* Palette drawn from the materials of the texts themselves: unbleached
-   linen for the ground, iron-gall ink (which oxidises violet-black) for
-   type, Tyrian purple for the accent — the dye of the Levantine coast,
-   the argaman of Exodus 26 and the trade of Lydia in Acts 16 — and
-   verdigris, the patina of ancient bronze, for confirmations. Neutrals
-   carry a slight violet bias so they read as chosen, not defaulted. */
+/* Two accents, and the difference between them is the whole system.
+
+   RUBRIC is the red a scribe changed pens for. In a manuscript it marks
+   the structure of the text and nothing else — the chapter number, the
+   verse number, the heading, the initial — which is where the word
+   rubric comes from, and it does exactly that job here.
+
+   TYRIAN is the site's own machinery: a link, a focus ring, the control
+   you just pressed. It is the argaman of Exodus 26 and the trade of
+   Lydia in Acts 16, the dye of the coast these texts were written on.
+
+   So a red mark on this site is the book speaking and a purple one is
+   the reader speaking, and neither is ever used for the other's work.
+   Everything else follows from materials: unbleached parchment for the
+   ground, a brighter leaf raised off it, and iron-gall ink — which
+   oxidises violet-black rather than grey — for type. Dark inverts the
+   two, which is what a photographic negative of a manuscript looks
+   like: the leaf goes to the colour of the ink and the ink to the
+   colour of the leaf.
+
+   No font, image or texture is fetched. The site ships no dependencies
+   and its single-file build has to open from file:// with the network
+   off, so the grain of the paper is a gradient and the type is whatever
+   the device already has. */
 
 :root {
-  --paper:      #f2eee5;
-  --paper-2:    #e8e2d6;
-  --raised:     #fbf9f4;
-  --ink:        #1f1b24;
-  --ink-soft:   #574f5c;
-  --ink-faint:  #857c8a;
-  --rule:       #d6cec4;
-  --rule-soft:  #e4ddd3;
-  --accent:     #6b2d5b;
-  --accent-2:   #8a3f76;
-  --accent-bg:  #eee2ea;
+  --paper:      #eee7d9;
+  --paper-2:    #e4dbc9;
+  --raised:     #fcf9f2;
+  --ink:        #1d1822;
+  --ink-soft:   #554d5c;
+  --ink-faint:  #837a89;
+  --rule:       #d4cab8;
+  --rule-soft:  #e3dac9;
+  --accent:     #632a55;
+  --accent-2:   #83406f;
+  --accent-bg:  #efe3ec;
+  --rubric:     #9b2f21;
+  --rubric-2:   #b8503f;
+  --rubric-bg:  #f5e4df;
+  --gilt:       #9d7526;
   --good:       #2f6b5f;
-  --good-bg:    #e0ece9;
+  --good-bg:    #dfeae6;
   --warn:       #8a5a12;
-  --warn-bg:    #f4e9d3;
+  --warn-bg:    #f2e7cf;
   --fix:        #33587e;
-  --fix-bg:     #e2e9f2;
-  --mark:       #f6e2a4;
+  --fix-bg:     #e0e7f0;
+  --mark:       #f4dd9c;
+
+  /* The gutter of a bound leaf, and the grain across it. Both are drawn
+     rather than photographed, and both are nearly invisible on purpose:
+     texture a reader notices is texture in the way. */
+  --spine:      rgba(74, 55, 30, .17);
+  --grain:      rgba(74, 55, 30, .022);
+  --wash-1:     rgba(255, 253, 246, .75);
+  --wash-2:     rgba(99, 42, 85, .045);
 
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
            Georgia, "Times New Roman", serif;
@@ -37,9 +67,12 @@
            "Helvetica Neue", Arial, sans-serif;
   --mono:  ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  --shadow: 0 1px 2px rgba(35, 32, 27, .06), 0 8px 24px rgba(35, 32, 27, .07);
+  --shadow: 0 1px 2px rgba(58, 44, 24, .07), 0 10px 30px rgba(58, 44, 24, .09);
   --radius: 10px;
   --measure: 34rem;
+  /* The leaf the reader is set on, and the width every control above it
+     lines up with. One number, so they cannot drift apart. */
+  --leaf: calc(var(--measure) + 5rem);
   --reader-size: 1.075rem;
 
   /* Native widgets -- select dropdowns, scrollbars -- are drawn by the
@@ -47,27 +80,38 @@
   color-scheme: light;
 }
 
+/* The unlit room. Kept as one block and applied twice, because the theme
+   can be chosen as well as inherited and neither route may be the poor
+   relation of the other. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper:     #16131a;
-    --paper-2:   #1c1822;
-    --raised:    #211c29;
-    --ink:       #e7e1e9;
-    --ink-soft:  #a79fae;
-    --ink-faint: #7d7484;
-    --rule:      #342d3c;
-    --rule-soft: #292332;
-    --accent:    #c98bb4;
-    --accent-2:  #dda8c8;
-    --accent-bg: #2a1f28;
+    --paper:     #14121a;
+    --paper-2:   #1c1925;
+    --raised:    #211d2b;
+    --ink:       #ece3d3;
+    --ink-soft:  #aea5b1;
+    --ink-faint: #837a8b;
+    --rule:      #383140;
+    --rule-soft: #2b2535;
+    --accent:    #d29ac1;
+    --accent-2:  #e7b8d5;
+    --accent-bg: #2d2231;
+    --rubric:    #e2836b;
+    --rubric-2:  #f0a893;
+    --rubric-bg: #301f1d;
+    --gilt:      #d9b46b;
     --good:      #78c0b0;
     --good-bg:   #162623;
     --warn:      #d9b269;
     --warn-bg:   #262015;
     --fix:       #8ab3d8;
     --fix-bg:    #182231;
-    --mark:      #55401f;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 28px rgba(0, 0, 0, .35);
+    --mark:      #5a4520;
+    --spine:     rgba(0, 0, 0, .55);
+    --grain:     rgba(255, 250, 235, .014);
+    --wash-1:    rgba(60, 52, 78, .40);
+    --wash-2:    rgba(210, 154, 193, .05);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 12px 34px rgba(0, 0, 0, .40);
     color-scheme: dark;
   }
 }
@@ -75,25 +119,33 @@
 :root[data-theme="light"] { color-scheme: light; }
 
 :root[data-theme="dark"] {
-  --paper:     #16131a;
-  --paper-2:   #1c1822;
-  --raised:    #211c29;
-  --ink:       #e7e1e9;
-  --ink-soft:  #a79fae;
-  --ink-faint: #7d7484;
-  --rule:      #342d3c;
-  --rule-soft: #292332;
-  --accent:    #c98bb4;
-  --accent-2:  #dda8c8;
-  --accent-bg: #2a1f28;
+  --paper:     #14121a;
+  --paper-2:   #1c1925;
+  --raised:    #211d2b;
+  --ink:       #ece3d3;
+  --ink-soft:  #aea5b1;
+  --ink-faint: #837a8b;
+  --rule:      #383140;
+  --rule-soft: #2b2535;
+  --accent:    #d29ac1;
+  --accent-2:  #e7b8d5;
+  --accent-bg: #2d2231;
+  --rubric:    #e2836b;
+  --rubric-2:  #f0a893;
+  --rubric-bg: #301f1d;
+  --gilt:      #d9b46b;
   --good:      #78c0b0;
   --good-bg:   #162623;
   --warn:      #d9b269;
   --warn-bg:   #262015;
   --fix:       #8ab3d8;
   --fix-bg:    #182231;
-  --mark:      #55401f;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 28px rgba(0, 0, 0, .35);
+  --mark:      #5a4520;
+  --spine:     rgba(0, 0, 0, .55);
+  --grain:     rgba(255, 250, 235, .014);
+  --wash-1:    rgba(60, 52, 78, .40);
+  --wash-2:    rgba(210, 154, 193, .05);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 12px 34px rgba(0, 0, 0, .40);
   color-scheme: dark;
 }
 
@@ -109,6 +161,24 @@ body {
   font-size: 16px;
   line-height: 1.62;
   -webkit-text-size-adjust: 100%;
+}
+
+/* The ground the leaves sit on: two soft washes and the laid lines of a
+   sheet of paper, drawn with gradients because nothing here may be
+   fetched. Fixed and behind everything, so it does not scroll with the
+   text and does not repaint as the page grows. Dropped for a reader who
+   has asked for less: it is decoration and nothing depends on it. */
+body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, var(--grain) 0 1px, transparent 1px 3px),
+    radial-gradient(120% 80% at 8% -15%, var(--wash-1), transparent 62%),
+    radial-gradient(90% 65% at 100% 0%, var(--wash-2), transparent 58%),
+    var(--paper);
+}
+@media (prefers-reduced-transparency: reduce) {
+  body::before { background: var(--paper); }
 }
 
 a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
@@ -128,10 +198,20 @@ a:hover { color: var(--accent-2); }
   position: sticky; top: 0; z-index: 40;
   display: flex; align-items: center; gap: 1rem;
   padding: .55rem clamp(.75rem, 3vw, 1.6rem);
-  background: color-mix(in srgb, var(--paper) 88%, transparent);
-  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--paper) 86%, transparent);
+  backdrop-filter: blur(12px) saturate(1.1);
   border-bottom: 1px solid var(--rule);
   flex-wrap: wrap;
+}
+/* The head rule a printer sets under a running head: a hairline of the
+   book's own red, not another grey line. */
+.topbar::after {
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+  background: linear-gradient(90deg,
+    var(--rubric) 0, color-mix(in srgb, var(--rubric) 30%, transparent) 38%,
+    transparent 72%);
+  opacity: .55; pointer-events: none;
 }
 
 /* The wordmark. The subtitle is the whole argument of the project in five
@@ -140,7 +220,8 @@ a:hover { color: var(--accent-2); }
   display: inline-flex; align-items: center; gap: .5rem;
   color: var(--ink); text-decoration: none; white-space: nowrap;
 }
-.brand-mark { color: var(--accent); display: flex; align-items: center; }
+.brand-mark { color: var(--rubric); display: flex; align-items: center; }
+.brand:hover .brand-mark { color: var(--rubric-2); }
 .brand-text { display: flex; flex-direction: column; line-height: 1.05; }
 .brand-name {
   font-family: var(--serif); font-size: 1.16rem; font-weight: 600;
@@ -166,7 +247,10 @@ a:hover { color: var(--accent-2); }
   font-size: .875rem; white-space: nowrap;
 }
 .nav a:hover { background: var(--paper-2); color: var(--ink); }
-.nav a[aria-current="page"] { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+.nav a[aria-current="page"] {
+  background: var(--accent-bg); color: var(--accent); font-weight: 600;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+}
 
 .tools { display: flex; gap: .3rem; align-items: center; }
 
@@ -184,9 +268,15 @@ main { padding: clamp(1.2rem, 4vw, 2.6rem) clamp(.9rem, 4vw, 2rem) 4rem; }
 .wrap { max-width: 60rem; margin: 0 auto; }
 .wrap-wide { max-width: 74rem; margin: 0 auto; }
 
-h1, h2, h3, h4 { font-family: var(--serif); line-height: 1.22; font-weight: 600; }
-h1 { font-size: clamp(1.7rem, 4.2vw, 2.5rem); margin: 0 0 .5rem; letter-spacing: -.01em; }
-h2 { font-size: 1.42rem; margin: 2.4rem 0 .7rem; }
+h1, h2, h3, h4 {
+  font-family: var(--serif); line-height: 1.18; font-weight: 600;
+  text-wrap: balance;
+}
+h1 {
+  font-size: clamp(1.9rem, 5.2vw, 3rem); margin: 0 0 .6rem;
+  letter-spacing: -.018em;
+}
+h2 { font-size: 1.48rem; margin: 2.6rem 0 .7rem; letter-spacing: -.008em; }
 h3 { font-size: 1.1rem; margin: 1.6rem 0 .4rem; }
 
 .lede { font-size: 1.08rem; color: var(--ink-soft); max-width: 44rem; }
@@ -203,25 +293,39 @@ h3 { font-size: 1.1rem; margin: 1.6rem 0 .4rem; }
 
 /* ---------- home ---------- */
 
-.hero { padding: 1rem 0 .5rem; }
-.hero h1 { max-width: 20ch; }
+/* A title page. The rule above the title is the one a printer sets there,
+   and the mark on it is the same five rectangles as the tab icon. */
+.hero { padding: 1.6rem 0 .5rem; position: relative; }
+.hero::before {
+  content: "";
+  display: block; width: 3.2rem; height: 2px; margin: 0 0 1.3rem;
+  background: var(--rubric); opacity: .8;
+}
+.hero h1 { max-width: 18ch; }
+.hero .lede { margin-top: 1rem; }
 
+/* The numbers are a colophon rather than a dashboard: a row of figures
+   under a rule, in the book's own type, with nothing boxed. */
 .stats {
-  display: grid; gap: .7rem; margin: 1.8rem 0 .5rem;
-  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  display: grid; gap: 0 1.6rem; margin: 2.2rem 0 .5rem;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  border-top: 1px solid var(--rule);
+  padding-top: 1rem;
 }
-.stat {
-  background: var(--raised); border: 1px solid var(--rule-soft);
-  border-radius: var(--radius); padding: .8rem .9rem;
-}
+.stat { padding: .35rem 0; }
 .stat b {
-  display: block; font-family: var(--serif); font-size: 1.5rem;
-  font-weight: 600; letter-spacing: -.01em;
+  display: block; font-family: var(--serif); font-size: 1.75rem;
+  font-weight: 600; letter-spacing: -.02em; line-height: 1.1;
+  font-variant-numeric: tabular-nums lining-nums;
 }
-.stat span { font-size: .78rem; color: var(--ink-faint); }
+.stat span {
+  display: block; margin-top: .15rem;
+  font-size: .7rem; color: var(--ink-faint);
+  text-transform: uppercase; letter-spacing: .09em;
+}
 
 .callout {
-  border-left: 3px solid var(--accent);
+  border-left: 3px solid var(--rubric);
   background: var(--paper-2);
   padding: .9rem 1.1rem; border-radius: 0 var(--radius) var(--radius) 0;
   margin: 1.6rem 0; font-size: .94rem;
@@ -258,6 +362,7 @@ h3 { font-size: 1.1rem; margin: 1.6rem 0 .4rem; }
   border: 1px solid var(--accent); border-radius: 4px;
   padding: .05rem .3rem; letter-spacing: .04em;
 }
+.era-num { color: var(--rubric); border-color: color-mix(in srgb, var(--rubric) 35%, transparent); }
 .era[data-collection="1"] .era-num { color: var(--ink-faint); border-color: var(--rule); }
 .era-name { font-family: var(--serif); font-size: 1.14rem; font-weight: 600; }
 .era-date { color: var(--ink-faint); font-size: .84rem; font-variant-numeric: tabular-nums; }
@@ -273,7 +378,18 @@ h3 { font-size: 1.1rem; margin: 1.6rem 0 .4rem; }
   background: var(--raised); border: 1px solid var(--rule-soft);
   border-radius: 8px; padding: .55rem .7rem;
 }
-.work:hover { border-color: var(--accent); background: var(--accent-bg); }
+.work {
+  background: var(--raised);
+  transition: border-color .15s, background-color .15s, transform .15s;
+}
+.work:hover {
+  border-color: var(--accent); background: var(--accent-bg);
+  transform: translateY(-1px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .work { transition: none; }
+  .work:hover { transform: none; }
+}
 .work-title { font-family: var(--serif); font-size: .97rem; display: block; }
 .work-meta { font-size: .74rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
 .work.note-only { background: transparent; border-style: dashed; }
@@ -304,8 +420,13 @@ table.grid th, table.grid td {
   text-align: left; padding: .42rem .6rem; border-bottom: 1px solid var(--rule-soft);
   vertical-align: top;
 }
+/* The head stays put as the table scrolls, so it needs a ground of its
+   own: the page's is a gradient now and a transparent header would have
+   the rows running through it. */
 table.grid thead th {
-  position: sticky; top: 3.2rem; background: var(--paper);
+  position: sticky; top: 3.2rem;
+  background: var(--paper);
+  box-shadow: 0 -1px 0 0 var(--paper), 0 1px 0 0 var(--rule);
   border-bottom: 1px solid var(--rule); font-size: .78rem;
   text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint);
   font-weight: 600;
@@ -328,6 +449,10 @@ table.grid tbody tr:hover { background: var(--paper-2); }
   background: var(--raised); border: 1px solid var(--rule-soft);
   border-radius: var(--radius); padding: 1.1rem 1.2rem;
   border-left: 3px solid var(--accent);
+}
+.thread-card {
+  background: var(--raised); box-shadow: var(--shadow);
+  border-left-color: var(--rubric);
 }
 .thread-card:hover { border-color: var(--accent); background: var(--accent-bg); }
 .thread-card h2 {
@@ -394,7 +519,17 @@ table.grid tbody tr:hover { background: var(--paper-2); }
 
 /* ---------- reader ---------- */
 
-.reader-head { border-bottom: 1px solid var(--rule); padding-bottom: 1rem; margin-bottom: 1.4rem; }
+/* Everything on a reading page is the same column: the leaf sets the
+   width and the head, the controls and the pager line up with it, so the
+   page reads as one object rather than as a wide header with a page
+   floating somewhere under it. */
+.reader-head, .pager, .witnesses {
+  max-width: var(--leaf); margin-left: auto; margin-right: auto;
+}
+.reader-head {
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 1rem; margin-bottom: 1.4rem;
+}
 .crumbs { font-size: .8rem; color: var(--ink-faint); margin-bottom: .35rem; }
 .crumbs a { color: var(--ink-faint); }
 
@@ -411,15 +546,53 @@ table.grid tbody tr:hover { background: var(--paper-2); }
 .chapter-strip a:hover { border-color: var(--accent); color: var(--accent); }
 .chapter-strip a[aria-current="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
 
+/* The text is set on a leaf rather than on the page's own ground: a
+   brighter surface, a hairline, and a gutter shadow down the bound edge.
+   That is the mark of this volume drawn at full size -- a spine and the
+   leaves hanging off it -- and it is what tells the eye where the book
+   stops and the apparatus around it starts.
+
+   The measure is unchanged. The leaf is the measure plus its margins,
+   which is why every control above it is sized from the same token. */
 .reader {
+  position: relative;
   font-family: var(--serif);
   font-size: var(--reader-size);
   line-height: 1.75;
-  max-width: var(--measure);
+  max-width: var(--leaf);
   margin: 0 auto;
+  padding: clamp(1.3rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2.5rem);
+  background: var(--raised);
+  border: 1px solid var(--rule-soft);
+  border-radius: 2px var(--radius) var(--radius) 2px;
+  /* Two leaves under this one, drawn as offset hairlines rather than as
+     an image, so the chapter reads as a page in a book with more of the
+     book behind it. */
+  box-shadow:
+    3px 3px 0 -1px var(--raised), 3px 3px 0 0 var(--rule-soft),
+    6px 6px 0 -1px var(--raised), 6px 6px 0 0 var(--rule-soft),
+    var(--shadow);
   hanging-punctuation: first;
+  text-wrap: pretty;
+  margin-top: .9rem;
 }
-.reader.verse-per-line .v { display: block; margin: 0 0 .5rem; }
+.reader::before {
+  content: "";
+  position: absolute; left: 0; top: 0; bottom: 0; width: 9px;
+  border-radius: 2px 0 0 2px;
+  background: linear-gradient(90deg, var(--spine), transparent);
+  pointer-events: none;
+}
+/* Set out this way the verse is a line, and a line's number belongs in
+   the margin beside it rather than in front of it. */
+.reader.verse-per-line .v {
+  display: block; margin: 0 0 .5rem;
+  padding-left: 2.1rem; text-indent: -2.1rem;
+}
+.reader.verse-per-line .vnum {
+  display: inline-block; min-width: 1.7rem; text-align: right;
+  margin-right: .4rem; vertical-align: baseline; font-size: .74em;
+}
 .reader .v { transition: background-color .25s; }
 .reader .v.target { background: var(--mark); border-radius: 3px; }
 .reader p { margin: 0 0 1.05rem; }
@@ -427,13 +600,15 @@ table.grid tbody tr:hover { background: var(--paper-2); }
 /* The verse number is a button now, but must still read as a superscript
    numeral inside flowing text rather than as a control. */
 .vnum {
-  font-family: var(--sans); font-size: .68em; font-weight: 600;
-  color: var(--accent); vertical-align: .35em;
-  margin-right: .22em; font-variant-numeric: tabular-nums;
+  font-family: var(--sans); font-size: .66em; font-weight: 700;
+  color: var(--rubric); vertical-align: .38em;
+  margin-right: .24em; font-variant-numeric: tabular-nums lining-nums;
   background: none; border: 0; padding: 0 .1em; cursor: pointer;
   line-height: 1;
 }
-.vnum:hover { text-decoration: underline; }
+.vnum:hover { color: var(--rubric-2); text-decoration: underline; }
+/* Opened, it is a control rather than a numeral, so it changes colour
+   as well as ground: purple is the site talking. */
 .vnum[aria-expanded="true"] {
   background: var(--accent); color: #fff; border-radius: 3px;
 }
@@ -497,20 +672,24 @@ table.grid tbody tr:hover { background: var(--paper-2); }
 
 .note-block {
   font-family: var(--sans); font-size: .93rem; color: var(--ink-soft);
-  background: var(--paper-2); border-radius: var(--radius);
-  padding: .9rem 1.1rem; margin: 0 auto 1.8rem;
-  max-width: calc(var(--measure) + 2.2rem);
+  background: transparent; border-left: 2px solid var(--rule);
+  border-radius: 0;
+  padding: .2rem 0 .2rem 1.1rem; margin: 0 auto 1.8rem;
+  max-width: var(--leaf);
 }
 
 .reader-controls {
   display: flex; gap: .4rem; align-items: center; justify-content: flex-end;
-  flex-wrap: wrap; margin: .9rem auto 0; max-width: calc(var(--measure) + 2.2rem);
+  flex-wrap: wrap; margin: .9rem auto 0; max-width: var(--leaf);
 }
+/* The chapter's own heading, in the red a scribe would have changed pens
+   for, with the hairline that separates it from the leaf above. */
 .chapter-title {
-  font-size: 1.12rem; margin: .4rem auto 1.1rem;
-  max-width: calc(var(--measure) + 2.2rem); color: var(--ink-soft);
-  letter-spacing: .02em; text-transform: uppercase; font-size: .8rem;
-  font-family: var(--sans); font-weight: 600;
+  margin: 0 0 1.2rem;
+  color: var(--rubric);
+  letter-spacing: .16em; text-transform: uppercase; font-size: .72rem;
+  font-family: var(--sans); font-weight: 700;
+  padding-bottom: .5rem; border-bottom: 1px solid var(--rule-soft);
 }
 .note-block p { margin: .4rem 0; }
 .note-block p:first-child { margin-top: 0; }
@@ -520,7 +699,7 @@ table.grid tbody tr:hover { background: var(--paper-2); }
    Two columns, deliberately identical in weight. Neither tradition is
    styled as the default reading; the reader compares and decides. */
 
-.positions { margin: 0 auto 1.6rem; max-width: calc(var(--measure) + 2.2rem); }
+.positions { margin: 0 auto 1.6rem; max-width: var(--leaf); }
 
 .positions-head {
   width: 100%; text-align: left; cursor: pointer; font: inherit; color: inherit;
@@ -774,6 +953,7 @@ mark { background: var(--mark); color: inherit; padding: 0 .1em; border-radius: 
   background: transparent; cursor: pointer; font-family: inherit;
   text-decoration: none;
 }
+.chip { background: var(--raised); }
 .chip:hover { border-color: var(--accent); color: var(--accent); }
 .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 
@@ -924,7 +1104,7 @@ main > * { animation: rise .18s ease-out; }
    Closed by default so it never competes with the text itself. */
 
 .witnesses {
-  margin: 0 auto 1.6rem; max-width: calc(var(--measure) + 2.2rem);
+  margin: 0 auto 1.6rem; max-width: var(--leaf);
   border: 1px solid var(--rule); border-radius: var(--radius);
   background: var(--raised);
 }
@@ -976,7 +1156,7 @@ main > * { animation: rise .18s ease-out; }
 
 /* Said out loud where the button is, not only to the live region. */
 .listen-note {
-  max-width: calc(var(--measure) + 2.2rem);
+  max-width: var(--leaf);
   margin: .5rem auto 0;
   font-family: var(--sans); font-size: .82rem; line-height: 1.5;
   color: var(--warn); background: var(--warn-bg);
@@ -1012,6 +1192,7 @@ main > * { animation: rise .18s ease-out; }
 .player-btn:hover { border-color: var(--accent); color: var(--accent); }
 /* The accent is a deep purple in light and a pale one in dark, so the glyph
    takes the ground colour rather than a fixed white and stays legible in both. */
+.player-bar i { background: var(--rubric); }
 .player-play {
   background: var(--accent); border-color: var(--accent); color: var(--paper);
   width: 2.6rem; height: 2.6rem; font-size: 1.05rem;

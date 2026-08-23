@@ -463,6 +463,45 @@ fails every utterance — so the engine is replaced with a stand-in that records
 what it was asked to say. Everything above that line is the site's own code.
 The last inch, audible sound, needs a real device.
 
+## How it looks, and why
+
+A codex, drawn out of what the texts were made of.
+
+The chapter is set on a **leaf**: a brighter surface than the page it sits
+on, with a hairline, a gutter shadow down the bound edge, and two more
+leaves showing under it as offset hairlines. That is the volume's own mark
+— a bound spine and the leaves hanging off it — drawn at full size, and it
+is what tells the eye where the book stops and the apparatus around it
+starts. Everything on a reading page is the width of that leaf: the title,
+the chapter strip, the controls and the pager all line up with it, so the
+page reads as one object.
+
+**Two accents, and the difference between them is the whole system.**
+Rubric red is the colour a scribe changed pens for, and it does here what
+it did there: the chapter heading, the verse numbers, the section numerals,
+and nothing else. Tyrian purple — the argaman of Exodus 26 and the trade of
+Lydia in Acts 16, the dye of the coast these texts were written on — is the
+site's own machinery: a link, a focus ring, the control you just pressed.
+So a red mark is the book speaking and a purple one is the reader speaking,
+and neither is ever used for the other's work. Open a verse's menu and its
+number turns from red to purple, because at that moment it has stopped
+being a numeral and become a control.
+
+The rest follows from materials: unbleached parchment for the ground, iron
+gall — which oxidises violet-black rather than grey — for type. Dark is the
+same room unlit, and it inverts the two, which is what a photographic
+negative of a manuscript looks like: the leaf goes to the colour of the ink
+and the ink to the colour of the leaf.
+
+**Nothing is fetched to do any of it.** The site ships no dependencies and
+its single-file build has to open from `file://` with the network off, so
+the grain of the paper is a gradient, the stacked leaves are box shadows,
+and the type is whatever the device already has. A web font would be the
+easiest thing here and the one thing that cannot be had.
+
+Set one verse per line and the numbers hang in the margin beside the lines,
+the way a psalter sets them.
+
 ## How the site works
 
 Static files only — no build step, no dependencies, no tracking. Work texts and

@@ -549,8 +549,11 @@
         })
       ]);
       body.appendChild(controls);
+      // The chapter's rubric goes on the leaf it heads, not above it: in a
+      // codex the heading is part of the page, and the leaf is where this
+      // volume draws the line between the text and the apparatus round it.
       var chapterTitle = el("h2", { class: "chapter-title", text: chapter.label });
-      body.appendChild(chapterTitle);
+      reader.appendChild(chapterTitle);
 
       // What the narrator will read, in the order it appears, pointing at the
       // very nodes just rendered so the highlight lands on the visible text.
