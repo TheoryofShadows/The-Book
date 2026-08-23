@@ -39,6 +39,31 @@ def collect() -> dict:
     return bundle
 
 
+ONLINE_ONLY = ("<!-- online-only:start -->", "<!-- online-only:end -->")
+
+
+def strip_online_only(body: str) -> str:
+    """Drop anything the served site has that this copy cannot honour.
+
+    The one case so far is the link offering this file. In the served page it
+    is a download; inlined here it would be a link from the offline copy to
+    the offline copy, resolving against a file:// path that does not exist --
+    a dead link in the one build whose whole claim is that nothing it needs
+    is elsewhere. Marking the region in index.html rather than matching on
+    the link keeps the rule general, and keeps the decision beside the thing
+    being decided about.
+    """
+    start, end = ONLINE_ONLY
+    while start in body:
+        head, rest = body.split(start, 1)
+        if end not in rest:
+            raise SystemExit(f"unclosed {start} in docs/index.html")
+        body = head + rest.split(end, 1)[1]
+    if end in body:
+        raise SystemExit(f"{end} with no {start} in docs/index.html")
+    return body
+
+
 def main() -> int:
     css = open(os.path.join(DOCS, "assets", "app.css"), encoding="utf-8").read()
     js = open(os.path.join(DOCS, "assets", "app.js"), encoding="utf-8").read()
@@ -53,6 +78,7 @@ def main() -> int:
 
     body = html.split("<body>", 1)[1].split("</body>", 1)[0]
     body = body.replace('<script src="assets/app.js"></script>', "")
+    body = strip_online_only(body)
 
     # Only the body survives the split above, so the tab icon has to be put
     # back by hand or the offline copy is the one place the mark is missing.

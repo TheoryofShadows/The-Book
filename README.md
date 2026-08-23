@@ -431,7 +431,7 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | `tools/audit.py` | Checks chapter and verse counts against reference figures |
 | `tools/build_canon.py` | Builds canon membership and checks coverage claims |
 | `tools/build_index.py` | Builds the sharded search index |
-| `tools/build_standalone.py` | Inlines the whole library into one HTML file that runs offline |
+| `tools/build_standalone.py` | Inlines the whole library into one HTML file that runs offline, and cuts out the parts of the page an offline copy cannot honour |
 | `tools/textnorm.py` | The one rule that folds text into a search token or a lookup key |
 | `tools/dates.py` | Reads a numeric span out of a position statement, and refuses to where there is none |
 | `tools/lint.sh` | Everything parses, and every data file is the JSON it claims to be |
@@ -541,6 +541,35 @@ easiest thing here and the one thing that cannot be had.
 Set one verse per line and the numbers hang in the margin beside the lines,
 the way a psalter sets them.
 
+## Taking it offline
+
+**[Download the whole library as one file](https://theoryofshadows.github.io/The-Book/the-book.html)** —
+13 MB of HTML with every text, the search index, the definitions, the
+gazetteer and the land outlines inlined into it. Open it from your own disk
+with the network off and everything works: search, the map, the word lookup,
+read-aloud, saving verses. Nothing is fetched, because there is nothing left
+to fetch.
+
+It is built by `tools/build_standalone.py`, which walks `docs/data` rather
+than naming the files it inlines — an earlier version named them, so every
+data file added afterwards was silently missing and the feature resting on it
+died with nothing but a failed fetch to show for it. The `offline` suite opens
+the built file from a `file://` URL and exercises the features in it, and the
+build refuses to finish above 15 MB.
+
+The file is not in this repository. It is derived, it is 13 MB, and a copy
+regenerated on every data change would be most of the history here within a
+year — so `.gitignore` holds it out, `tools/build.sh` writes it locally so the
+link on the page works while you are developing, and the deploy rebuilds it
+from the committed data and ships it inside the Pages artifact. That is the
+only copy served.
+
+The served page offers it in the footer, and that link is the one thing cut
+out of the offline copy: inlined whole it would point from the file at the
+file, at a path beside itself that is not there. `docs/index.html` marks the
+region and the build cuts it, with tests holding both ends — a dead link is
+the failure that looks completely normal.
+
 ## How the site works
 
 Static files only — no build step, no dependencies, no tracking. Work texts and
@@ -557,8 +586,9 @@ and scanned for exact verses. Quote a phrase to match it exactly.
 
 `.github/workflows/pages.yml` runs the lint and the unit tests, rebuilds the
 data from source, fails the build if `docs/data` has drifted or the audit finds
-anything not in the baseline, runs the browser checks, and only then publishes
-`docs/`.
+anything not in the baseline, runs the browser checks, then builds the
+single-file offline copy from the committed data and publishes `docs/` with it
+inside.
 
 **One manual step is required before the site can go live:** open
 **Settings → Pages** and set **Source: GitHub Actions**. The workflow cannot do

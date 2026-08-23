@@ -54,4 +54,15 @@ python3 tools/build_index.py "$OUT"
 echo "==> audit"
 python3 tools/audit.py "$OUT"
 
+# The whole library as one file, after the audit rather than before it: a copy
+# nobody can check is a copy of whatever the data happened to be. It is not
+# committed -- 13 MB regenerated on every data change would be most of this
+# repository's history within a year -- so it is gitignored here and rebuilt
+# from the committed data by the deploy, which is the only place it is served
+# from. Building it locally too means the link in the footer works while you
+# are developing, and means this script fails here rather than in CI if the
+# page ever stops being self-contained.
+echo "==> the single-file offline build"
+python3 tools/build_standalone.py docs docs/the-book.html
+
 echo "==> done"
