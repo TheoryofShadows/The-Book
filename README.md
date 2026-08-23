@@ -34,7 +34,7 @@ them is old enough to be public domain.
 
 It opens with the Song of the Sea, not with Genesis.
 
-**172 works · 2,530 chapters · 40,124 numbered verses · 1.22 million words**
+**172 works · 2,537 chapters · 40,124 numbered verses · 1.22 million words**
 
 Of the 172 entries, **163 carry text**. The other nine are apparatus rather
 than works: the Dead Sea Scrolls summaries, the Psalms of Solomon and Philo
@@ -87,6 +87,7 @@ translation.
 | M. R. James, The Apocryphal New Testament, 1924 | The second book of the Book of the Covenant, and the Apocalypse of Peter out of the Ethiopic Books of Clement — **not audited** |
 | G. H. Schodde, Journal of the Society of Biblical Literature, 1885 | The fifty-seven Apostolic Canons, the second part of the Sinodos — **not audited** |
 | J. Cooper and A. J. Maclean, 1902 | The Testamentum Domini, the Book of the Covenant's church order — **not audited**, and from the Syriac |
+| J. B. Lightfoot and J. R. Harmer, 1891 | 1 Clement 58–63, the six chapters the damaged last leaf of Codex Alexandrinus took with it — recovered from the scan, and checked at both seams against the volume's own translation of the chapters either side |
 
 ## Seeing the disagreement
 
@@ -187,6 +188,37 @@ Verified correct:
 - The Catholic canon of 73 and the Eastern Orthodox additions are complete.
 - No duplicate chapters, no empty chapters, no broken verse sequences.
 
+Closed since, from editions the source compilation did not use:
+
+- **1 Clement's great intercessory prayer**, and the five other chapters
+  around it. The 1885 printing follows Codex Alexandrinus, whose last leaf is
+  damaged: 57:7–63:4 went with it, which is why this letter used to run 1–59
+  where every complete edition runs 1–65. That was never a hole in the public
+  domain — Bryennios found the whole letter in a Constantinople manuscript in
+  1873 and Lightfoot printed it in English in 1891 — so the six chapters are
+  recovered from the scan of that printing by their word coordinates, and the
+  last two chapters are renumbered 64 and 65, as they are everywhere else.
+  Two translators in one letter is stated on the work's own page rather than
+  smoothed over, and the join is held under test from both sides.
+- **Ignatius to the Smyrnaeans 13**, which turned out not to be missing at
+  all. It was printed as the second half of chapter 12, behind the single
+  word *CONCLUSION* — the printing's heading for it, left standing in the
+  running text. The same chapter had the scrape's fingerprints on it twice
+  more: Ignatius greeted Troas twice, and one *and* was doubled.
+- **Twenty-three chapter headings** across 1 Clement, Barnabas and two
+  letters of Ignatius, each of them the second line of a two-line heading
+  that the source preparation cut at the line break and left at the head of
+  its own chapter. 1 Clement 24 opened *"resurrection."* and Ignatius to the
+  Philadelphians 10 opened *"PERSECUTION."* Which openings those are is not
+  guessed: the 1870 edition prints the headings in full, and a chapter
+  opening is taken off only when it is the end of its own printed heading
+  and the text resumes at a sentence after it — so Barnabas 19, which is
+  headed *The way of light* and opens *"The way of light, then, is as
+  follows"*, keeps its first words.
+- **The opening of Ignatius to the Magnesians 15**, where the cut that was
+  meant to take the heading off took the first nine words of the chapter with
+  it. It began *"you), who are here for the glory of God"*.
+
 Corrected in this edition:
 
 - **~31,000 characters of website furniture** were embedded in the scripture
@@ -215,12 +247,8 @@ Corrected claims:
 
 Gaps inherited from the source editions, left honest rather than invented:
 
-- **1 Clement is missing its great intercessory prayer.** The 1885 printing
-  followed Codex Alexandrinus, which has a lacuna at roughly 57:7–63:4, so the
-  chapters run 1–59 rather than 1–65.
-- Ignatius to the Smyrnaeans lacks chapter 13; Polycarp to the Philippians
-  breaks off mid-sentence in chapter 14.
-- The Shepherd of Hermas is missing Similitudes 1 and 10.
+- Polycarp to the Philippians breaks off mid-sentence in chapter 14, where
+  the Greek does; the Latin carries on and this volume does not print it.
 - The Psalms of Solomon and Philo are described but have no text.
 - The Dead Sea Scrolls appear as summaries — every English translation of the
   1947-and-later finds is under copyright.
@@ -236,7 +264,9 @@ chapter, or `l`.
   the browser supports the Custom Highlight API.
 - Speed, voice, time remaining and a sleep timer are in the player, and **♪**
   reads a sentence in the selected voice so a chapter is not the way you find
-  out what it sounds like.
+  out what it sounds like. The time remaining counts the silences as well as
+  the words, which at liturgical pace is three minutes of the thirteen that
+  Psalm 119 takes.
 - It announces each chapter, then runs on: to the next chapter, and at the end
   of a work into the work written next, stepping over the entries that carry no
   text. Left alone it plays the library in composition order. The toggle in the
@@ -289,13 +319,37 @@ voice and download its Enhanced or Premium version. That single download does
 more for how this sounds than everything else here put together, and nothing a
 web page does can substitute for it: the audio is the operating system's.
 
-Three other things were making the reading sound mechanical whatever voice was
-doing it, and are fixed:
+Several other things were making the reading sound mechanical whatever voice
+was doing it, and are fixed:
 
 - **The apparatus was being read out.** Charles prints his in the running text
   — daggers round a corrupt reading, angle brackets round a restoration, plus
   signs round an emendation. The eye steps over them; an engine says "dagger".
   They are blanked before speaking and left standing on the page.
+- **So was the other printings' apparatus, and there is far more of it.** The
+  nineteenth-century volumes recovered from scans set their footnote
+  references as superscript symbols, and the scanner read each as whatever
+  glyph it most resembled: ® 270 times, then », °, §, •, ¢, £, ¥, ™, © and the
+  rest. The Testament of our Lord carries one about every other sentence, and
+  every one of them was spoken. The blanked set is now every character in the
+  volume that is neither a letter, a digit nor ordinary punctuation, and a
+  unit test fails if the volume ever grows one that is not on the list — which
+  is the only way to notice, since nobody is listening to 1.22 million words
+  to find out.
+- **Roman numerals were read as letters.** Charles numbers his chapters inside
+  the running text, so two hundred of them stand in the prose of Enoch,
+  Jubilees, the Apostolic Canons and the Didascalia. *LXXXIX* came out as the
+  alphabet in the middle of a sentence about Noah. They are spoken as numbers
+  and printed as numerals, and the spoken form is padded back to the printed
+  length so the word highlight still lands where it should.
+- **Long passages were being cut off at the slow speeds.** Chrome stops an
+  utterance at about fifteen seconds, which is a duration; the limit that
+  guards against it was a fixed number of characters, which is only the same
+  thing at one speed. At 0.85× and 0.7× a full-length piece ran past the
+  cut-off and the rest of it was simply not spoken — the exact failure the
+  cutting exists to prevent, at the setting a reader of the Psalms is most
+  likely to be using. The budget is now read through the reading speed, and
+  changing the speed cuts the queue again and keeps your place in it.
 - **Long verses were cut mid-clause.** Chrome stops a single utterance at about
   fifteen seconds, so long passages have to be broken up — and an engine drops
   its pitch and takes a breath at the end of every utterance, so a break inside
@@ -332,6 +386,9 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | Tool | Does |
 | --- | --- |
 | `tools/parse_book.py` | Turns the source text into structured JSON, logging every removal |
+| `tools/fetch_scans.py` | The only script that touches the network: pulls the scans this volume recovers text from, run by hand, output committed |
+| `tools/scans.py` | Reads a scan by its word coordinates — running heads, marginal numbers and footnotes taken off by where they sit on the leaf |
+| `tools/build_lightfoot.py` | Splices 1 Clement's six recovered chapters in, and restores Smyrnaeans 13 |
 | `tools/audit.py` | Checks chapter and verse counts against reference figures |
 | `tools/build_canon.py` | Builds canon membership and checks coverage claims |
 | `tools/build_index.py` | Builds the sharded search index |
@@ -375,7 +432,7 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 
 | Suite | Checks |
 | --- | --- |
-| `tests/python` | The parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. One of them runs the reader's own copy of the folding rule against the Python one, because the two are written in different languages and a divergence between them is silent |
+| `tests/python` | The parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. One of them runs the reader's own copy of the folding rule against the Python one, because the two are written in different languages and a divergence between them is silent. Another holds the seam where 1 Clement changes translator: the six recovered chapters are checked against the volume's own text of the chapters either side of them, because a splice made one chapter out of step would still read as English |
 | `routes` | Every page renders, search returns verses, a saved verse survives a reload, nothing throws |
 | `layout` | At 320–430px every nav link is on screen, nothing scrolls sideways, the bar tucks away as you read, desktop is unchanged |
 | `dating` | The date card against the spans the parser read, the method page, and that a citation names the edition and the era rather than just a URL |
@@ -405,6 +462,45 @@ browser has no speech engine — the one these run in reports zero voices and
 fails every utterance — so the engine is replaced with a stand-in that records
 what it was asked to say. Everything above that line is the site's own code.
 The last inch, audible sound, needs a real device.
+
+## How it looks, and why
+
+A codex, drawn out of what the texts were made of.
+
+The chapter is set on a **leaf**: a brighter surface than the page it sits
+on, with a hairline, a gutter shadow down the bound edge, and two more
+leaves showing under it as offset hairlines. That is the volume's own mark
+— a bound spine and the leaves hanging off it — drawn at full size, and it
+is what tells the eye where the book stops and the apparatus around it
+starts. Everything on a reading page is the width of that leaf: the title,
+the chapter strip, the controls and the pager all line up with it, so the
+page reads as one object.
+
+**Two accents, and the difference between them is the whole system.**
+Rubric red is the colour a scribe changed pens for, and it does here what
+it did there: the chapter heading, the verse numbers, the section numerals,
+and nothing else. Tyrian purple — the argaman of Exodus 26 and the trade of
+Lydia in Acts 16, the dye of the coast these texts were written on — is the
+site's own machinery: a link, a focus ring, the control you just pressed.
+So a red mark is the book speaking and a purple one is the reader speaking,
+and neither is ever used for the other's work. Open a verse's menu and its
+number turns from red to purple, because at that moment it has stopped
+being a numeral and become a control.
+
+The rest follows from materials: unbleached parchment for the ground, iron
+gall — which oxidises violet-black rather than grey — for type. Dark is the
+same room unlit, and it inverts the two, which is what a photographic
+negative of a manuscript looks like: the leaf goes to the colour of the ink
+and the ink to the colour of the leaf.
+
+**Nothing is fetched to do any of it.** The site ships no dependencies and
+its single-file build has to open from `file://` with the network off, so
+the grain of the paper is a gradient, the stacked leaves are box shadows,
+and the type is whatever the device already has. A web font would be the
+easiest thing here and the one thing that cannot be had.
+
+Set one verse per line and the numbers hang in the margin beside the lines,
+the way a psalter sets them.
 
 ## How the site works
 

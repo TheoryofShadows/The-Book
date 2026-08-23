@@ -12,6 +12,9 @@ python3 tools/parse_book.py "$SRC" "$OUT"
 echo "==> repairs"
 python3 tools/build_repairs.py "$OUT" source/extra
 
+echo "==> 1 Clement's lacuna, from Lightfoot's edition of 1891"
+python3 tools/build_lightfoot.py "$OUT" source/extra
+
 echo "==> the Ethiopic Didascalia"
 python3 tools/build_didascalia.py "$OUT" source/extra
 
