@@ -1,10 +1,14 @@
-"""The rest of the build pipeline: the repairs, the lexicon, the gazetteer.
+"""The rest of the build pipeline: the repairs, the lexicon, the gazetteer,
+and the single-file offline copy.
 
 These are smaller than the parser and no less load-bearing. The lexicon keys
 every definition the reader can open; the gazetteer keys every place; a repair
-that slices the wrong range publishes someone else's paragraph as scripture.
+that slices the wrong range publishes someone else's paragraph as scripture;
+and the offline build is the one artifact nobody opens until they are already
+somewhere with no network to fix it from.
 """
 
+import os
 import unittest
 
 import _tools  # noqa: F401
@@ -12,6 +16,9 @@ import _tools  # noqa: F401
 import build_lexicon
 import build_places
 import build_repairs
+import build_standalone
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 class RepairClean(unittest.TestCase):
@@ -181,3 +188,49 @@ class PlaceKinds(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TheOfflineCopyCarriesNoDeadLinks(unittest.TestCase):
+    """The one page whose claim is that nothing it needs is elsewhere.
+
+    The served site offers the single-file build for download. Inlining the
+    footer whole would put that link inside the file it offers, pointing at a
+    path beside itself that is not there. index.html marks the region and
+    build_standalone.py cuts it; these hold both ends of that arrangement,
+    because the failure is a link that looks perfectly normal and does
+    nothing.
+    """
+
+    def index(self):
+        with open(os.path.join(ROOT, "docs", "index.html"), encoding="utf-8") as fh:
+            return fh.read()
+
+    def test_the_markers_are_balanced(self):
+        start, end = build_standalone.ONLINE_ONLY
+        page = self.index()
+        self.assertEqual(page.count(start), page.count(end))
+        self.assertGreater(page.count(start), 0,
+                           "nothing is marked online-only; if the download "
+                           "link has gone, this test and the stripping can go "
+                           "with it")
+
+    def test_the_download_link_is_inside_them(self):
+        start, end = build_standalone.ONLINE_ONLY
+        page = self.index()
+        self.assertIn('href="the-book.html"', page,
+                      "the served page no longer offers the offline copy")
+        self.assertNotIn('href="the-book.html"',
+                         build_standalone.strip_online_only(page),
+                         "the download link is not inside the online-only "
+                         "markers, so the offline copy would link to itself")
+
+    def test_stripping_takes_the_region_and_nothing_else(self):
+        start, end = build_standalone.ONLINE_ONLY
+        self.assertEqual(
+            build_standalone.strip_online_only(f"keep{start}drop{end}keep"),
+            "keepkeep")
+
+    def test_an_unclosed_marker_stops_the_build(self):
+        start, _end = build_standalone.ONLINE_ONLY
+        with self.assertRaises(SystemExit):
+            build_standalone.strip_online_only("a" + start + "b")

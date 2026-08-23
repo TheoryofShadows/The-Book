@@ -15,6 +15,13 @@ editorial claims carry citations. These are the citations.
 The map's own README claim -- 1,209 of 1,232 places inside the frame -- is
 checked in test_basemap.py instead, where the frame constant it depends on
 lives.
+
+The share card in docs/index.html is here too. It is prose about the counts
+in exactly the way the README headline is, it is read by more people than
+either -- it is what a link to this site looks like when somebody posts it --
+and it was the one that rotted: it went on advertising 166 works, 2,269
+chapters and 1.16 million words for as long as the headline beside it was
+being kept right by the tests below.
 """
 
 import json
@@ -71,6 +78,98 @@ class TheHeadline(unittest.TestCase):
         """
         stated = float(self.claim.group(4))
         self.assertEqual(stated, round(self.totals["words"] / 1_000_000, 2))
+
+
+class TheThreadCount(unittest.TestCase):
+    """The README says how many threads there are, so it is checked.
+
+    A count in prose beside a file that is regenerated on every build is the
+    same kind of claim as the headline, and rots the same way.
+    """
+
+    def test_the_readme_states_the_number_of_threads(self):
+        stated = re.search(r"\*\*([\d,]+) threads\*\*", readme())
+        self.assertIsNotNone(
+            stated, "README.md no longer states how many threads there are")
+        with open(os.path.join(ROOT, "docs", "data", "threads.json"),
+                  encoding="utf-8") as fh:
+            threads = json.load(fh)
+        self.assertEqual(stated.group(1), f"{len(threads):,}")
+
+    def test_every_thread_has_stops_with_text(self):
+        """A thread with an empty stop would still build; it would say nothing."""
+        with open(os.path.join(ROOT, "docs", "data", "threads.json"),
+                  encoding="utf-8") as fh:
+            threads = json.load(fh)
+        for thread in threads:
+            self.assertGreaterEqual(len(thread["stops"]), 4, thread["id"])
+            for stop in thread["stops"]:
+                self.assertTrue(stop["verses"], f"{thread['id']}: empty stop")
+                self.assertTrue(stop["why"].strip(),
+                                f"{thread['id']}: a stop with no reason")
+                for verse in stop["verses"]:
+                    self.assertTrue(verse["t"].strip(),
+                                    f"{thread['id']}: a verse with no text")
+
+
+class TheLinks(unittest.TestCase):
+    """A link with nothing behind it.
+
+    "How the dating was decided" pointed at (#) for as long as the page it
+    names has existed. It is the one link in the file a sceptical reader is
+    most likely to follow -- the arrangement is the claim, and that page is
+    where the claim is defended -- and it went nowhere.
+    """
+
+    LINK = re.compile(r"\[(?P<text>[^\]]+)\]\((?P<href>[^)]*)\)")
+
+    def test_no_link_points_at_nothing(self):
+        dead = [m.group("text") for m in self.LINK.finditer(readme())
+                if m.group("href").strip() in ("", "#")]
+        self.assertEqual(dead, [],
+                         "links in README.md with no destination: " +
+                         ", ".join(dead))
+
+    def test_every_repository_path_a_link_names_exists(self):
+        missing = []
+        for m in self.LINK.finditer(readme()):
+            href = m.group("href").split("#")[0].strip()
+            if not href or "://" in href or href.startswith("mailto:"):
+                continue
+            if not os.path.exists(os.path.join(ROOT, href)):
+                missing.append(href)
+        self.assertEqual(missing, [],
+                         "links in README.md to paths that are not here: " +
+                         ", ".join(missing))
+
+
+class TheShareCard(unittest.TestCase):
+    """What a link to this site says before anyone has opened it."""
+
+    def setUp(self):
+        with open(os.path.join(ROOT, "docs", "index.html"), encoding="utf-8") as fh:
+            page = fh.read()
+        card = re.search(r'<meta property="og:description" content="([^"]+)"', page)
+        self.assertIsNotNone(card, "docs/index.html has no og:description")
+        self.claim = re.match(
+            r"([\d,]+) works, ([\d,]+) chapters, ([\d.]+) million words",
+            card.group(1))
+        self.assertIsNotNone(
+            self.claim,
+            "the og:description no longer opens with the counts this test "
+            "reads; rewrite the test or restore the form")
+        self.totals = totals()
+
+    def test_the_number_of_works(self):
+        self.assertEqual(self.claim.group(1), f"{self.totals['works']:,}")
+
+    def test_the_number_of_chapters(self):
+        self.assertEqual(self.claim.group(2), f"{self.totals['chapters']:,}")
+
+    def test_the_number_of_words(self):
+        """Rounded to two places, and held to the precision it is written at."""
+        self.assertEqual(float(self.claim.group(3)),
+                         round(self.totals["words"] / 1_000_000, 2))
 
 
 class WhatCountsAsAWork(unittest.TestCase):

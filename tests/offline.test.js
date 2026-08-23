@@ -59,6 +59,25 @@ module.exports = async function offline(t, ctx) {
   t.check('the threads page works offline',
           await page.locator('.thread-card').count() > 0);
 
+  /* The served page offers this file for download. Inlined here that link
+     would point from the offline copy at the offline copy, resolving to a
+     file:// path beside it that is not there -- a dead link in the one build
+     whose whole claim is that nothing it needs is anywhere else. It is cut
+     out by the online-only markers in index.html, and this is what notices
+     if that stops happening. */
+  const selfLink = await page.locator('a[href$="the-book.html"]').count();
+  t.check('and it does not link to itself for a copy it already is',
+          selfLink === 0, selfLink ? selfLink + ' such links' : 'none');
+
+  /* Nothing else on the page may point at a file either: every remaining
+     link is a route, an anchor, or an outside address that a reader with no
+     network simply cannot follow rather than one this build broke. */
+  const local = await page.evaluate(() => Array.from(document.querySelectorAll('a[href]'))
+    .map(a => a.getAttribute('href'))
+    .filter(h => h && !/^(#|https?:|mailto:|data:)/.test(h)));
+  t.check('and no link in it points at a file that is not there',
+          local.length === 0, local.slice(0, 4).join(', '));
+
   await page.goto('file://' + out + '#/read/amos/2');
   await page.waitForSelector('.reader .v');
   await page.evaluate(() => {

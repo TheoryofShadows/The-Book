@@ -420,13 +420,18 @@ table.grid th, table.grid td {
   text-align: left; padding: .42rem .6rem; border-bottom: 1px solid var(--rule-soft);
   vertical-align: top;
 }
-/* The head stays put as the table scrolls, so it needs a ground of its
-   own: the page's is a gradient now and a transparent header would have
-   the rows running through it. */
+/* The head is not sticky, and cannot be. It was, at top: 3.2rem, to clear
+   the bar -- but a wide table is wrapped in .scroller so a phone can push it
+   sideways, and a box that scrolls in one axis is a scrollport in both. A
+   sticky offset is measured from the scrollport rather than the viewport,
+   and sticky pushes an element *down* to its offset even at scroll zero, so
+   the head was landing 51px into the table and sitting on top of the first
+   row -- The Song of the Sea on the contents, Genesis on the canons: in
+   each case the first line of the thing being listed. Nothing in CSS gets
+   both, because the wrapper that makes the table scrollable is the same box
+   that redefines what the head is sticky to. The row is worth more than the
+   head, so the head goes. */
 table.grid thead th {
-  position: sticky; top: 3.2rem;
-  background: var(--paper);
-  box-shadow: 0 -1px 0 0 var(--paper), 0 1px 0 0 var(--rule);
   border-bottom: 1px solid var(--rule); font-size: .78rem;
   text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint);
   font-weight: 600;

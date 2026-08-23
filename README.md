@@ -89,6 +89,45 @@ translation.
 | J. Cooper and A. J. Maclean, 1902 | The Testamentum Domini, the Book of the Covenant's church order — **not audited**, and from the Syriac |
 | J. B. Lightfoot and J. R. Harmer, 1891 | 1 Clement 58–63, the six chapters the damaged last leaf of Codex Alexandrinus took with it — recovered from the scan, and checked at both seams against the volume's own translation of the chapters either side |
 
+## Threads
+
+**11 threads** follow a single question across the whole collection in the
+order the texts were written, which is the one thing this arrangement can do
+that a canonical Bible cannot: an idea being asked, answered, contradicted and
+answered again over eight hundred years. Where do the dead go. Does God want
+sacrifice or justice. Where does Satan come from — and there the census of
+2 Samuel 24 is retold in 1 Chronicles 21 two or three centuries later with
+Satan in the sentence where Yahweh used to be.
+
+A thread names references only. `tools/build_threads.py` resolves every one of
+them against the published text, pulls the verse out of the same JSON the
+reader loads, and refuses to write the file if a single reference does not
+exist — so a thread cannot quote a verse this volume does not contain, or
+drift when the parse changes. It also checks that the stops run forward
+through the sections, and fails a thread that goes backwards without saying
+why. The connective prose between the stops is editorial, and the page says
+so.
+
+Five of the eleven start from what people actually ask, and because that is an
+editorial claim it carries citations. *What may a woman do?* is first on the
+top twenty [GotQuestions.org][gq] publishes from the questions put to it, and
+*Can a marriage be ended?* is twentieth; *Who wrote the Bible?* heads the
+[lists compiled from search][fatb] rather than from submissions; the end of
+the world is one of the subject headings of that first site's hundred-question
+collection. The fifth, *Where does Satan come from?*, has no such list cited
+for it and `tools/threads.py` says so — it is there because it is the sharpest
+case in the volume of one scene told twice, centuries apart, with a different
+agent the second time.
+
+They are not answered in those sites' sense. They are shown: what the
+collection says on the subject, in the order it said it, contradictions
+included. Much of that frequently asked list is a request for a ruling, and a
+ruling is the one thing a chronological arrangement cannot produce; the same
+file records which questions were left out on that ground and why.
+
+[gq]: https://www.gotquestions.org/top20.html
+[fatb]: https://forallthings.bible/top-91-most-frequently-asked-questions-about-the-bible/
+
 ## Seeing the disagreement
 
 Every work with a position record carries a **date card**: the traditional and
@@ -166,7 +205,7 @@ rest fall back. There are no itineraries here, and a test counts the map's own
 line segments to keep it that way, because on a 430-pixel canvas a wrong
 hairline is invisible and still wrong.
 
-[How the dating was decided](#) is a page of its own: what the arrangement is
+[How the dating was decided](https://theoryofshadows.github.io/The-Book/#/method) is a page of its own: what the arrangement is
 and is not, where each date comes from, how the bars are derived, the boundary
 of every named period and the event that fixes it, and the two things the bars
 cannot tell you — that a composite book has one bar and several dates, and that
@@ -392,7 +431,7 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | `tools/audit.py` | Checks chapter and verse counts against reference figures |
 | `tools/build_canon.py` | Builds canon membership and checks coverage claims |
 | `tools/build_index.py` | Builds the sharded search index |
-| `tools/build_standalone.py` | Inlines the whole library into one HTML file that runs offline |
+| `tools/build_standalone.py` | Inlines the whole library into one HTML file that runs offline, and cuts out the parts of the page an offline copy cannot honour |
 | `tools/textnorm.py` | The one rule that folds text into a search token or a lookup key |
 | `tools/dates.py` | Reads a numeric span out of a position statement, and refuses to where there is none |
 | `tools/lint.sh` | Everything parses, and every data file is the JSON it claims to be |
@@ -502,6 +541,35 @@ easiest thing here and the one thing that cannot be had.
 Set one verse per line and the numbers hang in the margin beside the lines,
 the way a psalter sets them.
 
+## Taking it offline
+
+**[Download the whole library as one file](https://theoryofshadows.github.io/The-Book/the-book.html)** —
+13 MB of HTML with every text, the search index, the definitions, the
+gazetteer and the land outlines inlined into it. Open it from your own disk
+with the network off and everything works: search, the map, the word lookup,
+read-aloud, saving verses. Nothing is fetched, because there is nothing left
+to fetch.
+
+It is built by `tools/build_standalone.py`, which walks `docs/data` rather
+than naming the files it inlines — an earlier version named them, so every
+data file added afterwards was silently missing and the feature resting on it
+died with nothing but a failed fetch to show for it. The `offline` suite opens
+the built file from a `file://` URL and exercises the features in it, and the
+build refuses to finish above 15 MB.
+
+The file is not in this repository. It is derived, it is 13 MB, and a copy
+regenerated on every data change would be most of the history here within a
+year — so `.gitignore` holds it out, `tools/build.sh` writes it locally so the
+link on the page works while you are developing, and the deploy rebuilds it
+from the committed data and ships it inside the Pages artifact. That is the
+only copy served.
+
+The served page offers it in the footer, and that link is the one thing cut
+out of the offline copy: inlined whole it would point from the file at the
+file, at a path beside itself that is not there. `docs/index.html` marks the
+region and the build cuts it, with tests holding both ends — a dead link is
+the failure that looks completely normal.
+
 ## How the site works
 
 Static files only — no build step, no dependencies, no tracking. Work texts and
@@ -518,8 +586,9 @@ and scanned for exact verses. Quote a phrase to match it exactly.
 
 `.github/workflows/pages.yml` runs the lint and the unit tests, rebuilds the
 data from source, fails the build if `docs/data` has drifted or the audit finds
-anything not in the baseline, runs the browser checks, and only then publishes
-`docs/`.
+anything not in the baseline, runs the browser checks, then builds the
+single-file offline copy from the committed data and publishes `docs/` with it
+inside.
 
 **One manual step is required before the site can go live:** open
 **Settings → Pages** and set **Source: GitHub Actions**. The workflow cannot do

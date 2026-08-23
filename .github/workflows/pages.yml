@@ -84,6 +84,16 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # The single-file build is not committed -- it is 13 MB and it is
+      # derived -- so the one place it exists is here, made from the same
+      # docs/data the verify job has just proved does not drift from source/.
+      # Built before the upload so it goes out inside the Pages artifact and
+      # the footer link on the live site has something on the end of it.
+      - name: Build the single-file offline copy
+        run: python3 tools/build_standalone.py docs docs/the-book.html
       # Pages must already be enabled for the repository, under
       # Settings -> Pages -> Source: GitHub Actions. The workflow cannot turn
       # it on itself: GITHUB_TOKEN lacks the admin right to create the Pages
