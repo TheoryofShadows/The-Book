@@ -19,15 +19,26 @@ const TYPES = {
   '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
-  '.svg': 'image/svg+xml'
+  '.svg': 'image/svg+xml',
+  '.xml': 'application/xml; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8'
 };
 
 /* A static file server, so the checks need nothing installed to serve with. */
 function serve(root) {
   const server = http.createServer((req, res) => {
     const rel = decodeURIComponent(req.url.split('?')[0].split('#')[0]);
-    let file = path.join(root, rel === '/' ? 'index.html' : rel);
+    let file = path.join(root, rel);
     if (!file.startsWith(path.resolve(root))) { res.writeHead(403).end(); return; }
+    /* A directory is its index.html, which is what GitHub Pages does and what
+       every one of the prerendered pages depends on: they live at
+       /read/genesis/1/ and nowhere else. Without this the pages built by
+       tools/build_pages.py are reachable on the live site and unreachable
+       here -- a gap that hides itself, because the only thing that would
+       report it is the check that cannot load the page. */
+    let dir = false;
+    try { dir = fs.statSync(file).isDirectory(); } catch (e) { dir = false; }
+    if (rel.endsWith('/') || dir) file = path.join(file, 'index.html');
     fs.readFile(file, (err, body) => {
       if (err) { res.writeHead(404).end('not found'); return; }
       res.writeHead(200, { 'content-type': TYPES[path.extname(file)] || 'application/octet-stream' });
@@ -196,6 +207,19 @@ function recordedEngine(verses, opts) {
         const u = String(url);
         if (u.indexOf('archive.org') !== -1) {
           log.push({ fetched: u });
+          /* The page asks once whether the collection exists at all before
+             asking it for any chapter. The Internet Archive answers {} for an
+             item that is not there, which is exactly what a suite standing in
+             for a chapter with no reading should answer too -- a stand-in
+             that reported the collection present while refusing every file
+             would be testing a state the real service cannot be in. */
+          if (u.indexOf('/metadata/') !== -1) {
+            return Promise.resolve({
+              ok: true,
+              json: () => Promise.resolve(
+                INDEX ? { metadata: { identifier: 'the-book-read-aloud' } } : {})
+            });
+          }
           if (!INDEX) return Promise.resolve({ ok: false, status: 404 });
           if (/\\.json$/.test(u)) {
             const d = INDEX[INDEX.length - 1][2] + 0.35;

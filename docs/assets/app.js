@@ -43,6 +43,60 @@
       function (m) { return m.toUpperCase(); });
   }
 
+  /* Where you are, in the one place a browser puts it.
+
+     A single page that never changes its title gives all 2,537 chapters the
+     same name: a bookmark list where every entry reads the same, a history
+     that cannot be searched, a row of tabs that cannot be told apart, and a
+     screen reader that announces nothing on arrival, because the title is
+     what it announces and the title did not move.
+
+     The full title stays on the front page, where it is the description of
+     the whole library rather than a label repeated 2,537 times. */
+  var BASE_TITLE = document.title;
+
+  function setTitle(what) {
+    document.title = what ? what + " — The Book" : BASE_TITLE;
+  }
+
+  /* "Genesis 1", not "Genesis Chapter 1", and not "Jubilees Jubilees -
+     Prologue".
+
+     Most labels are "Chapter 7" and want the work's name in front of them.
+     Some two hundred and fifty -- Jubilees, the Enoch volumes, the Testaments
+     -- already carry it, and putting the name in front of those says it
+     twice. So a leading run of words the work's own title already contains is
+     dropped, but only when the run really is the name being repeated: a
+     leading "The" is not, and the last word is never eaten, or a label that
+     is nothing but the repeat would leave the chapter with no number.
+
+     chapter_heading() in tools/build_pages.py is the same rule, because the
+     prerendered page
+     for a chapter is the copy a search engine indexes and this is the copy
+     a reader sees in their tab. Two rules would be two titles for one
+     thing. (Not chapterTitle: viewRead already has a local of that name
+     for the chapter's own <h2>, and a var shadows a function.) */
+  function chapterHeading(workTitle, label) {
+    var rest = String(label).replace(/^Chapter\s+/i, "").trim();
+    var inTitle = {};
+    String(workTitle).toLowerCase().split(/[^a-z0-9]+/).forEach(function (w) {
+      if (w) inTitle[w] = true;
+    });
+
+    var words = rest.split(/\s+/);
+    var run = 0, named = false;
+    for (var i = 0; i < words.length - 1; i++) {
+      var bare = words[i].toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!bare || !inTitle[bare]) break;
+      run = i + 1;
+      if (bare.length >= 4) named = true;
+    }
+    if (named) {
+      rest = words.slice(run).join(" ").replace(/^[^A-Za-z0-9]+/, "").trim();
+    }
+    return (titleCase(workTitle) + (rest ? " " + rest : "")).trim();
+  }
+
   /* Screen readers get told about things that happen without a page change:
      saving, copying, search finishing. Without this the app is silent to
      anyone not watching the pixels. */
@@ -404,6 +458,7 @@
       s.works.forEach(function (w) { if (w.id === workId) { meta = w; section = s; } });
     });
     if (!meta) {
+      setTitle("No such work");
       return el("div", { class: "wrap" }, [
         el("div", { class: "crumbs" }, [
           el("a", { href: "#/", text: "Timeline" }),
@@ -454,6 +509,7 @@
       }
 
       if (!work.chapters.length) {
+        setTitle(titleCase(meta.title));
         body.appendChild(el("p", {
           class: "empty",
           text: "This work is described in the volume but no text was available " +
@@ -463,8 +519,30 @@
         return;
       }
 
-      var idx = Math.max(0, Math.min(chapterIdx | 0, work.chapters.length - 1));
+      var asked = chapterIdx | 0;
+      var idx = Math.max(0, Math.min(asked, work.chapters.length - 1));
       var chapter = work.chapters[idx];
+
+      /* Clamping is right -- #/read/amos/9999 should show Amos 9 rather than
+         an error -- but leaving the address saying 9999 afterwards is not.
+         That URL gets bookmarked, copied, and put in the history as though
+         it were a real place, and every out-of-range number becomes another
+         address serving the same chapter.
+
+         replaceState rather than an assignment, because this is a correction
+         to where you already are and not a move: assigning to the hash would
+         leave the false address sitting in the history for Back to walk into,
+         which is the same bug with an extra step. Changing the hash this way
+         raises no hashchange, so the route does not run again. */
+      if (idx !== asked) {
+        history.replaceState(null, "", "#/read/" + workId + "/" + idx +
+                             (anchor ? "/" + anchor : ""));
+      }
+
+      /* 2,537 chapters used to share one title. This is the one place a
+         browser records where you have been, and the one thing a screen
+         reader says when a page arrives. */
+      setTitle(chapterHeading(meta.title, chapter.label));
 
       store.set("last", { work: workId, chapter: idx, title: meta.title });
       refreshResume();
@@ -630,9 +708,10 @@
         if (!ids || !ids.length) return;
 
         var box = el("details", { class: "witnesses" });
-        box.appendChild(el("summary", { text:
-          "What survives · " + ids.length +
-          (ids.length === 1 ? " manuscript" : " manuscripts") }));
+        box.appendChild(el("summary", {
+          role: "heading", "aria-level": "2",
+          text: "What survives · " + ids.length +
+                (ids.length === 1 ? " manuscript" : " manuscripts") }));
 
         ids.forEach(function (id) {
           var w = ms.witnesses[id];
@@ -2519,7 +2598,7 @@
       wrap.appendChild(el("p", { class: "muted", text: g.blurb }));
       g.items.forEach(function (it) {
         wrap.appendChild(el("div", { class: "finding" }, [
-          el("h4", {}, [
+          el("h3", {}, [
             el("span", { class: "badge " + it.status, text: it.status }),
             document.createTextNode(it.claim)
           ]),
@@ -3504,6 +3583,18 @@
      because 1.79 GB cannot live in the Pages artifact — that caps at 1 GB. */
   var AUDIO_BASE = "https://archive.org/download/the-book-read-aloud/";
 
+  /* Whether that item exists at all, which is a different question from
+     whether a given chapter has a reading, and needs a different answer.
+
+     The metadata endpoint returns {} for an item that is not there -- the
+     Internet Archive's way of saying no such thing -- and sends
+     Access-Control-Allow-Origin: *, so the page can ask. Without asking, a
+     missing collection is indistinguishable from a chapter that was never
+     rendered: the drawer goes on offering a reading nobody can hear, and
+     every chapter opened fires another doomed cross-origin request at it.
+     Reading through Psalms did that a hundred and fifty times. */
+  var AUDIO_META = "https://archive.org/metadata/the-book-read-aloud";
+
   /* Not in the single-file copy. That build's whole claim is that it opens
      from a file:// URL with the network off and everything in it works, and
      a voice that has to be fetched from an archive is the one thing it
@@ -3522,6 +3613,49 @@
     tried: {},      // chapters already looked for, so a miss is asked once
     waiting: 0      // a pace pause is running; ignore the transport meanwhile
   };
+
+  /* Asked once a session rather than once a chapter, and asked once even if
+     six things ask at the same moment: everything that wants to know waits on
+     the one request in flight. */
+  var audioItem = {
+    state: "unknown",   // "unknown" | "checking" | "present" | "absent"
+    waiting: []         // callbacks held while the one request is in flight
+  };
+
+  function audioItemReady(done) {
+    if (audioItem.state === "present") { done(true); return; }
+    if (audioItem.state === "absent") { done(false); return; }
+
+    audioItem.waiting.push(done);
+    if (audioItem.state === "checking") return;
+    audioItem.state = "checking";
+
+    fetchJSON(AUDIO_META, function (meta) {
+      // A network failure is not an answer. Treating an unreachable
+      // archive.org as a missing collection would take the reading away from
+      // everyone on a flaky connection and not give it back until they
+      // reloaded, which is the worse of the two mistakes: the reading is
+      // most wanted by the people least able to fetch it reliably.
+      if (meta === null) {
+        audioItem.state = "unknown";
+      } else {
+        audioItem.state = (meta.files || meta.metadata) ? "present" : "absent";
+      }
+      var present = audioItem.state === "present";
+      var waiting = audioItem.waiting;
+      audioItem.waiting = [];
+      if (audioItem.state === "absent") {
+        // Stop offering it, and stop the reader's saved choice pointing at
+        // it -- otherwise every chapter starts by asking for a voice that
+        // does not exist and falling back from it.
+        if (store.get("listen-voice", null) === "recorded") {
+          store.set("listen-voice", null);
+        }
+        if (player) fillVoices();
+      }
+      waiting.forEach(function (fn) { fn(present); });
+    });
+  }
 
   function audioWanted() {
     if (!AUDIO_OK) return false;
@@ -3550,18 +3684,23 @@
     if (aud.key === key && aud.index) { done(aud.index); return; }
     if (aud.tried[key] === false) { done(null); return; }
 
-    fetchJSON(AUDIO_BASE + ctx.work + "/" + ctx.chapter + ".json",
-      function (data) {
-        if (!data || !data.v || !data.v.length) {
-          aud.tried[key] = false;
-          done(null);
-          return;
-        }
-        aud.tried[key] = true;
-        aud.key = key;
-        aud.index = data;
-        done(data);
-      });
+    // Is there a collection at all, before asking it for one chapter.
+    audioItemReady(function (present) {
+      if (!present) { done(null); return; }
+
+      fetchJSON(AUDIO_BASE + ctx.work + "/" + ctx.chapter + ".json",
+        function (data) {
+          if (!data || !data.v || !data.v.length) {
+            aud.tried[key] = false;
+            done(null);
+            return;
+          }
+          aud.tried[key] = true;
+          aud.key = key;
+          aud.index = data;
+          done(data);
+        });
+    });
   }
 
   function fetchJSON(url, done) {
@@ -4247,7 +4386,10 @@
        machine at the top of the list and it is still the operating system's
        voice; this one is the same reading everywhere, and on the phones the
        drawer has least to offer it is the only good answer there is. */
-    if (AUDIO_OK) {
+    /* Offered while the answer is still "unknown" -- hiding a working voice
+       because a request is in flight is the worse of the two mistakes, and
+       the drawer refills itself the moment the probe comes back. */
+    if (AUDIO_OK && audioItem.state !== "absent") {
       var read = el("optgroup", { label: "Read aloud" });
       read.appendChild(option("recorded", "Recorded reading", recorded));
       voiceSel.appendChild(read);
@@ -4721,6 +4863,8 @@
       MANIFEST = manifest;
       var node;
       if (view === "read") {
+        // Set by viewRead once the chapter is loaded: the title is the
+        // chapter, and until the work file arrives nothing here knows it.
         setNav("");
         node = viewRead(manifest, parts[1], parseInt(parts[2] || "0", 10), parts[3]);
         main.innerHTML = "";
@@ -4730,13 +4874,16 @@
       }
       if (view === "search") {
         setNav("search");
-        node = viewSearch(manifest, parts[1] ? decodeURIComponent(parts[1]) : "");
+        var q = parts[1] ? decodeURIComponent(parts[1]) : "";
+        setTitle(q ? "Search: " + q : "Search");
+        node = viewSearch(manifest, q);
         main.innerHTML = "";
         main.appendChild(node);
         return;
       }
       if (view === "canons" || view === "contents") {
         setNav(view);
+        setTitle(view === "canons" ? "Canons" : "Contents");
         return getJSON("canon.json").then(function (canon) {
           main.innerHTML = "";
           main.appendChild(view === "canons"
@@ -4747,7 +4894,12 @@
       }
       if (view === "threads" || view === "thread") {
         setNav("threads");
+        setTitle("Threads");
         return getJSON("threads.json").then(function (threads) {
+          if (view === "thread") {
+            var one = threads.filter(function (x) { return x.id === parts[1]; })[0];
+            setTitle(one ? one.title : "No such thread");
+          }
           main.innerHTML = "";
           main.appendChild(view === "thread"
             ? viewThread(threads, parts[1])
@@ -4757,6 +4909,7 @@
       }
       if (view === "timeline") {
         setNav("");
+        setTitle("The timeline");
         main.innerHTML = "";
         main.appendChild(viewTimeline(manifest));
         window.scrollTo(0, 0);
@@ -4764,6 +4917,7 @@
       }
       if (view === "method") {
         setNav("accuracy");
+        setTitle("How the dating was decided");
         main.innerHTML = "";
         main.appendChild(viewMethod(manifest));
         window.scrollTo(0, 0);
@@ -4771,6 +4925,7 @@
       }
       if (view === "saved") {
         setNav("saved");
+        setTitle("Saved");
         main.innerHTML = "";
         main.appendChild(viewSaved());
         window.scrollTo(0, 0);
@@ -4778,6 +4933,7 @@
       }
       if (view === "accuracy") {
         setNav("accuracy");
+        setTitle("Accuracy report");
         return Promise.all([getJSON("findings.json"), getJSON("removals.json"),
                             getJSON("splices.json").catch(function () { return []; })])
           .then(function (r) {
@@ -4787,10 +4943,14 @@
           });
       }
       setNav("home");
+      // The front page, and anything that named no route at all: the full
+      // title, which is the description of the whole library.
+      setTitle("");
       main.innerHTML = "";
       main.appendChild(viewHome(manifest));
       window.scrollTo(0, 0);
     }).catch(function (e) {
+      setTitle("Could not load the library");
       main.innerHTML = "";
       main.appendChild(el("div", { class: "wrap" }, [
         el("h1", { text: "Could not load the library" }),

@@ -92,6 +92,14 @@ jobs:
       # docs/data the verify job has just proved does not drift from source/.
       # Built before the upload so it goes out inside the Pages artifact and
       # the footer link on the live site has something on the end of it.
+      # One real page per work and per chapter. The reader is a single page
+      # behind hash routes, and a fragment never reaches a server, so without
+      # these the whole library is one indexable URL with no scripture on it.
+      # Not committed -- 2,709 files rebuilt on every text change -- so, like
+      # the offline copy below, the only place they exist is here, inside the
+      # artifact that gets uploaded.
+      - name: Build the crawlable static pages
+        run: python3 tools/build_pages.py docs
       - name: Build the single-file offline copy
         run: python3 tools/build_standalone.py docs docs/the-book.html
       # Pages must already be enabled for the repository, under
