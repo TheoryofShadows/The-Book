@@ -3210,6 +3210,7 @@
      character in this volume that is neither a letter, a digit, nor ordinary
      punctuation, and tests/python/test_narration.py fails if the volume ever
      grows one that is not listed here. */
+  /* --8<-- speakable: start --8<-- */
   var EDITORIAL = /[†‡+<>[\]{}®©™°§¶•¢£¥€$#%*«»^¬■|\\_&]/g;
 
   /* Charles numbers his chapters in the running text, so Enoch, Jubilees,
@@ -3256,6 +3257,7 @@
                  return said + PAD.slice(0, m.length - said.length);
                });
   }
+  /* --8<-- speakable: end --8<-- */
 
   var NO_VOICE =
     "This device has no speech voice for the page to read with. Voices are " +
