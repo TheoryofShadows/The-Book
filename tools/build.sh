@@ -65,4 +65,15 @@ python3 tools/audit.py "$OUT"
 echo "==> the single-file offline build"
 python3 tools/build_standalone.py docs docs/the-book.html
 
+# One plain page per work and per chapter, so the library is reachable by a
+# crawler at all: the reader is hash-routed, and a fragment is never sent to
+# a server, so without these there is exactly one indexable URL for 172 works
+# and 2,537 chapters. Not committed either, for the same reason as above and
+# with more force -- 2,709 files rebuilt on every text change -- so it is
+# gitignored and made here and by the deploy. After the audit, like the
+# offline copy: pages nobody has checked are pages of whatever the data
+# happened to be.
+echo "==> the crawlable static pages"
+python3 tools/build_pages.py docs
+
 echo "==> done"

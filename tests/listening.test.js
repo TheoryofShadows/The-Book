@@ -706,6 +706,85 @@ module.exports = async function listening(t, ctx) {
           await page.evaluate(() => window.__spoken.length) > 0);
   await page.close();
 
+  /* ---- the collection itself is not there ----
+
+     Every check above stands in for archive.org, and so proves the recorded
+     reading's code works. None of them could notice that the item it fetches
+     from does not exist -- which it did not, while the voice was offered
+     first and to everyone and produced silence for every reader who chose
+     it. The gap was that a missing chapter and a missing collection looked
+     identical from here: both a failed fetch, both remembered per chapter,
+     so reading through Psalms asked a hundred and fifty separate times.
+
+     So the page asks the metadata endpoint once, which is the only cheap way
+     to tell the two apart, and acts on the answer. */
+  page = await open(ctx, '#/read/amos/0', workingEngine(30), recordedEngine(null));
+  await page.evaluate(() => localStorage.setItem(
+    'thebook:listen-voice', JSON.stringify('recorded')));
+  await page.reload();
+  await page.waitForSelector('.reader .v');
+  for (const n of [1, 2, 3, 4, 5]) {
+    await page.evaluate(h => { location.hash = h; }, '#/read/amos/' + n);
+    await page.waitForTimeout(400);
+  }
+
+  const asked = await page.evaluate(() => {
+    const fetched = window.__audio.filter(e => e.fetched).map(e => e.fetched);
+    return {
+      probes: fetched.filter(u => u.indexOf('/metadata/') !== -1).length,
+      downloads: fetched.filter(u => u.indexOf('/download/') !== -1).length
+    };
+  });
+  t.check('a missing collection is asked about once, not once a chapter',
+          asked.probes === 1, asked.probes + ' probes over six chapters');
+  t.check('and no chapter is fetched from an item that is not there',
+          asked.downloads === 0, asked.downloads + ' fetches');
+
+  /* store.set(k, null) writes the JSON string "null", so the raw item is
+     never the absent value getItem() returns for a key that was removed. */
+  const cleared = await page.evaluate(
+    () => localStorage.getItem('thebook:listen-voice'));
+  t.check('the reader is taken off a voice that cannot play',
+          cleared !== null && JSON.parse(cleared) === null, String(cleared));
+
+  await page.locator('[data-listen]').click();
+  await page.waitForSelector('.player:not([hidden])');
+  const offered = await page.evaluate(() => Array.from(
+    document.querySelectorAll('select[aria-label="Voice"] option'), o => o.value));
+  t.check('and it is no longer in the drawer to choose again',
+          offered.indexOf('recorded') === -1, offered.slice(0, 4).join(', '));
+  await page.close();
+
+  /* ---- archive.org unreachable, which is not the same answer ----
+
+     A network failure says nothing about whether the collection exists.
+     Reading it as "absent" would take the recording away from everyone on a
+     flaky connection -- and not give it back until they reloaded -- which is
+     the worse of the two mistakes, since the readers who most want a real
+     voice are the ones least likely to have a reliable line to fetch it on.
+
+     The outage is a 200 with a body that is not JSON, rather than an abort
+     or a 5xx: both of those log a console error that the tally treats as a
+     failure of its own, and what is under test is the answer, not the noise.
+     r.json() rejects either way, and fetchJSON reports the same null. */
+  page = await open(ctx, '#/read/amos/0', workingEngine(30));
+  await page.route('**/archive.org/**', r => r.fulfill({
+    status: 200,
+    headers: { 'access-control-allow-origin': '*' },
+    contentType: 'text/plain',
+    body: 'the gateway is having a day'
+  }));
+  await page.evaluate(() => localStorage.setItem(
+    'thebook:listen-voice', JSON.stringify('recorded')));
+  await page.reload();
+  await page.waitForSelector('.reader .v');
+  await page.waitForTimeout(600);
+  const survived = await page.evaluate(
+    () => localStorage.getItem('thebook:listen-voice'));
+  t.check('an unreachable archive does not take the reading away',
+          survived !== null && JSON.parse(survived) === 'recorded', String(survived));
+  await page.close();
+
   /* ---- a browser from before the API ---- */
   /* This used to be offered nothing at all, and that was the right answer
      while the only voice was the device's own. It is not any more: the

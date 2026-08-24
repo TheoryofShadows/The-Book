@@ -75,6 +75,27 @@ jobs:
             exit 1
           fi
 
+  # Its own job, and deliberately so. The browser checks stand in for
+  # archive.org and prove the recorded-reading code works; this is the only
+  # thing that asks whether the recording exists, and it is the only thing
+  # here that depends on somebody else's server being up. Kept separate so a
+  # red mark on it means one specific thing -- the audio is not there -- and
+  # cannot be mistaken for the reader being broken, or drag the reader's own
+  # result down with it.
+  audio:
+    name: The recorded reading has something on the end of it
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Exits zero with a "skip" line if archive.org cannot be reached: an
+      # outage is not a finding about this repository, and a check that goes
+      # red on somebody else's downtime is one people stop reading.
+      - name: The audio the reader offers is really served
+        run: python3 tools/check_audio.py
+
   reader:
     name: The reader works in a browser
     runs-on: ubuntu-latest

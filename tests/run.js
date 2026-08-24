@@ -15,7 +15,7 @@ const { serve, launch, Tally } = require('./harness');
 /* 'offline' builds the single-file copy and hands it to 'map', so it runs
    first of the two. run.js clears what it left behind at the end. */
 const SUITES = ['routes', 'layout', 'search', 'words', 'keeping',
-                'dating', 'resilience', 'listening', 'offline', 'map'];
+                'dating', 'resilience', 'listening', 'crawlable', 'offline', 'map'];
 
 async function main() {
   const wanted = process.argv.slice(2);
