@@ -34,6 +34,15 @@ module.exports = async function offline(t, ctx) {
           await page.waitForFunction(() => window.__spoken && window.__spoken.length >= 2,
                                      null, { timeout: 6000 }).then(() => true).catch(() => false));
 
+  /* The recorded reading is fetched from an archive, so this is the one build
+     that must not offer it: a voice in the drawer that cannot be reached from
+     a file:// URL with the network off is exactly the dead link the footer
+     download is cut to avoid. The device engine is the whole story here. */
+  const drawer = await page.evaluate(() => Array.from(
+    document.querySelectorAll('select[aria-label="Voice"] optgroup'), g => g.label));
+  t.check('and the offline copy does not offer a voice it would have to fetch',
+          drawer.indexOf('Read aloud') === -1, JSON.stringify(drawer));
+
   /* The build used to name the data files it inlined one by one, so anything
      added later was quietly missing here and the feature resting on it died
      with only a failed fetch to show for it. These are the ones that were

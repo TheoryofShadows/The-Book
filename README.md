@@ -401,19 +401,89 @@ was doing it, and are fixed:
   sentence cut only because it was too long gets none — that seam is the one
   place a pause would be a lie.
 
-None of this synthesises audio. If a device has nothing but eSpeak or the
-compact set installed, nothing a web page can do will make those sound like a
-person; the player says so, and opens to say where better voices are a free
-download on each platform, rather than leaving you to conclude the site is
-broken. It opens rather than hovering, because the phone that most needs it has
-no tooltips.
+None of that synthesises audio, and none of it can. If a device has nothing but
+eSpeak or the compact set installed, nothing a web page can do will make those
+sound like a person; the player says so, and opens to say where better voices
+are a free download on each platform, rather than leaving you to conclude the
+site is broken. It opens rather than hovering, because the phone that most
+needs it has no tooltips.
 
-A browser with no speech support is not offered the control at all, and a
-device that has the support but no installed voice — a Linux desktop without
-speech-dispatcher, for instance — is told exactly that rather than left
-pressing a button that does nothing. On a phone the reading
-usually stops when the screen locks or you switch app — the browser suspends
-the page, and this is speech, not a track playing in the background.
+On a phone the reading usually stops when the screen locks or you switch app —
+the browser suspends the page, and this is speech, not a track playing in the
+background.
+
+### The recorded reading
+
+Everything above is the device's own engine, and its ceiling is that the audio
+belongs to the operating system. So there is now a second voice in the drawer,
+offered first and to everyone, which is not the device's: **Recorded reading**,
+a neural voice reading the library, rendered ahead of time and served.
+
+It is the same reading on every device, which is the point — the machines with
+the worst drawers get the same voice as the best.
+
+**Why it is not synthesised in the browser.** That was the first plan and the
+measurements killed it. Both engines were run through the same Chromium the
+browser checks use, single-threaded, on token lengths taken from real passages
+here:
+
+| Engine | Native, 4 threads | In the browser, 1 thread |
+| --- | --- | --- |
+| Piper `lessac-medium` | 9.7× realtime | 4.10× |
+| Kokoro `fp16` | 3.0× realtime | **0.43×** |
+
+Below 1× the engine makes sound more slowly than the sound plays. Kokoro at
+0.43× needs thirty-one seconds to speak a thirteen-second verse, and a phone is
+worse again. It loses seven times going to WebAssembly — it is transformer-heavy,
+and there are no threads to be had on a site that cannot send COOP/COEP headers,
+which GitHub Pages cannot. Piper survives that and was the fallback plan; it is
+also not the voice that sounded right. So the arithmetic is done once, by
+[`tools/render_audio.py`](tools/render_audio.py), and the result is served.
+
+**What it costs**, measured over Genesis 1, Daniel 3 and Psalm 23: 4.1× realtime
+on one core, 116 hours of audio for the whole library, 1.79 GB as Opus at 34
+kbps, 28 core-hours to render — and nothing in fees, the model being
+Apache-2.0 and running locally. The audio is not in this repository and not in
+the Pages artifact, which caps at 1 GB; it is an Internet Archive item, which
+is free, permanent, and the right home for a public-domain reading of
+public-domain texts.
+
+**Why one file per chapter, with the verses indexed.** The chapter is what you
+fetch and what you sit through, so it is one request and one `<audio>` element:
+speed becomes `playbackRate`, which browsers time-stretch without shifting
+pitch, and starting at a verse becomes one assignment to `currentTime`. Neither
+had to be built. But each verse is synthesised separately and its offset
+recorded as it accumulates, and that is what makes the verse marks exact. The
+alternative — render the chapter whole and recover the boundaries afterwards —
+is forced alignment: a second model, an approximation, and a new way for the
+highlight to drift halfway through Jeremiah.
+
+Two things are honestly worse with it. **There is no word highlight**, because
+an audio file has no word boundaries to report; the verse mark carries the
+reading instead. And **it needs a network**, so the device voice remains the
+default and the offline path, and the single-file copy does not offer it at all.
+
+Everything that can go wrong lands back on the device voice with a sentence
+saying why: no recording of this chapter, a file that will not play, a fetch
+that fails. The pace control still works — the file carries a natural 350 ms
+rest between verses and the player holds the transport for whatever the slower
+paces ask for beyond it, so a psalm can still be read the way a psalm is read.
+
+The rule deciding what a voice is handed now runs on both sides of the build,
+so it is written once and checked rather than copied:
+[`tools/speakable.py`](tools/speakable.py) reads the blanked character class
+out of `app.js` itself, and a unit test runs the reader's own `speakable()` in
+Node against the Python one. A divergence there is silent on both sides — the
+page renders, the render finishes, and the audio simply says something the page
+does not — and it would be found only by somebody listening to that verse, in a
+hundred and sixteen hours of it.
+
+A browser with no speech support at all used to be offered no control. It is
+now offered the recorded reading, which needs no engine — that device is
+exactly who it is for. If there is no recording within reach either, it is told
+so rather than left pressing a button that does nothing; and a device that has
+speech support but no installed voice — a Linux desktop without
+speech-dispatcher — is still told exactly that.
 
 ## Building it
 
@@ -433,6 +503,8 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | `tools/build_index.py` | Builds the sharded search index |
 | `tools/build_standalone.py` | Inlines the whole library into one HTML file that runs offline, and cuts out the parts of the page an offline copy cannot honour |
 | `tools/textnorm.py` | The one rule that folds text into a search token or a lookup key |
+| `tools/speakable.py` | The one rule for what a voice is handed, read out of `app.js` so the page and the recording cannot drift apart |
+| `tools/render_audio.py` | Renders the library to audio, one file per chapter with the verses indexed — run by hand, output hosted off this repository |
 | `tools/dates.py` | Reads a numeric span out of a position statement, and refuses to where there is none |
 | `tools/lint.sh` | Everything parses, and every data file is the JSON it claims to be |
 | `tools/test.sh` | Runs the unit tests and the browser checks in `tests/` |
