@@ -30,8 +30,8 @@
   <path d="M300 585 l9 9 -9 9 -9 -9Z" fill="#d5ab6f"/>
   <path d="M314 594 H488" stroke="#d5ab6f" stroke-width="2"/>
   <text x="302" y="632" text-anchor="middle" fill="#0c2d5a" font-family="ui-sans-serif, system-ui, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="22" letter-spacing="3.2">CHRONOLOGICAL BIBLICAL LIBRARY</text>
-  <path d="M186 658 H288" stroke="#d5ab6f" stroke-width="1.5"/>
+  <path d="M196 658 H288" stroke="#d5ab6f" stroke-width="1.5"/>
   <circle cx="300" cy="658" r="4" fill="#d5ab6f"/>
-  <path d="M312 658 H414" stroke="#d5ab6f" stroke-width="1.5"/>
-  <text x="302" y="690" text-anchor="middle" fill="#0c2d5a" font-family="ui-sans-serif, system-ui, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="18" letter-spacing="3.4">SCRIPTURE · HISTORY · TRUTH</text>
+  <path d="M312 658 H404" stroke="#d5ab6f" stroke-width="1.5"/>
+  <text x="302" y="690" text-anchor="middle" fill="#0c2d5a" font-family="ui-sans-serif, system-ui, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="18" letter-spacing="3.4">SCRIPTURE · HISTORY</text>
 </svg>

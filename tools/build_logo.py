@@ -162,6 +162,24 @@ def hexc(rgb: tuple[int, int, int]) -> str:
 # real and worth knowing: the wordmark renders in whatever serif the viewer
 # has, so this is not the file to hand a printer. The mark above it is
 # geometry and is exact everywhere.
+#
+# The second line reads SCRIPTURE · HISTORY. The artwork this was drawn from
+# has a third term, TRUTH, and it is left out on purpose -- so if you are
+# here to put it back because the lockup looks like it lost a word, this is
+# the reason it did not.
+#
+# The volume says, in bold, on its own accuracy page: "That is a decision
+# about order, not a verdict about truth", and closes the section "Nothing
+# here is a claim to have settled a question scholars have not." That is not
+# a stray sentence; it is the position the whole apparatus is built to hold
+# -- every work carrying the traditional dating beside the critical one in
+# the same size type, every absence carrying a reason and a source, the pace
+# control refusing to sort the books by genre because that would be an
+# editorial claim with no citation behind it.
+#
+# A signature is read more often than a page of prose. Claiming truth on it
+# while the text underneath declines to is the one contradiction a reader
+# would actually catch.
 LOCKUP_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 700" \
 width="600" height="700" role="img" aria-label="The Book — Chronological \
 Biblical Library">
@@ -181,12 +199,12 @@ font-family="{serif}" font-size="150">Book</text>
   <text x="302" y="632" text-anchor="middle" fill="{navy}" \
 font-family="{sans}" font-size="22" letter-spacing="3.2">CHRONOLOGICAL \
 BIBLICAL LIBRARY</text>
-  <path d="M186 658 H288" stroke="{gold}" stroke-width="1.5"/>
+  <path d="M196 658 H288" stroke="{gold}" stroke-width="1.5"/>
   <circle cx="300" cy="658" r="4" fill="{gold}"/>
-  <path d="M312 658 H414" stroke="{gold}" stroke-width="1.5"/>
+  <path d="M312 658 H404" stroke="{gold}" stroke-width="1.5"/>
   <text x="302" y="690" text-anchor="middle" fill="{navy}" \
 font-family="{sans}" font-size="18" letter-spacing="3.4">SCRIPTURE · \
-HISTORY · TRUTH</text>
+HISTORY</text>
 </svg>
 """
 
