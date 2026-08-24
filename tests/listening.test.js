@@ -3,13 +3,17 @@
 /* Read aloud: what is spoken, in what order, and what happens when the
    device cannot speak at all. */
 
-const { workingEngine, failingEngine, silentEngine, noEngine } = require('./harness');
+const { workingEngine, failingEngine, silentEngine, noEngine,
+        recordedEngine } = require('./harness');
 
 const settle = 120;
 
-async function open(ctx, route, engine) {
+/* More than one init script, because the speech engine and the recorded one
+   are separate stubs and several cases need both -- a device with no voice
+   of its own is precisely the case the recording exists for. */
+async function open(ctx, route, ...engines) {
   const page = ctx.tally.watch(await ctx.browser.newPage(), route);
-  if (engine) await page.addInitScript(engine);
+  for (const engine of engines) if (engine) await page.addInitScript(engine);
   await page.goto(ctx.base + route);
   await page.waitForSelector('.reader .v, .reader p', { timeout: 20000 });
   return page;
@@ -179,16 +183,26 @@ module.exports = async function listening(t, ctx) {
   const drawer = await page.evaluate(() => Array.from(
     document.querySelectorAll('select[aria-label="Voice"] optgroup'),
     g => [g.label, Array.from(g.querySelectorAll('option'), o => o.value)]));
+  /* Found by label rather than by position. The drawer grew a group when the
+     recorded reading arrived, and every one of these read the wrong group the
+     moment it did -- a count here fails for the wrong reason every time the
+     drawer changes shape. */
+  const group = label => (drawer.find(g => g[0] === label) || [label, []])[1];
+
+  t.check('the recorded reading is offered first, and to everyone',
+          drawer[0][0] === 'Read aloud' && group('Read aloud').join() === 'recorded',
+          JSON.stringify(drawer.map(g => g[0])));
   t.check('the drawer is grouped by what the voices are',
-          drawer.length === 3 && drawer[0][0] === 'Best on this device' &&
-          drawer[0][1].join() === 'google',
+          group('Best on this device').join() === 'google',
           JSON.stringify(drawer.map(g => g[0])));
   t.check('the relics are kept, and kept apart',
-          drawer[1][1].indexOf('espeak') !== -1 && drawer[1][1].indexOf('david') !== -1,
-          JSON.stringify(drawer[1][1]));
+          group('Other voices').indexOf('espeak') !== -1 &&
+          group('Other voices').indexOf('david') !== -1,
+          JSON.stringify(group('Other voices')));
   t.check('the novelties and the other languages are last',
-          drawer[2][1].indexOf('zarvox') !== -1 && drawer[2][1].indexOf('google-de') !== -1,
-          JSON.stringify(drawer[2][1]));
+          group('Novelty, legacy and other languages').indexOf('zarvox') !== -1 &&
+          group('Novelty, legacy and other languages').indexOf('google-de') !== -1,
+          JSON.stringify(group('Novelty, legacy and other languages')));
   t.check('and nothing is said about voices when there is a good one',
           await page.evaluate(() => document.querySelector('.player-hint').hidden));
 
@@ -251,11 +265,13 @@ module.exports = async function listening(t, ctx) {
   t.check('and the help opens rather than hovering, there being no hover',
           await page.evaluate(
             () => document.querySelector('.player-hint > summary') !== null));
+  // The first device voice, not the first option: the recorded reading now
+  // sits above them all and is not one of the device's own.
+  const firstDeviceVoice = () => page.evaluate(() => document.querySelector(
+    'select[aria-label="Voice"] optgroup:not([label="Read aloud"]) option'
+  ).textContent);
   t.check('the grade is on the label, since the names repeat',
-          /Compact$/.test(await page.evaluate(() => document.querySelector(
-            'select[aria-label="Voice"] option').textContent)),
-          await page.evaluate(() => document.querySelector(
-            'select[aria-label="Voice"] option').textContent));
+          /Compact$/.test(await firstDeviceVoice()), await firstDeviceVoice());
   await page.close();
 
   /* Download the better one and it has to win, over the same name. */
@@ -596,10 +612,116 @@ module.exports = async function listening(t, ctx) {
           healthy.spoken > 8 && !healthy.note && !healthy.disabled, JSON.stringify(healthy));
   await page.close();
 
+  /* ---- the recorded reading ----
+
+     The voice a device has is the operating system's, and on a phone out of
+     the box that is the compact set. The recording is the same reading
+     everywhere and needs no engine at all -- what has to be true of it is
+     that the page's arithmetic over it is right: the verse marked is the
+     verse sounding, a jump seeks where it says, speed does not restart the
+     sentence, and every way it can fail lands back on the device voice
+     rather than on silence. */
+  const READING = [[1, 0, 4], [2, 4.35, 9], [3, 9.35, 14], [4, 14.35, 20]];
+
+  async function openRecorded(opts) {
+    const p = await open(ctx, '#/read/amos/2', workingEngine(30),
+                         recordedEngine(READING, opts));
+    await p.evaluate(() => localStorage.setItem(
+      'thebook:listen-voice', JSON.stringify('recorded')));
+    await p.reload();
+    await p.waitForSelector('.reader .v');
+    return p;
+  }
+
+  page = await openRecorded();
+  await page.locator('[data-listen]').click();
+  await page.waitForFunction(
+    () => window.__player && window.__player.paused === false, null,
+    { timeout: 5000 });
+
+  t.check('the recorded reading is fetched for the chapter on the page',
+          await page.evaluate(() => window.__audio.some(
+            e => e.src && /amos\/2\.opus$/.test(e.src))),
+          JSON.stringify(await page.evaluate(() => window.__audio.slice(0, 3))));
+  t.check('and the device engine is not asked to say anything',
+          await page.evaluate(() => window.__spoken.length) === 0);
+
+  await page.waitForFunction(() => window.__player.currentTime > 5, null,
+                             { timeout: 5000 });
+  t.check('the verse marked is the verse sounding',
+          await page.evaluate(() => {
+            const m = document.querySelector('.is-speaking');
+            return m && /^2/.test(m.textContent.trim());
+          }));
+
+  /* Speed is playbackRate on a recording, so the sentence being read keeps
+     going rather than starting again -- which is what changing speed on the
+     device engine has to do, and the one place the two differ visibly. */
+  const beforeSpeed = await page.evaluate(() => window.__player.currentTime);
+  await page.selectOption('select[aria-label="Reading speed"]', '1.5');
+  t.check('speed changes without restarting the sentence',
+          await page.evaluate(() => window.__player.playbackRate) === 1.5 &&
+          await page.evaluate(() => window.__player.currentTime) >= beforeSpeed);
+
+  await page.locator('[aria-label="Forward one verse"]').click();
+  await page.waitForTimeout(settle);
+  t.check('a jump seeks the recording to that verse, exactly',
+          await page.evaluate(() => {
+            const seeks = window.__audio.filter(e => 'seek' in e);
+            return seeks.length && [0, 4.35, 9.35, 14.35]
+              .indexOf(seeks[seeks.length - 1].seek) !== -1;
+          }),
+          JSON.stringify(await page.evaluate(
+            () => window.__audio.filter(e => 'seek' in e).slice(-2))));
+
+  t.check('the time left is the recording\'s own, not an estimate',
+          /min left|under a minute/.test(
+            await page.locator('.player').textContent()));
+  await page.close();
+
+  /* Every failure lands on the engine that needs nothing. */
+  page = await openRecorded({ failAudio: true });
+  await page.locator('[data-listen]').click();
+  await page.waitForFunction(() => window.__spoken.length > 0, null,
+                             { timeout: 8000 });
+  t.check('a recording that will not play falls back to the device voice',
+          await page.evaluate(() => window.__spoken.length) > 0);
+  t.check('and the reader is told, rather than left wondering',
+          /device's own voice/.test(
+            await page.locator('#live, [aria-live]').first().textContent()),
+          await page.locator('#live, [aria-live]').first().textContent());
+  await page.close();
+
+  /* A chapter with no reading of it is not an error, and not silence. */
+  page = await open(ctx, '#/read/amos/2', workingEngine(30),
+                    recordedEngine(null));
+  await page.evaluate(() => localStorage.setItem(
+    'thebook:listen-voice', JSON.stringify('recorded')));
+  await page.reload();
+  await page.waitForSelector('.reader .v');
+  await page.locator('[data-listen]').click();
+  await page.waitForFunction(() => window.__spoken.length > 0, null,
+                             { timeout: 8000 });
+  t.check('a chapter with no recording is read by the device instead',
+          await page.evaluate(() => window.__spoken.length) > 0);
+  await page.close();
+
   /* ---- a browser from before the API ---- */
-  page = await open(ctx, '#/read/amos/2', noEngine());
-  t.check('a browser with no speech support is offered no control',
-          await page.locator('[data-listen]').count() === 0);
+  /* This used to be offered nothing at all, and that was the right answer
+     while the only voice was the device's own. It is not any more: the
+     recorded reading needs no speech engine, and a machine with no voice
+     installed is exactly who it is for. What has to stay true is that a
+     reader is never left with a control that does nothing -- so with no
+     engine and no recording within reach, they are told. */
+  page = await open(ctx, '#/read/amos/2', noEngine(), recordedEngine(null));
+  await page.waitForSelector('.listen-note', { timeout: 5000 });
+  t.check('with no speech engine and no recording, the reader is told why',
+          /no speech voice of its own/.test(
+            await page.locator('.listen-note').textContent()),
+          await page.locator('.listen-note').textContent());
+  t.check('and the control stops inviting another try',
+          await page.evaluate(
+            () => document.querySelector('[data-listen]').disabled));
   await page.locator('.reader .v .vnum').first().click();
   t.check('and no read-aloud item in the verse menu',
           await page.locator('.vmenu button', { hasText: 'Read aloud' }).count() === 0);

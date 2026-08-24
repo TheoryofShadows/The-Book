@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 700" width="600" height="700" role="img" aria-label="The Book — Chronological Biblical Library">
+  <title>The Book — Chronological Biblical Library</title>
+  <g>
+  <path d="M300 265.75 Q231.25 288.24 162.5 236.19 L162.5 201.5 Q231.25 251.55 300 260.61Z" fill="#ffffff"/>
+  <path d="M300 265.75 Q233.12 287.62 166.25 237 L166.25 203.25 Q233.12 251.94 300 260.75Z" fill="#0c2d5a"/>
+  <path d="M300 265.75 Q368.75 288.24 437.5 236.19 L437.5 201.5 Q368.75 251.55 300 260.61Z" fill="#ffffff"/>
+  <path d="M300 265.75 Q366.88 287.62 433.75 237 L433.75 203.25 Q366.88 251.94 300 260.75Z" fill="#0c2d5a"/>
+  <path d="M300 265.75 Q238.32 287.59 176.64 240.05 L176.64 207.93 Q238.32 252.71 300 259.32Z" fill="#ffffff"/>
+  <path d="M300 265.75 Q240 287 180 240.75 L180 209.5 Q240 253.06 300 259.5Z" fill="#0c2d5a"/>
+  <path d="M300 265.75 Q361.68 287.59 423.36 240.05 L423.36 207.93 Q361.68 252.71 300 259.32Z" fill="#ffffff"/>
+  <path d="M300 265.75 Q360 287 420 240.75 L420 209.5 Q360 253.06 300 259.5Z" fill="#0c2d5a"/>
+  <path d="M300 265.75 Q248.6 260.61 197.2 198.93 L197.2 135.97 L225.47 123.12 Q277.64 205.97 300 256.75Z" fill="#ffffff"/>
+  <path d="M300 265.75 Q250 260.75 200 200.75 L200 139.5 L227.5 127 Q278.25 207.6 300 257Z" fill="#d5ab6f"/>
+  <path d="M300 265.75 Q351.4 260.61 402.8 198.93 L402.8 135.97 L374.53 123.12 Q322.36 205.97 300 256.75Z" fill="#ffffff"/>
+  <path d="M300 265.75 Q350 260.75 400 200.75 L400 139.5 L372.5 127 Q321.75 207.6 300 257Z" fill="#d5ab6f"/>
+  <path d="M300 265.75 Q259.52 250.33 219.05 186.08 L219.05 123.12 L249.88 110.27 Q284.97 198.7 300 252.9Z" fill="#ffffff"/>
+  <path d="M300 265.75 Q260.62 250.75 221.25 188.25 L221.25 127 L251.25 114.5 Q285.38 200.52 300 253.25Z" fill="#d5ab6f"/>
+  <path d="M300 265.75 Q340.48 250.33 380.95 186.08 L380.95 123.12 L350.12 110.27 Q315.03 198.7 300 252.9Z" fill="#ffffff"/>
+  <path d="M300 265.75 Q339.38 250.75 378.75 188.25 L378.75 127 L348.75 114.5 Q314.62 200.52 300 253.25Z" fill="#d5ab6f"/>
+  <path d="M300 265.75 Q271.73 240.69 243.46 174.52 L243.46 115.4 L271.73 105.12 Q291.52 193.56 300 247.76Z" fill="#ffffff"/>
+  <path d="M300 265.75 Q272.5 241.38 245 177 L245 119.5 L272.5 109.5 Q291.75 195.53 300 248.25Z" fill="#e8c894"/>
+  <path d="M300 265.75 Q328.27 240.69 356.54 174.52 L356.54 115.4 L328.27 105.12 Q308.48 193.56 300 247.76Z" fill="#ffffff"/>
+  <path d="M300 265.75 Q327.5 241.38 355 177 L355 119.5 L327.5 109.5 Q308.25 195.53 300 248.25Z" fill="#e8c894"/>
+  </g>
+  <path d="M300 331 l9 9 -9 9 -9 -9Z" fill="#d5ab6f"/>
+  <path d="M170 349 H430" stroke="#d5ab6f" stroke-width="2"/>
+  <text x="300" y="446" text-anchor="middle" fill="#0c2d5a" font-family="Iowan Old Style, Palatino Linotype, Palatino, Book Antiqua, Georgia, serif" font-size="86">The</text>
+  <text x="300" y="546" text-anchor="middle" fill="#0c2d5a" font-family="Iowan Old Style, Palatino Linotype, Palatino, Book Antiqua, Georgia, serif" font-size="150">Book</text>
+  <path d="M112 594 H286" stroke="#d5ab6f" stroke-width="2"/>
+  <path d="M300 585 l9 9 -9 9 -9 -9Z" fill="#d5ab6f"/>
+  <path d="M314 594 H488" stroke="#d5ab6f" stroke-width="2"/>
+  <text x="302" y="632" text-anchor="middle" fill="#0c2d5a" font-family="ui-sans-serif, system-ui, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="22" letter-spacing="3.2">CHRONOLOGICAL BIBLICAL LIBRARY</text>
+  <path d="M196 658 H288" stroke="#d5ab6f" stroke-width="1.5"/>
+  <circle cx="300" cy="658" r="4" fill="#d5ab6f"/>
+  <path d="M312 658 H404" stroke="#d5ab6f" stroke-width="1.5"/>
+  <text x="302" y="690" text-anchor="middle" fill="#0c2d5a" font-family="ui-sans-serif, system-ui, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="18" letter-spacing="3.4">SCRIPTURE · HISTORY</text>
+</svg>
