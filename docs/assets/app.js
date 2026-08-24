@@ -76,15 +76,34 @@
      a reader sees in their tab. Two rules would be two titles for one
      thing. (Not chapterTitle: viewRead already has a local of that name
      for the chapter's own <h2>, and a var shadows a function.) */
+  /* The lowercase word sequence of a string, punctuation dropped, so that
+     "SIMILITUDE 1" and "Similitude 1" are the same thing said twice. */
+  function bareWords(s) {
+    return String(s).toLowerCase().split(/[^a-z0-9]+/)
+      .filter(function (w) { return !!w; });
+  }
+
   function chapterHeading(workTitle, label) {
     var rest = String(label).replace(/^Chapter\s+/i, "").trim();
+
+    /* The label is the whole title and nothing else -- Hermas's
+       "Similitude 1" inside the work "SIMILITUDE 1". There is no number to
+       keep hold of, so the repeat is the entire label and the title alone is
+       the answer. Only safe because such a work is a single chapter, which
+       build_pages.py asserts. */
+    if (bareWords(rest).join(" ") === bareWords(workTitle).join(" ")) {
+      return titleCase(workTitle);
+    }
+
     var inTitle = {};
-    String(workTitle).toLowerCase().split(/[^a-z0-9]+/).forEach(function (w) {
-      if (w) inTitle[w] = true;
-    });
+    bareWords(workTitle).forEach(function (w) { inTitle[w] = true; });
 
     var words = rest.split(/\s+/);
     var run = 0, named = false;
+    /* Never as far as the last word. "1 ENOCH 83" belongs to "1 ENOCH: DREAM
+       VISIONS ... (chapters 83-108)", which contains 83 as well as 1 and
+       ENOCH: consuming the lot would leave every chapter of that volume with
+       the same title, which is the bug this whole helper exists to fix. */
     for (var i = 0; i < words.length - 1; i++) {
       var bare = words[i].toLowerCase().replace(/[^a-z0-9]/g, "");
       if (!bare || !inTitle[bare]) break;

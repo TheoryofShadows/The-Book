@@ -59,6 +59,41 @@ module.exports = async function crawlable(t, ctx) {
           fs.existsSync(path.join(docs, 'read', 'jubilees', 'jubilees-prologue',
                                   'index.html')));
 
+  /* Four shapes of chapter label, which need four different answers from
+     chapter_heading(). Checked as built titles rather than by calling the
+     function, because the title is the thing that gets indexed.
+
+       prefix      the label opens with the work's name  (Jubilees)
+       word run    the label repeats the title's first words, but is not a
+                   prefix of the whole title  (the Enoch volumes)
+       borrowed    the label names the work without matching its opening
+                   (the Testaments: "Judah 1" under "The Testament of Judah")
+       degenerate  the label is the title and nothing else (Hermas's
+                   "Similitude 1"), so dropping the repeat leaves nothing and
+                   the title alone has to be the answer -- not a bare dash,
+                   and not the number said twice.
+
+     The last is the one with no margin: it is a single-chapter work, so
+     there is no sibling page to notice a wrong answer by. */
+  const SHAPES = [
+    ['similitude-1/1', 'Similitude 1 — The Book'],
+    ['jubilees/jubilees-prologue', 'Jubilees Prologue — The Book'],
+    ['jubilees/1', 'Jubilees 1 — The Book'],
+    ['the-testament-of-judah/1', 'The Testament of Judah 1 — The Book'],
+    ['1-enoch-the-book-of-the-watchers-chapters-1-36/1',
+     '1 Enoch: the Book of the Watchers (Chapters 1-36) 1 — The Book'],
+    ['genesis/1', 'Genesis 1 — The Book']
+  ];
+  const wrongly = SHAPES.filter(([where, want]) => {
+    const html = fs.readFileSync(
+      path.join(docs, 'read', where, 'index.html'), 'utf8');
+    const got = (/<title>([^<]*)<\/title>/.exec(html) || [])[1];
+    return got !== want;
+  });
+  t.check('a repeated work name is dropped without eating the chapter',
+          wrongly.length === 0,
+          wrongly.map(w => w[0]).join(', ') || SHAPES.length + ' shapes');
+
   const page = ctx.tally.watch(await ctx.browser.newPage(), 'crawlable');
   /* A crawler runs nothing. Anything that only appears once a script has run
      is, to the thing being served here, not on the page at all. */

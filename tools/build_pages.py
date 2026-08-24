@@ -66,6 +66,12 @@ def title_case(s):
     return _SHOUT.sub(lambda m: m.group(0).upper(), _WORD.sub(word, s.lower()))
 
 
+def _words(s):
+    """The lowercase word sequence of a string, punctuation dropped, so that
+    "SIMILITUDE 1" and "Similitude 1" are the same thing said twice."""
+    return [w for w in re.split(r"[^a-z0-9]+", s.lower()) if w]
+
+
 def slugify(s):
     s = re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
     return s or "chapter"
@@ -87,11 +93,24 @@ def chapter_heading(work_title, label):
     sees in their tab, and they are the same chapter.
     """
     rest = re.sub(r"^Chapter\s+", "", label, flags=re.IGNORECASE).strip()
-    in_title = set(w for w in re.split(r"[^a-z0-9]+", work_title.lower()) if w)
+
+    # The label is the whole title and nothing else -- Hermas's "Similitude 1"
+    # inside the work "SIMILITUDE 1". There is no number to keep hold of, so
+    # the repeat is the entire label and the title alone is the answer. Only
+    # safe because such a work is a single chapter; the assertion in build()
+    # is what keeps that true.
+    if _words(rest) == _words(work_title):
+        return title_case(work_title)
+
+    in_title = set(_words(work_title))
 
     words = rest.split()
     run = 0
     named = False
+    # Never as far as the last word. "1 ENOCH 83" belongs to "1 ENOCH: DREAM
+    # VISIONS ... (chapters 83-108)", which contains 83 as well as 1 and
+    # ENOCH: consuming the lot would leave every chapter of that volume with
+    # the same title, which is the bug this whole helper exists to fix.
     for i in range(max(0, len(words) - 1)):
         bare = re.sub(r"[^a-z0-9]", "", words[i].lower())
         if not bare or bare not in in_title:
@@ -625,6 +644,21 @@ def build(out_dir):
         chapters = work.get("chapters") or []
         chapters_expected += len(chapters)
         slugs = chapter_slugs(chapters)
+
+        # Two chapters of one work must never end up with the same title.
+        # The rule that drops a repeated work name is what could cause it --
+        # eat one word too many and every chapter of a volume is left calling
+        # itself the volume -- and the titles are indexed, so a collision is
+        # duplicate pages competing with each other rather than a cosmetic
+        # slip. Cheap to check, and the check is what lets chapter_heading()
+        # return the bare title for a label that is nothing but the title.
+        headings = [chapter_heading(meta["title"], c.get("label") or "")
+                    for c in chapters]
+        if len(set(headings)) != len(headings):
+            dupes = sorted(h for h in set(headings) if headings.count(h) > 1)
+            raise SystemExit("%s: %d chapters share a title, e.g. %r"
+                             % (meta["id"], len(headings) - len(set(headings)),
+                                dupes[0]))
 
         urls.append(work_page(
             manifest, section, meta, chapters, slugs,
