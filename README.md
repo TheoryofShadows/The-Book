@@ -674,5 +674,25 @@ Run workflow) and the site appears at
 
 ## Licence
 
-Texts are public domain. The code, the audit and the editorial apparatus are
-offered freely; use them.
+**Code: [MIT](LICENSE). Texts: public domain. Reference data: CC BY 4.0.**
+
+Three licences rather than one, because the material arrived under three and
+no single label would be true of all of it. The full account is in
+[LICENSE-DATA.md](LICENSE-DATA.md); what matters most:
+
+- **The texts are public domain** and carry no conditions at all. Every
+  edition is listed with its date in Sources above. Nothing is drawn from a
+  modern copyrighted translation.
+- **The code is MIT** — `tools/`, `tests/`, `docs/assets/`, `docs/index.html`.
+  Take it.
+- **The reference data cannot be public domain**, and this is the one part
+  that constrains you. Word definitions are Easton's 1897 in a parse by NEUU
+  under CC BY 4.0; place coordinates are OpenBible.info's Bible Geocoding
+  under CC BY 4.0, parts of it derived from OpenStreetMap under the ODbL.
+  Those attribution requirements were inherited and cannot be dropped by
+  relicensing downstream, so everything in `docs/data/` is offered under
+  CC BY 4.0 to match. The site names the source of every definition and every
+  coordinate at the point of use, not only in aggregate.
+- **The recorded reading is CC BY 4.0** — public-domain words, synthesised
+  with an Apache-2.0 model whose licence governs the weights this repository
+  does not ship, and asserts nothing over what the model produces.
