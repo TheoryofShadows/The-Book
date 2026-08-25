@@ -67,6 +67,35 @@ jobs:
       - name: Run the browser checks
         run: node tests/run.js
 
+  # The one thing the browser checks cannot ask. They stand in for
+  # archive.org and prove the recorded-reading code works; whether there is
+  # a recording on the other end of it is a question only the network can
+  # answer, and it was being asked on pull requests alone. Nothing merged
+  # straight to main, and nothing merged without a pull request, ever ran it
+  # -- which is how the site shipped for weeks offering a "Recorded reading"
+  # fetched from an Internet Archive item that had never been uploaded.
+  #
+  # Deliberately not in deploy's needs. The reader no longer offers the
+  # recorded voice until it has confirmed the collection is there, so a
+  # missing recording costs the site one voice in a drawer and breaks
+  # nothing: holding the whole library back over it would be the wrong
+  # trade. The job going red is the signal, and the run carries that mark
+  # whether or not it gates anything.
+  #
+  # check_audio.py exits zero with a "skip" line when archive.org cannot be
+  # reached, so this goes red on a missing recording and not on somebody
+  # else's outage.
+  audio:
+    name: The recorded reading has something on the end of it
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: The audio the reader offers is really served
+        run: python3 tools/check_audio.py
+
   deploy:
     needs: [verify, reader]
     # Only the default branch can deploy. The github-pages environment refuses

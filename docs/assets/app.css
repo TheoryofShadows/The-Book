@@ -262,6 +262,33 @@ button.ghost {
 }
 button.ghost:hover { background: var(--paper-2); color: var(--ink); border-color: var(--ink-faint); }
 
+/* The offline copy's own badge, added by markOfflineCopy() and present in no
+   other build. Quiet, because it is a statement of fact rather than a
+   warning -- but never absent, because the whole point is that the reader
+   cannot otherwise tell this copy from the living site. It sits in the
+   running head, so it survives every route. */
+.offline-chip {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .26rem .6rem; border-radius: 999px;
+  font-size: .72rem; letter-spacing: .02em; white-space: nowrap;
+  color: var(--ink-soft);
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+}
+/* On a phone the running head is already one scrolling row; the date is the
+   part that can go, the fact that this is a copy is not. */
+@media (max-width: 34rem) {
+  .offline-chip { font-size: .68rem; padding: .22rem .45rem; }
+}
+
+.offline-note {
+  padding: .7rem .9rem; margin: 0 0 1rem;
+  border-left: 3px solid var(--rubric);
+  background: var(--paper-2);
+  border-radius: 0 6px 6px 0;
+}
+.offline-rev { color: var(--ink-faint); }
+
 /* ---------- layout ---------- */
 
 main { padding: clamp(1.2rem, 4vw, 2.6rem) clamp(.9rem, 4vw, 2rem) 4rem; }

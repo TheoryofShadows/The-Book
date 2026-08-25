@@ -43,6 +43,41 @@ module.exports = async function offline(t, ctx) {
   t.check('and the offline copy does not offer a voice it would have to fetch',
           drawer.indexOf('Read aloud') === -1, JSON.stringify(drawer));
 
+  /* ---- the copy says that it is one ----
+
+     A photograph of the site that does not know it is one. Opened from a
+     disk months after it was downloaded this is the reader down to the
+     wordmark and the routes, so a library that has grown since and a text
+     that has been corrected both read as a project that stopped being
+     maintained -- and there is nothing inside the page to tell the reader
+     otherwise. Hence a date, in the running head where every route carries
+     it, and the sentence in the footer for anyone who wants the rest. */
+  const chip = await page.locator('.topbar .offline-chip').textContent()
+                         .catch(() => '');
+  t.check('the offline copy says so in the running head',
+          /Offline copy/.test(chip), JSON.stringify(chip));
+  t.check('and carries the date it was taken',
+          /\d{1,2} [A-Z][a-z]+ \d{4}/.test(chip), JSON.stringify(chip));
+
+  const note = await page.locator('.foot .offline-note').textContent()
+                         .catch(() => '');
+  t.check('and says in full that it will not change',
+          /will not change/.test(note) && /\d{1,2} [A-Z][a-z]+ \d{4}/.test(note),
+          JSON.stringify(note.slice(0, 90)));
+  t.check('and points at the living site, which is the thing it is not',
+          await page.locator('.foot .offline-note a[href^="https://"]').count() === 1);
+
+  /* The served site must carry none of it. A "this copy is from..." marker on
+     the page that is never a copy is a lie in the one place the reader has
+     no reason to doubt, and it would be wrong about a date it cannot know. */
+  const served = ctx.tally.watch(await ctx.browser.newPage(), 'served');
+  await served.goto(ctx.base + '#/read/amos/2');
+  await served.waitForSelector('.reader .v', { timeout: 20000 });
+  t.check('and the served site is not marked as a copy of anything',
+          await served.locator('.offline-chip').count() === 0 &&
+          await served.locator('.offline-note').count() === 0);
+  await served.close();
+
   /* The build used to name the data files it inlined one by one, so anything
      added later was quietly missing here and the feature resting on it died
      with only a failed fetch to show for it. These are the ones that were

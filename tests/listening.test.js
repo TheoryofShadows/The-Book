@@ -8,11 +8,29 @@ const { workingEngine, failingEngine, silentEngine, noEngine,
 
 const settle = 120;
 
+/* The per-verse offsets of a chapter that has been recorded. At the top
+   because two sections need it now: the drawer, which only offers the
+   recorded reading once it knows the collection is there, and the transport
+   checks further down. */
+const READING = [[1, 0, 4], [2, 4.35, 9], [3, 9.35, 14], [4, 14.35, 20]];
+
 /* More than one init script, because the speech engine and the recorded one
    are separate stubs and several cases need both -- a device with no voice
    of its own is precisely the case the recording exists for. */
 async function open(ctx, route, ...engines) {
   const page = ctx.tally.watch(await ctx.browser.newPage(), route);
+  /* Nothing in this suite may touch the real archive. startHere() asks
+     whether the recorded collection exists the moment listening begins, so a
+     case that stubs no archive would put a live request to archive.org on
+     the wire -- slow, flaky, and answered one way in CI and another on a
+     laptop with the network off. The stubs below patch window.fetch and
+     never reach this; it is the backstop for the cases that pass no recorded
+     engine, and it answers what the Internet Archive really answers for an
+     item that is not there. */
+  await page.route('**archive.org**', r => r.fulfill({
+    status: 200, contentType: 'application/json',
+    headers: { 'access-control-allow-origin': '*' }, body: '{}'
+  }));
   for (const engine of engines) if (engine) await page.addInitScript(engine);
   await page.goto(ctx.base + route);
   await page.waitForSelector('.reader .v, .reader p', { timeout: 20000 });
@@ -173,13 +191,22 @@ module.exports = async function listening(t, ctx) {
     { name: 'Google US English', lang: 'en-US', voiceURI: 'google', localService: false },
     { name: 'Google Deutsch', lang: 'de-DE', voiceURI: 'google-de', localService: false }
   ];
-  page = await open(ctx, '#/read/amos/2', workingEngine(30, DRAWER));
+  /* With the archive stubbed present, because the recorded reading is no
+     longer advertised until the page has confirmed the collection is really
+     there. This case is about the order of a full drawer, so it wants one. */
+  page = await open(ctx, '#/read/amos/2', workingEngine(30, DRAWER),
+                    recordedEngine(READING));
   await page.locator('[data-listen]').click();
   await page.waitForFunction(() => window.__spoken.length >= 1);
   t.check('the best voice is used, not the one the device calls default',
           await page.evaluate(() => window.__spoken[0].voice) === 'google',
           await page.evaluate(() => window.__spoken[0].voice));
 
+  // The probe is fired as listening starts and the drawer refills when it
+  // lands, so the group appears a beat after the player does.
+  await page.waitForSelector(
+    'select[aria-label="Voice"] optgroup[label="Read aloud"]',
+    { state: 'attached', timeout: 5000 });   // an optgroup is never 'visible'
   const drawer = await page.evaluate(() => Array.from(
     document.querySelectorAll('select[aria-label="Voice"] optgroup'),
     g => [g.label, Array.from(g.querySelectorAll('option'), o => o.value)]));
@@ -620,8 +647,7 @@ module.exports = async function listening(t, ctx) {
      that the page's arithmetic over it is right: the verse marked is the
      verse sounding, a jump seeks where it says, speed does not restart the
      sentence, and every way it can fail lands back on the device voice
-     rather than on silence. */
-  const READING = [[1, 0, 4], [2, 4.35, 9], [3, 9.35, 14], [4, 14.35, 20]];
+     rather than on silence. READING is at the top of the file. */
 
   async function openRecorded(opts) {
     const p = await open(ctx, '#/read/amos/2', workingEngine(30),
@@ -753,6 +779,51 @@ module.exports = async function listening(t, ctx) {
     document.querySelectorAll('select[aria-label="Voice"] option'), o => o.value));
   t.check('and it is no longer in the drawer to choose again',
           offered.indexOf('recorded') === -1, offered.slice(0, 4).join(', '));
+  await page.close();
+
+  /* ---- and never offered in the first place ----
+
+     Everything above is the recovery, and the recovery runs after the fact:
+     the reader had already chosen the recorded voice, the collection turned
+     out not to be there, and the page took them off it and stopped listing
+     it. That was the whole defence, and it left the drawer leading with
+     "Recorded reading" for every reader on every chapter until somebody
+     picked it and found out. Which mattered, because for the entire life of
+     the feature there was nothing on the other end: the archive item was
+     never uploaded, so the one entry promising to be better than the
+     device's own voice was the one entry that could not play.
+
+     So an unproven collection is not advertised. Here is the ordinary case
+     the old rule got wrong -- a reader who has chosen nothing, on a device
+     that speaks, opening the player for the first time. */
+  page = await open(ctx, '#/read/amos/2', workingEngine(30), recordedEngine(null));
+  await page.locator('[data-listen]').click();
+  await page.waitForSelector('.player:not([hidden])');
+  await page.waitForFunction(
+    () => window.__audio.some(e => e.fetched &&
+                              e.fetched.indexOf('/metadata/') !== -1),
+    null, { timeout: 5000 });
+  await page.waitForTimeout(settle);
+  const unproven = await page.evaluate(() => Array.from(
+    document.querySelectorAll('select[aria-label="Voice"] option'), o => o.value));
+  t.check('a collection that is not there is never offered to begin with',
+          unproven.indexOf('recorded') === -1, unproven.join(', '));
+  /* The probe must not be in the way of the reading. Asking is worth one
+     request; it is not worth a pause before the first word. */
+  t.check('and the reader is reading rather than waiting on the answer',
+          await page.evaluate(() => window.__spoken.length) > 0);
+  await page.close();
+
+  /* The other half of the same rule: a collection that is there is offered
+     without the reader having had to know to ask for it. */
+  page = await open(ctx, '#/read/amos/2', workingEngine(30), recordedEngine(READING));
+  await page.locator('[data-listen]').click();
+  await page.waitForSelector(
+    'select[aria-label="Voice"] optgroup[label="Read aloud"]',
+    { state: 'attached', timeout: 5000 });   // an optgroup is never 'visible'
+  t.check('a collection that is there is offered without being asked for',
+          await page.evaluate(() => !!document.querySelector(
+            'select[aria-label="Voice"] option[value="recorded"]')));
   await page.close();
 
   /* ---- archive.org unreachable, which is not the same answer ----
