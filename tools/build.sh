@@ -48,6 +48,13 @@ python3 tools/build_canon.py "$OUT"
 echo "==> search index"
 python3 tools/build_index.py "$OUT"
 
+# After the works exist, because it validates every work id against the
+# manifest, and after nothing in particular else: it derives what has been
+# recorded from the offsets on disk rather than from a list, so it is only
+# ever as bold as the evidence under docs/data/audio.
+echo "==> published readings"
+python3 tools/build_readings.py "$OUT"
+
 # The audit is a gate, not a report: it exits non-zero when a finding is not
 # in tools/audit-baseline.txt. Piping it through tail used to hide both the
 # findings and, because the exit status came from tail, the failure itself.
