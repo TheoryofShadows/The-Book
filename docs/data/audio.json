@@ -1,0 +1,5 @@
+{
+  "base": "",
+  "works": {},
+  "note": "What has been recorded, and where it is served from. base is the GitHub Release download URL the work assets sit under; works maps a work id to its asset and the narrator to credit. Both empty means nothing has been published yet, which is the reader's cue not to offer a recorded voice at all. Written by tools/build_readings.py."
+}

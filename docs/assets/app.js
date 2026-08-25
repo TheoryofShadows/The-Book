@@ -3686,22 +3686,28 @@
      carries the reading. The device engine stays the default and the
      offline path, and everything falls back to it. */
 
-  /* The one line to change when the audio moves. It is an Internet Archive
-     item because the texts are public domain and so is their reading, and
-     because 1.79 GB cannot live in the Pages artifact — that caps at 1 GB. */
-  var AUDIO_BASE = "https://archive.org/download/the-book-read-aloud/";
+  /* Two hosts, and neither of them needs CORS.
 
-  /* Whether that item exists at all, which is a different question from
-     whether a given chapter has a reading, and needs a different answer.
+     The offsets are data, so they ship with the site: data/audio.json says
+     what exists and where the audio lives, and data/audio/<work>.json
+     carries the timings. Both are same-origin, which means no preflight, no
+     rate limit, no third party to be down, and -- the part that matters
+     most -- no guessing. What a remote metadata endpoint could only be asked
+     about, the site now simply knows, because the answer is checked into it.
 
-     The metadata endpoint returns {} for an item that is not there -- the
-     Internet Archive's way of saying no such thing -- and sends
-     Access-Control-Allow-Origin: *, so the page can ask. Without asking, a
-     missing collection is indistinguishable from a chapter that was never
-     rendered: the drawer goes on offering a reading nobody can hear, and
-     every chapter opened fires another doomed cross-origin request at it.
-     Reading through Psalms did that a hundred and fifty times. */
-  var AUDIO_META = "https://archive.org/metadata/the-book-read-aloud";
+     The audio is a GitHub Release asset. A media element loads cross-origin
+     without CORS, so only range requests matter, and those are for seeking.
+     Release assets are flat -- an asset name cannot contain a slash -- so
+     the unit is one file per work with the chapter offsets inside the index,
+     rather than one file per chapter. That also suits the recordings, which
+     arrive as long multi-chapter files and would otherwise have to be cut
+     2,537 ways.
+
+     There is no AUDIO_BASE constant here any more. The base is the release
+     tag, it changes every time the audio is republished, and a URL that
+     changes on a schedule is data rather than code -- so it lives in
+     data/audio.json with everything else about the release, and
+     tools/check_audio.py reads it from there. */
 
   /* Not in the single-file copy. That build's whole claim is that it opens
      from a file:// URL with the network off and everything in it works, and
@@ -3714,19 +3720,31 @@
   var AUDIO_OK = typeof window.Audio === "function" && !window.__BOOK__;
 
   var aud = {
-    el: null,       // one <audio>, reused across chapters
-    index: null,    // [[verse, start, end], ...] for the chapter loaded
-    key: null,      // which chapter that is
+    el: null,       // one <audio>, reused across works
+    index: null,    // {src, d, gap, c, v} for the work loaded
+    key: null,      // which work that is
     want: false,    // the reader has asked for the recorded voice
-    tried: {},      // chapters already looked for, so a miss is asked once
+    tried: {},      // works already looked for, so a miss is asked once
     waiting: 0      // a pace pause is running; ignore the transport meanwhile
   };
 
-  /* Asked once a session rather than once a chapter, and asked once even if
-     six things ask at the same moment: everything that wants to know waits on
-     the one request in flight. */
+  /* What has been recorded, and where it is served from.
+
+     Asked once a session, and asked once even if six things ask at the same
+     moment: everything waits on the one request in flight.
+
+     This used to be a cross-origin probe of an Internet Archive metadata
+     endpoint, reading {} as "no such item". It had to distinguish three
+     states, because a network failure is not an answer and treating an
+     unreachable host as an empty one would take the reading away from
+     precisely the readers least able to fetch it. The manifest is
+     same-origin and checked into the site, so that whole problem is gone: if
+     the page loaded, this loads. A miss here means no recording has been
+     published, which is a fact about the repository rather than about the
+     reader's connection. */
   var audioItem = {
     state: "unknown",   // "unknown" | "checking" | "present" | "absent"
+    manifest: null,     // {base, works: {<id>: {src, narrator, licence, url}}}
     waiting: []         // callbacks held while the one request is in flight
   };
 
@@ -3738,21 +3756,14 @@
     if (audioItem.state === "checking") return;
     audioItem.state = "checking";
 
-    fetchJSON(AUDIO_META, function (meta) {
-      // A network failure is not an answer. Treating an unreachable
-      // archive.org as a missing collection would take the reading away from
-      // everyone on a flaky connection and not give it back until they
-      // reloaded, which is the worse of the two mistakes: the reading is
-      // most wanted by the people least able to fetch it reliably.
-      if (meta === null) {
-        audioItem.state = "unknown";
-      } else {
-        audioItem.state = (meta.files || meta.metadata) ? "present" : "absent";
-      }
-      var present = audioItem.state === "present";
+    function settle(manifest) {
+      var ok = !!(manifest && manifest.base && manifest.works &&
+                  Object.keys(manifest.works).length);
+      audioItem.manifest = ok ? manifest : null;
+      audioItem.state = ok ? "present" : "absent";
       var waiting = audioItem.waiting;
       audioItem.waiting = [];
-      if (audioItem.state === "absent") {
+      if (!ok) {
         // Stop offering it, and stop the reader's saved choice pointing at
         // it -- otherwise every chapter starts by asking for a voice that
         // does not exist and falling back from it.
@@ -3761,8 +3772,19 @@
         }
         if (player) fillVoices();
       }
-      waiting.forEach(function (fn) { fn(present); });
-    });
+      waiting.forEach(function (fn) { fn(ok); });
+    }
+
+    getJSON("audio.json").then(settle).catch(function () { settle(null); });
+  }
+
+  /* What the reader is listening to, for the credit line in the player.
+     Named per work, because the narrator is not the same person throughout:
+     the canon is one reading and Enoch is another. */
+  function audioCredit(workId) {
+    var m = audioItem.manifest;
+    var rec = m && m.works && m.works[workId];
+    return rec || null;
   }
 
   function audioWanted() {
@@ -3776,48 +3798,66 @@
     return !SPEECH_OK && want === null;
   }
 
-  function chapterKey(ctx) {
-    return ctx ? ctx.work + "/" + ctx.chapter : null;
-  }
+  /* The whole work's index, or null if there is no reading of it.
 
-  /* The offsets for a chapter, or null if there is no reading of it.
+     Fetched per work rather than per chapter, because the audio is one file
+     per work and so are its offsets: paging from chapter to chapter within a
+     work now costs nothing at all, where it used to cost a request each
+     time. A miss is remembered so that a work with no reading is asked about
+     once rather than once a chapter.
 
-     Not every chapter has one: render_audio.py works from the verse
-     structure, so the paragraph works — Hermas, the Didascalia — have no
-     index and fall back to the device engine. A miss is remembered so that
-     paging through a work does not ask for the same missing file twice. */
+     Not every work has one. Two reasons, and they are different. The
+     paragraph works -- Hermas, the Didascalia, the Ignatian epistles -- have
+     no verses to key offsets to, so they were never candidates. The rest are
+     works for which no recording of *this edition* exists: a reading of a
+     different translation cannot be aligned to this text and is not offered
+     as though it could be. Both fall back to the device engine, which is
+     what it is for. */
   function loadAudioIndex(ctx, done) {
-    var key = chapterKey(ctx);
+    var key = ctx ? ctx.work : null;
     if (!key) { done(null); return; }
     if (aud.key === key && aud.index) { done(aud.index); return; }
     if (aud.tried[key] === false) { done(null); return; }
 
-    // Is there a collection at all, before asking it for one chapter.
+    // Is anything published at all, before asking for one work.
     audioItemReady(function (present) {
       if (!present) { done(null); return; }
 
-      fetchJSON(AUDIO_BASE + ctx.work + "/" + ctx.chapter + ".json",
-        function (data) {
-          if (!data || !data.v || !data.v.length) {
-            aud.tried[key] = false;
-            done(null);
-            return;
-          }
-          aud.tried[key] = true;
-          aud.key = key;
-          aud.index = data;
-          done(data);
-        });
+      // The manifest already says whether this work was recorded, so a work
+      // that was not costs no request rather than a doomed one.
+      if (!audioCredit(key)) { aud.tried[key] = false; done(null); return; }
+
+      getJSON("audio/" + key + ".json").then(function (data) {
+        if (!data || !data.src || !data.v || !data.c) {
+          aud.tried[key] = false;
+          done(null);
+          return;
+        }
+        aud.tried[key] = true;
+        aud.key = key;
+        aud.index = data;
+        done(data);
+      }).catch(function () {
+        aud.tried[key] = false;
+        done(null);
+      });
     });
   }
 
-  function fetchJSON(url, done) {
-    try {
-      fetch(url, { mode: "cors" })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(done)
-        .catch(function () { done(null); });
-    } catch (e) { done(null); }
+  /* The rows for one chapter of a loaded work's index, or [] for a chapter
+     the reading does not cover. Keyed by the reader's chapter index, which
+     is the same number the route carries and the same one
+     render_audio.chapter_stem() names its files by. */
+  function chapterRows(index, chapter) {
+    if (!index || !index.v) return [];
+    return index.v[String(chapter)] || [];
+  }
+
+  /* Where this chapter sits inside the work's file, as [start, end] seconds.
+     Null if the index does not cover it. */
+  function chapterSpan(index, chapter) {
+    var c = index && index.c && index.c[chapter];
+    return (c && c.length === 2) ? c : null;
   }
 
   /* One item per verse, in the order the offsets give, pointing at the same
@@ -3828,14 +3868,14 @@
      The only additions are the two numbers that say where in the file this
      verse is. A verse in the index with nothing matching it on the page is
      dropped rather than guessed at. */
-  function buildAudioItems(passages, index) {
+  function buildAudioItems(passages, rows) {
     var byVerse = {};
     passages.forEach(function (p) {
       if (p.verse && !byVerse[p.verse]) byVerse[p.verse] = p;
     });
 
     var items = [];
-    index.v.forEach(function (row, i) {
+    (rows || []).forEach(function (row, i) {
       var p = byVerse[row[0]];
       if (!p) return;
       items.push({
@@ -3872,12 +3912,26 @@
 
   /* The pace controls are the reader's, not the recording's.
 
-     render_audio.py bakes a 350 ms rest between verses, which is the natural
-     pace and the one that has to sound continuous. The slower paces ask for
-     more than that, so the difference is taken here by holding the transport
-     — which is also why a psalm can still be read the way a psalm is read.
-     Nothing is added at natural pace, so the common case never pauses. */
+     A recording carries its own rest between verses. The slower paces ask
+     for more than that, so the difference is taken here by holding the
+     transport — which is also why a psalm can still be read the way a psalm
+     is read. Nothing is added at the recording's own pace, so the common
+     case never pauses.
+
+     How long that baked rest is was a magic number in two files that had to
+     agree by hand: 350 ms here and GAP = 0.35 in render_audio.py, with
+     nothing asserting they matched. That was survivable while the only
+     recording was one this repository synthesised. It is not survivable now:
+     a human narrator's pauses are whatever they are, they differ between
+     narrators, and nothing here can know them. So the index declares its own
+     gap and this reads it, falling back to the synthesiser's 350 ms for an
+     index written before the field existed. */
   var BAKED_REST = 350;
+
+  function bakedRest() {
+    var g = aud.index && aud.index.gap;
+    return typeof g === "number" && g >= 0 ? Math.round(g * 1000) : BAKED_REST;
+  }
 
   function audioTick() {
     if (!usingAudio() || !nar.playing || aud.waiting) return;
@@ -3905,11 +3959,25 @@
       updatePlayer();
     }
 
+    /* The end of the chapter is a time, not the end of the file.
+
+       One file holds the whole work, so nothing stops of its own accord at a
+       chapter boundary: left alone, Genesis 1 would run straight on through
+       Genesis 2 with the page still showing the first. The "ended" event now
+       only fires at the end of the last chapter of a work, and is kept as
+       the backstop for exactly that. */
+    var span = chapterSpan(aud.index, nar.ctx ? nar.ctx.chapter : -1);
+    if (span && t >= span[1]) {
+      a.pause();
+      chapterFinished();
+      return;
+    }
+
     // Past the end of this verse, with more to come: take the extra rest the
     // pace asks for beyond what the file already carries.
     var item = items[nar.at];
     if (item && nar.at + 1 < items.length && t >= item.b) {
-      var extra = restAfter(item, items[nar.at + 1]) - BAKED_REST;
+      var extra = restAfter(item, items[nar.at + 1]) - bakedRest();
       if (extra > 200) {
         var gen = nar.gen;
         aud.waiting = 1;
@@ -3930,7 +3998,15 @@
     nar.playing = true;
     aud.waiting = 0;
 
-    var src = AUDIO_BASE + nar.ctx.work + "/" + nar.ctx.chapter + ".opus";
+    /* One asset per work, named by the manifest. Paging between chapters of
+       the same work therefore never reloads anything -- it is a seek. */
+    var m = audioItem.manifest;
+    if (!m || !aud.index || !aud.index.src) {
+      fallBackToDevice("The recording could not be played — using this " +
+                       "device's own voice instead.");
+      return;
+    }
+    var src = m.base + aud.index.src;
     if (a.getAttribute("src") !== src) {
       a.setAttribute("src", src);
       a.load();
@@ -4014,7 +4090,7 @@
 
     if (!nar.ctx) return;
     loadAudioIndex(nar.ctx, function (index) {
-      if (!index) {
+      if (!index || !chapterRows(index, nar.ctx.chapter).length) {
         // Asked for by a reader who cannot have it here: say so once, and
         // leave them on the engine that works.
         store.set("listen-voice", null);
@@ -4023,7 +4099,8 @@
                  "this device's own voice.");
         return;
       }
-      var items = buildAudioItems(nar.passages, index);
+      var items = buildAudioItems(nar.passages,
+                                  chapterRows(index, nar.ctx.chapter));
       if (!items.length) { store.set("listen-voice", null); return; }
       if (playing && SPEECH_OK) speech.cancel();
       settle(items, "recorded");
@@ -4120,9 +4197,14 @@
     // estimate: the arithmetic below exists only because an engine speaking
     // live cannot be asked.
     if (usingAudio() && aud.index) {
+      /* The chapter's end, not the file's. The file is the whole work, so
+         "d" would tell a reader four chapters into Genesis that they had
+         three hours left of it. */
+      var span = chapterSpan(aud.index, nar.ctx ? nar.ctx.chapter : -1);
+      var ends = span ? span[1] : aud.index.d;
       var played = aud.el ? aud.el.currentTime : 0;
       var rate = store.get("listen-rate", 1) || 1;
-      return Math.max(0, (aud.index.d - played) / rate) / 60;
+      return Math.max(0, (ends - played) / rate) / 60;
     }
 
     var chars = 0, rest = 0;
@@ -4811,7 +4893,9 @@
     if (audioWanted()) {
       loadAudioIndex(ctx, function (index) {
         if (nar.ctx !== ctx) return;
-        var items = index ? buildAudioItems(passages, index) : [];
+        var items = index
+          ? buildAudioItems(passages, chapterRows(index, ctx.chapter))
+          : [];
         if (!items.length) {
           /* Nothing to read with. A device that has no engine of its own was
              relying on this, so it has to be told rather than left with a

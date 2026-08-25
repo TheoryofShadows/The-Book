@@ -19,18 +19,13 @@ const READING = [[1, 0, 4], [2, 4.35, 9], [3, 9.35, 14], [4, 14.35, 20]];
    of its own is precisely the case the recording exists for. */
 async function open(ctx, route, ...engines) {
   const page = ctx.tally.watch(await ctx.browser.newPage(), route);
-  /* Nothing in this suite may touch the real archive. startHere() asks
-     whether the recorded collection exists the moment listening begins, so a
-     case that stubs no archive would put a live request to archive.org on
-     the wire -- slow, flaky, and answered one way in CI and another on a
-     laptop with the network off. The stubs below patch window.fetch and
-     never reach this; it is the backstop for the cases that pass no recorded
-     engine, and it answers what the Internet Archive really answers for an
-     item that is not there. */
-  await page.route('**archive.org**', r => r.fulfill({
-    status: 200, contentType: 'application/json',
-    headers: { 'access-control-allow-origin': '*' }, body: '{}'
-  }));
+  /* No backstop needed any more. What the reader asks about the recorded
+     reading, it asks of docs/data/audio.json, which this suite's own server
+     serves and which is checked in empty -- so a case that stubs nothing
+     gets the honest "nothing published" answer off the disk, with no request
+     leaving the machine. That used to be a route intercepting archive.org,
+     because the question went to a third party over the wire and was
+     answered differently in CI than on a laptop with the network off. */
   for (const engine of engines) if (engine) await page.addInitScript(engine);
   await page.goto(ctx.base + route);
   await page.waitForSelector('.reader .v, .reader p', { timeout: 20000 });
@@ -665,20 +660,28 @@ module.exports = async function listening(t, ctx) {
     () => window.__player && window.__player.paused === false, null,
     { timeout: 5000 });
 
-  t.check('the recorded reading is fetched for the chapter on the page',
+  t.check('the work\'s recording is fetched for the chapter on the page',
           await page.evaluate(() => window.__audio.some(
-            e => e.src && /amos\/2\.opus$/.test(e.src))),
+            e => e.src && /amos\.opus$/.test(e.src))),
           JSON.stringify(await page.evaluate(() => window.__audio.slice(0, 3))));
   t.check('and the device engine is not asked to say anything',
           await page.evaluate(() => window.__spoken.length) === 0);
 
-  await page.waitForFunction(() => window.__player.currentTime > 5, null,
-                             { timeout: 5000 });
+  /* Waiting for the playhead to reach the chapter's SECOND verse, which is
+     at 104.35 -- the chapter begins 100 seconds into the work's file, so a
+     wait for "past five seconds" is satisfied before a word has sounded. */
+  const intoVerseTwo = await page.waitForFunction(
+    () => window.__player.currentTime > 105, null, { timeout: 6000 })
+    .then(() => true).catch(() => false);
   t.check('the verse marked is the verse sounding',
-          await page.evaluate(() => {
+          intoVerseTwo && await page.evaluate(() => {
             const m = document.querySelector('.is-speaking');
             return m && /^2/.test(m.textContent.trim());
-          }));
+          }),
+          JSON.stringify(await page.evaluate(() => ({
+            at: Math.round(window.__player.currentTime * 100) / 100,
+            marked: (document.querySelector('.is-speaking') || {}).textContent
+          }))));
 
   /* Speed is playbackRate on a recording, so the sentence being read keeps
      going rather than starting again -- which is what changing speed on the
@@ -689,12 +692,15 @@ module.exports = async function listening(t, ctx) {
           await page.evaluate(() => window.__player.playbackRate) === 1.5 &&
           await page.evaluate(() => window.__player.currentTime) >= beforeSpeed);
 
+  /* The chapter sits at 100 seconds into the work's file, so every one of
+     these is that plus the verse's own offset. A fixture whose chapter began
+     at zero would pass whether or not the reader did the addition. */
   await page.locator('[aria-label="Forward one verse"]').click();
   await page.waitForTimeout(settle);
   t.check('a jump seeks the recording to that verse, exactly',
           await page.evaluate(() => {
             const seeks = window.__audio.filter(e => 'seek' in e);
-            return seeks.length && [0, 4.35, 9.35, 14.35]
+            return seeks.length && [100, 104.35, 109.35, 114.35]
               .indexOf(seeks[seeks.length - 1].seek) !== -1;
           }),
           JSON.stringify(await page.evaluate(
@@ -732,18 +738,19 @@ module.exports = async function listening(t, ctx) {
           await page.evaluate(() => window.__spoken.length) > 0);
   await page.close();
 
-  /* ---- the collection itself is not there ----
+  /* ---- nothing has been published ----
 
-     Every check above stands in for archive.org, and so proves the recorded
-     reading's code works. None of them could notice that the item it fetches
-     from does not exist -- which it did not, while the voice was offered
+     Every check above stands in for the host, and so proves the recorded
+     reading's code works. None of them could notice that the audio it
+     fetches does not exist -- which it did not, while the voice was offered
      first and to everyone and produced silence for every reader who chose
      it. The gap was that a missing chapter and a missing collection looked
      identical from here: both a failed fetch, both remembered per chapter,
      so reading through Psalms asked a hundred and fifty separate times.
 
-     So the page asks the metadata endpoint once, which is the only cheap way
-     to tell the two apart, and acts on the answer. */
+     The manifest closes it. It is read once, it is same-origin, and it says
+     outright which works were recorded -- so a work that was not costs no
+     request at all rather than a doomed one. */
   page = await open(ctx, '#/read/amos/0', workingEngine(30), recordedEngine(null));
   await page.evaluate(() => localStorage.setItem(
     'thebook:listen-voice', JSON.stringify('recorded')));
@@ -757,14 +764,14 @@ module.exports = async function listening(t, ctx) {
   const asked = await page.evaluate(() => {
     const fetched = window.__audio.filter(e => e.fetched).map(e => e.fetched);
     return {
-      probes: fetched.filter(u => u.indexOf('/metadata/') !== -1).length,
-      downloads: fetched.filter(u => u.indexOf('/download/') !== -1).length
+      probes: fetched.filter(u => u === 'manifest').length,
+      indexes: fetched.filter(u => u.indexOf('index:') === 0).length
     };
   });
-  t.check('a missing collection is asked about once, not once a chapter',
-          asked.probes === 1, asked.probes + ' probes over six chapters');
-  t.check('and no chapter is fetched from an item that is not there',
-          asked.downloads === 0, asked.downloads + ' fetches');
+  t.check('an empty manifest is read once, not once a chapter',
+          asked.probes === 1, asked.probes + ' reads over six chapters');
+  t.check('and no work is fetched that the manifest does not list',
+          asked.indexes === 0, asked.indexes + ' fetches');
 
   /* store.set(k, null) writes the JSON string "null", so the raw item is
      never the absent value getItem() returns for a key that was removed. */
@@ -800,8 +807,7 @@ module.exports = async function listening(t, ctx) {
   await page.locator('[data-listen]').click();
   await page.waitForSelector('.player:not([hidden])');
   await page.waitForFunction(
-    () => window.__audio.some(e => e.fetched &&
-                              e.fetched.indexOf('/metadata/') !== -1),
+    () => window.__audio.some(e => e.fetched === 'manifest'),
     null, { timeout: 5000 });
   await page.waitForTimeout(settle);
   const unproven = await page.evaluate(() => Array.from(
@@ -826,34 +832,88 @@ module.exports = async function listening(t, ctx) {
             'select[aria-label="Voice"] option[value="recorded"]')));
   await page.close();
 
-  /* ---- archive.org unreachable, which is not the same answer ----
+  /* ---- the release host is down, which is not the same answer ----
 
-     A network failure says nothing about whether the collection exists.
-     Reading it as "absent" would take the recording away from everyone on a
-     flaky connection -- and not give it back until they reloaded -- which is
-     the worse of the two mistakes, since the readers who most want a real
-     voice are the ones least likely to have a reliable line to fetch it on.
+     This used to be about an unreachable archive, and about not reading a
+     network failure as "the collection is empty" -- because doing so would
+     take the reading away from precisely the readers least able to fetch it
+     reliably, and not give it back until they reloaded.
 
-     The outage is a 200 with a body that is not JSON, rather than an abort
-     or a 5xx: both of those log a console error that the tally treats as a
-     failure of its own, and what is under test is the answer, not the noise.
-     r.json() rejects either way, and fetchJSON reports the same null. */
-  page = await open(ctx, '#/read/amos/0', workingEngine(30));
-  await page.route('**/archive.org/**', r => r.fulfill({
-    status: 200,
-    headers: { 'access-control-allow-origin': '*' },
-    contentType: 'text/plain',
-    body: 'the gateway is having a day'
-  }));
+     That whole hazard is gone, and for a better reason than a careful branch:
+     the question is no longer asked over the network. What exists is stated
+     in docs/data/audio.json, which is same-origin and checked in, so if the
+     page loaded then the answer loaded with it. Only the audio itself is
+     remote now, and a host that will not serve it costs this one playback --
+     never the offer. The voice stays in the drawer to be tried again. */
+  page = await openRecorded({ failAudio: true });
+  await page.locator('[data-listen]').click();
+  await page.waitForFunction(() => window.__spoken.length > 0, null,
+                             { timeout: 8000 });
+  const stillOffered = await page.evaluate(() => Array.from(
+    document.querySelectorAll('select[aria-label="Voice"] option'), o => o.value));
+  t.check('a release host that will not serve costs the playback, not the offer',
+          stillOffered.indexOf('recorded') !== -1, stillOffered.join(', '));
+  await page.close();
+
+  /* ---- a chapter is a slice of the work, and stops where it ends ----
+
+     One asset holds the whole work. Nothing in the file marks a chapter
+     boundary, so left alone the transport reads straight through it: Amos 3
+     would run on into Amos 4 with the page still showing the third. The
+     "ended" event cannot help -- it fires once, at the end of the last
+     chapter of the work. The chapter's end is a time, and the reader has to
+     stop at it. */
+  page = await openRecorded();
+  await page.locator('[data-listen]').click();
+  await page.waitForFunction(
+    () => window.__player && window.__player.paused === false, null,
+    { timeout: 5000 });
+  // Jump to the last verse so the end arrives without playing the whole slice.
+  for (const _ of [1, 2, 3]) {
+    await page.locator('[aria-label="Forward one verse"]').click();
+    await page.waitForTimeout(60);
+  }
+  const moved = await page.waitForFunction(
+    () => location.hash !== '#/read/amos/2', null, { timeout: 9000 })
+    .then(() => true).catch(() => false);
+  t.check('the chapter stops at its own end rather than reading on',
+          moved, await page.evaluate(() => location.hash));
+  t.check('and it stopped at the chapter boundary, not the end of the file',
+          await page.evaluate(() => {
+            const d = window.__player.duration;      // 140.35, the whole work
+            return window.__player.currentTime < d - 10;
+          }),
+          JSON.stringify(await page.evaluate(
+            () => ({ at: Math.round(window.__player.currentTime * 10) / 10,
+                     fileEnds: window.__player.duration }))));
+  await page.close();
+
+  /* ---- the recording declares its own rest ----
+
+     The pause a reader hears between verses is whatever the narrator left
+     there, and it is not the same from one narrator to the next. The reader
+     adds to it at the slower paces, so it has to know how much is already
+     baked in -- and it used to assume 350 ms, because that is what
+     render_audio.py bakes and the two numbers were kept level by hand.
+
+     A recording whose own rest is longer than the pace asks for needs
+     nothing added. If the reader went on assuming 350 ms it would insert a
+     pause on top of a gap already longer than the one requested, and the
+     liturgical pace would drift further behind with every verse. */
+  page = await openRecorded({ gap: 1.2 });
   await page.evaluate(() => localStorage.setItem(
-    'thebook:listen-voice', JSON.stringify('recorded')));
+    'thebook:listen-pace', JSON.stringify('liturgical')));
   await page.reload();
   await page.waitForSelector('.reader .v');
-  await page.waitForTimeout(600);
-  const survived = await page.evaluate(
-    () => localStorage.getItem('thebook:listen-voice'));
-  t.check('an unreachable archive does not take the reading away',
-          survived !== null && JSON.parse(survived) === 'recorded', String(survived));
+  await page.locator('[data-listen]').click();
+  await page.waitForFunction(
+    () => window.__player && window.__player.paused === false, null,
+    { timeout: 5000 });
+  await page.waitForTimeout(900);
+  t.check('a rest longer than the pace asks for has nothing added to it',
+          await page.evaluate(() => !window.__audio.some(e => 'pause' in e)),
+          JSON.stringify(await page.evaluate(
+            () => window.__audio.filter(e => 'pause' in e))));
   await page.close();
 
   /* ---- a browser from before the API ---- */

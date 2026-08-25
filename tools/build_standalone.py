@@ -44,6 +44,8 @@ def collect() -> dict:
                 continue
             full = os.path.join(folder, fn)
             key = os.path.relpath(full, DATA).replace(os.sep, "/")
+            if skip_offline(key):
+                continue
             with open(full, encoding="utf-8") as fh:
                 bundle[key] = json.load(fh)
     return bundle
@@ -89,6 +91,18 @@ def stamp() -> dict:
         "commit": commit(),
         "home": BASE.rstrip("/") + "/",
     }
+
+
+# The recorded reading is the one feature this build cannot honour: the audio
+# is a release asset and there is no network here. docs/assets/app.js already
+# knows that -- AUDIO_OK is false whenever window.__BOOK__ is set -- so these
+# files would be inlined, never read, and paid for in megabytes. Roughly three
+# quarters of a megabyte of verse offsets for a voice that cannot play.
+#
+# The same rule as the online-only markers in index.html, applied to the data
+# rather than to the page.
+def skip_offline(key):
+    return key == "audio.json" or key.startswith("audio/")
 
 
 ONLINE_ONLY = ("<!-- online-only:start -->", "<!-- online-only:end -->")

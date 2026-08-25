@@ -185,48 +185,82 @@ function noEngine() {
 
 /* The recorded reading, without the recording.
 
-   The real files are 1.79 GB on an Internet Archive item, so the suite stands
-   in for them: fetch answers the offsets with a synthetic index, and the
-   <audio> element is replaced by one that reports a duration and advances a
-   playhead on a timer. What is being checked is the page's arithmetic --
-   which verse is marked when, what a jump seeks to, what a failure falls back
-   to -- and none of that needs a decoder.
+   Two halves are stubbed, because the reader now fetches them from two
+   places. The manifest and the per-work offsets are same-origin data, so
+   window.fetch is patched for those paths; the audio is a release asset, so
+   the <audio> element is replaced by one that reports a duration and advances
+   a playhead on a timer. What is being checked is the page's arithmetic --
+   which verse is marked when, what a jump seeks to, when a chapter stops,
+   what a failure falls back to -- and none of that needs a decoder.
 
-   `verses` is [[verse, start, end], ...]; pass null for `index` to make the
-   chapter one that has no reading, which is the fallback path. */
-function recordedEngine(verses, opts) {
+   `rows` is [[verse, start, end], ...] for the chapter under test, in
+   offsets relative to the start of that chapter. Pass null to publish
+   nothing at all, which is the fallback path.
+
+   The chapter is deliberately NOT placed at the start of the work file.
+   One asset holds the whole work, so every offset the reader uses is the
+   chapter's own start plus the verse's offset within it, and a fixture that
+   began at zero would pass whether or not that addition happened. AT is
+   where the chapter sits. */
+const CHAPTER_AT = 100;
+
+function recordedEngine(rows, opts) {
   const o = opts || {};
   return { content: `
     (() => {
-      const INDEX = ${JSON.stringify(verses)};
+      const ROWS = ${JSON.stringify(rows)};
+      const AT = ${o.at === undefined ? CHAPTER_AT : o.at};
+      const GAP = ${o.gap === undefined ? 0.35 : o.gap};
+      const WORK = ${JSON.stringify(o.work || 'amos')};
+      const CH = ${o.chapter === undefined ? 2 : o.chapter};
+      const CHAPTERS = ${o.chapters === undefined ? 9 : o.chapters};
       const FAIL_AUDIO = ${o.failAudio ? 'true' : 'false'};
+      const BASE = 'https://releases.example.invalid/audio-v1/';
       const log = []; window.__audio = log;
 
+      /* The work's index, built around the one chapter under test. Every
+         other chapter of the work gets a span too, so that running off the
+         end of this one has somewhere to go and the reader can advance. */
+      function workIndex() {
+        if (!ROWS) return null;
+        const span = ROWS[ROWS.length - 1][2] + GAP;
+        const c = [];
+        for (let i = 0; i < CHAPTERS; i++) {
+          c.push(i === CH ? [AT, AT + span]
+                          : [i * 5 + (i > CH ? AT + span : 0),
+                             i * 5 + 4 + (i > CH ? AT + span : 0)]);
+        }
+        const v = {};
+        v[String(CH)] = ROWS.map(r => [r[0], AT + r[1], AT + r[2]]);
+        return { src: WORK + '.opus', d: AT + span + 20, gap: GAP, c: c, v: v };
+      }
+
+      const MANIFEST = ROWS
+        ? { base: BASE,
+            works: { [WORK]: { src: WORK + '.opus',
+                               narrator: 'A Test Narrator',
+                               licence: 'Public domain',
+                               url: 'https://example.invalid/reading' } } }
+        : { base: '', works: {} };
+
       const realFetch = window.fetch;
+      const MANIFEST_PATH = 'data/audio.json';
+      const INDEX_DIR = 'data/audio/';
       window.fetch = function (url, init) {
-        const u = String(url);
-        if (u.indexOf('archive.org') !== -1) {
-          log.push({ fetched: u });
-          /* The page asks once whether the collection exists at all before
-             asking it for any chapter. The Internet Archive answers {} for an
-             item that is not there, which is exactly what a suite standing in
-             for a chapter with no reading should answer too -- a stand-in
-             that reported the collection present while refusing every file
-             would be testing a state the real service cannot be in. */
-          if (u.indexOf('/metadata/') !== -1) {
-            return Promise.resolve({
-              ok: true,
-              json: () => Promise.resolve(
-                INDEX ? { metadata: { identifier: 'the-book-read-aloud' } } : {})
-            });
-          }
-          if (!INDEX) return Promise.resolve({ ok: false, status: 404 });
-          if (/\\.json$/.test(u)) {
-            const d = INDEX[INDEX.length - 1][2] + 0.35;
-            return Promise.resolve({
-              ok: true, json: () => Promise.resolve({ d: d, v: INDEX })
-            });
-          }
+        const u = String(url).split('?')[0];
+        if (u.endsWith(MANIFEST_PATH)) {
+          log.push({ fetched: 'manifest' });
+          return Promise.resolve({
+            ok: true, json: () => Promise.resolve(MANIFEST)
+          });
+        }
+        const at = u.indexOf(INDEX_DIR);
+        if (at !== -1 && u.endsWith('.json')) {
+          const work = u.slice(at + INDEX_DIR.length, -5);
+          log.push({ fetched: 'index:' + work });
+          const idx = work === WORK ? workIndex() : null;
+          if (!idx) return Promise.resolve({ ok: false, status: 404 });
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(idx) });
         }
         return realFetch.apply(this, arguments);
       };
@@ -239,7 +273,8 @@ function recordedEngine(verses, opts) {
           super();
           this._t = 0; this._timer = null; this._src = '';
           this.playbackRate = 1; this.preload = 'none'; this.readyState = 0;
-          this.duration = INDEX ? INDEX[INDEX.length - 1][2] + 0.35 : 0;
+          const idx = workIndex();
+          this.duration = idx ? idx.d : 0;
           window.__player = this;
         }
         get currentTime() { return this._t; }
@@ -276,4 +311,4 @@ function recordedEngine(verses, opts) {
 }
 
 module.exports = { serve, launch, Tally, workingEngine, failingEngine,
-                   silentEngine, noEngine, recordedEngine };
+                   silentEngine, noEngine, recordedEngine, CHAPTER_AT };
