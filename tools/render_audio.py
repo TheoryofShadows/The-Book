@@ -76,6 +76,29 @@ MAX_TOKENS = 500
 CLAUSE = (";", ":", ",", "—", "–")
 
 
+def chapter_stem(work_id: str, idx: int) -> str:
+    """Where the reader will look for this chapter, minus the extension.
+
+    The index, not chapter["n"]. These are two different numbers and they
+    disagree for 2,486 of the 2,537 chapters here: "n" is the number printed
+    at the head of the chapter, while the reader addresses a chapter by its
+    position in work["chapters"] -- what the route #/read/<work>/<i> carries,
+    and what ctx.chapter hands to the fetch in docs/assets/app.js.
+
+    This named files by "n" until it was found. A rendered Genesis 1 landed
+    at genesis/1 while the reader asked for genesis/0, and so for 98% of the
+    library. Nothing caught it because nothing was ever uploaded for it to
+    404 against -- and check_audio.py's own default sample, genesis/0, is
+    written in the reader's numbering, so the check would have failed on a
+    correct render and passed on none.
+
+    It is a function so that there is one rule rather than two, and so
+    tests/python/test_render_audio.py can hold it against the reader's own
+    URL rather than against a second copy of it.
+    """
+    return os.path.join(work_id, str(idx))
+
+
 def load_engine(models: str):
     """Import and construct the engine, with a useful failure if it is absent.
 
@@ -204,8 +227,8 @@ def main():
         folder = os.path.join(args.out, work_id)
         os.makedirs(folder, exist_ok=True)
 
-        for chapter in work.get("chapters", []):
-            base = os.path.join(folder, str(chapter["n"]))
+        for idx, chapter in enumerate(work.get("chapters", [])):
+            base = os.path.join(args.out, chapter_stem(work_id, idx))
             opus, meta = base + ".opus", base + ".json"
 
             # Twenty-eight core-hours will be interrupted. Anything already
@@ -230,7 +253,8 @@ def main():
             total_audio += duration
             total_chars += chars
             total_bytes += os.path.getsize(opus)
-            print(f"{work['title']} {chapter['n']}: {len(index)} verses, "
+            print(f"{work['title']} {chapter['n']} -> {work_id}/{idx}: "
+                  f"{len(index)} verses, "
                   f"{duration/60:.1f} min, {os.path.getsize(opus)/1024:.0f} KB, "
                   f"{duration/(time.time()-t0):.1f}x realtime", flush=True)
 
