@@ -436,7 +436,7 @@ worse again. It loses seven times going to WebAssembly — it is transformer-hea
 and there are no threads to be had on a site that cannot send COOP/COEP headers,
 which GitHub Pages cannot. Piper survives that and was the fallback plan; it is
 also not the voice that sounded right. So the arithmetic is done once, by
-[`tools/render_audio.py`](tools/render_audio.py), and the result is served.
+a renderer run ahead of time, and the result is served.
 
 **What it costs**, measured over Genesis 1, Daniel 3 and Psalm 23: 4.1× realtime
 on one core, 116 hours of audio for the whole library, 1.79 GB as Opus at 34
@@ -502,7 +502,6 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | `tools/build_standalone.py` | Inlines the whole library into one HTML file that runs offline, and cuts out the parts of the page an offline copy cannot honour |
 | `tools/textnorm.py` | The one rule that folds text into a search token or a lookup key |
 | `tools/speakable.py` | The one rule for what a voice is handed, read out of `app.js` so the page and the recording cannot drift apart |
-| `tools/render_audio.py` | Renders the library to audio, one file per chapter with the verses indexed — run by hand, output hosted off this repository |
 | `tools/dates.py` | Reads a numeric span out of a position statement, and refuses to where there is none |
 | `tools/lint.sh` | Everything parses, and every data file is the JSON it claims to be |
 | `tools/test.sh` | Runs the unit tests and the browser checks in `tests/` |

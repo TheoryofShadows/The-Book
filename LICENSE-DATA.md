@@ -74,7 +74,7 @@ https://github.com/TheoryofShadows/The-Book*
 
 ## The recorded reading — CC BY 4.0
 
-The audio produced by [`tools/render_audio.py`](tools/render_audio.py) is a
+The audio produced by the renderer that used to live here is a
 reading of public-domain texts, synthesised with
 [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), whose weights are
 Apache-2.0. The model licence governs the weights, which this repository does

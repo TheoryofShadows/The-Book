@@ -17,7 +17,8 @@ tests/python/test_speakable_agreement.py runs the reader's own copy of the
 rule against this one and fails if they part company, the way
 test_tokeniser_agreement.py already does for the search tokeniser.
 
-Deliberately stdlib-only. tools/render_audio.py needs a neural engine and
+Deliberately stdlib-only. The renderer that used to share it needed a
+neural engine and
 half a gigabyte of wheels; the rule it shares with the reader must not, or
 the test that holds the two together could not run in CI.
 """
