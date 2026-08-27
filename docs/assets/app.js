@@ -3542,12 +3542,17 @@
      happens to flag as default, is how a library of scripture ends up read
      by a joke robot — which is exactly what it used to do here.
 
-     So the drawer is scored. What is known to be good — Apple's enhanced and
-     premium downloads, Microsoft's natural voices, Google's, anything the
-     browser synthesises on a server rather than on the device — is preferred
-     and offered first. What is known to be a toy or a relic is put at the
-     bottom and labelled, rather than hidden: a device may have nothing else,
-     and the choice stays the reader's.
+     So the drawer is scored, and the best of it is used without asking.
+     What is known to be good — Apple's enhanced and premium downloads,
+     Microsoft's natural voices, Google's, anything the browser synthesises on
+     a server rather than on the device — wins. What is known to be a toy or a
+     relic loses, and a device that has nothing else still gets read to, since
+     the worst voice here is better than no voice at all.
+
+     There used to be a select listing all of this, grouped in three tiers.
+     It is gone: it was one of five controls in a row that wrapped on every
+     phone, offering a decision almost nobody made. The ranking is the part
+     that was doing the work, and it needs no interface to do it.
 
      The scoring goes on names, which is unlovely, but names are all there is:
      the API has no field for quality, and no way to ask. So this is a list of
@@ -3583,8 +3588,10 @@
 
   function isEnglish(v) { return /^en(-|_|$)/i.test(v.lang || ""); }
 
-  /* Three drawers rather than a ranking the reader cannot see: what to use,
-     what else is here, and what not to be surprised by. */
+  /* Three bands: what to use, what will do, and what a reader should not be
+     surprised by. Only the ordering is visible now -- the best voice simply
+     speaks -- but the bands still decide it, and bestIsPoor() still asks
+     whether the whole device is stuck in the bottom one. */
   function voiceTier(v) {
     var name = v.name || "", uri = v.voiceURI || "";
     if (NOVELTY.test(name) || !isEnglish(v)) return 2;
@@ -3646,18 +3653,24 @@
     loadVoices();
     speech.addEventListener("voiceschanged", function () {
       loadVoices();
-      if (player) fillVoices();
+      if (player) updateHint();
     });
   }
 
+  /* The best voice on this device, which is the whole of the choice now.
+
+     There used to be a drawer, and this preferred whatever had been picked
+     from it. The drawer is gone -- it was five controls of clutter for a
+     decision almost nobody made -- but the scoring above is not, because it
+     is what stops a stock phone reading scripture in the thinnest voice it
+     owns. The reader gets the best one silently instead of being asked.
+
+     A choice saved by an older version is cleared rather than honoured: it
+     may name a voice this device no longer has, and leaving it would pin
+     somebody to a worse voice with nothing on screen to explain why. */
   function chosenVoice() {
-    var want = store.get("listen-voice", null);
-    var found = null;
-    // Some engines renumber their voice URIs between releases; the name is
-    // the more durable half of a saved choice, so it is the fallback.
-    voices.forEach(function (v) { if (!found && v.voiceURI === want) found = v; });
-    voices.forEach(function (v) { if (!found && v.name === want) found = v; });
-    return found || voices[0] || null;
+    if (store.get("listen-voice", null) !== null) store.set("listen-voice", null);
+    return voices[0] || null;
   }
 
   /* ---------------- the narrator ---------------- */
@@ -3675,8 +3688,6 @@
     utter: null,
     gen: 0,         // cancels stale onend/onerror from a discarded utterance
     resumeChapter: null,  // set when auto-advancing into the next chapter
-    sleepAt: 0,
-    stopAtEnd: false,
     pendingResumeAt: 0,
     blocked: null   // the engine has already told us it cannot speak
 
@@ -3788,20 +3799,9 @@
      can hear which one they are in; a hand-written list of "the poetry books"
      would be an editorial claim with no citation behind it, which is the one
      thing the rest of this volume refuses to do. */
-  var PACE = {
-    natural:    { rest: 1,   line: 1,   label: "Pace: natural" },
-    measured:   { rest: 1.8, line: 2.2, label: "Measured" },
-    liturgical: { rest: 3,   line: 4,   label: "Liturgical" }
-  };
-
-  function pace() {
-    return PACE[store.get("listen-pace", "natural")] || PACE.natural;
-  }
-
   function restAfter(item, next) {
     if (!next) return 0;
-    var p = pace();
-    if (item.unit === "heading") return Math.round(550 * p.rest);
+    if (item.unit === "heading") return 550;
     var ends = /[.!?]["'’”)\]]?\s*$/.test(item.text);
     var moved = next.verse !== item.verse || next.el !== item.el;
 
@@ -3809,8 +3809,7 @@
        and takes the longer silence. A sentence broken only for the engine's
        length limit still takes none, at any pace, or the words come apart. */
     if (!ends && !moved) return 0;
-    if (moved) return Math.round(260 * p.line);
-    return Math.round(170 * p.rest);
+    return moved ? 260 : 170;
   }
 
   function speakFrom(i) {
@@ -3827,11 +3826,6 @@
 
   function step(gen) {
     if (gen !== nar.gen) return;
-
-    if (nar.sleepAt && Date.now() > nar.sleepAt) {
-      stopListening("Listening stopped — sleep timer.");
-      return;
-    }
 
     var item = nar.items[nar.at];
     if (!item) { chapterFinished(); return; }
@@ -3936,11 +3930,6 @@
     var ctx = nar.ctx;
     store.set("listen-at", null);
 
-    if (nar.stopAtEnd) {
-      nar.stopAtEnd = false;
-      stopListening("Listening stopped — end of chapter.");
-      return;
-    }
     if (store.get("listen-continue", true) && ctx) {
       var intoWork = ctx.next === null;
       var target = intoWork
@@ -3996,8 +3985,6 @@
     nar.playing = false;
     nar.on = false;
     nar.resumeChapter = null;
-    nar.sleepAt = 0;
-    nar.stopAtEnd = false;
     if (SPEECH_OK) speech.cancel();
     clearMarks();
     // The position is deliberately left behind: stopping is not finishing,
@@ -4043,81 +4030,17 @@
   /* ---------------- the player ---------------- */
 
   var player = null, playBtn = null, whereEl = null, unitEl = null,
-      barEl = null, voiceSel = null, hintEl = null;
+      barEl = null, hintEl = null;
 
   function option(value, label, selected) {
     return el("option", { value: value, selected: selected ? true : null, text: label });
   }
 
-  var displayNames = null;
-  function langLabel(tag) {
-    var t = (tag || "").replace("_", "-");
-    try {
-      if (displayNames === null && window.Intl && Intl.DisplayNames) {
-        displayNames = new Intl.DisplayNames([navigator.language || "en"],
-                                             { type: "language" });
-      }
-      if (displayNames) return displayNames.of(t) || t;
-    } catch (e) { displayNames = false; }
-    return t;
-  }
-
-  /* "Microsoft Aria Online (Natural) - English (United States)" names the
-     language twice and the second half is the browser's doing, not the
-     voice's; it comes off, and the language goes back on cleanly. */
-  function voiceLabel(v) {
-    var name = String(v.name || "Voice").replace(/\s+[-–]\s+[^-–]*\(.*\)\s*$/, "").trim();
-    var label = (name || "Voice") + " · " + langLabel(v.lang);
-    // Apple ships several voices under one name and tells them apart only in
-    // the identifier, so the drawer would otherwise show the same word twice
-    // with no way to know which is the one worth having.
-    var grade = APPLE_BETTER.exec(v.voiceURI || "") ||
-                APPLE_COMPACT.exec(v.voiceURI || "");
-    if (grade) label += " · " + titleCase(grade[0].toLowerCase());
-    return label;
-  }
-
-  var TIERS = ["Best on this device", "Other voices",
-               "Novelty, legacy and other languages"];
-
-  function fillVoices() {
-    if (!voiceSel) return;
-    var want = chosenVoice();
-    var recorded = store.get("listen-voice", null) === "recorded";
-    voiceSel.innerHTML = "";
-
-    /* First, and offered to everyone rather than only to the devices with
-       nothing good on them. The scoring below can put the best voice on this
-       machine at the top of the list and it is still the operating system's
-       voice; this one is the same reading everywhere, and on the phones the
-       drawer has least to offer it is the only good answer there is. */
-
-    if (!voices.length) {
-      voiceSel.appendChild(option("", "Default voice", !recorded));
-      updateHint();
-      return;
-    }
-    var groups = [null, null, null];
-    voices.forEach(function (v) {
-      var t = voiceTier(v);
-      if (!groups[t]) groups[t] = el("optgroup", { label: TIERS[t] });
-      groups[t].appendChild(option(v.voiceURI, voiceLabel(v),
-                                   !recorded && !!want &&
-                                   v.voiceURI === want.voiceURI));
-    });
-    groups.forEach(function (g) { if (g) voiceSel.appendChild(g); });
-    // chosenVoice() always names a device voice, because that is what it is
-    // for; letting it set the value here would undo the recorded choice
-    // every time the drawer was refilled.
-    if (recorded) voiceSel.value = "recorded";
-    else if (want) voiceSel.value = want.voiceURI;
-    updateHint();
-  }
-
   /* Nothing a web page can do will make eSpeak sound like a person: the audio
-     belongs to the operating system, not to the site. When the drawer holds
+     belongs to the operating system, not to the site. When the device holds
      nothing better than a relic, saying where better voices come from is more
-     use to the reader than letting them conclude the site is broken. */
+     use to the reader than letting them conclude the site is broken. It is
+     the only thing left in the player that is about voices at all. */
   var VOICE_HELP = [
     ["iPhone and iPad", "Settings › Accessibility › Spoken Content › Voices › " +
      "English — pick a voice and download the Enhanced or Premium one. The " +
@@ -4161,25 +4084,6 @@
     hintEl.hidden = !bestIsPoor();
   }
 
-  /* Only the person listening can say whether a voice is bearable, and a
-     chapter is a long way to find out, so the drawer comes with a sentence
-     to try one on. */
-  var SAMPLE = "In the beginning, God created the heavens and the earth.";
-
-  function previewVoice() {
-    if (!SPEECH_OK) return;
-    if (nar.playing) pauseListening();
-    nar.gen++;
-    speech.cancel();
-    var u = new SpeechSynthesisUtterance(SAMPLE);
-    var v = chosenVoice();
-    if (v) { u.voice = v; u.lang = v.lang; }
-    u.rate = store.get("listen-rate", 1);
-    u.pitch = 1;
-    // The same beat of daylight after a cancel() that the narration needs.
-    setTimeout(function () { speech.speak(u); }, 60);
-  }
-
   function buildPlayer() {
     playBtn = el("button", {
       class: "player-btn player-play", "aria-label": "Pause reading",
@@ -4208,54 +4112,8 @@
       rate.appendChild(option(String(r), r + "×", Math.abs(r - current) < 0.001));
     });
 
-    voiceSel = el("select", {
-      "aria-label": "Voice",
-      onchange: function (e) {
-        store.set("listen-voice", e.target.value || null);
-        // Picked while stopped: let it be heard, rather than making a chapter
-        // the way you find out what a voice sounds like.
-        if (nar.playing) speakFrom(nar.at);
-        else previewVoice();
-      }
-    });
     hintEl = buildHint();
-    fillVoices();
-
-    var tryIt = el("button", {
-      class: "player-btn player-try", text: "♪",
-      "aria-label": "Hear this voice", title: "Hear this voice",
-      onclick: function () { previewVoice(); }
-    });
-
-    var paceSel = el("select", {
-      "aria-label": "Pace",
-      title: "How long the silences are. Slower suits verse, where the line " +
-             "is the unit and the pause after it is part of it.",
-      onchange: function (e) {
-        store.set("listen-pace", e.target.value);
-        announce(e.target.value === "natural"
-          ? "Natural pace" : PACE[e.target.value].label + " pace");
-      }
-    });
-    var nowPace = store.get("listen-pace", "natural");
-    ["natural", "measured", "liturgical"].forEach(function (k) {
-      paceSel.appendChild(option(k, PACE[k].label, k === nowPace));
-    });
-
-    var sleep = el("select", {
-      "aria-label": "Sleep timer",
-      onchange: function (e) {
-        var v = e.target.value;
-        nar.stopAtEnd = v === "chapter";
-        nar.sleepAt = /^\d+$/.test(v) && +v > 0 ? Date.now() + (+v) * 60000 : 0;
-        announce(v === "off" ? "Sleep timer off"
-               : v === "chapter" ? "Stopping at the end of this chapter"
-               : "Stopping in " + v + " minutes");
-      }
-    });
-    [["off", "Sleep: off"], ["10", "10 min"], ["20", "20 min"], ["30", "30 min"],
-     ["45", "45 min"], ["60", "60 min"], ["chapter", "End of chapter"]
-    ].forEach(function (o) { sleep.appendChild(option(o[0], o[1], o[0] === "off")); });
+    updateHint();
 
     var cont = el("button", {
       class: "player-btn player-cont",
@@ -4294,7 +4152,7 @@
           onclick: function () { stopListening("Stopped reading aloud"); }
         })
       ]),
-      el("div", { class: "player-line player-opts" }, [rate, paceSel, voiceSel, tryIt, sleep]),
+      el("div", { class: "player-line player-opts" }, [rate]),
       hintEl
     ]);
     document.body.appendChild(player);

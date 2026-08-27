@@ -180,42 +180,18 @@ module.exports = async function listening(t, ctx) {
           await page.evaluate(() => window.__spoken[0].voice) === 'google',
           await page.evaluate(() => window.__spoken[0].voice));
 
-  const drawer = await page.evaluate(() => Array.from(
-    document.querySelectorAll('select[aria-label="Voice"] optgroup'),
-    g => [g.label, Array.from(g.querySelectorAll('option'), o => o.value)]));
-  /* Found by label rather than by position: a count here would fail for the
-     wrong reason every time the drawer changes shape. */
-  const group = label => (drawer.find(g => g[0] === label) || [label, []])[1];
+  /* The drawer that used to be here is gone -- five controls of clutter for
+     a decision almost nobody made -- but the scoring behind it is not, and
+     the check above is the whole of what it now shows: given a device whose
+     own default is a joke robot, the reader is read to by the best voice on
+     the machine instead. That is the entire point of keeping 129 lines with
+     no interface attached to them.
 
-  t.check('the drawer is grouped by what the voices are',
-          group('Best on this device').join() === 'google',
-          JSON.stringify(drawer.map(g => g[0])));
-  t.check('the relics are kept, and kept apart',
-          group('Other voices').indexOf('espeak') !== -1 &&
-          group('Other voices').indexOf('david') !== -1,
-          JSON.stringify(group('Other voices')));
-  t.check('the novelties and the other languages are last',
-          group('Novelty, legacy and other languages').indexOf('zarvox') !== -1 &&
-          group('Novelty, legacy and other languages').indexOf('google-de') !== -1,
-          JSON.stringify(group('Novelty, legacy and other languages')));
+     The other half of the same rule is further down: a drawer holding
+     nothing but relics gets told where better voices come from. Between them
+     the ranking is checked from both ends. */
   t.check('and nothing is said about voices when there is a good one',
           await page.evaluate(() => document.querySelector('.player-hint').hidden));
-
-  /* The ranking is a default, not a policy: a choice made by hand outranks it. */
-  await page.selectOption('select[aria-label="Voice"]', 'zarvox');
-  await page.waitForFunction(
-    () => window.__spoken[window.__spoken.length - 1].voice === 'zarvox');
-  t.check('a voice chosen by hand is the one used', true);
-
-  await page.locator('.player-play').click();          // pause, then audition
-  await page.waitForTimeout(settle);
-  const beforeTry = await page.evaluate(() => window.__spoken.length);
-  await page.locator('.player-try').click();
-  await page.waitForFunction(n => window.__spoken.length > n, beforeTry);
-  t.check('a voice can be heard on a sentence before a chapter is given to it',
-          await page.evaluate(
-            () => /^In the beginning/.test(window.__spoken[window.__spoken.length - 1].text)),
-          await page.evaluate(() => window.__spoken[window.__spoken.length - 1].text));
   await page.close();
 
   /* Nothing a page can do makes eSpeak sound like a person; saying where
@@ -247,10 +223,6 @@ module.exports = async function listening(t, ctx) {
   page = await open(ctx, '#/read/amos/2', workingEngine(30, IPHONE));
   await page.locator('[data-listen]').click();
   await page.waitForSelector('.player:not([hidden])');
-  const stock = await page.evaluate(() => Array.from(
-    document.querySelectorAll('select[aria-label="Voice"] optgroup'), g => g.label));
-  t.check('a stock iPhone is not told its compact voices are the best there is',
-          stock.indexOf('Best on this device') === -1, JSON.stringify(stock));
   t.check('it is told the download is what fixes it, and where',
           await page.evaluate(() => {
             const h = document.querySelector('.player-hint');
@@ -260,13 +232,6 @@ module.exports = async function listening(t, ctx) {
   t.check('and the help opens rather than hovering, there being no hover',
           await page.evaluate(
             () => document.querySelector('.player-hint > summary') !== null));
-  // The first device voice, not the first option: the recorded reading now
-  // sits above them all and is not one of the device's own.
-  const firstDeviceVoice = () => page.evaluate(() => document.querySelector(
-    'select[aria-label="Voice"] optgroup:not([label="Read aloud"]) option'
-  ).textContent);
-  t.check('the grade is on the label, since the names repeat',
-          /Compact$/.test(await firstDeviceVoice()), await firstDeviceVoice());
   await page.close();
 
   /* Download the better one and it has to win, over the same name. */
@@ -280,12 +245,6 @@ module.exports = async function listening(t, ctx) {
           await page.evaluate(() => window.__spoken[0].voice) ===
             'com.apple.voice.enhanced.en-US.Samantha',
           await page.evaluate(() => window.__spoken[0].voice));
-  const samanthas = await page.evaluate(() => Array.from(
-    document.querySelectorAll('select[aria-label="Voice"] option'),
-    o => o.textContent).filter(x => x.indexOf('Samantha') !== -1));
-  t.check('and the drawer says which Samantha is which',
-          samanthas.length === 2 && samanthas.some(x => /Enhanced$/.test(x)) &&
-          samanthas.some(x => /Compact$/.test(x)), JSON.stringify(samanthas));
   t.check('and nothing is said about downloads once there is a good one',
           await page.evaluate(() => document.querySelector('.player-hint').hidden));
   await page.close();
@@ -447,18 +406,17 @@ module.exports = async function listening(t, ctx) {
           JSON.stringify([wasAt.slice(0, 40), nowAt.slice(0, 40)]));
   await page.close();
 
-  /* ---- pace ----
-     Conversational pauses are wrong for verse: the line is the unit and the
-     silence after it is part of the line. The volume does not decide which
-     books are poetry -- it has no genre data and no business inventing any --
-     so this is the reader's control, and what it has to do is lengthen the
-     silences without touching the seam inside a broken sentence. */
-  const beatsAt = async (setting) => {
-    const p = ctx.tally.watch(await ctx.browser.newPage(), 'pace:' + setting);
+  /* ---- the silence between pieces ----
+     The pace control is gone -- three settings for a preference almost nobody
+     touched -- but restAfter() is not, and what it has to do is unchanged: a
+     real break between lines, and none at all inside a sentence that was only
+     broken because the engine cannot say it in one breath. The second is the
+     one that matters. An engine drops its pitch at the end of every
+     utterance, so a pause at the wrong seam is heard as a full stop that is
+     not there, and a psalm comes apart. */
+  {
+    const p = ctx.tally.watch(await ctx.browser.newPage(), 'rests');
     await p.addInitScript(workingEngine(30));
-    await p.addInitScript({ content:
-      `try { localStorage.setItem('thebook:listen-pace', ` +
-      `${JSON.stringify(JSON.stringify(setting))}); } catch (e) {}` });
     await p.goto(ctx.base + '#/read/psalms/22');
     await p.waitForSelector('.reader .v');
     await p.locator('[data-listen]').click();
@@ -467,46 +425,20 @@ module.exports = async function listening(t, ctx) {
       const s = window.__spoken, beats = [], seams = [];
       for (let i = 1; i < s.length; i++) {
         const g = Math.round(s[i].at - s[i - 1].at);
-        (/[.!?]["'’”)\]]?\s*$/.test(s[i - 1].text) ? beats : seams).push(g);
+        (/[.!?]["'\u2019\u201d)\]]?\s*$/.test(s[i - 1].text) ? beats : seams).push(g);
       }
       return { first: Math.round(s[1].at - s[0].at), beats, seams };
     });
     await p.close();
-    return out;
-  };
 
-  const natural = await beatsAt('natural');
-  const liturgy = await beatsAt('liturgical');
-  const median = xs => xs.slice().sort((a, b) => a - b)[Math.floor(xs.length / 2)];
-
-  t.check('a slower pace lengthens the silence between lines',
-          median(liturgy.beats.slice(1)) > median(natural.beats.slice(1)) * 2,
-          median(natural.beats.slice(1)) + 'ms -> ' + median(liturgy.beats.slice(1)) + 'ms');
-
-  t.check('and gives the chapter heading longer still',
-          liturgy.first > natural.first,
-          natural.first + 'ms -> ' + liturgy.first + 'ms');
-
-  t.check('but never pulls apart a sentence broken only for length',
-          liturgy.seams.length === 0 || liturgy.seams.every(g => g < 150),
-          JSON.stringify(liturgy.seams.slice(0, 5)));
-
-  {
-    const p = ctx.tally.watch(await ctx.browser.newPage(), 'pace-control');
-    await p.addInitScript(workingEngine(30));
-    await p.goto(ctx.base + '#/read/psalms/22');
-    await p.waitForSelector('.reader .v');
-    await p.locator('[data-listen]').click();
-    await p.waitForSelector('.player:not([hidden])');
-    const sel = p.locator('select[aria-label="Pace"]');
-    t.check('the pace is offered in the player', await sel.count() === 1);
-    await sel.selectOption('liturgical');
-    await p.waitForTimeout(200);
-    t.check('and choosing one is remembered',
-            await p.evaluate(
-              () => JSON.parse(localStorage.getItem('thebook:listen-pace'))) ===
-            'liturgical');
-    await p.close();
+    t.check('a finished line is given a real silence after it',
+            out.beats.length > 0 && out.beats.slice(1).every(g => g >= 150),
+            JSON.stringify(out.beats.slice(0, 5)));
+    t.check('and the chapter heading a longer one still',
+            out.first > 400, out.first + 'ms');
+    t.check('but a sentence broken only for length is put back without a gap',
+            out.seams.length === 0 || out.seams.every(g => g < 150),
+            JSON.stringify(out.seams.slice(0, 5)));
   }
 
   /* And broken where the sentence itself pauses, not in the middle of a
@@ -547,18 +479,13 @@ module.exports = async function listening(t, ctx) {
           await page.locator('.reader .v, .reader p').count() > 0);
   await page.close();
 
-  /* ---- the timers ---- */
+  /* ---- stopping at the end of a chapter ----
+     The sleep timer offered this too, among five other durations. It is gone;
+     the continue toggle does the same job with one control instead of seven
+     options, and it is the one people actually reached for. */
   page = await open(ctx, '#/read/amos/1', workingEngine(25));
   await page.locator('[data-listen]').click();
   await page.waitForSelector('.player:not([hidden])');
-  await page.selectOption('select[aria-label="Sleep timer"]', 'chapter');
-  await toChapterEnd(page, "!document.querySelector('.player').hidden");
-  t.check('the end-of-chapter timer stops instead of carrying on',
-          await page.evaluate(() => document.querySelector('.player').hidden &&
-                                    location.hash === '#/read/amos/1'),
-          await page.evaluate(() => location.hash));
-
-  await page.locator('[data-listen]').click();
   await page.locator('.player-cont').click();
   t.check('continuing can be turned off',
           await page.getAttribute('.player-cont', 'aria-pressed') === 'false');

@@ -1266,12 +1266,9 @@ main > * { animation: rise .18s ease-out; }
 
 /* The voice drawer is grouped by how the voices sound; the headings carry
    that, so they have to read as headings and not as choices. */
-.player-opts optgroup { font-style: normal; font-weight: 600; }
-.player-opts option { font-weight: 400; }
 
 /* Try-this-voice sits with the drawer it belongs to, and smaller than the
    transport: it is a convenience, not a control. */
-.player-try { width: 2rem; height: 2rem; font-size: .85rem; }
 
 /* Only shown when the device has nothing good installed, which is a fact
    about the device and not a failure of the page. It opens rather than
