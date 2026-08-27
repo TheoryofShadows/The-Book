@@ -68,6 +68,13 @@ module.exports = async function listening(t, ctx) {
   t.check('the player says where it is and how long is left',
           /(min left|under a minute left)/.test(await page.textContent('.player-unit')),
           await page.textContent('.player-unit'));
+  /* The device's own voice belongs to the operating system and has nobody to
+     credit, so the line is absent rather than blank -- and the player is
+     shorter for it. Crediting "your phone" would be worse than saying
+     nothing. */
+  t.check('and credits nobody when the device itself is reading',
+          await page.evaluate(
+            () => document.querySelector('.player-credit').hidden));
 
   /* ---- transport ---- */
   await page.locator('.player-play').click();
@@ -709,6 +716,55 @@ module.exports = async function listening(t, ctx) {
   t.check('the time left is the recording\'s own, not an estimate',
           /min left|under a minute/.test(
             await page.locator('.player').textContent()));
+
+  /* ---- who is reading, said where the reading is heard ----
+
+     Nobody who recorded these asked to be credited: LibriVox's dedication
+     waives it outright, and David Williams released his without restriction.
+     That is exactly why LICENSE-DATA.md requires the source be named at the
+     point of use rather than only in aggregate -- a credit nobody is owed is
+     a credit that quietly stops being rendered, and nothing would say so. */
+  t.check('the player names who is reading',
+          /A Test Narrator/.test(
+            await page.locator('.player-credit').textContent()),
+          await page.locator('.player-credit').textContent());
+  t.check('and under what terms, with the recording itself linked',
+          await page.evaluate(() => {
+            const c = document.querySelector('.player-credit');
+            return !c.hidden && /Public domain/.test(c.textContent) &&
+                   !!c.querySelector('a[href^="https://"]');
+          }),
+          await page.evaluate(() => {
+            const a = document.querySelector('.player-credit a');
+            return a ? a.getAttribute('href') : '(no link)';
+          }));
+  await page.close();
+
+  /* The advice about downloading a better voice belongs to the device's own
+     drawer, and stops applying the moment somebody else is reading. A stock
+     iPhone is exactly the drawer that triggers it, so it is the case where
+     getting this wrong would show: "no high-quality voice is installed on
+     this device", printed over the top of a human reading aloud. */
+  page = await open(ctx, '#/read/amos/2', workingEngine(30, IPHONE),
+                    recordedEngine(READING));
+  await page.evaluate(() => localStorage.setItem(
+    'thebook:listen-voice', JSON.stringify('recorded')));
+  await page.reload();
+  await page.waitForSelector('.reader .v');
+  await page.locator('[data-listen]').click();
+  await page.waitForSelector('.player-credit:not([hidden])', { timeout: 8000 });
+  t.check('and does not advise a voice download over a human reading',
+          await page.evaluate(
+            () => document.querySelector('.player-hint').hidden));
+  /* But it is advice, not a verdict on the drawer: switching back to the
+     device voice is switching back to the thin one, and the reader should be
+     told so again. */
+  await page.selectOption('select[aria-label="Voice"]',
+                          'com.apple.voice.compact.en-US.Samantha');
+  await page.waitForTimeout(settle);
+  t.check('and says it again the moment the device voice takes over',
+          await page.evaluate(
+            () => !document.querySelector('.player-hint').hidden));
   await page.close();
 
   /* Every failure lands on the engine that needs nothing. */

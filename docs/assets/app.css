@@ -1574,3 +1574,14 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
 }
 .map-arrival a { color: var(--accent); }
 .map-arrival-note { color: var(--ink-faint); }
+
+/* Who is reading, while they are reading. Only ever present on the recorded
+   voice: the device's own belongs to the operating system and has nobody to
+   credit. The same quiet italic the definition and gazetteer citations use --
+   it is an attribution, not a caption, and it must not compete with the
+   transport above it. */
+.player-credit {
+  margin: .35rem 0 0; font-size: .72rem; font-style: italic;
+  color: var(--ink-faint);
+}
+.player-credit a { color: inherit; }

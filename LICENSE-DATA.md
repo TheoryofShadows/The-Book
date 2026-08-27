@@ -72,18 +72,53 @@ rather than a per-file map nobody would read.
 Attribute as: *The Book — Chronological Biblical Library,
 https://github.com/TheoryofShadows/The-Book*
 
-## The recorded reading — CC BY 4.0
+## The recorded readings — public domain, and not ours
 
-The audio produced by [`tools/render_audio.py`](tools/render_audio.py) is a
-reading of public-domain texts, synthesised with
+The readings the site offers are recordings of these texts made by other
+people, who put them in the public domain. They are listed in
+[`tools/readings.py`](tools/readings.py), each stating its narrator, the
+edition it reads, and its terms.
+
+Most reach the site through [LibriVox](https://librivox.org/), whose readers
+dedicate their recordings under the
+[Public Domain Mark 1.0](https://creativecommons.org/publicdomain/mark/1.0/);
+one, David Williams's reading, was released without restriction by the reader
+directly. **No attribution is legally required by any of them.** The site
+names every narrator anyway, in the player while their reading plays — the
+same choice it makes about Natural Earth, and for the same reason: a person
+read a hundred hours of scripture aloud and gave it away, and the fact that
+they waived the credit is not a reason to withhold it.
+
+The recordings are mirrored rather than hot-linked, so that a chapter is one
+small request instead of an hour-long file, and so that a reader is not
+dependent on somebody else's directory layout. They are not stored in this
+repository — roughly 1.5 GB, published as release assets. What *is* stored
+here is the alignment: which second of the recording each verse begins at,
+under `docs/data/audio/`. That is derived data, and is offered under
+**CC BY 4.0** with the rest of it.
+
+**A recording of the wrong translation is not usable, and none is offered.**
+This volume prints particular editions, and a reading of a different one
+shares the subject and not the words. That is checked by alignment rather than
+asserted: audio that will not match this text is rejected and the reader falls
+back to the device's own voice. `tools/readings.py` also records the
+recordings that were turned down and why, so the same mistakes are not made
+twice.
+
+Nothing here is drawn from a commercial audio Bible. Those are copyrighted
+recordings, and the text underneath being free does not change that.
+
+## The synthesised reading — CC BY 4.0
+
+[`tools/render_audio.py`](tools/render_audio.py) can synthesise a reading with
 [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), whose weights are
 Apache-2.0. The model licence governs the weights, which this repository does
 not redistribute; it asserts nothing over audio the model produces, and the
-words being read are public domain.
+words being read are public domain. Such audio would be offered under **CC BY
+4.0**, with the rest of the derived data.
 
-The recording is offered under **CC BY 4.0**, with the rest of the derived
-data. It is not stored in this repository — it is 1.79 GB and lives as an
-Internet Archive item.
+None has ever been published, and the recorded readings above are the better
+answer where one exists.
 
 ---
 
@@ -94,9 +129,10 @@ The minimum notice that satisfies everything above:
 > Texts are public domain. Word definitions from Easton's Bible Dictionary
 > (1897), parsed by NEUU, CC BY 4.0. Place coordinates from OpenBible.info's
 > Bible Geocoding, CC BY 4.0, parts derived from OpenStreetMap under the ODbL.
-> Land outlines from Natural Earth (public domain). Compiled by The Book —
-> Chronological Biblical Library, CC BY 4.0.
+> Land outlines from Natural Earth (public domain). Recorded readings are
+> public domain, by the narrators named in tools/readings.py. Compiled by
+> The Book — Chronological Biblical Library, CC BY 4.0.
 
 The running site carries this notice on its front page, and names the source
-of every definition and coordinate at the point of use rather than only in
-aggregate here.
+of every definition, coordinate and recorded reading at the point of use
+rather than only in aggregate here.

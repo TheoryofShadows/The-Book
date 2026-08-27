@@ -292,10 +292,17 @@ Gaps inherited from the source editions, left honest rather than invented:
 
 ## Listening to it
 
-Every chapter can be read aloud. There is no audiobook of these translations
-in the public domain and 1.22 million words cannot be recorded, so the reading
-is done by the speech engine already in the browser: press **Listen** in any
-chapter, or `l`.
+Every chapter can be read aloud. By default the reading is done by the speech
+engine already in the browser: press **Listen** in any chapter, or `l`.
+
+This used to say that no public-domain audiobook of these translations existed
+and that 1.22 million words could not be recorded. The first half was wrong.
+People have recorded them — the World English Bible has been read straight
+through by more than one person and released into the public domain, and so
+have Charles's Enoch and Jubilees, which are the editions printed here. Where
+such a reading exists and can be matched to this text, it is offered instead of
+the device's voice. See [The recorded reading](#the-recorded-reading) for what
+that costs and how much of the library it reaches, which is not all of it.
 
 - The verse being spoken is marked, and the word inside it is highlighted where
   the browser supports the Custom Highlight API.
@@ -311,8 +318,10 @@ chapter, or `l`.
 - Where you stopped is remembered per chapter, the way **Resume** works for
   reading, and any verse can be the starting point from its verse menu.
 
-The voices are the ones your device has installed, and they are synthetic: no
-audio is downloaded, no text is sent anywhere, and it works offline.
+Unless a recording is playing, the voices are the ones your device has
+installed, and they are synthetic: no audio is downloaded, no text is sent
+anywhere, and it works offline. That is the default and the only voice the
+downloadable copy has.
 
 ### Which voice, and why it used to sound like that
 
@@ -413,12 +422,29 @@ background.
 ### The recorded reading
 
 Everything above is the device's own engine, and its ceiling is that the audio
-belongs to the operating system. So there is now a second voice in the drawer,
-offered first and to everyone, which is not the device's: **Recorded reading**,
-a neural voice reading the library, rendered ahead of time and served.
+belongs to the operating system. So there is a second kind of voice in the
+drawer, which is not the device's: **Recorded reading** — a person reading, the
+same reading on every device, so the machines with the worst drawers get the
+same voice as the best.
 
-It is the same reading on every device, which is the point — the machines with
-the worst drawers get the same voice as the best.
+**Nothing is published yet, and while that is true the option is not offered
+at all.** The reader consults
+[`docs/data/audio.json`](docs/data/audio.json), which is checked into this
+repository and currently empty, and offers the voice only for works it lists.
+This is worth stating plainly because the opposite happened for months: the
+option sat at the top of the drawer, offered first and to everyone, fetching
+from an Internet Archive item that had never been uploaded. Choosing it played
+silence and fell back, through hundreds of green tests. It is now impossible
+for the offer and the audio to disagree, because the same file decides both.
+
+**The readings are other people's.** They are public-domain recordings by
+people who read the same editions this volume prints, listed with their
+narrators and terms in [`tools/readings.py`](tools/readings.py). That
+qualification is the whole difficulty: a reading of the King James cannot be
+attached to the World English Bible text, and Charles Taylor's Hermas cannot be
+attached to the Ante-Nicene Fathers text — same works, different English. The
+catalogues do not reliably say which, either. The LibriVox recording titled
+*Apocrypha* is Plato's.
 
 **Why it is not synthesised in the browser.** That was the first plan and the
 measurements killed it. Both engines were run through the same Chromium the
@@ -435,37 +461,66 @@ Below 1× the engine makes sound more slowly than the sound plays. Kokoro at
 worse again. It loses seven times going to WebAssembly — it is transformer-heavy,
 and there are no threads to be had on a site that cannot send COOP/COEP headers,
 which GitHub Pages cannot. Piper survives that and was the fallback plan; it is
-also not the voice that sounded right. So the arithmetic is done once, by
-[`tools/render_audio.py`](tools/render_audio.py), and the result is served.
+also not the voice that sounded right. So the arithmetic would have to be done
+once, ahead of time, by [`tools/render_audio.py`](tools/render_audio.py) —
+28 core-hours for 116 hours of audio, 1.79 GB as Opus at 34 kbps, and nothing
+in fees, the model being Apache-2.0 and running locally.
 
-**What it costs**, measured over Genesis 1, Daniel 3 and Psalm 23: 4.1× realtime
-on one core, 116 hours of audio for the whole library, 1.79 GB as Opus at 34
-kbps, 28 core-hours to render — and nothing in fees, the model being
-Apache-2.0 and running locally. The audio is not in this repository and not in
-the Pages artifact, which caps at 1 GB; it is an Internet Archive item, which
-is free, permanent, and the right home for a public-domain reading of
-public-domain texts.
+**And then it turned out not to be necessary.** People have already read these
+texts aloud, in these editions, and put the recordings in the public domain. A
+person reading beats any voice that could be synthesised here, costs no compute
+at all, and needs no model licence. The synthesiser remains in the repository
+as the answer for anything nobody has recorded; it has never been published,
+and the readings are the better answer wherever one exists.
 
-**Why one file per chapter, with the verses indexed.** The chapter is what you
-fetch and what you sit through, so it is one request and one `<audio>` element:
-speed becomes `playbackRate`, which browsers time-stretch without shifting
-pitch, and starting at a verse becomes one assignment to `currentTime`. Neither
-had to be built. But each verse is synthesised separately and its offset
-recorded as it accumulates, and that is what makes the verse marks exact. The
-alternative — render the chapter whole and recover the boundaries afterwards —
-is forced alignment: a second model, an approximation, and a new way for the
-highlight to drift halfway through Jeremiah.
+**Where it lives.** The audio is not in this repository and not in the Pages
+artifact, which caps at 1 GB: it is a GitHub Release asset. The offsets *are*
+in the repository, under `docs/data/audio/`, because they are small and because
+a same-origin file needs no CORS, cannot be rate-limited, and cannot be down.
+That split is why the reader never has to ask a third party whether the voice
+it is about to offer exists.
 
-Two things are honestly worse with it. **There is no word highlight**, because
-an audio file has no word boundaries to report; the verse mark carries the
-reading instead. And **it needs a network**, so the device voice remains the
-default and the offline path, and the single-file copy does not offer it at all.
+**Why one file per work, with the chapters and verses indexed.** Release asset
+names are flat — a name cannot contain a slash — so the unit is the work rather
+than the chapter. That suits the recordings anyway, which arrive as half-hour
+files spanning several chapters and would otherwise have to be cut 2,537 ways.
+A chapter is then a *slice*: speed is still `playbackRate`, which browsers
+time-stretch without shifting pitch, and starting at a verse is still one
+assignment to `currentTime` — but nothing in the file marks where a chapter
+ends, so the player stops at a time it is told rather than waiting for the file
+to run out.
+
+**Forced alignment is how the verses are found, and it is also the audit.**
+Synthesis knew where each verse began because it had just made it. A recording
+does not, so the offsets are recovered by aligning the audio against the text
+this volume already has. That was the approach ruled out when the reading was
+going to be synthesised — a second model, an approximation — and taking it on
+buys something the synthesised path could never have had: audio that is *not*
+this text will not align to it. The score collapses, and no tolerance rescues
+it. So a chapter that fails to align is rejected rather than published, and the
+Plato *Apocrypha* and the Taylor Hermas are both caught by machine rather than
+by somebody noticing. Verse granularity is forgiving — a fifth of a second at a
+boundary is inaudible — which is why this works at all on recordings made by
+volunteers in domestic rooms.
+
+Three things are honestly worse with a recording. **There is no word
+highlight**, because an audio file has no word boundaries to report; the verse
+mark carries the reading instead. **It needs a network**, so the device voice
+remains the default and the offline path, and the single-file copy does not
+offer it at all. And **the coverage is partial and always will be**: no
+recording exists in the right edition for most of the deuterocanon, for the
+Apostolic Fathers, or for the texts recovered from scans, and the 66 paragraph
+works have no verses to key offsets to. Every one of those falls back to the
+device voice, per chapter, silently.
 
 Everything that can go wrong lands back on the device voice with a sentence
 saying why: no recording of this chapter, a file that will not play, a fetch
-that fails. The pace control still works — the file carries a natural 350 ms
-rest between verses and the player holds the transport for whatever the slower
-paces ask for beyond it, so a psalm can still be read the way a psalm is read.
+that fails. The pace control still works — the recording carries its own rest
+between verses and the player holds the transport for whatever the slower paces
+ask for beyond it, so a psalm can still be read the way a psalm is read. How
+long that rest is, the index declares; it used to be assumed to be 350 ms,
+which was true only of audio this repository made itself. A narrator's pauses
+are whatever they are, and differ from one narrator to the next.
 
 The rule deciding what a voice is handed now runs on both sides of the build,
 so it is written once and checked rather than copied:
@@ -477,11 +532,11 @@ does not — and it would be found only by somebody listening to that verse, in 
 hundred and sixteen hours of it.
 
 A browser with no speech support at all used to be offered no control. It is
-now offered the recorded reading, which needs no engine — that device is
-exactly who it is for. If there is no recording within reach either, it is told
-so rather than left pressing a button that does nothing; and a device that has
-speech support but no installed voice — a Linux desktop without
-speech-dispatcher — is still told exactly that.
+now offered the recorded reading where one has been published, since that needs
+no engine and such a device is exactly who it is for. If there is no recording
+within reach either, it is told so rather than left pressing a button that does
+nothing; and a device that has speech support but no installed voice — a Linux
+desktop without speech-dispatcher — is still told exactly that.
 
 ## Building it
 
@@ -502,7 +557,11 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | `tools/build_standalone.py` | Inlines the whole library into one HTML file that runs offline, and cuts out the parts of the page an offline copy cannot honour |
 | `tools/textnorm.py` | The one rule that folds text into a search token or a lookup key |
 | `tools/speakable.py` | The one rule for what a voice is handed, read out of `app.js` so the page and the recording cannot drift apart |
-| `tools/render_audio.py` | Renders the library to audio, one file per chapter with the verses indexed — run by hand, output hosted off this repository |
+| `tools/readings.py` | The public-domain recordings on record, each stating its narrator, the edition it reads, and its terms — and the ones turned down, with the reason |
+| `tools/align_audio.py` | Finds the verses inside a recording by aligning it against the text here, and rejects a chapter that will not align rather than publishing a guess |
+| `tools/build_readings.py` | Writes the published-audio manifest from the offsets that actually exist, and refuses to write it at all when a claim in them does not hold |
+| `tools/check_audio.py` | Asks the one question the browser checks cannot: whether the audio the reader offers is really served |
+| `tools/render_audio.py` | Synthesises a reading for anything nobody has recorded — run by hand, never published, and the recordings are the better answer where one exists |
 | `tools/dates.py` | Reads a numeric span out of a position statement, and refuses to where there is none |
 | `tools/lint.sh` | Everything parses, and every data file is the JSON it claims to be |
 | `tools/test.sh` | Runs the unit tests and the browser checks in `tests/` |

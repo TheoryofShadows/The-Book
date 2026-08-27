@@ -4528,7 +4528,7 @@
   /* ---------------- the player ---------------- */
 
   var player = null, playBtn = null, whereEl = null, unitEl = null,
-      barEl = null, voiceSel = null, hintEl = null;
+      barEl = null, voiceSel = null, hintEl = null, creditEl = null;
 
   function option(value, label, selected) {
     return el("option", { value: value, selected: selected ? true : null, text: label });
@@ -4666,7 +4666,12 @@
 
   function updateHint() {
     if (!hintEl) return;
-    hintEl.hidden = !bestIsPoor();
+    /* Not over the top of somebody reading. The hint is about the device's
+       own drawer, and a reader on the recorded voice is not listening to it:
+       being told your phone's voices are thin, while a person reads to you,
+       is advice about a problem you do not currently have. It comes back the
+       moment the device engine does. */
+    hintEl.hidden = !bestIsPoor() || usingAudio();
   }
 
   /* Only the person listening can say whether a voice is bearable, and a
@@ -4736,6 +4741,15 @@
       }
     });
     hintEl = buildHint();
+    /* Who is reading. Nobody who recorded these asked to be credited -- the
+       LibriVox dedication waives it, and David Williams released his without
+       restriction -- which is exactly why it is here. A person read the
+       library aloud and gave it away; the fact that they waived the credit is
+       not a reason to withhold it. It also answers the question a listener
+       actually has while a strange voice is reading to them, which is whose
+       voice it is. LICENSE-DATA.md requires the source be named at the point
+       of use rather than only in aggregate, and this is that point. */
+    creditEl = el("p", { class: "player-credit", hidden: true });
     fillVoices();
 
     var tryIt = el("button", {
@@ -4812,9 +4826,37 @@
         })
       ]),
       el("div", { class: "player-line player-opts" }, [rate, paceSel, voiceSel, tryIt, sleep]),
-      hintEl
+      hintEl,
+      creditEl
     ]);
     document.body.appendChild(player);
+  }
+
+  /* Named only while their reading is actually playing. On the device engine
+     there is nobody to credit -- the voice belongs to the operating system --
+     so the line is not merely blank but absent, and the player is shorter for
+     it. */
+  function showCredit() {
+    if (!creditEl) return;
+    var rec = usingAudio() && nar.ctx ? audioCredit(nar.ctx.work) : null;
+    if (!rec || !rec.narrator) {
+      creditEl.hidden = true;
+      creditEl.textContent = "";
+      return;
+    }
+    creditEl.hidden = false;
+    creditEl.textContent = "";
+    creditEl.appendChild(document.createTextNode("Read by " + rec.narrator));
+    if (rec.licence) {
+      creditEl.appendChild(document.createTextNode(" · " + rec.licence));
+    }
+    if (rec.url) {
+      creditEl.appendChild(document.createTextNode(" · "));
+      creditEl.appendChild(el("a", {
+        href: rec.url, target: "_blank", rel: "noopener noreferrer",
+        text: "the recording"
+      }));
+    }
   }
 
   /* The page gives back the inch the player covers, and the player is not
@@ -4830,6 +4872,8 @@
     if (!player) return;
     player.hidden = !nar.on;
     if (!nar.on) return;
+    showCredit();
+    updateHint();
     sizePlayer();
 
     playBtn.textContent = nar.playing ? "⏸" : "▶";
