@@ -3660,376 +3660,6 @@
     return found || voices[0] || null;
   }
 
-  /* ---------------- the recorded voice ----------------
-
-     Everything above is the device's own engine, and the ceiling of it is
-     that the audio belongs to the operating system: on a phone out of the
-     box that is the compact set, and no amount of work on this page changes
-     how it sounds.
-
-     A neural voice good enough to read these texts cannot run here. Kokoro
-     measures 0.43x realtime in Chromium on one thread — thirty-one seconds
-     of arithmetic for thirteen seconds of speech — because WebAssembly gets
-     no threads on a site that cannot send COOP/COEP headers, and the model
-     is transformer-heavy. So the arithmetic is done once by
-     tools/render_audio.py and the result is served: one Opus file per
-     chapter, with a JSON of per-verse offsets beside it.
-
-     What that buys, beyond the voice: speed is playbackRate, which browsers
-     time-stretch without shifting pitch; seeking to a verse is one
-     assignment to currentTime; and the verse marks are exact rather than
-     estimated, because each verse was synthesised on its own and its offset
-     recorded as it accumulated.
-
-     What it costs: it needs a network, and there are no word boundaries in
-     an audio file, so the word highlight is off here and the verse mark
-     carries the reading. The device engine stays the default and the
-     offline path, and everything falls back to it. */
-
-  /* The one line to change when the audio moves. It is an Internet Archive
-     item because the texts are public domain and so is their reading, and
-     because 1.79 GB cannot live in the Pages artifact — that caps at 1 GB. */
-  var AUDIO_BASE = "https://archive.org/download/the-book-read-aloud/";
-
-  /* Whether that item exists at all, which is a different question from
-     whether a given chapter has a reading, and needs a different answer.
-
-     The metadata endpoint returns {} for an item that is not there -- the
-     Internet Archive's way of saying no such thing -- and sends
-     Access-Control-Allow-Origin: *, so the page can ask. Without asking, a
-     missing collection is indistinguishable from a chapter that was never
-     rendered: the drawer goes on offering a reading nobody can hear, and
-     every chapter opened fires another doomed cross-origin request at it.
-     Reading through Psalms did that a hundred and fifty times. */
-  var AUDIO_META = "https://archive.org/metadata/the-book-read-aloud";
-
-  /* Not in the single-file copy. That build's whole claim is that it opens
-     from a file:// URL with the network off and everything in it works, and
-     a voice that has to be fetched from an archive is the one thing it
-     cannot honour. The footer link is cut from that build for the same
-     reason -- see strip_online_only() in tools/build_standalone.py -- and
-     this is the same rule applied to the one feature the markers in
-     index.html cannot reach, because the drawer is built here rather than
-     written in the page. */
-  var AUDIO_OK = typeof window.Audio === "function" && !window.__BOOK__;
-
-  var aud = {
-    el: null,       // one <audio>, reused across chapters
-    index: null,    // [[verse, start, end], ...] for the chapter loaded
-    key: null,      // which chapter that is
-    want: false,    // the reader has asked for the recorded voice
-    tried: {},      // chapters already looked for, so a miss is asked once
-    waiting: 0      // a pace pause is running; ignore the transport meanwhile
-  };
-
-  /* Asked once a session rather than once a chapter, and asked once even if
-     six things ask at the same moment: everything that wants to know waits on
-     the one request in flight. */
-  var audioItem = {
-    state: "unknown",   // "unknown" | "checking" | "present" | "absent"
-    waiting: []         // callbacks held while the one request is in flight
-  };
-
-  function audioItemReady(done) {
-    if (audioItem.state === "present") { done(true); return; }
-    if (audioItem.state === "absent") { done(false); return; }
-
-    audioItem.waiting.push(done);
-    if (audioItem.state === "checking") return;
-    audioItem.state = "checking";
-
-    fetchJSON(AUDIO_META, function (meta) {
-      // A network failure is not an answer. Treating an unreachable
-      // archive.org as a missing collection would take the reading away from
-      // everyone on a flaky connection and not give it back until they
-      // reloaded, which is the worse of the two mistakes: the reading is
-      // most wanted by the people least able to fetch it reliably.
-      if (meta === null) {
-        audioItem.state = "unknown";
-      } else {
-        audioItem.state = (meta.files || meta.metadata) ? "present" : "absent";
-      }
-      var present = audioItem.state === "present";
-      var waiting = audioItem.waiting;
-      audioItem.waiting = [];
-      if (audioItem.state === "absent") {
-        // Stop offering it, and stop the reader's saved choice pointing at
-        // it -- otherwise every chapter starts by asking for a voice that
-        // does not exist and falling back from it.
-        if (store.get("listen-voice", null) === "recorded") {
-          store.set("listen-voice", null);
-        }
-        if (player) fillVoices();
-      }
-      waiting.forEach(function (fn) { fn(present); });
-    });
-  }
-
-  function audioWanted() {
-    if (!AUDIO_OK) return false;
-    var want = store.get("listen-voice", null);
-    if (want === "recorded") return true;
-    /* A device with no speech engine of its own has only this one, and the
-       drawer that would let it be chosen lives inside a player that does not
-       open until something is being read. Without this, such a device gets a
-       Listen button that does nothing and no way to find out why. */
-    return !SPEECH_OK && want === null;
-  }
-
-  function chapterKey(ctx) {
-    return ctx ? ctx.work + "/" + ctx.chapter : null;
-  }
-
-  /* The offsets for a chapter, or null if there is no reading of it.
-
-     Not every chapter has one: render_audio.py works from the verse
-     structure, so the paragraph works — Hermas, the Didascalia — have no
-     index and fall back to the device engine. A miss is remembered so that
-     paging through a work does not ask for the same missing file twice. */
-  function loadAudioIndex(ctx, done) {
-    var key = chapterKey(ctx);
-    if (!key) { done(null); return; }
-    if (aud.key === key && aud.index) { done(aud.index); return; }
-    if (aud.tried[key] === false) { done(null); return; }
-
-    // Is there a collection at all, before asking it for one chapter.
-    audioItemReady(function (present) {
-      if (!present) { done(null); return; }
-
-      fetchJSON(AUDIO_BASE + ctx.work + "/" + ctx.chapter + ".json",
-        function (data) {
-          if (!data || !data.v || !data.v.length) {
-            aud.tried[key] = false;
-            done(null);
-            return;
-          }
-          aud.tried[key] = true;
-          aud.key = key;
-          aud.index = data;
-          done(data);
-        });
-    });
-  }
-
-  function fetchJSON(url, done) {
-    try {
-      fetch(url, { mode: "cors" })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(done)
-        .catch(function () { done(null); });
-    } catch (e) { done(null); }
-  }
-
-  /* One item per verse, in the order the offsets give, pointing at the same
-     nodes the device engine would have marked.
-
-     Built to the same shape buildItems() produces, so mark(), itemLabel(),
-     jump(), updatePlayer() and the saved position all work on it unchanged.
-     The only additions are the two numbers that say where in the file this
-     verse is. A verse in the index with nothing matching it on the page is
-     dropped rather than guessed at. */
-  function buildAudioItems(passages, index) {
-    var byVerse = {};
-    passages.forEach(function (p) {
-      if (p.verse && !byVerse[p.verse]) byVerse[p.verse] = p;
-    });
-
-    var items = [];
-    index.v.forEach(function (row, i) {
-      var p = byVerse[row[0]];
-      if (!p) return;
-      items.push({
-        el: p.el, node: p.node, start: 0, text: p.text,
-        verse: p.verse, unit: p.unit, ordinal: i + 1,
-        a: row[1], b: row[2]
-      });
-    });
-    return items;
-  }
-
-  function audioElement() {
-    if (aud.el) return aud.el;
-    var a = new Audio();
-    a.preload = "none";
-
-    a.addEventListener("timeupdate", function () { audioTick(); });
-    a.addEventListener("ended", function () {
-      if (!nar.playing || !usingAudio()) return;
-      chapterFinished();
-    });
-    a.addEventListener("error", function () {
-      if (!usingAudio()) return;
-      fallBackToDevice("The recording could not be played — using this " +
-                       "device's own voice instead.");
-    });
-    aud.el = a;
-    return a;
-  }
-
-  function usingAudio() {
-    return nar.engine === "recorded";
-  }
-
-  /* The pace controls are the reader's, not the recording's.
-
-     render_audio.py bakes a 350 ms rest between verses, which is the natural
-     pace and the one that has to sound continuous. The slower paces ask for
-     more than that, so the difference is taken here by holding the transport
-     — which is also why a psalm can still be read the way a psalm is read.
-     Nothing is added at natural pace, so the common case never pauses. */
-  var BAKED_REST = 350;
-
-  function audioTick() {
-    if (!usingAudio() || !nar.playing || aud.waiting) return;
-    var a = aud.el, items = nar.items;
-    if (!a || !items.length) return;
-
-    // The sleep timer is checked between pieces on the device side; here the
-    // transport is what ticks, so it is checked here.
-    if (nar.sleepAt && Date.now() > nar.sleepAt) {
-      stopListening("Listening stopped — sleep timer.");
-      return;
-    }
-
-    var t = a.currentTime;
-    var at = nar.at;
-
-    // Which verse the playhead is in. Normally the next one along, so this
-    // walks rather than searches.
-    while (at + 1 < items.length && t >= items[at + 1].a) at++;
-    while (at > 0 && t < items[at].a) at--;
-
-    if (at !== nar.at) {
-      nar.at = at;
-      mark(items[at]);
-      updatePlayer();
-    }
-
-    // Past the end of this verse, with more to come: take the extra rest the
-    // pace asks for beyond what the file already carries.
-    var item = items[nar.at];
-    if (item && nar.at + 1 < items.length && t >= item.b) {
-      var extra = restAfter(item, items[nar.at + 1]) - BAKED_REST;
-      if (extra > 200) {
-        var gen = nar.gen;
-        aud.waiting = 1;
-        a.pause();
-        setTimeout(function () {
-          aud.waiting = 0;
-          if (gen === nar.gen && nar.playing && usingAudio()) a.play();
-        }, extra);
-      }
-    }
-  }
-
-  function audioPlayFrom(i) {
-    var a = audioElement(), items = nar.items;
-    if (!items.length) return;
-
-    nar.at = Math.max(0, Math.min(i, items.length - 1));
-    nar.playing = true;
-    aud.waiting = 0;
-
-    var src = AUDIO_BASE + nar.ctx.work + "/" + nar.ctx.chapter + ".opus";
-    if (a.getAttribute("src") !== src) {
-      a.setAttribute("src", src);
-      a.load();
-    }
-    a.playbackRate = store.get("listen-rate", 1);
-
-    // A seek before the file has any duration is discarded, so it waits for
-    // as much metadata as a seek needs rather than for the whole file.
-    var target = items[nar.at].a;
-    function go() {
-      try { a.currentTime = target; } catch (e) { /* seek when it can */ }
-      var playing = a.play();
-      if (playing && playing.catch) {
-        playing.catch(function () {
-          fallBackToDevice("The recording could not be played — using this " +
-                           "device's own voice instead.");
-        });
-      }
-    }
-    if (a.readyState >= 1) go();
-    else a.addEventListener("loadedmetadata", go, { once: true });
-
-    mark(items[nar.at]);
-    updatePlayer();
-  }
-
-  /* Any failure on the recorded side is answered by the engine that needs
-     nothing: rebuild the queue the device engine expects and carry on from
-     the verse being read, rather than stopping on an error the reader can do
-     nothing about. */
-  function fallBackToDevice(message) {
-    var verse = nar.items[nar.at] ? nar.items[nar.at].verse : null;
-    if (aud.el) aud.el.pause();
-    aud.waiting = 0;
-    nar.engine = "device";
-    store.set("listen-voice", null);
-
-    if (!SPEECH_OK) { stopListening(message); return; }
-
-    nar.items = buildItems(nar.passages, maxChars(store.get("listen-rate", 1)));
-    var at = 0;
-    for (var i = 0; i < nar.items.length; i++) {
-      if (nar.items[i].verse === verse) { at = i; break; }
-    }
-    if (player) fillVoices();
-    announce(message);
-    if (nar.playing) speakFrom(at);
-    else { nar.at = at; updatePlayer(); }
-  }
-
-  /* Changing voice mid-chapter changes which engine is reading, and the two
-     count their position differently — the device engine in utterance-sized
-     pieces, the recording in verses. So the place is carried across as the
-     verse it is, the way rebuildQueue() carries it across a change of speed,
-     and not as an index into a list that is about to be replaced. */
-  function switchEngine(toRecorded) {
-    var was = nar.items[nar.at];
-    var verse = was ? was.verse : null;
-    var playing = nar.playing;
-
-    function settle(items, engine) {
-      nar.engine = engine;
-      nar.items = items;
-      var at = 0;
-      for (var i = 0; i < items.length; i++) {
-        if (items[i].verse === verse) { at = i; break; }
-      }
-      nar.at = at;
-      if (playing) speakFrom(at);
-      else { if (items[at]) mark(items[at]); updatePlayer(); }
-    }
-
-    if (!toRecorded) {
-      if (aud.el) { aud.el.pause(); aud.waiting = 0; }
-      if (!SPEECH_OK) { stopListening(null); return; }
-      settle(buildItems(nar.passages, maxChars(store.get("listen-rate", 1))),
-             "device");
-      if (!playing) previewVoice();   // picked while stopped: let it be heard
-      return;
-    }
-
-    if (!nar.ctx) return;
-    loadAudioIndex(nar.ctx, function (index) {
-      if (!index) {
-        // Asked for by a reader who cannot have it here: say so once, and
-        // leave them on the engine that works.
-        store.set("listen-voice", null);
-        if (player) fillVoices();
-        announce("There is no recording of this chapter — it is read by " +
-                 "this device's own voice.");
-        return;
-      }
-      var items = buildAudioItems(nar.passages, index);
-      if (!items.length) { store.set("listen-voice", null); return; }
-      if (playing && SPEECH_OK) speech.cancel();
-      settle(items, "recorded");
-    });
-  }
-
   /* ---------------- the narrator ---------------- */
 
   var HIGHLIGHT_OK = !!(window.CSS && CSS.highlights &&
@@ -4048,8 +3678,7 @@
     sleepAt: 0,
     stopAtEnd: false,
     pendingResumeAt: 0,
-    blocked: null,  // the engine has already told us it cannot speak
-    engine: "device"  // "device" is speechSynthesis, "recorded" is the files
+    blocked: null   // the engine has already told us it cannot speak
 
   };
 
@@ -4116,15 +3745,6 @@
      minutes on the longest chapter in the volume is worse than no time left
      at all, because it is believed. */
   function minutesLeft() {
-    // The recording knows exactly how long it is, so there is nothing to
-    // estimate: the arithmetic below exists only because an engine speaking
-    // live cannot be asked.
-    if (usingAudio() && aud.index) {
-      var played = aud.el ? aud.el.currentTime : 0;
-      var rate = store.get("listen-rate", 1) || 1;
-      return Math.max(0, (aud.index.d - played) / rate) / 60;
-    }
-
     var chars = 0, rest = 0;
     for (var i = nar.at; i < nar.items.length; i++) {
       chars += nar.items[i].text.length;
@@ -4194,9 +3814,6 @@
   }
 
   function speakFrom(i) {
-    // The recorded voice is a file with a playhead rather than a queue of
-    // utterances, so it takes the whole transport rather than one piece.
-    if (usingAudio()) { nar.gen++; audioPlayFrom(i); return; }
     if (!SPEECH_OK) return;
     nar.gen++;
     var gen = nar.gen;
@@ -4382,7 +3999,6 @@
     nar.sleepAt = 0;
     nar.stopAtEnd = false;
     if (SPEECH_OK) speech.cancel();
-    if (aud.el) { aud.el.pause(); aud.waiting = 0; }
     clearMarks();
     // The position is deliberately left behind: stopping is not finishing,
     // and reopening the chapter should offer the spot back.
@@ -4396,16 +4012,9 @@
     if (!nar.playing) return;
     nar.gen++;
     nar.playing = false;
-    if (usingAudio()) {
-      // A file pauses where it is and resumes there, which is what an
-      // audio element is for; nothing has to be restarted.
-      aud.waiting = 0;
-      if (aud.el) aud.el.pause();
-    } else {
-      // Pause is unreliable on some Android engines, so the position is kept
-      // and the piece restarted on resume rather than trusted to the queue.
-      speech.cancel();
-    }
+    // Pause is unreliable on some Android engines, so the position is kept
+    // and the piece restarted on resume rather than trusted to the queue.
+    speech.cancel();
     clearWordHighlight();
     updatePlayer();
     syncListenButtons();
@@ -4413,18 +4022,6 @@
 
   function resumeListening() {
     if (!nar.on || !nar.items.length) return;
-    if (usingAudio() && aud.el && aud.el.getAttribute("src")) {
-      // Carry on from where the playhead stopped, rather than from the top
-      // of the verse it stopped inside: seeking back would make pause and
-      // play repeat a line every time.
-      nar.gen++;
-      nar.playing = true;
-      aud.el.playbackRate = store.get("listen-rate", 1);
-      aud.el.play();
-      updatePlayer();
-      syncListenButtons();
-      return;
-    }
     speakFrom(nar.at);
     syncListenButtons();
   }
@@ -4494,14 +4091,6 @@
        machine at the top of the list and it is still the operating system's
        voice; this one is the same reading everywhere, and on the phones the
        drawer has least to offer it is the only good answer there is. */
-    /* Offered while the answer is still "unknown" -- hiding a working voice
-       because a request is in flight is the worse of the two mistakes, and
-       the drawer refills itself the moment the probe comes back. */
-    if (AUDIO_OK && audioItem.state !== "absent") {
-      var read = el("optgroup", { label: "Read aloud" });
-      read.appendChild(option("recorded", "Recorded reading", recorded));
-      voiceSel.appendChild(read);
-    }
 
     if (!voices.length) {
       voiceSel.appendChild(option("", "Default voice", !recorded));
@@ -4578,9 +4167,6 @@
   var SAMPLE = "In the beginning, God created the heavens and the earth.";
 
   function previewVoice() {
-    // The recorded reading has no sample to try: it is one voice, and the
-    // way to hear it is to press play.
-    if (audioWanted()) { announce("The recorded reading starts on play."); return; }
     if (!SPEECH_OK) return;
     if (nar.playing) pauseListening();
     nar.gen++;
@@ -4610,15 +4196,6 @@
       "aria-label": "Reading speed",
       onchange: function (e) {
         store.set("listen-rate", parseFloat(e.target.value));
-        if (usingAudio()) {
-          // A recording changes speed where it stands. Browsers time-stretch
-          // playbackRate without shifting pitch, so there is no queue to cut
-          // and nothing to restart -- the sentence being read keeps going,
-          // faster.
-          if (aud.el) aud.el.playbackRate = store.get("listen-rate", 1);
-          updatePlayer();
-          return;
-        }
         // The speed decides how long a piece may be as well as how fast it
         // is read, so the queue is cut again before anything is spoken.
         rebuildQueue();
@@ -4635,7 +4212,10 @@
       "aria-label": "Voice",
       onchange: function (e) {
         store.set("listen-voice", e.target.value || null);
-        switchEngine(e.target.value === "recorded");
+        // Picked while stopped: let it be heard, rather than making a chapter
+        // the way you find out what a voice sounds like.
+        if (nar.playing) speakFrom(nar.at);
+        else previewVoice();
       }
     });
     hintEl = buildHint();
@@ -4779,42 +4359,14 @@
      get the recorded one, which is the case the whole feature is for -- so
      the gate is "some voice is possible", not "this browser can speak". */
   function attachListening(ctx, passages, controls) {
-    if ((!SPEECH_OK && !AUDIO_OK) || !passages.length) return;
+    if (!SPEECH_OK || !passages.length) return;
 
     nar.passages = passages;
-    nar.engine = "device";
     nar.items = SPEECH_OK
       ? buildItems(passages, maxChars(store.get("listen-rate", 1)))
       : [];
     nar.ctx = ctx;
     if (!player) buildPlayer();
-
-    /* Whether this chapter has a reading is a question for the network, so
-       the answer arrives after the button does. It only ever swaps the queue
-       out from under a chapter that has not started, and a chapter already
-       playing on the device engine is left alone. */
-    if (audioWanted()) {
-      loadAudioIndex(ctx, function (index) {
-        if (nar.ctx !== ctx) return;
-        var items = index ? buildAudioItems(passages, index) : [];
-        if (!items.length) {
-          /* Nothing to read with. A device that has no engine of its own was
-             relying on this, so it has to be told rather than left with a
-             button that does nothing when pressed. */
-          if (!SPEECH_OK) {
-            listenUnavailable(
-              "There is no recording of this chapter, and this device has no " +
-              "speech voice of its own to read it with.");
-          }
-          return;
-        }
-        if (nar.on && nar.playing) return;
-        nar.engine = "recorded";
-        nar.items = items;
-        if (player) fillVoices();
-        updatePlayer();
-      });
-    }
 
     var btn = el("button", {
       class: "chip", "data-listen": "1", "aria-pressed": "false",
@@ -4845,7 +4397,7 @@
   }
 
   function startHere(index, announceIt) {
-    if ((!SPEECH_OK && !usingAudio()) || !nar.items.length) return;
+    if (!SPEECH_OK || !nar.items.length) return;
     if (index === 0 && nar.pendingResumeAt) {
       index = nar.pendingResumeAt;
       nar.pendingResumeAt = 0;
