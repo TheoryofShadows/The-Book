@@ -292,196 +292,65 @@ Gaps inherited from the source editions, left honest rather than invented:
 
 ## Listening to it
 
-Every chapter can be read aloud. There is no audiobook of these translations
-in the public domain and 1.22 million words cannot be recorded, so the reading
-is done by the speech engine already in the browser: press **Listen** in any
-chapter, or `l`.
+Every chapter can be read aloud by the speech engine already in the browser:
+press **Listen** in any chapter, or `l`.
 
-- The verse being spoken is marked, and the word inside it is highlighted where
-  the browser supports the Custom Highlight API.
-- Speed, voice, time remaining and a sleep timer are in the player, and **♪**
-  reads a sentence in the selected voice so a chapter is not the way you find
-  out what it sounds like. The time remaining counts the silences as well as
-  the words, which at liturgical pace is three minutes of the thirteen that
-  Psalm 119 takes.
+- The verse being spoken is marked, and the word inside it is highlighted
+  where the browser supports the Custom Highlight API.
+- Speed and time remaining are in the player. The time counts the silences as
+  well as the words.
 - It announces each chapter, then runs on: to the next chapter, and at the end
-  of a work into the work written next, stepping over the entries that carry no
-  text. Left alone it plays the library in composition order. The toggle in the
-  player stops it at the end of the chapter instead.
+  of a work into the work written next, stepping over the entries that carry
+  no text. Left alone it plays the library in composition order; the toggle in
+  the player stops it at the end of the chapter instead.
 - Where you stopped is remembered per chapter, the way **Resume** works for
   reading, and any verse can be the starting point from its verse menu.
 
-The voices are the ones your device has installed, and they are synthetic: no
-audio is downloaded, no text is sent anywhere, and it works offline.
+The voice is one your device already has. Nothing is downloaded, no text is
+sent anywhere, and it works offline.
 
 ### Which voice, and why it used to sound like that
 
 A device does not offer a voice, it offers a drawer of them, and the drawer is
 not sorted by how they sound. macOS files two dozen novelties — Zarvox,
-Bubbles, Deranged, Trinoids — beside its good ones, and the MacinTalk voices of
-the early nineties beside those. Linux answers with eSpeak. Windows still ships
-the old SAPI *Desktop* voices alongside its neural ones. And the voice a system
-flags as its default is very often the worst thing in the drawer.
+Bubbles, Deranged, Trinoids — beside its good ones, and the MacinTalk voices
+of the early nineties beside those. Linux answers with eSpeak. Windows still
+ships the old SAPI *Desktop* voices alongside its neural ones. And the voice a
+system flags as its default is very often the worst thing in the drawer.
 
-So the drawer is now scored rather than taken in the order it arrives. Apple's
+So the drawer is scored, and the best of it is used without asking. Apple's
 enhanced and premium downloads, Microsoft's natural voices, Google's, and
-anything the browser synthesises on a server rather than on the device are
-preferred and grouped first; the relics sit under them; the novelties and the
-other languages sit under those, labelled rather than hidden, because a device
-may have nothing else and the choice stays yours. The Web Speech API has no
-field for quality and no way to ask, so this is a list of what the platforms
-are known to ship, and it will age. It is only ever a default: one selection in
-the player overrides all of it.
+anything the browser synthesises on a server rather than on the device win;
+the relics and the novelties lose. The Web Speech API has no field for quality
+and no way to ask, so this is a list of what the platforms are known to ship,
+and it will age.
+
+There used to be a select in the player listing all of this in three tiers.
+It is gone, along with the pace control, the sleep timer and a preview button:
+five controls in a row that wrapped on every phone, for decisions almost
+nobody made. The ranking was the part doing the work, and it needs no
+interface to do it.
 
 ### On an iPhone or iPad, the voice is a download
 
 Most platforms write the quality into the voice's name — *Natural*, *Neural*,
 *Online*. Apple does the opposite: the name is bare and the grade is in the
-identifier, so the same Samantha arrives as
+identifier, so the same Samantha can be the thin compact one or a far better
+download and nothing on screen says which. The scoring reads the identifier,
+so a downloaded voice outranks the stock one of the same name.
 
-```
-com.apple.voice.compact.en-US.Samantha      nothing downloaded
-com.apple.voice.enhanced.en-US.Samantha     the free download
-com.apple.voice.premium.en-US.Samantha      the larger free download
-```
+When every voice on a device is a relic, the player says so in a collapsed
+line and gives the path to the free downloads — Settings › Accessibility ›
+Spoken Content › Voices on iOS, and the equivalent elsewhere. That single
+download is the largest improvement available to the reading, and nothing a
+web page does can substitute for it: the audio belongs to the operating
+system.
 
-and an iPhone out of the box has only the compact set — the thin, clipped
-reading this whole section is about. So the identifier is read as well as the
-name: a downloaded voice outranks the stock one of the same name, the drawer
-labels which Samantha is which, and a device carrying nothing but the compact
-set is told so, with the path to the download rather than a shrug.
+A browser with no speech support at all is offered no control, since there is
+nothing to offer. A browser that has the support but no installed voice — a
+Linux desktop without speech-dispatcher — is told exactly that, rather than
+left holding a button that does nothing.
 
-**Settings › Accessibility › Spoken Content › Voices › English**, then pick a
-voice and download its Enhanced or Premium version. That single download does
-more for how this sounds than everything else here put together, and nothing a
-web page does can substitute for it: the audio is the operating system's.
-
-Several other things were making the reading sound mechanical whatever voice
-was doing it, and are fixed:
-
-- **The apparatus was being read out.** Charles prints his in the running text
-  — daggers round a corrupt reading, angle brackets round a restoration, plus
-  signs round an emendation. The eye steps over them; an engine says "dagger".
-  They are blanked before speaking and left standing on the page.
-- **So was the other printings' apparatus, and there is far more of it.** The
-  nineteenth-century volumes recovered from scans set their footnote
-  references as superscript symbols, and the scanner read each as whatever
-  glyph it most resembled: ® 270 times, then », °, §, •, ¢, £, ¥, ™, © and the
-  rest. The Testament of our Lord carries one about every other sentence, and
-  every one of them was spoken. The blanked set is now every character in the
-  volume that is neither a letter, a digit nor ordinary punctuation, and a
-  unit test fails if the volume ever grows one that is not on the list — which
-  is the only way to notice, since nobody is listening to 1.22 million words
-  to find out.
-- **Roman numerals were read as letters.** Charles numbers his chapters inside
-  the running text, so two hundred of them stand in the prose of Enoch,
-  Jubilees, the Apostolic Canons and the Didascalia. *LXXXIX* came out as the
-  alphabet in the middle of a sentence about Noah. They are spoken as numbers
-  and printed as numerals, and the spoken form is padded back to the printed
-  length so the word highlight still lands where it should.
-- **Long passages were being cut off at the slow speeds.** Chrome stops an
-  utterance at about fifteen seconds, which is a duration; the limit that
-  guards against it was a fixed number of characters, which is only the same
-  thing at one speed. At 0.85× and 0.7× a full-length piece ran past the
-  cut-off and the rest of it was simply not spoken — the exact failure the
-  cutting exists to prevent, at the setting a reader of the Psalms is most
-  likely to be using. The budget is now read through the reading speed, and
-  changing the speed cuts the queue again and keeps your place in it.
-- **Long verses were cut mid-clause.** Chrome stops a single utterance at about
-  fifteen seconds, so long passages have to be broken up — and an engine drops
-  its pitch and takes a breath at the end of every utterance, so a break inside
-  a clause is heard as a full stop that is not there. Breaks are now taken at
-  the nearest comma, semicolon, colon or dash: across the library that moved
-  the proportion of pieces ending mid-clause from 31% to 0.25%.
-- **There were no pauses.** Engines run one utterance straight into the next,
-  so a chapter arrived as an unbroken wall. A verse now gets the beat a person
-  reading aloud would take and the chapter heading a longer one, while a
-  sentence cut only because it was too long gets none — that seam is the one
-  place a pause would be a lie.
-
-None of that synthesises audio, and none of it can. If a device has nothing but
-eSpeak or the compact set installed, nothing a web page can do will make those
-sound like a person; the player says so, and opens to say where better voices
-are a free download on each platform, rather than leaving you to conclude the
-site is broken. It opens rather than hovering, because the phone that most
-needs it has no tooltips.
-
-On a phone the reading usually stops when the screen locks or you switch app —
-the browser suspends the page, and this is speech, not a track playing in the
-background.
-
-### The recorded reading
-
-Everything above is the device's own engine, and its ceiling is that the audio
-belongs to the operating system. So there is now a second voice in the drawer,
-offered first and to everyone, which is not the device's: **Recorded reading**,
-a neural voice reading the library, rendered ahead of time and served.
-
-It is the same reading on every device, which is the point — the machines with
-the worst drawers get the same voice as the best.
-
-**Why it is not synthesised in the browser.** That was the first plan and the
-measurements killed it. Both engines were run through the same Chromium the
-browser checks use, single-threaded, on token lengths taken from real passages
-here:
-
-| Engine | Native, 4 threads | In the browser, 1 thread |
-| --- | --- | --- |
-| Piper `lessac-medium` | 9.7× realtime | 4.10× |
-| Kokoro `fp16` | 3.0× realtime | **0.43×** |
-
-Below 1× the engine makes sound more slowly than the sound plays. Kokoro at
-0.43× needs thirty-one seconds to speak a thirteen-second verse, and a phone is
-worse again. It loses seven times going to WebAssembly — it is transformer-heavy,
-and there are no threads to be had on a site that cannot send COOP/COEP headers,
-which GitHub Pages cannot. Piper survives that and was the fallback plan; it is
-also not the voice that sounded right. So the arithmetic is done once, by
-a renderer run ahead of time, and the result is served.
-
-**What it costs**, measured over Genesis 1, Daniel 3 and Psalm 23: 4.1× realtime
-on one core, 116 hours of audio for the whole library, 1.79 GB as Opus at 34
-kbps, 28 core-hours to render — and nothing in fees, the model being
-Apache-2.0 and running locally. The audio is not in this repository and not in
-the Pages artifact, which caps at 1 GB; it is an Internet Archive item, which
-is free, permanent, and the right home for a public-domain reading of
-public-domain texts.
-
-**Why one file per chapter, with the verses indexed.** The chapter is what you
-fetch and what you sit through, so it is one request and one `<audio>` element:
-speed becomes `playbackRate`, which browsers time-stretch without shifting
-pitch, and starting at a verse becomes one assignment to `currentTime`. Neither
-had to be built. But each verse is synthesised separately and its offset
-recorded as it accumulates, and that is what makes the verse marks exact. The
-alternative — render the chapter whole and recover the boundaries afterwards —
-is forced alignment: a second model, an approximation, and a new way for the
-highlight to drift halfway through Jeremiah.
-
-Two things are honestly worse with it. **There is no word highlight**, because
-an audio file has no word boundaries to report; the verse mark carries the
-reading instead. And **it needs a network**, so the device voice remains the
-default and the offline path, and the single-file copy does not offer it at all.
-
-Everything that can go wrong lands back on the device voice with a sentence
-saying why: no recording of this chapter, a file that will not play, a fetch
-that fails. The pace control still works — the file carries a natural 350 ms
-rest between verses and the player holds the transport for whatever the slower
-paces ask for beyond it, so a psalm can still be read the way a psalm is read.
-
-The rule deciding what a voice is handed now runs on both sides of the build,
-so it is written once and checked rather than copied:
-[`tools/speakable.py`](tools/speakable.py) reads the blanked character class
-out of `app.js` itself, and a unit test runs the reader's own `speakable()` in
-Node against the Python one. A divergence there is silent on both sides — the
-page renders, the render finishes, and the audio simply says something the page
-does not — and it would be found only by somebody listening to that verse, in a
-hundred and sixteen hours of it.
-
-A browser with no speech support at all used to be offered no control. It is
-now offered the recorded reading, which needs no engine — that device is
-exactly who it is for. If there is no recording within reach either, it is told
-so rather than left pressing a button that does nothing; and a device that has
-speech support but no installed voice — a Linux desktop without
-speech-dispatcher — is still told exactly that.
 
 ## Building it
 
@@ -548,7 +417,7 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 | `words` | Turning a word on the page into an entry — by selection, by keyboard, by alias — what a missing entry says, and the places panel |
 | `keeping` | Saving, unsaving, notes, the migration from the old bookmarks key, and what happens when the browser refuses to store anything at all |
 | `resilience` | The data failing to load, malformed data, routes that name nothing, the keyboard shortcuts, the skip link, and what a screen reader is actually told |
-| `listening` | What is spoken and in what order, which voice out of a bad drawer is picked, that the apparatus is never read out, where long passages are broken and how long the pauses are at each pace, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |
+| `listening` | What is spoken and in what order, which voice out of a bad drawer is picked, that the apparatus is never read out, where long passages are broken and how long the silences between them are, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |
 | `offline` | The single-file build opens from `file://` and every feature in it works with no network at all |
 | `map` | Land is actually painted, the frame chooses itself from what the chapter names, every place on the canvas is also a link on the page — checked against the canvas and against the mention index, not against itself — a disputed identification is not drawn as a settled one, panning cannot lose the map, zooming culls pins without inventing them, the first-appearance layer rings places rather than removing them and says it means composition order, relating two places draws no line between them, the canvas follows the theme, and all of it works from `file://` |
 
@@ -557,13 +426,14 @@ deploy. The browser checks used to run on pull requests only, which meant
 anything pushed straight to `main` went live without a browser having opened
 the site; they now gate the deploy as well.
 
-The player also offers a **pace** — natural, measured, liturgical — which sets
-how long the silences are. Conversational pauses are wrong for verse, where
-the line is the unit and the silence after it is part of the line. It is the
-reader's control rather than something the volume decides: there is no genre
-data here, Job is verse inside a prose frame, the prophets move between the two
-mid-chapter, and a hand-written list of "the poetry books" would be an
-editorial claim with no citation behind it.
+The silences between pieces are not uniform: a finished line gets a real
+pause, a chapter heading a longer one, and a sentence broken only because the
+engine cannot say it in one breath gets none at all. That last is the one that
+matters — an engine drops its pitch at the end of every utterance, so a pause
+at the wrong seam is heard as a full stop that is not there.
+
+There used to be three pace settings on top of that. They are gone; what
+remains is the one set of beats, which is what nearly everybody heard.
 
 **What they cannot check: whether a voice actually sounds right.** A headless
 browser has no speech engine — the one these run in reports zero voices and
@@ -690,6 +560,3 @@ no single label would be true of all of it. The full account is in
   relicensing downstream, so everything in `docs/data/` is offered under
   CC BY 4.0 to match. The site names the source of every definition and every
   coordinate at the point of use, not only in aggregate.
-- **The recorded reading is CC BY 4.0** — public-domain words, synthesised
-  with an Apache-2.0 model whose licence governs the weights this repository
-  does not ship, and asserts nothing over what the model produces.
