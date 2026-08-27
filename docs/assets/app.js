@@ -222,6 +222,95 @@
     }
   }
 
+  /* ---------------- the offline copy says what it is ----------------
+
+     The single-file build is a photograph of the site, and a photograph does
+     not know that it is one. Opened from a disk some months after it was
+     downloaded it is the reader down to the wordmark and the routes, so a
+     library that has grown since, a text that has been corrected and a
+     feature that has shipped all present as a site that has stopped being
+     maintained. Nothing inside the page distinguishes the two, which is the
+     whole trouble: the reader concludes the project is dead, and they are
+     looking at the evidence for it.
+
+     So the copy carries its own date. A chip in the running head, because
+     that is on screen at every route and a footer nobody scrolls to is not
+     an answer, and the full sentence in the footer for anyone who wants it.
+     Both are built here rather than written into index.html: the served site
+     must not carry them, and the marker for the served site is a marker that
+     has to be right about a file it does not know the age of.
+
+     tools/build_standalone.py writes the stamp. A copy built before this
+     existed has none, and says so rather than guessing at a date. */
+
+  var MONTHS = ["January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November",
+                "December"];
+
+  /* Formatted out of the parts rather than through Date, which reads a bare
+     ISO date as UTC midnight and then prints it in the reader's own zone --
+     west of Greenwich that is the day before, so a copy built on the 1st
+     would tell half the world it was built on the 31st. */
+  function longDate(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ""));
+    if (!m) return null;
+    var month = MONTHS[Number(m[2]) - 1];
+    if (!month) return null;
+    return String(Number(m[3])) + " " + month + " " + m[1];
+  }
+
+  function markOfflineCopy() {
+    if (!window.__BOOK__) return;
+
+    var built = window.__BOOK_BUILT__ || {};
+    var when = longDate(built.date);
+    var home = built.home || null;
+
+    var tools = document.querySelector(".topbar .tools");
+    if (tools) {
+      tools.insertBefore(el("span", {
+        class: "offline-chip",
+        title: when
+          ? "This is the downloaded copy, as the site stood on " + when +
+            ". It does not update."
+          : "This is the downloaded copy. It does not update."
+      }, [
+        el("span", { "aria-hidden": "true", text: "⇣" }),
+        el("span", { text: when ? "Offline copy · " + when : "Offline copy" })
+      ]), tools.firstChild);
+    }
+
+    var foot = document.querySelector(".foot");
+    if (!foot) return;
+
+    var note = el("p", { class: "offline-note" });
+    note.appendChild(el("strong", { text: "You are reading the offline copy. " }));
+    note.appendChild(document.createTextNode(
+      when
+        ? "It is the whole library as it stood on " + when + ", saved into " +
+          "one file, and it will not change: nothing here is fetched, so " +
+          "corrections to the text, works added since and anything built " +
+          "into the reader after that date are not in it. "
+        : "It is the whole library saved into one file, and it will not " +
+          "change: nothing here is fetched, so corrections to the text, " +
+          "works added since and anything built into the reader after it " +
+          "was downloaded are not in it. "));
+    if (home) {
+      note.appendChild(document.createTextNode("The living site is at "));
+      note.appendChild(el("a", { href: home, text: home }));
+      note.appendChild(document.createTextNode(
+        ", and a fresh copy can be downloaded from there."));
+    }
+    if (built.commit) {
+      note.appendChild(el("span", {
+        class: "offline-rev", text: " Built from " + built.commit + "."
+      }));
+    }
+    foot.insertBefore(note, foot.firstChild);
+  }
+
+  markOfflineCopy();
+
   /* ================================================================
      HOME — the chronological timeline
      ================================================================ */

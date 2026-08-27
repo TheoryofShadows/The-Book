@@ -8,10 +8,20 @@ opens from a file:// URL or any host with no network access at all.
 
 from __future__ import annotations
 
+import datetime
 import json
 import os
+import subprocess
 import sys
 from urllib.parse import quote
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# The live site's address, read from the script that already owns it rather
+# than written out a second time here. Two copies is one to forget: move the
+# site and this file goes on telling every offline reader to visit the old
+# address, which is the one thing the stamp exists to get right.
+from build_pages import BASE                                    # noqa: E402
 
 DOCS = sys.argv[1] if len(sys.argv) > 1 else "docs"
 OUT = sys.argv[2] if len(sys.argv) > 2 else "dist/the-book.html"
@@ -37,6 +47,48 @@ def collect() -> dict:
             with open(full, encoding="utf-8") as fh:
                 bundle[key] = json.load(fh)
     return bundle
+
+
+def commit() -> str:
+    """The revision this copy was cut from, or "" if that cannot be known.
+
+    GITHUB_SHA in the deploy, git otherwise, and nothing at all when the
+    build is run from an unpacked tarball with no repository around it. The
+    date below is the part that matters to a reader; this is for the person
+    they report a problem to.
+    """
+    sha = os.environ.get("GITHUB_SHA", "")
+    if sha:
+        return sha[:7]
+    try:
+        out = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
+                             cwd=os.path.dirname(os.path.abspath(__file__)),
+                             capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    return out.stdout.strip() if out.returncode == 0 else ""
+
+
+def stamp() -> dict:
+    """What this copy is, when it was taken, and where the living one is.
+
+    A single-file build is a photograph of the site, and a photograph does not
+    know that it is one. Opened from a disk some months later it is the reader
+    down to the wordmark, so a library that has grown since, a text that has
+    been corrected and a feature that has shipped all present as a site that
+    has stopped being maintained -- and the reader has no way to tell that
+    from the inside. The only difference is the one they cannot see, so the
+    build writes it down and docs/assets/app.js prints it.
+
+    UTC, because the machine that renders this is in no particular place and a
+    date that shifts with the builder's timezone is a date that says less than
+    it appears to.
+    """
+    return {
+        "date": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"),
+        "commit": commit(),
+        "home": BASE.rstrip("/") + "/",
+    }
 
 
 ONLINE_ONLY = ("<!-- online-only:start -->", "<!-- online-only:end -->")
@@ -90,7 +142,8 @@ def main() -> int:
         f'<link rel="icon" href="{href}" type="image/svg+xml">\n'
         f"<style>\n{css}\n</style>\n"
         f"{body}\n"
-        f'<script id="book-data">window.__BOOK__={payload};</script>\n'
+        f'<script id="book-data">window.__BOOK__={payload};\n'
+        f"window.__BOOK_BUILT__={json.dumps(stamp())};</script>\n"
         f"<script>\n{js}\n</script>\n"
     )
 
