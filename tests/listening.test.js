@@ -388,8 +388,16 @@ module.exports = async function listening(t, ctx) {
           slow.para.indexOf(slow.whole) === 0 && fast.para.indexOf(fast.whole) === 0);
 
   /* Changing the speed re-cuts the queue, so the index the reader is on
-     stops meaning what it meant. The place has to survive that. */
-  page = await open(ctx, '#/read/the-testament-of-issachar/0', workingEngine(40));
+     stops meaning what it meant. The place has to survive that.
+
+     The engine is deliberately slow here. What is under test is a pause that
+     lands INSIDE an utterance -- that is when the index still points at a
+     piece which is about to stop existing. At 40ms a piece finished before
+     the pause arrived about half the time, nar.at had already advanced, and
+     the check then compared two different verses and failed for a reason
+     that had nothing to do with re-cutting. 600ms is longer than anything
+     this test waits, so the pause is always mid-piece. */
+  page = await open(ctx, '#/read/the-testament-of-issachar/0', workingEngine(600));
   await page.locator('[data-listen]').click();
   await page.waitForFunction(() => window.__spoken.length >= 2);
   await page.locator('.player-play').click();
