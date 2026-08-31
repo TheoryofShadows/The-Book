@@ -3319,11 +3319,17 @@
   /* ================================================================
      LISTEN — the text read aloud
      ------------------------------------------------------------------
-     An audiobook of a 1.22-million-word library cannot be recorded, and
-     no recording of these translations exists in the public domain. What
-     every modern browser does ship is a speech engine, so the chapter is
-     narrated by the voices already installed on the machine. Nothing is
-     downloaded, nothing is sent anywhere, and it works offline.
+     Every modern browser ships a speech engine, so the chapter is narrated
+     by the voices already installed on the machine. Nothing is downloaded,
+     nothing is sent anywhere, and it works offline.
+
+     This comment used to justify that by saying an audiobook of a library
+     this size cannot be recorded and that no recording of these translations
+     exists in the public domain. Neither is true: LibriVox has read the
+     World English Bible through -- 99 hours, Public Domain Mark -- and has
+     done Charles's Enoch and Jubilees as well. The device voice is still the
+     right default, because it is the one that needs no network and works in
+     the single-file copy. It is not the only thing there is.
 
      The narration is verse-granular on purpose: it is the unit the reader
      already navigates by, it is what gets highlighted as the voice moves,

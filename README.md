@@ -292,10 +292,25 @@ Gaps inherited from the source editions, left honest rather than invented:
 
 ## Listening to it
 
-Every chapter can be read aloud. There is no audiobook of these translations
-in the public domain and 1.22 million words cannot be recorded, so the reading
-is done by the speech engine already in the browser: press **Listen** in any
-chapter, or `l`.
+Every chapter can be read aloud by the speech engine already in the browser:
+press **Listen** in any chapter, or `l`. Nothing is downloaded, nothing is
+sent anywhere, and it works offline.
+
+This section used to open by saying that no audiobook of these translations
+exists in the public domain and that 1.22 million words cannot be recorded.
+Both halves are false, and the sentence mattered, because it was the stated
+reason nobody looked. LibriVox has read the World English Bible straight
+through and dedicated it to the public domain —
+[99 hours and 37 minutes of it](https://archive.org/details/worldenglishbible_1707_librivox),
+under the Public Domain Mark, with the Old and New Testaments also issued
+separately — and has done the same for
+[the Book of Enoch](https://archive.org/details/bookofenoch_1812_librivox) and
+[the Book of Jubilees](https://archive.org/details/book_jubilees_2108_librivox),
+which are the editions printed here. Read by people, not synthesised.
+
+The device's own voice remains the default and the offline path, and it is
+what every feature described below runs on. But it is a fallback by
+circumstance rather than by necessity, and the volume should say which.
 
 - The verse being spoken is marked, and the word inside it is highlighted where
   the browser supports the Custom Highlight API.
