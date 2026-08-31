@@ -412,8 +412,9 @@
       if (mode === "chrono") {
         table.appendChild(el("thead", {}, [el("tr", {}, [
           el("th", { text: "Era" }), el("th", { text: "Work" }),
-          el("th", { text: "Dated" }), el("th", { text: "Chapters" }),
-          el("th", { text: "Words" })
+          el("th", { text: "Dated" }),
+          el("th", { class: "num", text: "Chapters" }),
+          el("th", { class: "num", text: "Words" })
         ])]));
         var tb = el("tbody");
         manifest.sections.forEach(function (s) {
@@ -422,8 +423,8 @@
               el("td", { class: "muted", text: s.roman || "—" }),
               el("td", {}, [el("a", { href: "#/read/" + w.id + "/0", text: titleCase(w.title) })]),
               el("td", { class: "muted", text: s.dates || "—" }),
-              el("td", { text: w.chapters || "—" }),
-              el("td", { text: w.words ? fmt(w.words) : "—" })
+              el("td", { class: "num", text: w.chapters || "—" }),
+              el("td", { class: "num", text: w.words ? fmt(w.words) : "—" })
             ]));
           });
         });
@@ -594,17 +595,36 @@
 
       if (work.chapters.length > 1) {
         var strip = el("div", { class: "chapter-strip" });
+        var hereLink = null;
         work.chapters.forEach(function (c, i) {
-          strip.appendChild(el("a", {
+          var a = el("a", {
             href: "#/read/" + workId + "/" + i,
             "aria-current": i === idx ? "true" : null,
             title: c.label,
             text: c.n === null || c.n === undefined
               ? c.label.replace(/^.*?(\d+).*$/, "$1") || "·"
               : String(c.n)
-          }));
+          });
+          if (i === idx) hereLink = a;
+          strip.appendChild(a);
         });
         head.appendChild(strip);
+
+        /* The strip scrolls once it is past two rows, and it used to open at
+           the top of itself whatever chapter you were in: Psalm 119 showed
+           you the first sixty numbers and left you to hunt for the one you
+           were reading. Put the current chapter in view instead -- after the
+           strip is in the document, because until then it has no height to
+           scroll. Not scrollIntoView, which would take the whole page with
+           it and move the chapter you are reading off the screen. */
+        if (hereLink) {
+          setTimeout(function () {
+            if (!strip.isConnected) return;
+            var want = hereLink.offsetTop -
+                       (strip.clientHeight - hereLink.offsetHeight) / 2;
+            strip.scrollTop = Math.max(0, want);
+          }, 0);
+        }
       }
 
       var perLine = store.get("verse-per-line", false);
@@ -1296,6 +1316,41 @@
      western and eastern horizon, and they are why the world layer exists. */
   var LEVANT = { w: 20, s: 12, e: 55, n: 42 };
 
+  /* Every map ever drawn has to follow the theme and the window, and it used
+     to arrange that for itself: three listeners added when the map opened --
+     the theme button, the system colour-scheme query, the window resize --
+     and none ever taken off again. They close over the canvas, the places and
+     the redraw, so nothing on a chapter you have left can be collected, and
+     every theme toggle repaints every map you have ever opened. Reading down
+     Psalms with the map open leaves a hundred and fifty of them wired up.
+
+     So the three listeners are registered once, here, and the maps register
+     with them instead. A map whose element has left the document is dropped
+     the next time anything fires, which is the only moment the answer
+     matters. */
+  var liveMaps = [];
+
+  function watchMap(wrap, redraw) {
+    liveMaps.push({ wrap: wrap, redraw: redraw });
+  }
+
+  function redrawLiveMaps() {
+    liveMaps = liveMaps.filter(function (m) { return m.wrap.isConnected; });
+    liveMaps.forEach(function (m) { if (m.wrap.open) m.redraw(); });
+  }
+
+  document.getElementById("theme").addEventListener("click", function () {
+    // After the class has actually changed, not while it is being changed.
+    setTimeout(redrawLiveMaps, 0);
+  });
+  if (window.matchMedia) {
+    var schemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    if (schemeQuery.addEventListener) {
+      schemeQuery.addEventListener("change", redrawLiveMaps);
+    }
+  }
+  window.addEventListener("resize", redrawLiveMaps);
+
   function inFrame(p, f) {
     return p.lon >= f.w && p.lon <= f.e && p.lat >= f.s && p.lat <= f.n;
   }
@@ -1977,16 +2032,10 @@
       redraw();
 
       /* The theme is a button and a system setting, and the canvas has to
-         follow both or it is the one element stuck in the old palette. */
-      var themeWatch = function () { if (wrap.open) redraw(); };
-      document.getElementById("theme").addEventListener("click", function () {
-        setTimeout(themeWatch, 0);
-      });
-      if (window.matchMedia) {
-        var mq = window.matchMedia("(prefers-color-scheme: dark)");
-        if (mq.addEventListener) mq.addEventListener("change", themeWatch);
-      }
-      window.addEventListener("resize", function () { if (wrap.open) redraw(); });
+         follow both or it is the one element stuck in the old palette. The
+         three listeners that watch for it are registered once for the whole
+         page rather than once per map -- see watchMap below. */
+      watchMap(wrap, redraw);
     }
 
     return wrap;
@@ -2418,20 +2467,49 @@
       var href = "#/read/" + wid + "/" + chIdx + (unit.ref ? "/v" + unit.ref : "");
       var label = titleCase(row[3]) + " · " + row[2] + (unit.ref ? ":" + unit.ref : "");
 
-      var html = esc(unit.t);
+      /* Cut the verse down before it is marked up, never after.
+
+         This used to escape, mark, and then slice 420 characters off the
+         finished HTML, which counts "&amp;" as five characters and "<mark>"
+         as six and will cut through the middle of either. Nothing in the
+         library is currently long enough to make it happen, so this is
+         hardening rather than a repair -- but the window is a fact about the
+         verse, not about its markup, and taken on the verse it also stops
+         cutting words in half at both edges and stops promising a "..." when
+         the window has in fact reached the end of the verse. */
+      var quote = function (t) { return t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); };
+      var finder = phrase
+        ? new RegExp(quote(phrase), "i")
+        : (terms.length ? new RegExp("\\b" + quote(terms[0]) + "\\w*", "i") : null);
+
+      var text = unit.t;
+      var WINDOW = 420;
+      if (text.length > WINDOW) {
+        var at = finder ? text.search(finder) : -1;
+        var from = at > 160 ? at - 160 : 0;
+        // Never leave a word cut in half at either edge.
+        if (from) {
+          var space = text.indexOf(" ", from);
+          from = space === -1 ? from : space + 1;
+        }
+        var to = from + WINDOW;
+        if (to < text.length) {
+          var back = text.lastIndexOf(" ", to);
+          to = back > from ? back : to;
+        }
+        text = (from ? "… " : "") + text.slice(from, to) +
+               (to < unit.t.length ? " …" : "");
+      }
+
+      var html = esc(text);
       if (phrase) {
-        html = html.replace(new RegExp("(" + phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi"),
+        html = html.replace(new RegExp("(" + quote(esc(phrase)) + ")", "gi"),
                             "<mark>$1</mark>");
       } else {
         terms.forEach(function (t) {
-          html = html.replace(new RegExp("(\\b" + t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\w*)", "gi"),
+          html = html.replace(new RegExp("(\\b" + quote(esc(t)) + "\\w*)", "gi"),
                               "<mark>$1</mark>");
         });
-      }
-      if (html.length > 420) {
-        var at = html.indexOf("<mark>");
-        var from = Math.max(0, at - 160);
-        html = (from ? "… " : "") + html.slice(from, from + 420) + " …";
       }
 
       return el("div", { class: "result" }, [
@@ -3241,7 +3319,7 @@
   /* ================================================================
      LISTEN — the text read aloud
      ------------------------------------------------------------------
-     An audiobook of a 1.13-million-word library cannot be recorded, and
+     An audiobook of a 1.22-million-word library cannot be recorded, and
      no recording of these translations exists in the public domain. What
      every modern browser does ship is a speech engine, so the chapter is
      narrated by the voices already installed on the machine. Nothing is

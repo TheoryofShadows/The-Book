@@ -408,6 +408,43 @@ module.exports = async function map(t, ctx) {
           await page.locator('.chapter-map .empty').count() === 1 &&
           await page.locator('.map-canvas').count() === 0);
 
+  /* ---- the maps you have left ----
+
+     Every map used to wire itself to the theme button, the system
+     colour-scheme query and the window resize, and take none of it off
+     again. The listeners close over the canvas and the places, so a chapter
+     you have navigated away from could never be collected, and one press of
+     the theme button repainted every map opened in the session. Reading down
+     Psalms with the map open left a hundred and fifty of them attached.
+
+     Counted from outside rather than from a private variable: the canvases
+     that actually get drawn on when the theme changes. There should be one,
+     and it should be the one on the page. */
+  await openMap(page, ctx.base, '#/read/amos/0');
+  await openMap(page, ctx.base, '#/read/amos/1');
+  await openMap(page, ctx.base, '#/read/amos/2');
+
+  const repainted = await page.evaluate(async () => {
+    const drawn = new Set();
+    const real = CanvasRenderingContext2D.prototype.fillRect;
+    CanvasRenderingContext2D.prototype.fillRect = function () {
+      drawn.add(this.canvas);
+      return real.apply(this, arguments);
+    };
+    document.getElementById('theme').click();
+    await new Promise(r => setTimeout(r, 300));
+    CanvasRenderingContext2D.prototype.fillRect = real;
+    const here = document.querySelector('.map-canvas');
+    return { drawn: drawn.size,
+             onThePage: drawn.has(here) };
+  });
+  t.check('changing the theme repaints the map on the page and no other',
+          repainted.drawn === 1 && repainted.onThePage,
+          repainted.drawn + ' canvas(es) repainted');
+  await page.evaluate(() => {
+    localStorage.setItem('thebook:theme', JSON.stringify('auto'));
+  });
+
   await page.close();
 
   /* ---- and all of it from a file, with no server ---- */

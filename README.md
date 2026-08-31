@@ -410,15 +410,31 @@ On a phone the reading usually stops when the screen locks or you switch app —
 the browser suspends the page, and this is speech, not a track playing in the
 background.
 
-### The recorded reading
+### The recorded reading, which is built but not yet rendered
 
-Everything above is the device's own engine, and its ceiling is that the audio
-belongs to the operating system. So there is now a second voice in the drawer,
-offered first and to everyone, which is not the device's: **Recorded reading**,
-a neural voice reading the library, rendered ahead of time and served.
+**Nothing is uploaded yet, and this section describes a plan rather than a
+recording.** The player carries a second voice — **Recorded reading**, a
+neural voice reading the library from files rather than from the device — and
+every part of it is written and under test: the fetch, the per-verse index,
+the seek, the pace control, and the fall back to the device engine when a
+chapter has no reading. What does not exist is the audio. `AUDIO_BASE` in
+`docs/assets/app.js` points at an Internet Archive item that has not been
+created, so the reader's own probe finds nothing there and drops the option
+from the drawer. Choosing it falls back, with a sentence saying why.
 
-It is the same reading on every device, which is the point — the machines with
-the worst drawers get the same voice as the best.
+`tools/check_audio.py` is the check that says so, and it is failing on
+purpose: it asks the Internet Archive whether the item on the end of
+`AUDIO_BASE` exists, and it does not. It will keep failing until either the
+28 core-hours below are spent and the result uploaded, or the option is taken
+out of the drawer. That is a decision for the owner of the repository, not
+something a build should quietly settle.
+
+Everything below is the design and the arithmetic behind it, kept because it
+is what the code implements and what the rendering will cost — not because
+any of it has been served to anybody.
+
+The point of it, once it exists: it is the same reading on every device, and
+the machines with the worst drawers get the same voice as the best.
 
 **Why it is not synthesised in the browser.** That was the first plan and the
 measurements killed it. Both engines were run through the same Chromium the
@@ -435,16 +451,16 @@ Below 1× the engine makes sound more slowly than the sound plays. Kokoro at
 worse again. It loses seven times going to WebAssembly — it is transformer-heavy,
 and there are no threads to be had on a site that cannot send COOP/COEP headers,
 which GitHub Pages cannot. Piper survives that and was the fallback plan; it is
-also not the voice that sounded right. So the arithmetic is done once, by
-[`tools/render_audio.py`](tools/render_audio.py), and the result is served.
+also not the voice that sounded right. So the arithmetic is to be done once, by
+[`tools/render_audio.py`](tools/render_audio.py), and the result served.
 
 **What it costs**, measured over Genesis 1, Daniel 3 and Psalm 23: 4.1× realtime
 on one core, 116 hours of audio for the whole library, 1.79 GB as Opus at 34
 kbps, 28 core-hours to render — and nothing in fees, the model being
-Apache-2.0 and running locally. The audio is not in this repository and not in
-the Pages artifact, which caps at 1 GB; it is an Internet Archive item, which
-is free, permanent, and the right home for a public-domain reading of
-public-domain texts.
+Apache-2.0 and running locally. The audio would not be in this repository and
+not in the Pages artifact, which caps at 1 GB; the intended home is an
+Internet Archive item, which is free, permanent, and the right place for a
+public-domain reading of public-domain texts. That item has not been made.
 
 **Why one file per chapter, with the verses indexed.** The chapter is what you
 fetch and what you sit through, so it is one request and one `<audio>` element:
@@ -456,10 +472,11 @@ alternative — render the chapter whole and recover the boundaries afterwards �
 is forced alignment: a second model, an approximation, and a new way for the
 highlight to drift halfway through Jeremiah.
 
-Two things are honestly worse with it. **There is no word highlight**, because
-an audio file has no word boundaries to report; the verse mark carries the
-reading instead. And **it needs a network**, so the device voice remains the
-default and the offline path, and the single-file copy does not offer it at all.
+Two things would be honestly worse with it. **There is no word highlight**,
+because an audio file has no word boundaries to report; the verse mark carries
+the reading instead. And **it needs a network**, so the device voice remains
+the default and the offline path, and the single-file copy does not offer it
+at all.
 
 Everything that can go wrong lands back on the device voice with a sentence
 saying why: no recording of this chapter, a file that will not play, a fetch
@@ -478,9 +495,10 @@ hundred and sixteen hours of it.
 
 A browser with no speech support at all used to be offered no control. It is
 now offered the recorded reading, which needs no engine — that device is
-exactly who it is for. If there is no recording within reach either, it is told
-so rather than left pressing a button that does nothing; and a device that has
-speech support but no installed voice — a Linux desktop without
+exactly who it is for, and it is the device that loses most by the audio not
+existing yet. With no recording within reach it is told so rather than left
+pressing a button that does nothing, which is what happens today; and a device
+that has speech support but no installed voice — a Linux desktop without
 speech-dispatcher — is still told exactly that.
 
 ## Building it
@@ -502,8 +520,9 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | `tools/build_standalone.py` | Inlines the whole library into one HTML file that runs offline, and cuts out the parts of the page an offline copy cannot honour |
 | `tools/textnorm.py` | The one rule that folds text into a search token or a lookup key |
 | `tools/speakable.py` | The one rule for what a voice is handed, read out of `app.js` so the page and the recording cannot drift apart |
-| `tools/render_audio.py` | Renders the library to audio, one file per chapter with the verses indexed — run by hand, output hosted off this repository |
+| `tools/render_audio.py` | Renders the library to audio, one file per chapter with the verses indexed — run by hand, output to be hosted off this repository. Not yet run |
 | `tools/dates.py` | Reads a numeric span out of a position statement, and refuses to where there is none |
+| `tools/check_audio.py` | Asks the Internet Archive whether the recorded reading the player offers is actually there. It is not, and this fails until it is |
 | `tools/lint.sh` | Everything parses, and every data file is the JSON it claims to be |
 | `tools/test.sh` | Runs the unit tests and the browser checks in `tests/` |
 
@@ -541,7 +560,7 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 
 | Suite | Checks |
 | --- | --- |
-| `tests/python` | The parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. One of them runs the reader's own copy of the folding rule against the Python one, because the two are written in different languages and a divergence between them is silent. Another holds the seam where 1 Clement changes translator: the six recovered chapters are checked against the volume's own text of the chapters either side of them, because a splice made one chapter out of step would still read as English |
+| `tests/python` | The parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. One of them runs the reader's own copy of the folding rule against the Python one, because the two are written in different languages and a divergence between them is silent. Another holds the seam where 1 Clement changes translator: the six recovered chapters are checked against the volume's own text of the chapters either side of them, because a splice made one chapter out of step would still read as English. Two more hold things the parser has no opinion about: every number this README states, against the data it is describing, and every colour in the stylesheet's palette against the contrast it has to clear — both of which are claims, and both of which had rotted |
 | `routes` | Every page renders, search returns verses, a saved verse survives a reload, nothing throws |
 | `layout` | At 320–430px every nav link is on screen, nothing scrolls sideways, the bar tucks away as you read, desktop is unchanged |
 | `dating` | The date card against the spans the parser read, the method page, and that a citation names the edition and the era rather than just a URL |
@@ -585,6 +604,17 @@ starts. Everything on a reading page is the width of that leaf: the title,
 the chapter strip, the controls and the pager all line up with it, so the
 page reads as one object.
 
+**One type for what is written, another for what operates it.** The
+scripture was always set in the book's own serif; everything around it —
+the lead paragraphs, the note on a work, the reasoning under a thread stop,
+the findings in the accuracy report, the footer — was set in the
+interface's sans, so the codex stopped at the edge of the leaf and the rest
+of the site read like a form wrapped round it. The division is a printed
+book's now: text face for anything written to be read, sans for the
+apparatus that works it — labels, buttons, table heads, counts, dates.
+Those are read by glance rather than by line, and they are the one place a
+second voice belongs.
+
 **Two accents, and the difference between them is the whole system.**
 Rubric red is the colour a scribe changed pens for, and it does here what
 it did there: the chapter heading, the verse numbers, the section numerals,
@@ -596,11 +626,29 @@ and neither is ever used for the other's work. Open a verse's menu and its
 number turns from red to purple, because at that moment it has stopped
 being a numeral and become a control.
 
+That rule is easy to state and had been broken in three places: a thread
+card ruled in rubric, an editorial callout ruled in rubric, and the
+player's own progress bar drawn in rubric — none of which is the structure
+of a text. They are furniture, and they are purple now. The callouts take
+**gilt** instead, which is the third material and the one that had been
+defined in the stylesheet and used nowhere: gold leaf, which a scribe put
+on neither the text nor the rubric but on the border of the leaf. It rules
+the volume's own asides and it does nothing else.
+
 The rest follows from materials: unbleached parchment for the ground, iron
 gall — which oxidises violet-black rather than grey — for type. Dark is the
 same room unlit, and it inverts the two, which is what a photographic
 negative of a manuscript looks like: the leaf goes to the colour of the ink
 and the ink to the colour of the leaf.
+
+**The way into the other chapters costs two rows, not four.** The strip of
+chapter numbers above the text used to stand at its full height — fifty
+numbers on Genesis, a hundred and fifty on Psalms — so on a laptop the
+scripture began below the fold. It is two rows deep now and scrolls past
+that, with the row under them showing half and fading, which is what says
+there are more. It also opens on the chapter you are in: it did not
+before, so Psalm 119 showed you the first sixty numbers and left you to
+find your own.
 
 **Nothing is fetched to do any of it.** The site ships no dependencies and
 its single-file build has to open from `file://` with the network off, so
@@ -648,7 +696,7 @@ though the library is seven megabytes. Read-aloud is the browser's own
 `speechSynthesis`, with each passage cut into utterances short enough to clear
 Chrome's fifteen-second cut-off.
 
-Search is a two-stage design: a chapter-granularity inverted index (1.45 MB
+Search is a two-stage design: a chapter-granularity inverted index (1.64 MB
 across 27 shards) narrows candidates, then only the matching works are fetched
 and scanned for exact verses. Quote a phrase to match it exactly.
 
@@ -691,6 +739,8 @@ no single label would be true of all of it. The full account is in
   relicensing downstream, so everything in `docs/data/` is offered under
   CC BY 4.0 to match. The site names the source of every definition and every
   coordinate at the point of use, not only in aggregate.
-- **The recorded reading is CC BY 4.0** — public-domain words, synthesised
-  with an Apache-2.0 model whose licence governs the weights this repository
-  does not ship, and asserts nothing over what the model produces.
+- **The recorded reading, when it exists, will be CC BY 4.0** — public-domain
+  words, synthesised with an Apache-2.0 model whose licence governs the weights
+  this repository does not ship, and asserts nothing over what the model
+  produces. Nothing has been rendered or published yet; see *The recorded
+  reading* above.

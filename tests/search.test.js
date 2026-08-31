@@ -169,5 +169,32 @@ module.exports = async function search(t, ctx) {
           chips > 0 && await page.locator('.result').count() > 0,
           chips + ' offered');
 
+  /* ---- a long verse is cut down without being cut through ----
+
+     The snippet is windowed on the verse and marked up afterwards, rather
+     than marked up and then sliced: "&amp;" is five characters of HTML and
+     "<mark>" is six, and a cut taken on the HTML goes through the middle of
+     either. Nothing in the library is quite long enough to make that happen
+     today, so this holds the invariant rather than reproducing a break --
+     every snippet closes every mark it opens, ends on a whole entity, and
+     still carries the highlight it was shown for. Greek Esther 8 carries a
+     four-thousand-character verse, which is where it would show first. */
+  await page.goto(ctx.base + '#/search/' + encodeURIComponent('Hammedatha'));
+  await settled(page);
+  const snippets = await page.evaluate(() => Array.from(
+    document.querySelectorAll('.result-text'),
+    e => ({ html: e.innerHTML, text: e.textContent })));
+
+  const balanced = snippets.every(s =>
+    (s.html.match(/<mark>/g) || []).length ===
+    (s.html.match(/<\/mark>/g) || []).length);
+  const marked = snippets.every(s => s.html.indexOf('<mark>') !== -1);
+  const whole = snippets.every(s => !/&[a-z]{1,6}$|<[a-z]*$/i.test(s.html));
+
+  t.check('a long result is windowed on the verse, not on its markup',
+          snippets.length > 0 && balanced && marked && whole,
+          snippets.length + ' snippet(s), longest ' +
+          Math.max.apply(null, snippets.map(s => s.text.length)) + ' chars');
+
   await page.close();
 };

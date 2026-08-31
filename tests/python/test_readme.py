@@ -364,5 +364,71 @@ class TheGazetteer(unittest.TestCase):
         self.assertEqual(stated.group(1), f"{counted:,}")
 
 
+class TheSizesInMegabytes(unittest.TestCase):
+    """The figures nothing rebuilds the sentence for.
+
+    A count of works moves when the parse moves, and somebody notices. A size
+    in megabytes moves every time a word is added to the library and nobody
+    does: the search index was advertised at 1.45 MB for as long as it took to
+    grow to 1.64, and that sentence is the one a reader on a phone uses to
+    decide whether to open the thing at all.
+
+    Measured the way tools/build_standalone.py measures, because that is the
+    figure the build prints and the one the README was written from: bytes,
+    over 1024, over 1024.
+    """
+
+    @staticmethod
+    def mib(path):
+        if os.path.isdir(path):
+            total = 0
+            for folder, _dirs, files in os.walk(path):
+                total += sum(os.path.getsize(os.path.join(folder, f))
+                             for f in files)
+        else:
+            total = os.path.getsize(path)
+        return total / 1024 / 1024
+
+    def test_the_search_index_is_the_size_the_readme_says(self):
+        claim = re.search(
+            r"inverted index \(([\d.]+) MB\s+across ([\d,]+) shards\)",
+            readme())
+        self.assertIsNotNone(
+            claim,
+            "the search index's size and shard count are no longer stated in "
+            "README.md in the form this test can read")
+
+        index = os.path.join(ROOT, "docs", "data", "index")
+        self.assertEqual(float(claim.group(1)), round(self.mib(index), 2))
+
+        shards = [f for f in os.listdir(index) if f.endswith(".json")]
+        self.assertEqual(claim.group(2), f"{len(shards):,}")
+
+    def test_the_offline_copy_refuses_at_the_size_the_readme_says(self):
+        """The sentence claims a gate. This is whether there is one.
+
+        build_standalone.py prints the word WARNING and then returns 1, and
+        build.sh runs under set -e, so it really is a refusal rather than a
+        note -- but the two halves of that are in different files, and a
+        later hand tidying the wording of a warning into a warning is all it
+        would take to turn the README's claim into a false one.
+        """
+        claim = re.search(r"refuses to finish above (\d+) MB", readme())
+        self.assertIsNotNone(
+            claim, "the offline copy's size ceiling is no longer stated in "
+                   "README.md")
+
+        with open(os.path.join(ROOT, "tools", "build_standalone.py"),
+                  encoding="utf-8") as fh:
+            source = fh.read()
+
+        gate = re.search(r"if mb > (\d+):\n(.*\n)*?\s+return 1\n", source)
+        self.assertIsNotNone(
+            gate,
+            "build_standalone.py no longer refuses above a size, so the "
+            "README's claim that it does is now false")
+        self.assertEqual(claim.group(1), gate.group(1))
+
+
 if __name__ == "__main__":
     unittest.main()

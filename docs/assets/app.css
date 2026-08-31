@@ -17,6 +17,17 @@
 
    So a red mark on this site is the book speaking and a purple one is
    the reader speaking, and neither is ever used for the other's work.
+   The rule is easy to state and was quietly broken in three places — a
+   thread card ruled in rubric, a callout ruled in rubric, the player's
+   own progress bar drawn in rubric — none of which is the structure of
+   a text. They are the site's furniture, and they are purple now.
+
+   GILT is the third material and the one held back: gold leaf, which a
+   scribe put on neither the text nor the rubric but on the border of the
+   leaf. It rules the editorial callouts — the volume's own asides, which
+   are neither scripture nor a control — and it does nothing else. It sat
+   in this file defined and used nowhere at all.
+
    Everything else follows from materials: unbleached parchment for the
    ground, a brighter leaf raised off it, and iron-gall ink — which
    oxidises violet-black rather than grey — for type. Dark inverts the
@@ -35,7 +46,13 @@
   --raised:     #fcf9f2;
   --ink:        #1d1822;
   --ink-soft:   #554d5c;
-  --ink-faint:  #837a89;
+  /* Measured rather than eyeballed. This was #837a89, which is 3.34:1 on
+     the page and 2.99:1 on the row a table highlights under the pointer --
+     under WCAG AA for body text at every size this palette uses it at, and
+     under the 3:1 floor for anything at all on that last ground. It carries
+     .muted, .tiny, the crumbs, the table heads, every count and every date,
+     which is to say most of the small type on the site. */
+  --ink-faint:  #655e6a;
   --rule:       #d4cab8;
   --rule-soft:  #e3dac9;
   --accent:     #632a55;
@@ -44,7 +61,7 @@
   --rubric:     #9b2f21;
   --rubric-2:   #b8503f;
   --rubric-bg:  #f5e4df;
-  --gilt:       #9d7526;
+  --gilt:       #906b23;
   --good:       #2f6b5f;
   --good-bg:    #dfeae6;
   --warn:       #8a5a12;
@@ -75,6 +92,15 @@
   --leaf: calc(var(--measure) + 5rem);
   --reader-size: 1.075rem;
 
+  /* One vertical rhythm, so the page has a beat rather than a hundred
+     hand-picked margins. Named for what they separate rather than for how
+     big they are: the sizes may change, the relationships may not. */
+  --gap-hair:  .3rem;    /* parts of one thing */
+  --gap-tight: .6rem;    /* a label and its value */
+  --gap:       1.1rem;   /* one block from the next */
+  --gap-wide:  1.9rem;   /* one group of blocks from the next */
+  --gap-part:  3rem;     /* one part of the page from the next */
+
   /* Native widgets -- select dropdowns, scrollbars -- are drawn by the
      browser itself, and follow this rather than the palette above. */
   color-scheme: light;
@@ -90,7 +116,7 @@
     --raised:    #211d2b;
     --ink:       #ece3d3;
     --ink-soft:  #aea5b1;
-    --ink-faint: #837a8b;
+    --ink-faint: #8b8393;
     --rule:      #383140;
     --rule-soft: #2b2535;
     --accent:    #d29ac1;
@@ -124,7 +150,7 @@
   --raised:    #211d2b;
   --ink:       #ece3d3;
   --ink-soft:  #aea5b1;
-  --ink-faint: #837a8b;
+  --ink-faint: #8b8393;
   --rule:      #383140;
   --rule-soft: #2b2535;
   --accent:    #d29ac1;
@@ -273,17 +299,51 @@ h1, h2, h3, h4 {
   text-wrap: balance;
 }
 h1 {
-  font-size: clamp(1.9rem, 5.2vw, 3rem); margin: 0 0 .6rem;
+  font-size: clamp(1.9rem, 5.2vw, 3rem); margin: 0 0 var(--gap-tight);
   letter-spacing: -.018em;
 }
-h2 { font-size: 1.48rem; margin: 2.6rem 0 .7rem; letter-spacing: -.008em; }
-h3 { font-size: 1.1rem; margin: 1.6rem 0 .4rem; }
+h2 {
+  font-size: 1.5rem; margin: var(--gap-part) 0 var(--gap-tight);
+  letter-spacing: -.008em;
+}
+h3 { font-size: 1.12rem; margin: var(--gap-wide) 0 var(--gap-hair); }
 
-.lede { font-size: 1.08rem; color: var(--ink-soft); max-width: 44rem; }
-.muted { color: var(--ink-faint); font-size: .875rem; }
+/* Everything the volume says in its own voice is set in the volume's own
+   type. The scripture always was; the prose around it -- the lead
+   paragraphs, the notes on a work, the reasoning under a thread, the
+   footer -- was in the interface's sans, which meant the codex stopped at
+   the edge of the leaf and the rest of the site read like a form. The
+   division now is the one a printed book uses: text face for anything
+   written to be read, sans for the apparatus that operates it. Labels,
+   buttons, table heads, counts and dates stay sans, because they are not
+   prose and are read by glance rather than by line. */
+.lede,
+.era-intro,
+.thread-card p,
+.stop-why,
+.stance .why,
+.note-block,
+.callout,
+.finding p,
+.lex-text,
+.foot p,
+.empty {
+  font-family: var(--serif);
+}
+
+.lede {
+  font-size: 1.16rem; line-height: 1.6; color: var(--ink-soft);
+  max-width: 42rem; text-wrap: pretty;
+}
+.muted { color: var(--ink-faint); font-size: .9rem; }
 .tiny  { font-size: .78rem; color: var(--ink-faint); }
 
-.rule { border: 0; border-top: 1px solid var(--rule); margin: 2.4rem 0; }
+.rule {
+  border: 0; border-top: 1px solid var(--rule); margin: var(--gap-wide) 0;
+}
+/* A rule and the heading under it are one gesture: the heading does not
+   also need its own three rems of air above it. */
+.rule + h2, .rule + .group-head h2 { margin-top: var(--gap-wide); }
 
 /* The canon table's own footnotes: why a book is absent, or which part of
    one is here. Closed by default -- the table is a table first. */
@@ -324,11 +384,15 @@ h3 { font-size: 1.1rem; margin: 1.6rem 0 .4rem; }
   text-transform: uppercase; letter-spacing: .09em;
 }
 
+/* The volume's own aside: not scripture, not a control. Gold leaf, which
+   is the one material here that was neither. */
 .callout {
-  border-left: 3px solid var(--rubric);
+  border-left: 2px solid var(--gilt);
   background: var(--paper-2);
-  padding: .9rem 1.1rem; border-radius: 0 var(--radius) var(--radius) 0;
-  margin: 1.6rem 0; font-size: .94rem;
+  padding: var(--gap) calc(var(--gap) + .1rem);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: var(--gap-wide) 0; font-size: 1rem; line-height: 1.6;
+  max-width: 46rem;
 }
 .callout p { margin: .35rem 0; }
 .callout p:first-child { margin-top: 0; }
@@ -377,9 +441,6 @@ h3 { font-size: 1.1rem; margin: 1.6rem 0 .4rem; }
   display: block; text-decoration: none; color: inherit;
   background: var(--raised); border: 1px solid var(--rule-soft);
   border-radius: 8px; padding: .55rem .7rem;
-}
-.work {
-  background: var(--raised);
   transition: border-color .15s, background-color .15s, transform .15s;
 }
 .work:hover {
@@ -415,11 +476,28 @@ input[type="search"], input[type="text"], select {
 }
 input[type="search"] { width: 100%; }
 
-table.grid { width: 100%; border-collapse: collapse; font-size: .87rem; }
+table.grid { width: 100%; border-collapse: collapse; font-size: .9rem; }
 table.grid th, table.grid td {
-  text-align: left; padding: .42rem .6rem; border-bottom: 1px solid var(--rule-soft);
-  vertical-align: top;
+  text-align: left; padding: .5rem .7rem;
+  border-bottom: 1px solid var(--rule-soft);
+  vertical-align: baseline;
 }
+/* A column of figures is read down, so it is aligned down: right, lining,
+   and one width per digit. Left-ragged numbers in a table are a column you
+   have to read rather than one you can compare. */
+table.grid th.num, table.grid td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+  /* Shrink to their content and give the slack to the column carrying the
+     names, rather than each column taking a fifth of a sixty-rem table and
+     leaving a hand's width of nothing between a work and its date. */
+  width: 1%;
+}
+table.grid th:first-child, table.grid td:first-child { width: 1%; white-space: nowrap; }
+/* The work is the thing being listed, so it is the thing set in the book's
+   own type -- everything beside it is a fact about it and stays sans. */
+table.grid td a { font-family: var(--serif); font-size: 1.02em; }
 /* The head is not sticky, and cannot be. It was, at top: 3.2rem, to clear
    the bar -- but a wide table is wrapped in .scroller so a phone can push it
    sideways, and a box that scrolls in one axis is a scrollport in both. A
@@ -437,6 +515,8 @@ table.grid thead th {
   font-weight: 600;
 }
 table.grid tbody tr:hover { background: var(--paper-2); }
+/* The last row's rule is the table's own bottom edge twice over. */
+table.grid tbody tr:last-child td { border-bottom: 0; }
 .scroller { overflow-x: auto; border-radius: var(--radius); }
 
 .yes { color: var(--good); font-weight: 700; }
@@ -449,22 +529,27 @@ table.grid tbody tr:hover { background: var(--paper-2); }
   display: grid; gap: .8rem; margin: 1.8rem 0;
   grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
 }
+/* A card is a way in, which makes it the reader's machinery rather than
+   the book's -- so the rule down its edge is purple. It was red, which
+   said "this is the structure of a text" about a link. */
 .thread-card {
   display: block; text-decoration: none; color: inherit;
   background: var(--raised); border: 1px solid var(--rule-soft);
-  border-radius: var(--radius); padding: 1.1rem 1.2rem;
-  border-left: 3px solid var(--accent);
-}
-.thread-card {
-  background: var(--raised); box-shadow: var(--shadow);
-  border-left-color: var(--rubric);
+  border-left: 2px solid var(--accent);
+  border-radius: var(--radius); padding: var(--gap) calc(var(--gap) + .1rem);
+  box-shadow: var(--shadow);
+  transition: border-color .15s, background-color .15s;
 }
 .thread-card:hover { border-color: var(--accent); background: var(--accent-bg); }
+@media (prefers-reduced-motion: reduce) { .thread-card { transition: none; } }
 .thread-card h2 {
-  margin: 0 0 .45rem; font-size: 1.16rem; line-height: 1.25;
+  margin: 0 0 var(--gap-tight); font-size: 1.2rem; line-height: 1.22;
   text-wrap: balance;
 }
-.thread-card p { margin: 0 0 .7rem; font-size: .89rem; color: var(--ink-soft); }
+.thread-card p {
+  margin: 0 0 var(--gap); font-size: .97rem; line-height: 1.55;
+  color: var(--ink-soft);
+}
 .thread-meta {
   font-size: .72rem; text-transform: uppercase; letter-spacing: .06em;
   color: var(--ink-faint);
@@ -533,23 +618,57 @@ table.grid tbody tr:hover { background: var(--paper-2); }
 }
 .reader-head {
   border-bottom: 1px solid var(--rule);
-  padding-bottom: 1rem; margin-bottom: 1.4rem;
+  padding-bottom: var(--gap); margin-bottom: var(--gap);
 }
+.reader-head h1 { margin-bottom: var(--gap-hair); }
 .crumbs { font-size: .8rem; color: var(--ink-faint); margin-bottom: .35rem; }
 .crumbs a { color: var(--ink-faint); }
 
+/* The way into the other chapters, and it used to take four rows of the
+   screen before a word of scripture -- fifty numbers on Genesis, a hundred
+   and fifty on Psalms, above the thing you came to read. It is two rows
+   now and scrolls past that, and the reader puts the chapter you are in
+   into view, which the old box did not: opening Psalm 119 showed you the
+   first sixty numbers and left you to find it.
+
+   Kept as a wall of numbers rather than turned into a menu, because it is
+   also how you see how long a book is. */
 .chapter-strip {
-  display: flex; gap: .28rem; flex-wrap: wrap; margin: 1rem 0 0;
-  max-height: 8.2rem; overflow-y: auto; padding: .15rem;
+  /* Positioned so the links inside measure their offsetTop against this box
+     rather than against the page: the reader scrolls the current chapter
+     into view by that number, and against the page it is the distance from
+     the top of the document, which puts the strip at its end every time. */
+  position: relative;
+  display: flex; gap: .3rem; flex-wrap: wrap;
+  margin: var(--gap-tight) 0 0;
+  max-height: 4.6rem; overflow-y: auto;
+  padding: .15rem .15rem var(--gap-hair);
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+  /* The half-row showing under the second is the whole point -- it says
+     there are more -- but cut flat it reads as a clipping mistake. Faded,
+     it reads as a page continuing. Purely decorative: a browser without
+     mask-image gets the flat cut and loses nothing it needs. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 1.1rem), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 1.1rem), transparent);
+}
+/* Not while it is being used: a keyboard tabbing through the numbers would
+   be tabbing into the faded part and appear to lose the focus ring. */
+.chapter-strip:focus-within {
+  -webkit-mask-image: none; mask-image: none;
 }
 .chapter-strip a {
-  min-width: 2.1rem; text-align: center; padding: .16rem .38rem;
+  min-width: 2rem; text-align: center; padding: .18rem .4rem;
   border: 1px solid var(--rule-soft); border-radius: 6px;
-  font-size: .8rem; text-decoration: none; color: var(--ink-soft);
-  font-variant-numeric: tabular-nums;
+  font-size: .8rem; line-height: 1.35; text-decoration: none;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums lining-nums;
 }
 .chapter-strip a:hover { border-color: var(--accent); color: var(--accent); }
-.chapter-strip a[aria-current="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+.chapter-strip a[aria-current="true"] {
+  background: var(--accent); color: var(--paper); border-color: var(--accent);
+  font-weight: 600;
+}
 
 /* The text is set on a leaf rather than on the page's own ground: a
    brighter surface, a hairline, and a gutter shadow down the bound edge.
@@ -675,11 +794,15 @@ table.grid tbody tr:hover { background: var(--paper-2); }
 .pager a:hover { border-color: var(--accent); color: var(--accent); }
 .pager .spacer { flex: 1; }
 
+/* The editor's note on the work: prose about the book, so it is set in the
+   book's type. It was in the interface's sans, which put a sentence of
+   commentary in the same voice as the buttons under it. */
 .note-block {
-  font-family: var(--sans); font-size: .93rem; color: var(--ink-soft);
+  font-family: var(--serif); font-size: 1rem; line-height: 1.6;
+  color: var(--ink-soft);
   background: transparent; border-left: 2px solid var(--rule);
   border-radius: 0;
-  padding: .2rem 0 .2rem 1.1rem; margin: 0 auto 1.8rem;
+  padding: .2rem 0 .2rem var(--gap); margin: 0 auto var(--gap-wide);
   max-width: var(--leaf);
 }
 
@@ -1034,7 +1157,10 @@ mark { background: var(--mark); color: inherit; padding: 0 .1em; border-radius: 
 }
 
 /* Chapter jump, for books too long to scan as a grid. */
-.chapter-jump { display: flex; gap: .4rem; align-items: center; margin: .8rem 0 0; }
+.chapter-jump {
+  display: flex; gap: var(--gap-hair); align-items: center;
+  margin: var(--gap-tight) 0 0;
+}
 .chapter-jump input {
   width: 6.5rem; font: inherit; font-size: .85rem;
   background: var(--raised); color: var(--ink);
@@ -1195,9 +1321,12 @@ main > * { animation: rise .18s ease-out; }
   flex: none;
 }
 .player-btn:hover { border-color: var(--accent); color: var(--accent); }
+/* The transport is the reader operating the page, so the bar that fills as
+   it plays is purple like every other control. It was rubric, which is the
+   colour reserved for the structure of a text. */
+.player-bar i { background: var(--accent); }
 /* The accent is a deep purple in light and a pale one in dark, so the glyph
    takes the ground colour rather than a fixed white and stays legible in both. */
-.player-bar i { background: var(--rubric); }
 .player-play {
   background: var(--accent); border-color: var(--accent); color: var(--paper);
   width: 2.6rem; height: 2.6rem; font-size: 1.05rem;
