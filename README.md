@@ -654,6 +654,7 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 | `words` | Turning a word on the page into an entry — by selection, by keyboard, by alias — what a missing entry says, and the places panel |
 | `keeping` | Saving, unsaving, notes, the migration from the old bookmarks key, and what happens when the browser refuses to store anything at all |
 | `resilience` | The data failing to load, malformed data, routes that name nothing, the keyboard shortcuts, the skip link, and what a screen reader is actually told |
+| `access` | Every route run through axe-core against WCAG A and AA, in both themes, with the map open — plus the first tab stop and whether a sideways-scrolling table can be scrolled without a pointer. It found one thing on its first run and it was real |
 | `listening` | What is spoken and in what order, which voice out of a bad drawer is picked, that the apparatus is never read out, where long passages are broken and how long the pauses are at each pace, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |
 | `offline` | The single-file build opens from `file://` and every feature in it works with no network at all |
 | `map` | Land is actually painted, the names are painted on it and not only listed under it, a drag does not also choose a place, the scale can be changed with two fingers and with buttons rather than only a wheel, choosing a place offers Google Maps, Earth and OpenStreetMap on its real coordinates, the frame chooses itself from what the chapter names, every place on the canvas is also a link on the page — checked against the canvas and against the mention index, not against itself — a disputed identification is not drawn as a settled one, panning cannot lose the map, zooming culls pins without inventing them, the first-appearance layer rings places rather than removing them and says it means composition order, relating two places draws no line between them, the canvas follows the theme, and all of it works from `file://` |
@@ -820,6 +821,24 @@ hundred verses from everywhere and the one you wanted was somewhere inside
 them. The book sits beside the query and in the URL, so a narrowed search can
 be kept and shared: `#/search/shepherd/psalms` is the six verses in the
 Psalter, the first of which is the one everybody means.
+
+**What it costs, measured rather than asserted.** Against a server that
+gzips, which is what GitHub Pages does, on a phone-sized viewport: the home
+page is **150 KB over six requests** and a chapter **210 KB over eight**,
+first contentful paint about 100 ms in both Chromium and Firefox. A search
+for a common word is the expensive thing here — **1.6 MB over sixty-one
+requests** — because the second stage fetches every work containing a hit.
+That is the price of a concordance over 1.22 million words, and it is paid
+on a search rather than on arrival. The `routes` suite holds the first two
+to a budget, so a data file cannot quietly wander onto the critical path.
+
+Three things were being shipped and never read, and are not shipped now: the
+manifest carried a copy of all 2,537 chapter labels (35 KB of a 170 KB file
+fetched before anything can render), and each of the lexicon's 20,120
+references was stored twice, as Easton's abbreviation and as the expansion,
+where only the expansion can be resolved. The manifest is 20% smaller, the
+lexicon 21%, and the single-file offline copy went from 13.33 MB to 12.59 —
+which also moved it from 89% of its build ceiling to 84%.
 
 Search is a two-stage design: a chapter-granularity inverted index (1.64 MB
 across 27 shards) narrows candidates, then only the matching works are fetched

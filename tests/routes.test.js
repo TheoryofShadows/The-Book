@@ -82,5 +82,48 @@ module.exports = async function routes(t, ctx) {
           colophon.drawn > colophon.numbered,
           colophon.drawn + ' drawn, ' + colophon.numbered + ' of them numbered');
 
+  /* ---- what the first page actually costs ----
+
+     The argument for fetching work texts and index shards on demand is that
+     the first paint stays small even though the library is seven megabytes.
+     That was an argument and not a measurement. Measured against a server
+     that gzips, which is what GitHub Pages does, the home page is about
+     150 KB over six requests and a chapter about 210 KB over eight.
+
+     The budgets below are the *uncompressed* figures, because this suite's
+     own server does not gzip -- 507 KB and 718 KB -- with about a third of
+     headroom so they do not fail on noise. They do fail if a data file
+     wanders onto the critical path, which is the whole point: the manifest
+     alone was carrying 35 KB of duplicated chapter labels that nothing
+     read, on a file fetched before anything can render.
+
+     Search is deliberately outside this: it is a two-stage design that
+     fetches every work containing a hit, which for a common word is 1.6 MB
+     over sixty-one requests. That is the cost of a concordance over a
+     million and a quarter words, and it is paid on a search rather than on
+     arrival. */
+  for (const [route, budget, requests] of [['#/', 700, 14],
+                                           ['#/read/genesis/0', 950, 18]]) {
+    const fresh = await ctx.browser.newPage();
+    /* Measured off the request rather than off a content-length header: the
+       test server does not send one, and reading the header gave a budget
+       check that reported nought kilobytes and passed everything. */
+    const weighed = [];
+    let count = 0;
+    fresh.on('response', res => {
+      count++;
+      weighed.push(res.request().sizes()
+        .then(s => s.responseBodySize).catch(() => 0));
+    });
+    await fresh.goto(ctx.base + route, { waitUntil: 'networkidle' });
+    const bytes = (await Promise.all(weighed)).reduce((a, b) => a + b, 0);
+    const kb = Math.round(bytes / 1024);
+    t.check('the first paint of ' + route + ' stays inside its budget',
+            kb > 0 && kb <= budget && count <= requests,
+            kb + ' KB over ' + count + ' requests, budget ' +
+            budget + ' KB and ' + requests);
+    await fresh.close();
+  }
+
   await page.close();
 };

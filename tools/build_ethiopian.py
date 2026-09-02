@@ -880,7 +880,6 @@ def main() -> int:
                 "versified": False,
                 "source": spec["source"],
                 "positions": work.get("positions"),
-                "chapterLabels": [c["label"] for c in work["chapters"]],
                 "verified": False,
             }, spec.get("before"))
 

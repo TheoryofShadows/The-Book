@@ -19,6 +19,41 @@
 <meta property="og:description" content="172 works, 2,537 chapters, 1.22 million words of the Jewish, Protestant, Catholic, Orthodox and Ethiopian canons, arranged by date of composition. Public domain, searchable, and audited.">
 <meta property="og:image" content="https://theoryofshadows.github.io/The-Book/assets/icon-512.png">
 <meta name="twitter:card" content="summary">
+
+<!-- The 2,709 generated pages under /read/ and /contents/ each carry
+     Chapter, Book or CollectionPage structured data, and this page -- the
+     one everybody links to -- carried none. Written out here rather than
+     built, because this file is the one hand-written page in the site; the
+     counts in it are held against the manifest by test_readme.py, which is
+     the same standard the sentence beside them is held to. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "The Book",
+  "alternateName": "The Book \u2014 the library in the order it was written",
+  "url": "https://theoryofshadows.github.io/The-Book/",
+  "description": "Every text of the Jewish, Protestant, Catholic, Orthodox and Ethiopian canons, together with the apocrypha and the Apostolic Fathers, arranged by when they were written.",
+  "inLanguage": "en",
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "isAccessibleForFree": true,
+  "mainEntity": {
+    "@type": "Collection",
+    "name": "The Book",
+    "collectionSize": 172,
+    "url": "https://theoryofshadows.github.io/The-Book/contents/",
+    "about": "Biblical and related ancient texts in order of composition"
+  },
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://theoryofshadows.github.io/The-Book/#/search/{search_term_string}"
+    },
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
 </head>
 <body>
 

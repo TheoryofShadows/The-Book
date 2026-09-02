@@ -7,13 +7,28 @@ name: Checks
 # run everything twice for the same commit.
 on:
   pull_request:
+  # A branch pushed before its pull request exists was tested by nothing:
+  # checks.yml ran on pull_request only and pages.yml covers main. The
+  # comment above explained the choice as avoiding a double run, and the
+  # modern form of that is to trigger on the push and skip the job when a
+  # pull request for the same head is already open -- which is what the
+  # `if` on each job below does. main is excluded because pages.yml runs
+  # everything here on it already.
+  push:
+    branches-ignore:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# Keyed on the branch rather than on the ref, which is what stops the same
+# commit being checked twice now that a push triggers this as well as a pull
+# request. A push is refs/heads/x and a pull request is refs/pull/N/merge --
+# different refs, the same branch, the same commit -- so keying on the ref
+# deduplicated nothing and keying on the branch deduplicates both.
 concurrency:
-  group: checks-${{ github.ref }}
+  group: checks-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:

@@ -248,7 +248,6 @@ def main() -> int:
             for c in work["chapters"]
             for p in (c.get("paras", []) + [v["t"] for v in c.get("verses", [])])
         )
-        entry["chapterLabels"] = [c["label"] for c in work["chapters"]]
 
     # ---- 1. Hermas Similitudes 1 and 10 ------------------------------
     hermas = find_section("the-shepherd-of-hermas")

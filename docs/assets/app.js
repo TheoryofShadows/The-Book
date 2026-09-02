@@ -28,6 +28,19 @@
     return n;
   }
 
+  /* A table too wide for the screen is put in a box that scrolls sideways.
+     A box that scrolls and cannot be focused is a box a keyboard cannot
+     scroll -- axe calls it scrollable-region-focusable and it is right: on
+     the accuracy report the only way to reach the right-hand columns was a
+     pointer. Focusable, named, and announced as a region it is a thing you
+     can tab to and then use the arrow keys in. */
+  function scroller(inner, label) {
+    return el("div", {
+      class: "scroller", tabindex: "0", role: "region",
+      "aria-label": label || "Table, scrollable sideways"
+    }, [inner]);
+  }
+
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -469,7 +482,7 @@
         });
         table.appendChild(tb2);
       }
-      body.appendChild(el("div", { class: "scroller" }, [table]));
+      body.appendChild(scroller(table, "Contents, scrollable sideways"));
     }
 
     render();
@@ -1699,7 +1712,30 @@
 
   function chapterMap(workId, chapterIdx, chapterLabel) {
     var wrap = el("details", { class: "chapter-map" });
-    wrap.appendChild(el("summary", { text: "Where this chapter happens" }));
+    var summary = el("summary", {}, [
+      el("span", { text: "Where this chapter happens" })
+    ]);
+    var tally = el("span", { class: "map-tally" });
+    summary.appendChild(tally);
+    wrap.appendChild(summary);
+
+    /* How many places, before it is opened rather than after.
+
+       The gazetteer covers the Hebrew Bible and the New Testament, so 1,718
+       of the 2,537 chapters have nothing to draw -- and Job has seven maps
+       across forty-two chapters, Psalms fifty-five across a hundred and
+       fifty. Opening the panel to be told there is nothing, over and over,
+       is what a removed feature feels like. The index this counts from is
+       60 KB and is the same file the map itself opens with, so the answer
+       costs one fetch that was going to happen anyway. */
+    getJSON("mentions.json").then(function (table) {
+      if (!tally.isConnected) return;
+      var n = (table[workId + "/" + chapterIdx] || []).length;
+      tally.textContent = n
+        ? n + (n === 1 ? " place" : " places")
+        : "none in the gazetteer";
+      if (!n) tally.className = "map-tally none";
+    }).catch(function () { /* the panel still opens and says so itself */ });
 
     var body = el("div", { class: "map-body" });
     wrap.appendChild(body);
@@ -2593,13 +2629,23 @@
        question about a book rather than about the collection. */
     var scopeSel = el("select", { "aria-label": "Which book to search" });
     scopeSel.appendChild(el("option", { value: "", text: "Every book" }));
+    /* Grouped by era, because a flat list of a hundred and sixty-three is a
+       list you scroll rather than one you read -- and because the grouping
+       is the volume's own argument: the order here is the order of
+       composition, so the heading a book sits under says when it was
+       written. */
     manifest.sections.forEach(function (section) {
-      section.works.forEach(function (work) {
-        if (!work.chapters) return;      // an entry with no text to search
-        scopeSel.appendChild(el("option", {
+      var withText = section.works.filter(function (w) { return !!w.chapters; });
+      if (!withText.length) return;
+      var label = section.name || section.title || "";
+      if (section.roman) label = section.roman + ". " + label;
+      var group = el("optgroup", { label: titleCase(label) });
+      withText.forEach(function (work) {
+        group.appendChild(el("option", {
           value: work.id, text: titleCase(work.title)
         }));
       });
+      scopeSel.appendChild(group);
     });
     scopeSel.value = initialScope || "";
 
@@ -3029,7 +3075,7 @@
         ])));
       });
       table.appendChild(tb);
-      tableBox.appendChild(el("div", { class: "scroller" }, [table]));
+      tableBox.appendChild(scroller(table, "Canon comparison, scrollable sideways"));
       tableBox.appendChild(el("p", { class: "tiny", text:
         "● received as scripture   ◐ printed but outside the canon, or received in some branches only   · absent" }));
     }
@@ -3087,7 +3133,7 @@
       ]));
     });
     table.appendChild(tb);
-    wrap.appendChild(el("div", { class: "scroller" }, [table]));
+    wrap.appendChild(scroller(table, "Findings, scrollable sideways"));
 
     if (splices && splices.length) {
       wrap.appendChild(el("hr", { class: "rule" }));
@@ -3116,7 +3162,7 @@
         ]));
       });
       stable.appendChild(sb);
-      wrap.appendChild(el("div", { class: "scroller" }, [stable]));
+      wrap.appendChild(scroller(stable, "Table, scrollable sideways"));
     }
 
     wrap.appendChild(el("hr", { class: "rule" }));
@@ -3395,7 +3441,7 @@
       ]));
     });
     table.appendChild(tb);
-    wrap.appendChild(el("div", { class: "scroller" }, [table]));
+    wrap.appendChild(scroller(table, "Sources, scrollable sideways"));
     wrap.appendChild(el("p", { class: "muted", text:
       "Where a boundary is itself argued, the span is drawn wide rather than " +
       "picking a side." }));

@@ -626,10 +626,16 @@ def main() -> None:
                 "chapters": nch,
                 "verses": nv,
                 "words": words,
+                # No chapterLabels here. It held a copy of all 2,537 chapter
+                # labels -- 35 KB, a fifth of this file -- and nothing ever
+                # read it: the reader takes labels off the work file it has
+                # just fetched, which is where they have to come from anyway
+                # because that is the file that has the text under them. The
+                # manifest is fetched before anything can render, so a fifth
+                # of it being dead weight was a fifth of the wait.
                 "versified": nv > 0,
                 "source": src,
                 "positions": stance,
-                "chapterLabels": [c["label"] for c in work["chapters"]],
             })
             with open(os.path.join(OUT, "works", work["id"] + ".json"), "w",
                       encoding="utf-8") as fh:
