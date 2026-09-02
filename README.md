@@ -550,6 +550,7 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | `tools/scans.py` | Reads a scan by its word coordinates — running heads, marginal numbers and footnotes taken off by where they sit on the leaf |
 | `tools/build_lightfoot.py` | Splices 1 Clement's six recovered chapters in, and restores Smyrnaeans 13 |
 | `tools/audit.py` | Checks chapter and verse counts against reference figures |
+| `tools/verify.py` | Reads every verse and paragraph and asks whether the text is the text and nothing else, and whether every definition, pin and link points at something that exists. `--links` reaches every external address as well |
 | `tools/build_canon.py` | Builds canon membership and checks coverage claims |
 | `tools/build_index.py` | Builds the sharded search index |
 | `tools/build_standalone.py` | Inlines the whole library into one HTML file that runs offline, and cuts out the parts of the page an offline copy cannot honour |
@@ -563,6 +564,31 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 
 The audit is the point: if a count on the site is wrong, `tools/audit.py` will
 say so, and the build will stop. Findings are stated so they can be falsified.
+
+`tools/verify.py` is the same idea one level in. The audit asks whether the
+*shape* of the library matches the reference figures — does Genesis have fifty
+chapters, does Psalms have 2,461 verses. It cannot see what is inside them. So
+this reads all 40,124 verses and every paragraph and asks whether the text is
+the text and nothing else, and whether every one of the 3,851 definitions, 114
+aliases, 1,232 places, 4,684 pins and every internal link points at something
+that exists.
+
+It found seventy-nine pieces of the transcription's own furniture being
+printed as scripture and read aloud as scripture. Thirty-nine were printed
+page numbers — `[p. 134]` — dropped into the running text of 1 Enoch and the
+Testament of our Lord wherever a leaf turned. Forty were `[paragraph
+continues]`, the transcriber's note that a paragraph ran on past a page break,
+and every one of them lands mid-clause: *"And regarding them I prayed to the
+[paragraph continues] Lord."* Neither is blanked before speaking, because
+`speakable()` blanks what is neither letter nor digit and `p. 134` is both.
+
+What it deliberately does **not** touch is Charles's own square brackets. He
+supplies words the Ethiopic does not have — `[and]`, `[them]`, `[for Thou
+seest everything]` — and that is the translator's apparatus, which this volume
+prints. 962 bracketed strings survive the pass and 79 were taken out; a rule
+that took the rest would be rewriting Charles rather than cleaning up after
+his scanner. `tests/python/test_verify.py` holds both halves of that: the
+planted furniture must be found, and the planted brackets must not be.
 
 `tools/audit-baseline.txt` is what makes that a gate rather than a report.
 Every finding the audit produces is either a defect or a known property of the
@@ -595,7 +621,7 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 
 | Suite | Checks |
 | --- | --- |
-| `tests/python` | The parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. One of them runs the reader's own copy of the folding rule against the Python one, because the two are written in different languages and a divergence between them is silent. Another holds the seam where 1 Clement changes translator: the six recovered chapters are checked against the volume's own text of the chapters either side of them, because a splice made one chapter out of step would still read as English. Two more hold things the parser has no opinion about: every number this README states, against the data it is describing, and every colour in the stylesheet's palette against the contrast it has to clear — both of which are claims, and both of which had rotted |
+| `tests/python` | The verifier against planted defects — a page number, a paragraph note, an advertisement, a duplicated verse number, a dangling alias, a pin on a chapter that is not there — including the control that a clean library reports nothing, and the negative case that a translator's square brackets are never mistaken for a scanner's. And the parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. One of them runs the reader's own copy of the folding rule against the Python one, because the two are written in different languages and a divergence between them is silent. Another holds the seam where 1 Clement changes translator: the six recovered chapters are checked against the volume's own text of the chapters either side of them, because a splice made one chapter out of step would still read as English. Two more hold things the parser has no opinion about: every number this README states, against the data it is describing, and every colour in the stylesheet's palette against the contrast it has to clear — both of which are claims, and both of which had rotted |
 | `routes` | Every page renders, search returns verses, a saved verse survives a reload, nothing throws |
 | `layout` | At 320–430px every nav link is on screen, nothing scrolls sideways, the bar tucks away as you read, desktop is unchanged |
 | `dating` | The date card against the spans the parser read, the method page, and that a citation names the edition and the era rather than just a URL |

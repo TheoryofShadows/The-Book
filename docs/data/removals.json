@@ -1,5 +1,377 @@
 [
  {
+  "where": "1 ENOCH: THE BOOK OF THE WATCHERS (chapters 1-36) / 1 ENOCH 1",
+  "reason": "printed page number from the transcription",
+  "chars": 8,
+  "excerpt": "[p. 32]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF THE WATCHERS (chapters 1-36) / 1 ENOCH 5",
+  "reason": "printed page number from the transcription",
+  "chars": 9,
+  "excerpt": "[p. 34]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF THE WATCHERS (chapters 1-36) / 1 ENOCH 8",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 22,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF THE WATCHERS (chapters 1-36) / 1 ENOCH 9",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 22,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF THE WATCHERS (chapters 1-36) / 1 ENOCH 21",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 22,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "1 ENOCH: THE ASTRONOMICAL BOOK (chapters 72-82) / 1 ENOCH 80",
+  "reason": "printed page number from the transcription",
+  "chars": 10,
+  "excerpt": "[p. 107]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 3",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 5",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 8",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 46,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 10",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 12",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 92,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 15",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 46,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 16",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 18",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 19",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 92,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 21",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 22",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 46,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 23",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 24",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 26",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 28",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 29",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 31",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 37",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 38",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 41",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 45",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "JUBILEES / JUBILEES 46",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "1 ENOCH: DREAM VISIONS AND THE EPISTLE OF ENOCH (chapters 83-108) / 1 ENOCH 83",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 22,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "1 ENOCH: DREAM VISIONS AND THE EPISTLE OF ENOCH (chapters 83-108) / 1 ENOCH 90",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 22,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "1 ENOCH: DREAM VISIONS AND THE EPISTLE OF ENOCH (chapters 83-108) / 1 ENOCH 91",
+  "reason": "printed page number from the transcription",
+  "chars": 9,
+  "excerpt": "[p. 134]"
+ },
+ {
+  "where": "1 ENOCH: DREAM VISIONS AND THE EPISTLE OF ENOCH (chapters 83-108) / 1 ENOCH 93",
+  "reason": "printed page number from the transcription",
+  "chars": 9,
+  "excerpt": "[p. 133]"
+ },
+ {
+  "where": "1 ENOCH: DREAM VISIONS AND THE EPISTLE OF ENOCH (chapters 83-108) / 1 ENOCH 94",
+  "reason": "printed page number from the transcription",
+  "chars": 9,
+  "excerpt": "[p. 135]"
+ },
+ {
+  "where": "1 ENOCH: DREAM VISIONS AND THE EPISTLE OF ENOCH (chapters 83-108) / 1 ENOCH 94",
+  "reason": "printed page number from the transcription",
+  "chars": 10,
+  "excerpt": "[p. 136]"
+ },
+ {
+  "where": "1 ENOCH: DREAM VISIONS AND THE EPISTLE OF ENOCH (chapters 83-108) / 1 ENOCH 96",
+  "reason": "printed page number from the transcription",
+  "chars": 10,
+  "excerpt": "[p. 138]"
+ },
+ {
+  "where": "1 ENOCH: DREAM VISIONS AND THE EPISTLE OF ENOCH (chapters 83-108) / 1 ENOCH 97",
+  "reason": "printed page number from the transcription",
+  "chars": 8,
+  "excerpt": "[p. 139]"
+ },
+ {
+  "where": "1 ENOCH: DREAM VISIONS AND THE EPISTLE OF ENOCH (chapters 83-108) / 1 ENOCH 98",
+  "reason": "printed page number from the transcription",
+  "chars": 10,
+  "excerpt": "[p. 140]"
+ },
+ {
+  "where": "1 ENOCH: DREAM VISIONS AND THE EPISTLE OF ENOCH (chapters 83-108) / 1 ENOCH 98",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 22,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "1 ENOCH: DREAM VISIONS AND THE EPISTLE OF ENOCH (chapters 83-108) / 1 ENOCH 99",
+  "reason": "printed page number from the transcription",
+  "chars": 10,
+  "excerpt": "[p. 143]"
+ },
+ {
+  "where": "1 ENOCH: DREAM VISIONS AND THE EPISTLE OF ENOCH (chapters 83-108) / 1 ENOCH 100",
+  "reason": "printed page number from the transcription",
+  "chars": 10,
+  "excerpt": "[p. 144]"
+ },
+ {
+  "where": "1 ENOCH: DREAM VISIONS AND THE EPISTLE OF ENOCH (chapters 83-108) / 1 ENOCH 101",
+  "reason": "printed page number from the transcription",
+  "chars": 9,
+  "excerpt": "[p. 146]"
+ },
+ {
+  "where": "1 ENOCH: DREAM VISIONS AND THE EPISTLE OF ENOCH (chapters 83-108) / 1 ENOCH 103",
+  "reason": "printed page number from the transcription",
+  "chars": 10,
+  "excerpt": "[p. 148]"
+ },
+ {
+  "where": "1 ENOCH: DREAM VISIONS AND THE EPISTLE OF ENOCH (chapters 83-108) / 1 ENOCH 103",
+  "reason": "printed page number from the transcription",
+  "chars": 9,
+  "excerpt": "[p. 149]"
+ },
+ {
+  "where": "1 ENOCH: DREAM VISIONS AND THE EPISTLE OF ENOCH (chapters 83-108) / 1 ENOCH 104",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 22,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 38",
+  "reason": "printed page number from the transcription",
+  "chars": 9,
+  "excerpt": "[p. 57]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 39",
+  "reason": "printed page number from the transcription",
+  "chars": 8,
+  "excerpt": "[p. 58]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 41",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 42",
+  "reason": "printed page number from the transcription",
+  "chars": 8,
+  "excerpt": "[p. 62]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 45",
+  "reason": "printed page number from the transcription",
+  "chars": 7,
+  "excerpt": "[p. 63]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 46",
+  "reason": "printed page number from the transcription",
+  "chars": 9,
+  "excerpt": "[p. 65]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 48",
+  "reason": "printed page number from the transcription",
+  "chars": 9,
+  "excerpt": "[p. 67]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 49",
+  "reason": "printed page number from the transcription",
+  "chars": 8,
+  "excerpt": "[p. 68]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 54",
+  "reason": "transcriber's paragraph-break note",
+  "chars": 23,
+  "excerpt": "[paragraph continues]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 56",
+  "reason": "printed page number from the transcription",
+  "chars": 9,
+  "excerpt": "[p. 74]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 58",
+  "reason": "printed page number from the transcription",
+  "chars": 8,
+  "excerpt": "[p. 75]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 61",
+  "reason": "printed page number from the transcription",
+  "chars": 8,
+  "excerpt": "[p. 80]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 61",
+  "reason": "printed page number from the transcription",
+  "chars": 9,
+  "excerpt": "[p. 81]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 62",
+  "reason": "printed page number from the transcription",
+  "chars": 8,
+  "excerpt": "[p. 83]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 63",
+  "reason": "printed page number from the transcription",
+  "chars": 9,
+  "excerpt": "[p. 84]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 69",
+  "reason": "printed page number from the transcription",
+  "chars": 9,
+  "excerpt": "[p. 91]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 71",
+  "reason": "printed page number from the transcription",
+  "chars": 7,
+  "excerpt": "[p. 94]"
+ },
+ {
+  "where": "1 ENOCH: THE BOOK OF PARABLES (chapters 37-71) / 1 ENOCH 71",
+  "reason": "printed page number from the transcription",
+  "chars": 8,
+  "excerpt": "[p. 95]"
+ },
+ {
   "where": "THE FIRST EPISTLE OF CLEMENT TO THE CORINTHIANS / Chapter 59",
   "reason": "ANF editorial introduction to the next work",
   "chars": 4961,

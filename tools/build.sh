@@ -54,6 +54,16 @@ python3 tools/build_index.py "$OUT"
 echo "==> audit"
 python3 tools/audit.py "$OUT"
 
+# The audit asks whether the shape of the library matches the reference
+# counts. This asks whether the text inside that shape is the text and
+# nothing else, and whether every definition, pin and link points at
+# something that exists. It is a gate on the same terms: a finding not in
+# tools/verify-baseline.txt stops the build. The --links pass is not run
+# here, because whether somebody else's server answered today is not a fact
+# about this repository.
+echo "==> verify"
+python3 tools/verify.py "$OUT"
+
 # The whole library as one file, after the audit rather than before it: a copy
 # nobody can check is a copy of whatever the data happened to be. It is not
 # committed -- 13 MB regenerated on every data change would be most of this

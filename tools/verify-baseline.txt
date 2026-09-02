@@ -1,0 +1,47 @@
+# Findings this volume accepts, from tools/verify.py.
+#
+# verify.py reads every verse and paragraph in the library and asks whether
+# the text is the text and nothing else, and whether every definition, pin
+# and link points at something that exists. Most of what it can find is a
+# defect. Some of it is a property of the editions this volume prints, and
+# this file is where that second kind is written down, with the reason.
+#
+# A finding not listed here fails the build. A line listed here that no
+# longer occurs also fails the build, because the file has to keep describing
+# the volume as it actually is. Nothing regenerates it.
+#
+# Format: KIND | where | detail. Blank lines and # are ignored.
+#
+# Regenerate the findings with:
+#     python3 tools/verify.py docs/data
+
+
+# ------------------------------------------------------------------------
+# Page references inside the four texts recovered from scans
+#
+# These four are not transcriptions somebody prepared. They are photographs
+# of nineteenth- and early twentieth-century printings, read by their word
+# coordinates, and each of them says on its own page that it is a text
+# recovered rather than a text verified. What the scan hands over includes
+# the editor's footnotes, and a footnote cites pages:
+#
+#   "All the translations and Clemens Alexandrinus (Strom. vi. 6, 46,
+#    p. 764) have this passage."
+#   "Cf. Donaldson's Hist. of Christ. Lit. vol. i. p. 291."
+#   "Probably Greek udvapyxos (see p. 16)."
+#
+# That is a citation, not a page marker dropped into a sentence. The two look
+# identical to a pattern and are opposite in kind, which is why the bracketed
+# form -- "[p. 134]", the transcriber's own leaf number, thirty-nine of them
+# in the middle of clauses of 1 Enoch -- is removed by parse_book.py as
+# furniture and the bare form is reported here for a person to read.
+#
+# Separating the footnote apparatus from the text in these four would mean
+# deciding, line by line and without a second edition to check against, which
+# sentences the editor wrote and which the translator did. The volume's answer
+# to that everywhere else is to say so rather than to guess, and these four
+# say so at length on their own pages.
+TEXT-PAGE-REFERENCE | similitude-10 | a bare page reference in the running text
+TEXT-PAGE-REFERENCE | the-apocalypse-of-peter | a bare page reference in the running text
+TEXT-PAGE-REFERENCE | the-book-of-the-covenant | a bare page reference in the running text
+TEXT-PAGE-REFERENCE | the-testament-of-our-lord | a bare page reference in the running text

@@ -63,6 +63,13 @@ jobs:
       - name: Audit chapter and verse counts
         run: python3 tools/audit.py docs/data
 
+      # Every verse and paragraph read, and every definition, pin and link
+      # resolved. The audit above checks the shape of the library against
+      # reference counts; this checks what is inside it. Both are gates
+      # against a written-down baseline.
+      - name: Verify the text, the definitions, the pins and the links
+        run: python3 tools/verify.py docs/data
+
       # The map is meant to cost less than a photograph. A simplification
       # threshold is easy to loosen by accident and the result is still a
       # working map, just a slower one on the phone most of this is read on.
