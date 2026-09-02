@@ -306,9 +306,33 @@ Gaps inherited from the source editions, left honest rather than invented:
 
 - Polycarp to the Philippians breaks off mid-sentence in chapter 14, where
   the Greek does; the Latin carries on and this volume does not print it.
-- The Psalms of Solomon and Philo are described but have no text.
+- The Psalms of Solomon and Philo are described but have no text. Unlike the
+  gaps below, these two are not forced: Ryle and James printed the Psalms of
+  Solomon in English in 1891 and G. B. Gray again in 1913, and Yonge
+  translated the whole of Philo in 1854. All three are public domain. They
+  are absent because nobody has done the work, which is a different sentence
+  from the one above and should not borrow its excuse.
 - The Dead Sea Scrolls appear as summaries — every English translation of the
   1947-and-later finds is under copyright.
+- **The sayings Gospel of Thomas is not here, and this volume has been
+  silent about that.** The Coptic text came out of Nag Hammadi in 1945 and
+  every English rendering of it is in copyright, which is the same wall the
+  Scrolls are behind. The silence matters more than the absence, because the
+  volume *does* print the Infancy Gospel of Thomas, under a title beginning
+  "THE GOSPEL OF THOMAS" — so a reader looking for the famous one finds a
+  different second-century text and nothing saying so. The one route in that
+  is public domain is partial: Grenfell and Hunt's English of the three Greek
+  Oxyrhynchus fragments, published 1897-1904, which carry about a fifth of
+  the sayings.
+- Whole shelves of the pseudepigrapha are simply not attempted, and the
+  volume says so nowhere. The Odes of Solomon, the Ascension of Isaiah, 2 and
+  3 Baruch, the Apocalypse and Testament of Abraham, Joseph and Aseneth, the
+  Life of Adam and Eve, the Letter of Aristeas and the Sibylline Oracles are
+  all in Charles's 1913 collection and all public domain; so are the Gospel
+  of Peter, the Acts of John, Peter and Andrew, the Epistle to the Laodiceans
+  and 3 Corinthians, in M. R. James's 1924 volume — which this volume already
+  cites as a source for two other books. "Related ancient texts" is the
+  subtitle, and Josephus in Whiston's 1737 English is not here either.
 
 ## Listening to it
 

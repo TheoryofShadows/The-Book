@@ -242,9 +242,17 @@
       })
     ]));
 
+    /* Counted, not typed. Every other figure in this row comes from the
+       manifest and moves when the library moves; this one was the literal
+       10, which is right today and is the only number on the front page
+       nothing checks. The eras are the sections that carry a numeral --
+       I to X -- as against the collections after them, which are grouped by
+       author or book rather than by date. */
+    var eras = manifest.sections.filter(function (s) { return !!s.roman; }).length;
+
     var stats = el("div", { class: "stats" });
     [[t.works, "works"], [t.chapters, "chapters"], [t.verses, "numbered verses"],
-     [t.words, "words"], [10, "eras, before the collections"]]
+     [t.words, "words"], [eras, "eras, before the collections"]]
       .forEach(function (p) {
         stats.appendChild(el("div", { class: "stat" }, [
           el("b", { text: fmt(p[0]) }), el("span", { text: p[1] })
