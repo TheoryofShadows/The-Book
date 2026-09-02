@@ -38,6 +38,23 @@ else
   echo "==> javascript  (skipped, no node)"
 fi
 
+# The stylesheet, for the two mistakes it can make silently.
+#
+# A selector declared twice is not an error and does not look like one: the
+# second block quietly overrides part of the first, and the first goes on
+# describing something that never renders. Six had accumulated here, and one
+# of them -- ".player-bar i { background: var(--rubric) }" -- sat twenty-six
+# lines above the real rule and so had never painted anything at all, which
+# did not stop it being read, believed, and written up as a fix.
+#
+# A custom property defined and never used is the same mistake in the
+# palette: --gilt sat in all three themes for a year unused, and --rubric-bg
+# went the same way. A colour nothing uses is a colour nobody maintains.
+echo "==> stylesheet"
+python3 tools/lint_css.py
+style=$?
+[ "$style" -eq 0 ] || fail=1
+
 echo "==> data"
 python3 - <<'PY'
 import json

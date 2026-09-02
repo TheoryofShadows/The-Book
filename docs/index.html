@@ -8,7 +8,10 @@
 <link rel="stylesheet" href="assets/app.css">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
-<meta name="theme-color" content="#6b2d5b">
+<!-- The light theme's accent, and it has to be spelt out: a browser reads
+     this before any stylesheet, so it cannot be var(--accent). Held to that
+     token by tests/python/test_palette.py, having drifted from #632a55. -->
+<meta name="theme-color" content="#632a55">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="The Book">

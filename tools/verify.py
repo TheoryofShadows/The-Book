@@ -59,6 +59,123 @@ FURNITURE = [
     (re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]"), "a control character"),
 ]
 
+# Scanner noise: not a misprint of a word, but a clump of things that are not
+# words at all, picked up off a smudged line and set as scripture.
+#
+#   "...that he Seperate ee oe ee ee, wee cone erage ee ogtoatyenenee should
+#    follow a human calling..."
+#
+# Two shapes of it, and both need care, because the corpus is full of things
+# that look like noise and are not. Transliterated Ethiopic -- Sedeqetelebab,
+# Ne'elatama'uk -- fragments into single letters under a tokeniser that does
+# not know its accents, and a page of 1 Esdras genealogy is fifteen rare
+# proper nouns in a row. So: letters are matched with their accents on, roman
+# numerals and real short English words are excluded by name, and a run has to
+# be three long before it counts.
+WORD = re.compile(r"[^\W\d_]+(?:['\u2019][^\W\d_]+)*", re.UNICODE)
+ROMAN = re.compile(r"^[IVXLCDM]+$")
+# Short words English actually uses. Everything else of three letters or
+# fewer, three in a row, is a scanner talking.
+SHORT_WORDS = set("""
+a an and are as at be but by do for go he her him his i if in is it its me my
+no nor not now of off on or our out own she so the to too up us we who why you
+yea nay lo oh ye thy thee thou hath had has was were will all any can did few
+how let man may men new one put run saw say see set six son ten two war way yet
+god age arm bed cup dry ear eat end eye far fat fig fly get got hot ice ill joy
+key kin lad law lay led leg lie lip low mad mid net oil old pay pit ram raw red
+rib rod row sad sat sea sew shy sin sir sit sow sum tax tea tie top try use vex
+vow wet win wit woe air ate bad bag bar bat bay big bit boy bud bug bow cat cow
+cry cut dam den die dig dip ere eve ewe fed fir fit fix foe fro fry fur gap gat
+ham hen hid hip hit hut ink inn ire jar jaw lap lot map mat mob nod oak oar ox
+pan paw pen pig pin pod pot ran rat ray rid rim rob rot rub rug sap sip sop spy
+sty sup tar tin toe ton tow tub urn van vat wag wax web wed wee wig
+""".split())
+# Caps that belong: an inscription, a divine name, an abbreviation.
+SHOUTED_WORDS = {"LORD", "GOD", "AM", "AD", "BC", "CE", "BCE", "US", "AN", "IT",
+                 "IS", "OF", "THE", "AND", "TO", "YAHWEH", "HOLY", "A", "I", "O"}
+
+
+def shouted_runs(text, vocabulary):
+    """Clumps of capitals the volume never uses as words anywhere else.
+
+    The other shape the scanner leaves: "Every believer who enters the
+    Christian church and NTO TE ANDY 17 BNR Hy BRIER hears the Scriptures".
+    Length cannot separate that from MENE, MENE, TEKEL, UPHARSIN or HOLY TO
+    YAHWEH, and neither can vowels -- NTO has an O in it. What separates them
+    is that the volume knows MENE and TEKEL and HOLY and YAHWEH as words
+    somewhere in its own million and a quarter, and has never once seen ANDY
+    or BNR. A word used nowhere else, shouted, twice in a row, in a line that
+    is not itself a heading, is a scanner rather than a scribe.
+    """
+    letters = [c for c in text if c.isalpha()]
+    if letters and sum(1 for c in letters if c.isupper()) / len(letters) > 0.4:
+        return []                       # a heading in capitals is not noise
+    tokens = [m.group(0) for m in WORD.finditer(text)]
+
+    def unknown(tok):
+        return (tok.isupper() and len(tok) >= 2 and not ROMAN.match(tok)
+                and vocabulary.get(tok.lower(), 0) == 0)
+
+    runs, i = [], 0
+    while i < len(tokens):
+        if unknown(tokens[i]):
+            j = i
+            while j + 1 < len(tokens) and unknown(tokens[j + 1]):
+                j += 1
+            if j - i + 1 >= 2:
+                runs.append(" ".join(tokens[i:j + 1]))
+            i = j + 1
+        else:
+            i += 1
+    return runs
+
+
+def vocabulary_of(units):
+    """Every word the volume uses in ordinary case, and how often.
+
+    Counted in ordinary case only, so a word that appears solely as part of a
+    shouted clump cannot vouch for itself.
+    """
+    counts = {}
+    for text in units:
+        for match in WORD.finditer(text):
+            token = match.group(0)
+            if not token.isupper():
+                key = token.lower()
+                counts[key] = counts.get(key, 0) + 1
+    return counts
+
+
+def noise_runs(text):
+    """Clumps of tokens that are not words, in a line of prose that is."""
+    letters = [c for c in text if c.isalpha()]
+    shouting = (letters
+                and sum(1 for c in letters if c.isupper()) / len(letters) > 0.6)
+    tokens = [m.group(0) for m in WORD.finditer(text)]
+
+    def gibberish(tok):
+        if len(tok) > 3:
+            return False
+        if tok.lower() in SHORT_WORDS or tok.upper() in SHOUTED_WORDS:
+            return False
+        if ROMAN.match(tok):
+            return False
+        return tok.islower() or (tok.isupper() and not shouting)
+
+    runs, i = [], 0
+    while i < len(tokens):
+        if gibberish(tokens[i]):
+            j = i
+            while j + 1 < len(tokens) and gibberish(tokens[j + 1]):
+                j += 1
+            if j - i + 1 >= 3:
+                runs.append(" ".join(tokens[i:j + 1]))
+            i = j + 1
+        else:
+            i += 1
+    return runs
+
+
 # A bare "p. 134" with no brackets is a citation in a footnote as often as it
 # is a page marker -- "Donaldson's Hist. of Christ. Lit. vol. i. p. 291" is
 # the former -- so it is reported for a human rather than matched as
@@ -80,6 +197,15 @@ def check(data_dir):
     manifest = load(os.path.join(data_dir, "manifest.json"))
     works = {w["id"]: w for s in manifest["sections"] for w in s["works"]}
     counts = {"works": 0, "chapters": 0, "verses": 0, "paras": 0}
+
+    # Read once for the vocabulary, because whether a shouted token is a word
+    # is a question about the whole volume rather than about its own line.
+    every_text = []
+    for path in sorted(glob.glob(os.path.join(data_dir, "works", "*.json"))):
+        for chapter in load(path).get("chapters", []):
+            every_text.extend(v.get("t", "") for v in (chapter.get("verses") or []))
+            every_text.extend(chapter.get("paras") or [])
+    vocabulary = vocabulary_of(every_text)
 
     # ---- the text itself ----------------------------------------------
     chapters_in = {}
@@ -128,6 +254,9 @@ def check(data_dir):
                     if hit:
                         say("TEXT-FURNITURE", where,
                             f"{ref} carries {what}: {hit.group(0)!r}")
+                for run in noise_runs(text) + shouted_runs(text, vocabulary):
+                    say("TEXT-NOT-WORDS", wid,
+                        f"a clump the scanner invented: {run!r}")
                 loose = LOOSE_PAGE.search(text)
                 if loose:
                     say("TEXT-PAGE-REFERENCE", wid,

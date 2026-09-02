@@ -4,6 +4,17 @@
    Both are defined as complete palettes so neither depends on the other.
  * ------------------------------------------------------------------ */
 
+/* A control filled with the accent takes the *ground* colour for its type,
+   never a literal white. The accent is a deep purple in light and a pale
+   pink in dark, so white on it measures 10.5:1 in one theme and 2.3:1 in
+   the other -- and 1.7:1 on the hover accent, which is a button whose label
+   has effectively gone. It was written correctly once, on the player's play
+   button, with a comment saying why, and five other rules went on using
+   #fff: the skip link, the contents toggle, an open verse menu, a pressed
+   chip, and the primary chip that carries "Open in Google Maps".
+   tests/python/test_palette.py now reads the literals out of this file and
+   measures them, which is the check that should have caught it. */
+
 /* Two accents, and the difference between them is the whole system.
 
    RUBRIC is the red a scribe changed pens for. In a manuscript it marks
@@ -60,7 +71,6 @@
   --accent-bg:  #efe3ec;
   --rubric:     #9b2f21;
   --rubric-2:   #b8503f;
-  --rubric-bg:  #f5e4df;
   --gilt:       #906b23;
   --good:       #2f6b5f;
   --good-bg:    #dfeae6;
@@ -124,7 +134,6 @@
     --accent-bg: #2d2231;
     --rubric:    #e2836b;
     --rubric-2:  #f0a893;
-    --rubric-bg: #301f1d;
     --gilt:      #d9b46b;
     --good:      #78c0b0;
     --good-bg:   #162623;
@@ -158,7 +167,6 @@
   --accent-bg: #2d2231;
   --rubric:    #e2836b;
   --rubric-2:  #f0a893;
-  --rubric-bg: #301f1d;
   --gilt:      #d9b46b;
   --good:      #78c0b0;
   --good-bg:   #162623;
@@ -212,7 +220,7 @@ a:hover { color: var(--accent-2); }
 
 .skip {
   position: absolute; left: -9999px; top: 0; z-index: 100;
-  background: var(--accent); color: #fff; padding: .6rem 1rem;
+  background: var(--accent); color: var(--paper); padding: .6rem 1rem;
 }
 .skip:focus { left: .5rem; top: .5rem; }
 
@@ -421,12 +429,15 @@ h3 { font-size: 1.12rem; margin: var(--gap-wide) 0 var(--gap-hair); }
   display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap;
 }
 .era-head:hover { background: var(--paper-2); }
+/* A section numeral is the structure of the volume, which is rubric's one
+   job. Declared once: this was two blocks, the second overriding the accent
+   the first had just set. */
 .era-num {
-  font-family: var(--mono); font-size: .72rem; color: var(--accent);
-  border: 1px solid var(--accent); border-radius: 4px;
-  padding: .05rem .3rem; letter-spacing: .04em;
+  font-family: var(--mono); font-size: .72rem;
+  color: var(--rubric);
+  border: 1px solid color-mix(in srgb, var(--rubric) 35%, transparent);
+  border-radius: 4px; padding: .05rem .3rem; letter-spacing: .04em;
 }
-.era-num { color: var(--rubric); border-color: color-mix(in srgb, var(--rubric) 35%, transparent); }
 .era[data-collection="1"] .era-num { color: var(--ink-faint); border-color: var(--rule); }
 .era-name { font-family: var(--serif); font-size: 1.14rem; font-weight: 600; }
 .era-date { color: var(--ink-faint); font-size: .84rem; font-variant-numeric: tabular-nums; }
@@ -467,7 +478,7 @@ h3 { font-size: 1.12rem; margin: var(--gap-wide) 0 var(--gap-hair); }
   font: inherit; font-size: .82rem; padding: .34rem .85rem;
   background: transparent; color: var(--ink-soft); border: 0; cursor: pointer;
 }
-.seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--paper); }
 
 input[type="search"], input[type="text"], select {
   font: inherit; font-size: .92rem; color: var(--ink);
@@ -680,6 +691,10 @@ table.grid tbody tr:last-child td { border-bottom: 0; }
    which is why every control above it is sized from the same token. */
 .reader {
   position: relative;
+  /* The leaf is read and selected from, not clicked. Declared here rather
+     than three hundred lines further down, where it was a second .reader
+     block on its own. */
+  cursor: text;
   font-family: var(--serif);
   font-size: var(--reader-size);
   line-height: 1.75;
@@ -734,7 +749,7 @@ table.grid tbody tr:last-child td { border-bottom: 0; }
 /* Opened, it is a control rather than a numeral, so it changes colour
    as well as ground: purple is the site talking. */
 .vnum[aria-expanded="true"] {
-  background: var(--accent); color: #fff; border-radius: 3px;
+  background: var(--accent); color: var(--paper); border-radius: 3px;
 }
 
 /* A saved verse keeps a quiet marker in the margin of the text. */
@@ -1019,7 +1034,6 @@ table.grid tbody tr:last-child td { border-bottom: 0; }
 }
 
 /* A quiet hint that the text responds to a tap at all. */
-.reader { cursor: text; }
 
 .apparatus {
   font-family: var(--sans); font-size: .8rem; color: var(--ink-faint);
@@ -1113,12 +1127,11 @@ mark { background: var(--mark); color: inherit; padding: 0 .1em; border-radius: 
 .chip {
   font-size: .78rem; padding: .2rem .6rem; border-radius: 999px;
   border: 1px solid var(--rule); color: var(--ink-soft);
-  background: transparent; cursor: pointer; font-family: inherit;
+  background: var(--raised); cursor: pointer; font-family: inherit;
   text-decoration: none;
 }
-.chip { background: var(--raised); }
 .chip:hover { border-color: var(--accent); color: var(--accent); }
-.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--paper); }
 
 .foot {
   border-top: 1px solid var(--rule); padding: 1.6rem clamp(.9rem, 4vw, 2rem) 3rem;
@@ -1257,9 +1270,9 @@ main > * { animation: rise .18s ease-out; }
 .place-links { display: flex; gap: .35rem; flex-wrap: wrap; }
 .place-links .chip { text-decoration: none; }
 .chip.primary {
-  background: var(--accent); border-color: var(--accent); color: #fff;
+  background: var(--accent); border-color: var(--accent); color: var(--paper);
 }
-.chip.primary:hover { background: var(--accent-2); border-color: var(--accent-2); color: #fff; }
+.chip.primary:hover { background: var(--accent-2); border-color: var(--accent-2); color: var(--paper); }
 .place-cite {
   margin: .6rem 0 0; font-size: .72rem; font-style: italic;
   color: var(--ink-faint);
@@ -1356,10 +1369,6 @@ main > * { animation: rise .18s ease-out; }
   flex: none;
 }
 .player-btn:hover { border-color: var(--accent); color: var(--accent); }
-/* The transport is the reader operating the page, so the bar that fills as
-   it plays is purple like every other control. It was rubric, which is the
-   colour reserved for the structure of a text. */
-.player-bar i { background: var(--accent); }
 /* The accent is a deep purple in light and a pale one in dark, so the glyph
    takes the ground colour rather than a fixed white and stays legible in both. */
 .player-play {

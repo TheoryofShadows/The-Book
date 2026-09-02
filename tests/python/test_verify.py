@@ -110,6 +110,39 @@ class TheVerifierFindsWhatIsPlanted(unittest.TestCase):
         self.verse("And they shall bless [and] praise [Him] for ever.")
         self.assertEqual(self.lib.kinds(), [])
 
+    def test_a_clump_the_scanner_invented(self):
+        """Apostolic Canons LIV, as Horner's page came out of the scanner."""
+        self.verse("that he Seperate ee oe ee ee, wee cone erage ee "
+                   "ogtoatyenenee should follow a human calling")
+        self.assertIn("TEXT-NOT-WORDS", self.lib.kinds())
+
+    def test_a_shouted_clump_the_scanner_invented(self):
+        """Apostolic Canons VII. Length cannot separate this from MENE,
+        MENE, TEKEL, UPHARSIN and neither can vowels -- NTO has an O."""
+        self.verse("Every believer who enters the church and NTO TE ANDY "
+                   "17 BNR Hy BRIER hears the Scriptures")
+        self.assertIn("TEXT-NOT-WORDS", self.lib.kinds())
+
+    def test_an_inscription_in_capitals_is_not_noise(self):
+        """The one that must NOT fire. Daniel 5:25 is four shouted words in
+        a row, and the volume knows every one of them elsewhere."""
+        self.verse("This is the writing that was inscribed: MENE, MENE, "
+                   "TEKEL, UPHARSIN.")
+        self.lib.work["chapters"][0]["verses"][1]["t"] = (
+            "This is the interpretation: mene, God has numbered thy kingdom; "
+            "tekel, thou art weighed; upharsin, thy kingdom is divided.")
+        self.assertEqual(self.lib.kinds(), [])
+
+    def test_a_list_of_foreign_names_is_not_noise(self):
+        """Also must not fire. 1 Esdras 9:34 is fifteen rare proper nouns in
+        a row, and Jubilees transliterates Ge'ez with its accents on."""
+        self.verse("Of the sons of Baani: Jeremias, Momdis, Ismaerus, Juel, "
+                   "Mamdai, Pedias, Anos, Carabasion, Enasibus.")
+        self.lib.work["chapters"][0]["verses"][1]["t"] = (
+            "and its name after his wife S\u00ead\u00ead\u0119q\u00eat\u00ebl\u0115b\u00e2b "
+            "and Na\u2019\u00eal\u00e2tam\u00e2\u2019\u00fbk.")
+        self.assertEqual(self.lib.kinds(), [])
+
     def test_an_advertisement(self):
         self.verse("The words of Amos. Please buy the CD to support the site.")
         self.assertIn("TEXT-FURNITURE", self.lib.kinds())

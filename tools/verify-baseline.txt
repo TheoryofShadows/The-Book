@@ -45,3 +45,32 @@ TEXT-PAGE-REFERENCE | similitude-10 | a bare page reference in the running text
 TEXT-PAGE-REFERENCE | the-apocalypse-of-peter | a bare page reference in the running text
 TEXT-PAGE-REFERENCE | the-book-of-the-covenant | a bare page reference in the running text
 TEXT-PAGE-REFERENCE | the-testament-of-our-lord | a bare page reference in the running text
+
+
+# ------------------------------------------------------------------------
+# Two clumps of scanner noise in the Apostolic Canons
+#
+# Both are in Horner's 1904 printing as this volume recovered it, and both
+# sit inside an otherwise clean English sentence:
+#
+#   Canon VII.  "Every believer who enters the Christian church and
+#                NTO TE ANDY 17 BNR Hy BRIER hears the Scriptures..."
+#   Canon LIV.  "...that he Seperate ee oe ee ee, wee cone erage ee
+#                ogtoatyenenee should follow a human calling..."
+#
+# Neither is a misprint of a word. They are what the scanner made of a
+# smudged line, and both sentences read correctly with them gone.
+#
+# They are left in all the same, and listed here rather than deleted,
+# because this work's own page states the policy the volume chose for the
+# texts it recovered from photographs: the scanner's worst pages are "left
+# visible rather than smoothed over", and a word is mended only when the
+# volume's own million and a quarter words have never seen it, the change is
+# one this scanner is known to make, and exactly one such change turns it
+# into a word the volume knows. Nothing here meets that, because there is no
+# word underneath to arrive at -- so taking them out would be an editor
+# silently improving a text he cannot check, which is the one thing this
+# volume says it will not do. Whoever holds a copy of Horner can settle it
+# in a minute; nobody here can.
+TEXT-NOT-WORDS | the-apostolic-canons | a clump the scanner invented: 'ANDY BNR'
+TEXT-NOT-WORDS | the-apostolic-canons | a clump the scanner invented: 'ee oe ee ee'

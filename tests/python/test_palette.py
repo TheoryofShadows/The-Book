@@ -154,5 +154,77 @@ class ThePaletteIsReadable(unittest.TestCase):
         self.assertEqual(failures, [], "\n" + "\n".join(failures))
 
 
+class NoRuleSetsALiteralOnATokenGround(unittest.TestCase):
+    """The hole the class above left open.
+
+    Checking every ink token against every ground token proves the palette is
+    internally sound and proves nothing about a rule that ignores the palette.
+    Six rules did: "background: var(--accent); color: #fff". White on the
+    accent measures 10.5:1 in the light theme and 2.30:1 in the dark one,
+    where the accent is a pale pink -- and 1.72:1 on the hover accent, which
+    is a button whose label has effectively gone. Among them were the skip
+    link, which is the first thing a keyboard user reaches, and the chip
+    carrying "Open in Google Maps".
+
+    So the literals are read out of the stylesheet and measured against the
+    token behind them, in both themes.
+    """
+
+    LITERALS = {"#fff": "#ffffff", "#ffffff": "#ffffff",
+                "#000": "#000000", "#000000": "#000000",
+                "white": "#ffffff", "black": "#000000"}
+
+    def setUp(self):
+        with open(CSS, encoding="utf-8") as fh:
+            self.css = fh.read()
+        self.light, self.media, _chosen = palettes()
+
+    def rules(self):
+        """Every rule body, with @media print left out: a printed page is
+        white paper and a literal is the right answer there."""
+        text = re.sub(r"/\*.*?\*/", "", self.css, flags=re.S)
+        text = re.sub(r"@media print\s*\{.*?\n\}", "", text, flags=re.S)
+        return re.findall(r"\{([^{}]*)\}", text)
+
+    def test_a_literal_colour_is_legible_on_the_token_behind_it(self):
+        failures = []
+        for body in self.rules():
+            ground = re.search(r"background(?:-color)?:\s*var\((--[a-z0-9-]+)\)", body)
+            ink = re.search(r"(?<!-)color:\s*(#[0-9a-fA-F]{3,6}|white|black)\s*[;}]", body)
+            if not ground or not ink:
+                continue
+            literal = self.LITERALS.get(ink.group(1).lower())
+            if not literal:
+                continue
+            token = ground.group(1)[2:]
+            dark = dict(self.light)
+            dark.update(self.media)
+            for theme, palette in (("light", self.light), ("dark", dark)):
+                if token not in palette:
+                    continue
+                got = contrast(literal, palette[token])
+                if got < AA_TEXT:
+                    failures.append(
+                        f"{theme}: {ink.group(1)} on --{token} is {got:.2f}:1, "
+                        f"under {AA_TEXT} -- use var(--paper) instead")
+        self.assertEqual(failures, [], "\n" + "\n".join(failures))
+
+
+class TheBrowserIsToldTheRightColour(unittest.TestCase):
+    """theme-color paints the phone's address bar, and a browser reads it
+    before any stylesheet, so it cannot be var(--accent) and has to be spelt
+    out. Spelt-out values drift: this one said #6b2d5b while the accent it
+    is meant to be had been #632a55 for as long as the file had existed."""
+
+    def test_theme_color_is_the_light_accent(self):
+        with open(os.path.join(ROOT, "docs", "index.html"), encoding="utf-8") as fh:
+            html = fh.read()
+        stated = re.search(r'name="theme-color"\s+content="(#[0-9a-fA-F]{6})"', html)
+        self.assertIsNotNone(
+            stated, "docs/index.html no longer states a theme-color")
+        light, _media, _chosen = palettes()
+        self.assertEqual(stated.group(1).lower(), light["accent"].lower())
+
+
 if __name__ == "__main__":
     unittest.main()

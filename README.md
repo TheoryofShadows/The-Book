@@ -559,7 +559,8 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | `tools/render_audio.py` | Renders the library to audio, one file per chapter with the verses indexed — run by hand, output to be hosted off this repository. Not yet run |
 | `tools/dates.py` | Reads a numeric span out of a position statement, and refuses to where there is none |
 | `tools/check_audio.py` | Asks the Internet Archive whether the recorded reading the player offers is actually there. It is not, and this fails until it is |
-| `tools/lint.sh` | Everything parses, and every data file is the JSON it claims to be |
+| `tools/lint_css.py` | The two mistakes a stylesheet makes silently: a selector declared twice, and a colour defined and never used |
+| `tools/lint.sh` | Everything parses, the stylesheet says each thing once, and every data file is the JSON it claims to be |
 | `tools/test.sh` | Runs the unit tests and the browser checks in `tests/` |
 
 The audit is the point: if a count on the site is wrong, `tools/audit.py` will
@@ -665,6 +666,17 @@ starts. Everything on a reading page is the width of that leaf: the title,
 the chapter strip, the controls and the pager all line up with it, so the
 page reads as one object.
 
+**A control filled with the accent takes the ground colour for its type**,
+never a literal white. The accent is a deep purple in the light theme and a
+pale pink in the dark one, so `#fff` on it measures 10.5:1 in one and
+**2.30:1** in the other — and 1.72:1 on the hover accent, which is a button
+whose label has effectively gone. That was written correctly once, on the
+player's play button, with a comment saying why; five other rules went on
+using white, among them the skip link, which is the first thing a keyboard
+user reaches, and the chip that carries *Open in Google Maps*. The palette
+test only compared tokens against tokens, so a rule that ignored the palette
+was invisible to it. It reads the literals out of the stylesheet now.
+
 **One type for what is written, another for what operates it.** The
 scripture was always set in the book's own serif; everything around it —
 the lead paragraphs, the note on a work, the reasoning under a thread stop,
@@ -687,10 +699,19 @@ and neither is ever used for the other's work. Open a verse's menu and its
 number turns from red to purple, because at that moment it has stopped
 being a numeral and become a control.
 
-That rule is easy to state and had been broken in three places: a thread
-card ruled in rubric, an editorial callout ruled in rubric, and the
-player's own progress bar drawn in rubric — none of which is the structure
-of a text. They are furniture, and they are purple now. The callouts take
+That rule is easy to state and had been broken in two places: a thread card
+ruled in rubric and an editorial callout ruled in rubric, neither of which
+is the structure of a text. They are furniture, and they are purple now.
+
+A third was claimed here and was not real. `.player-bar i` — the hairline
+that fills as a chapter plays — was declared twice, twenty-six lines apart,
+and the second declaration already said purple and won on source order. The
+rubric one had never painted a pixel. It was read, believed, and written up
+as a fix, and what actually happened was a dead line being edited rather
+than deleted. It is deleted now, and `tools/lint_css.py` fails the build on
+any selector declared twice, which is how the other four turned up.
+
+The callouts take
 **gilt** instead, which is the third material and the one that had been
 defined in the stylesheet and used nowhere: gold leaf, which a scribe put
 on neither the text nor the rubric but on the border of the leaf. It rules
