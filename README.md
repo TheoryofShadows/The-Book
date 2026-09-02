@@ -176,6 +176,26 @@ of coordinates reads as a reference; a dot on a coastline reads as a finding,
 and drawing Tarshish in Spain would settle an argument this volume refuses to
 settle everywhere else.
 
+**The places are named on the canvas**, not only in the list underneath. A
+field of unlabelled dots says how many places a chapter names and nothing
+else: to find out which dot on the coast is Ashdod you had to point at it,
+which on a phone means guessing. Names are placed rather than laid out — each
+takes the space beside its pin only if that space is inside the canvas and
+clear of every name already placed — so a crowded coast drops the smaller
+names rather than stacking them into a smear, and zooming in gives them back.
+
+**Choosing a place opens it somewhere real**: Google Maps, Google Earth and
+OpenStreetMap on the coordinate itself, which on a phone hands you to the app
+if it is installed. That has always been there and was hard to reach. On a
+touch screen it was nearly impossible: the pan began on the first pixel of
+movement and the tap that followed was tested against the positions the pan
+had just moved, so a finger that wobbled four pixels slid the map out from
+under itself and missed a seven-pixel target. Nothing pans now until the
+pointer has passed a dead zone, a gesture that crossed it does not also
+choose, and the target a finger is answered by is 22 pixels rather than 7.
+The wheel was also the only way to zoom, which is to say there was no way at
+all on a phone; there are now two fingers and a pair of buttons.
+
 A canvas cannot be read by a screen reader, so everything on it is also on the
 page as a list of links carrying the same three grades. That list is not a
 fallback — it is what a keyboard and a screen reader use, and a test fails if
@@ -585,7 +605,7 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 | `resilience` | The data failing to load, malformed data, routes that name nothing, the keyboard shortcuts, the skip link, and what a screen reader is actually told |
 | `listening` | What is spoken and in what order, which voice out of a bad drawer is picked, that the apparatus is never read out, where long passages are broken and how long the pauses are at each pace, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |
 | `offline` | The single-file build opens from `file://` and every feature in it works with no network at all |
-| `map` | Land is actually painted, the frame chooses itself from what the chapter names, every place on the canvas is also a link on the page — checked against the canvas and against the mention index, not against itself — a disputed identification is not drawn as a settled one, panning cannot lose the map, zooming culls pins without inventing them, the first-appearance layer rings places rather than removing them and says it means composition order, relating two places draws no line between them, the canvas follows the theme, and all of it works from `file://` |
+| `map` | Land is actually painted, the names are painted on it and not only listed under it, a drag does not also choose a place, the scale can be changed with two fingers and with buttons rather than only a wheel, choosing a place offers Google Maps, Earth and OpenStreetMap on its real coordinates, the frame chooses itself from what the chapter names, every place on the canvas is also a link on the page — checked against the canvas and against the mention index, not against itself — a disputed identification is not drawn as a settled one, panning cannot lose the map, zooming culls pins without inventing them, the first-appearance layer rings places rather than removing them and says it means composition order, relating two places draws no line between them, the canvas follows the theme, and all of it works from `file://` |
 
 The unit tests and the lint run on every pull request and again before every
 deploy. The browser checks used to run on pull requests only, which meant

@@ -1328,6 +1328,14 @@
      with them instead. A map whose element has left the document is dropped
      the next time anything fires, which is the only moment the answer
      matters. */
+  /* Asked each time rather than once: a laptop with a touchscreen answers
+     differently depending on what the reader last used, and the answer only
+     ever costs a media query. */
+  function coarsePointer() {
+    return !!(window.matchMedia &&
+              window.matchMedia("(pointer: coarse)").matches);
+  }
+
   var liveMaps = [];
 
   function watchMap(wrap, redraw) {
@@ -1391,7 +1399,12 @@
          dark ground. */
       coast: pick("--ink-faint", "#857c8a"),
       pin: pick("--accent", "#6b2d5b"),
-      faint: pick("--ink-faint", "#857c8a")
+      faint: pick("--ink-faint", "#857c8a"),
+      /* Names are drawn on top of land, sea and pins, so they carry a halo
+         of the ground behind them rather than relying on contrast with
+         whatever they happen to land on. */
+      text: pick("--ink", "#1d1822"),
+      halo: pick("--paper", "#eee7d9")
     };
   }
 
@@ -1463,7 +1476,14 @@
       var x = pr.x(p.lon), y = pr.y(p.lat);
       if (x < -20 || y < -20 || x > w + 20 || y > h + 20) return;
       var r = 2.2 + Math.log(1 + (p.mentions || 1)) * 1.15;
-      state.hit.push({ x: x, y: y, r: Math.max(r, 7), place: p });
+      /* The dot is small because the map is small. The target it answers to
+         is not the dot: seven pixels is a comfortable mouse target and a
+         quarter of a fingertip, and this map is most often read on a phone.
+         Apple asks for 44 and Android for 48; a pin cannot have that without
+         swallowing its neighbours, so 22 is the compromise -- four times the
+         area, still smaller than the gap between two nearby places. */
+      state.hit.push({ x: x, y: y, r: Math.max(r, coarsePointer() ? 22 : 9),
+                       place: p });
 
       /* With a place chosen, the ones it shares a chapter with keep their
          weight and the rest fall back. Nothing is drawn between them: a line
@@ -1531,6 +1551,67 @@
         ctx.lineWidth = 2;
         ctx.stroke();
       }
+    });
+
+    /* Names.
+
+       A field of unlabelled dots is a picture of how many places a chapter
+       names, and nothing else: to find out that the dot on the coast is
+       Ashdod you had to point at it, which on a phone means guessing. The
+       names are the map.
+
+       They are placed rather than laid out: each is offered the space to the
+       right of its pin and takes it only if that box is inside the canvas and
+       clear of every box already taken, so a crowded coast drops the smaller
+       names instead of stacking them into a smear. The chosen place is
+       written first and therefore never dropped; the rest are written in the
+       order the volume names them most often, which is the order in which
+       knowing the name is worth most.
+
+       Not a substitute for the list under the canvas. That list is still
+       every place, still in the DOM, and still what a screen reader reads. */
+    var labels = state.places.slice().sort(function (a, b) {
+      if (a === state.chosen) return -1;
+      if (b === state.chosen) return 1;
+      return (b.mentions || 0) - (a.mentions || 0);
+    });
+    var taken = [];
+    ctx.font = "500 11px " + (getComputedStyle(canvas).fontFamily || "sans-serif");
+    ctx.textBaseline = "middle";
+    labels.forEach(function (p) {
+      var hit = null;
+      state.hit.forEach(function (h) { if (h.place === p) hit = h; });
+      if (!hit) return;                       // off the canvas at this zoom
+
+      // Dimmed places are context rather than subject: naming them all
+      // would undo the emphasis the choosing just made.
+      var kin = state.kin && state.kin.counts;
+      if (kin && p !== state.chosen && !(kin[p.key] > 0)) return;
+
+      var pad = 3;
+      var wide = ctx.measureText(p.name).width;
+      var bx = hit.x + hit.r * 0.5 + 5, by = hit.y;
+      var box = { l: bx - pad, r: bx + wide + pad, t: by - 7, b: by + 7 };
+      // Flip to the left rather than run off the edge.
+      if (box.r > canvas.clientWidth - 2) {
+        bx = hit.x - hit.r * 0.5 - 5 - wide;
+        box = { l: bx - pad, r: bx + wide + pad, t: by - 7, b: by + 7 };
+      }
+      if (box.l < 2 || box.t < 2 || box.b > canvas.clientHeight - 2) return;
+      var clash = taken.some(function (t) {
+        return !(box.r < t.l || box.l > t.r || box.b < t.t || box.t > t.b);
+      });
+      if (clash) return;
+      taken.push(box);
+
+      ctx.globalAlpha = p === state.chosen ? 1 : 0.88;
+      ctx.lineJoin = "round";
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = ink.halo;
+      ctx.strokeText(p.name, bx, by);
+      ctx.fillStyle = p === state.chosen ? ink.pin : ink.text;
+      ctx.fillText(p.name, bx, by);
+      ctx.globalAlpha = 1;
     });
 
     /* What the canvas actually put down, in its own words. The page claims
@@ -1829,7 +1910,13 @@
                  " The full list is in the panel.");
       }
 
+      /* A gesture that panned or pinched is not also a choice. Set by the
+         pointer handlers below and read here; it used to be set and read by
+         nothing at all. */
+      var gestured = false;
+
       canvas.addEventListener("click", function (ev) {
+        if (gestured) { gestured = false; return; }
         var b = canvas.getBoundingClientRect();
         var x = ev.clientX - b.left, y = ev.clientY - b.top;
         var best = null, bestD = Infinity;
@@ -1876,24 +1963,84 @@
                (ev.clientY - b.top) / b.height);
       }, { passive: false });
 
+      /* Pan, and pinch, and the difference between a tap and either.
+
+         Every tap on a touch screen travels a few pixels. The pan used to
+         begin on the first of them, and the click that followed was tested
+         against the positions the pan had just moved -- so a finger that
+         wobbled four pixels slid the map out from under itself and then
+         missed a seven-pixel target. Nothing was wrong with the choosing;
+         it was being asked where a place had been a moment ago.
+
+         So the pointer has to travel past a dead zone before anything pans,
+         and a gesture that crossed it does not also choose. A pinch is two
+         pointers, which is the only zoom a phone has: the wheel below is a
+         mouse, and until now the wheel was the only way to zoom this map at
+         all. */
+      var DEAD = 5;
+      var pointers = {};
+      var live = function () { return Object.keys(pointers); };
       var dragging = null;
+      var pinching = null;
+
+      function spread() {
+        var ids = live();
+        if (ids.length < 2) return null;
+        var a = pointers[ids[0]], b2 = pointers[ids[1]];
+        return {
+          d: Math.hypot(a.x - b2.x, a.y - b2.y),
+          mx: (a.x + b2.x) / 2, my: (a.y + b2.y) / 2
+        };
+      }
+
       canvas.addEventListener("pointerdown", function (ev) {
-        dragging = { x: ev.clientX, y: ev.clientY, moved: false };
+        pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
         canvas.setPointerCapture(ev.pointerId);
+        if (live().length === 2) {
+          pinching = spread();
+          dragging = null;
+          gestured = true;
+        } else if (live().length === 1) {
+          dragging = { x: ev.clientX, y: ev.clientY,
+                       fromX: ev.clientX, fromY: ev.clientY, panning: false };
+        }
       });
+
       canvas.addEventListener("pointermove", function (ev) {
-        if (!dragging) return;
+        if (!pointers[ev.pointerId]) return;
+        pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
         var b = canvas.getBoundingClientRect();
+
+        if (pinching) {
+          var now = spread();
+          if (!now || !now.d || !pinching.d) return;
+          zoomBy(pinching.d / now.d,
+                 (now.mx - b.left) / b.width, (now.my - b.top) / b.height);
+          pinching = now;
+          return;
+        }
+        if (!dragging) return;
+
+        // Nothing moves until the finger has meant it.
+        if (!dragging.panning) {
+          if (Math.abs(ev.clientX - dragging.fromX) < DEAD &&
+              Math.abs(ev.clientY - dragging.fromY) < DEAD) return;
+          dragging.panning = true;
+          gestured = true;
+        }
         var v = state.view;
         var dx = (ev.clientX - dragging.x) / b.width * (v.e - v.w);
         var dy = (ev.clientY - dragging.y) / b.height * (v.n - v.s);
-        if (Math.abs(ev.clientX - dragging.x) > 3 ||
-            Math.abs(ev.clientY - dragging.y) > 3) dragging.moved = true;
         state.view = clamp({ w: v.w - dx, e: v.e - dx, n: v.n + dy, s: v.s + dy });
         dragging.x = ev.clientX; dragging.y = ev.clientY;
         redraw();
       });
-      var endDrag = function () { dragging = null; };
+
+      var endDrag = function (ev) {
+        if (ev && ev.pointerId !== undefined) delete pointers[ev.pointerId];
+        if (live().length < 2) pinching = null;
+        if (!live().length) dragging = null;
+      };
       canvas.addEventListener("pointerup", endDrag);
       canvas.addEventListener("pointercancel", endDrag);
 
@@ -1936,7 +2083,26 @@
         }
       });
 
+      /* Zoom without a wheel and without two hands.
+
+         The wheel was the only way to change the scale, which means a phone
+         had no way at all and a keyboard had none either. These are the same
+         zoomBy the wheel and the pinch call, centred on the middle of the
+         canvas rather than on a pointer, because a button has no position on
+         the map. */
+      function zoomChip(label, factor, said) {
+        return el("button", {
+          class: "chip", text: label, "aria-label": said,
+          onclick: function () {
+            zoomBy(factor, 0.5, 0.5);
+            announce(said);
+          }
+        });
+      }
+
       var tools = el("div", { class: "map-tools" }, [
+        zoomChip("−", 1.35, "Zoom out"),
+        zoomChip("+", 0.74, "Zoom in"),
         el("button", { class: "chip", text: "Reset", onclick: function () {
           /* The view and the chosen place, not the layer: the reader turned
              that on deliberately and did not ask for it to go away. */
@@ -2072,12 +2238,18 @@
       (p.mentions ? "  ·  named in " + p.mentions +
         (p.mentions === 1 ? " passage" : " passages") : "") }));
 
+    /* Three ways out to a real map of the world. Google Maps is first and
+       says so in full: it was labelled "Maps" and sat third, which is a
+       label you have to already know the meaning of, in the position you
+       look at last. On a phone both Google links open the app if it is
+       installed. */
     var links = el("div", { class: "place-links" }, [
-      el("a", { class: "chip primary", href: earth,
+      el("a", { class: "chip primary", href: maps,
                 target: "_blank", rel: "noopener noreferrer",
-                text: "🌍  Open in Google Earth" }),
-      el("a", { class: "chip", href: maps,
-                target: "_blank", rel: "noopener noreferrer", text: "Maps" }),
+                text: "📍  Open in Google Maps" }),
+      el("a", { class: "chip", href: earth,
+                target: "_blank", rel: "noopener noreferrer",
+                text: "🌍  Google Earth" }),
       el("a", { class: "chip", href: osm,
                 target: "_blank", rel: "noopener noreferrer",
                 text: "OpenStreetMap" })

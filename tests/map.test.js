@@ -408,6 +408,121 @@ module.exports = async function map(t, ctx) {
           await page.locator('.chapter-map .empty').count() === 1 &&
           await page.locator('.map-canvas').count() === 0);
 
+  /* ---- a tap is not a drag ----
+
+     Every tap on a touch screen travels a few pixels. The pan used to begin
+     on the first of them and the click that followed was tested against the
+     positions the pan had just moved, so a finger that wobbled four pixels
+     slid the map out from under itself and missed a seven-pixel target.
+     Nothing was wrong with the choosing; it was being asked where a place
+     had been a moment earlier. dragging.moved was already being computed for
+     exactly this, and was read by nothing.
+
+     Checked from the outside: a real drag must not select, and a tap on a
+     pin must. */
+  await openMap(page, ctx.base, '#/read/amos/2');
+  const canvasBox = await page.locator('.map-canvas').boundingBox();
+  await page.mouse.move(canvasBox.x + canvasBox.width * 0.5,
+                        canvasBox.y + canvasBox.height * 0.5);
+  await page.mouse.down();
+  await page.mouse.move(canvasBox.x + canvasBox.width * 0.5 + 70,
+                        canvasBox.y + canvasBox.height * 0.5 + 40, { steps: 12 });
+  await page.mouse.up();
+  await page.waitForTimeout(250);
+  t.check('dragging the map does not also choose a place',
+          await page.evaluate(() => document.querySelector('.map-detail').hidden));
+
+  /* ---- zoom without a wheel ----
+
+     The wheel was the only way to change the scale, so a phone had no way at
+     all and neither did a keyboard. Both buttons call the same zoomBy the
+     wheel does, centred on the canvas rather than on a pointer. */
+  const inkHash = () => page.evaluate(() => {
+    const c = document.querySelector('.map-canvas');
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let h = 0;
+    for (let i = 0; i < d.length; i += 997) h = (h * 31 + d[i]) >>> 0;
+    return h;
+  });
+  await openMap(page, ctx.base, '#/read/genesis/12');
+  const atHome = await inkHash();
+  await page.locator('.map-tools .chip', { hasText: '+' }).first().click();
+  await page.waitForTimeout(300);
+  const zoomedIn = await inkHash();
+  await page.locator('.map-tools .chip', { hasText: '−' }).first().click();
+  await page.waitForTimeout(300);
+  t.check('the map can be zoomed without a wheel',
+          atHome !== zoomedIn && zoomedIn !== await inkHash());
+
+  /* ---- and with two fingers, which is the only zoom a phone has ---- */
+  await openMap(page, ctx.base, '#/read/genesis/12');
+  const beforePinch = await inkHash();
+  const pinchBox = await page.locator('.map-canvas').boundingBox();
+  await page.evaluate(({ x, y, w, h }) => {
+    const c = document.querySelector('.map-canvas');
+    c.setPointerCapture = () => {};
+    const send = (type, id, cx, cy) => c.dispatchEvent(new PointerEvent(type, {
+      pointerId: id, clientX: cx, clientY: cy, bubbles: true, pointerType: 'touch'
+    }));
+    send('pointerdown', 1, x + w * 0.45, y + h * 0.5);
+    send('pointerdown', 2, x + w * 0.55, y + h * 0.5);
+    send('pointermove', 1, x + w * 0.30, y + h * 0.5);
+    send('pointermove', 2, x + w * 0.70, y + h * 0.5);
+    send('pointermove', 1, x + w * 0.15, y + h * 0.5);
+    send('pointermove', 2, x + w * 0.85, y + h * 0.5);
+    send('pointerup', 1, x + w * 0.15, y + h * 0.5);
+    send('pointerup', 2, x + w * 0.85, y + h * 0.5);
+  }, { x: pinchBox.x, y: pinchBox.y, w: pinchBox.width, h: pinchBox.height });
+  await page.waitForTimeout(300);
+  t.check('two fingers zoom it', beforePinch !== await inkHash());
+
+  /* ---- the names are on the map ----
+
+     A field of unlabelled dots says how many places a chapter names and
+     nothing else: to learn that the dot on the coast is Ashdod you had to
+     point at it, which on a phone means guessing.
+
+     Counted rather than read, because a canvas has no text to read. The type
+     is the only thing on this canvas drawn in the text colour -- the pins are
+     the accent and the coastline is the faint one, both of them lighter than
+     this threshold -- so the very darkest pixels are the names and nothing
+     else. Asserted as a relationship as well as a floor: a chapter naming a
+     hundred and sixty places must carry more lettering than one naming four,
+     which a fixed number alone would not catch if the labels stopped being
+     placed and something else went dark. */
+  const nameInk = () => page.evaluate(() => {
+    const c = document.querySelector('.map-canvas');
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let ink = 0;
+    for (let i = 0; i < d.length; i += 4) if (d[i] < 90) ink++;
+    return ink;
+  });
+
+  await openMap(page, ctx.base, '#/read/amos/2');
+  const fewNames = await nameInk();
+  await openMap(page, ctx.base, '#/read/joshua/14');
+  const manyNames = await nameInk();
+
+  t.check('place names are painted on the canvas, not only in the list',
+          fewNames > 25 && manyNames > fewNames,
+          fewNames + ' ink pixels on a chapter naming four places, ' +
+          manyNames + ' on one naming a hundred and sixty');
+
+  /* ---- and the way out to a real map of the world ---- */
+  await page.locator('.map-place').first().click();
+  await page.waitForTimeout(300);
+  const out = await page.evaluate(() => Array.from(
+    document.querySelectorAll('.place-links a'),
+    a => ({ text: a.textContent.trim(), href: a.href })));
+  t.check('choosing a place offers Google Maps first, and says so in full',
+          out.length === 3 && /Google Maps/.test(out[0].text) &&
+          /google\.com\/maps/.test(out[0].href),
+          out.map(o => o.text).join(' / '));
+  t.check('and Google Earth and OpenStreetMap beside it, on real coordinates',
+          /earth\.google\.com/.test(out[1].href) &&
+          /openstreetmap\.org/.test(out[2].href) &&
+          /@-?\d+\.\d+,-?\d+\.\d+/.test(out[1].href));
+
   /* ---- the maps you have left ----
 
      Every map used to wire itself to the theme button, the system
