@@ -1030,6 +1030,41 @@ table.grid tbody tr:last-child td { border-bottom: 0; }
 
 /* ---------- search ---------- */
 
+/* The query and the book it is asked of, on one line, wrapping to two on a
+   phone rather than squeezing the field down to nothing. */
+.search-bar { display: flex; gap: var(--gap-tight); flex-wrap: wrap; }
+.search-bar input[type="search"] { flex: 1 1 16rem; width: auto; }
+.search-bar select { flex: 0 1 15rem; max-width: 100%; }
+
+/* A reference is an answer, not a result, so it is set apart from the list
+   of verses below rather than being the first row of it. */
+.jump-box {
+  margin: var(--gap-wide) 0 0; padding: var(--gap) calc(var(--gap) + .1rem);
+  background: var(--raised); border: 1px solid var(--rule-soft);
+  border-left: 2px solid var(--accent); border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.jump-head {
+  margin: 0 0 var(--gap-tight); font-family: var(--sans);
+  font-size: .72rem; font-weight: 600; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+.jump-link {
+  display: flex; align-items: baseline; gap: var(--gap-tight);
+  flex-wrap: wrap; padding: .35rem 0; text-decoration: none; color: inherit;
+  border-top: 1px solid var(--rule-soft);
+}
+.jump-link:first-of-type { border-top: 0; }
+.jump-where {
+  font-family: var(--serif); font-size: 1.06rem; color: var(--accent);
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.jump-link:hover .jump-where { color: var(--accent-2); }
+.jump-era {
+  font-family: var(--sans); font-size: .74rem; color: var(--ink-faint);
+  margin-left: auto;
+}
+
 .results { margin-top: 1.6rem; }
 .result {
   border-bottom: 1px solid var(--rule-soft); padding: .85rem 0;

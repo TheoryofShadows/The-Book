@@ -2272,21 +2272,158 @@
   }
   /* --8<-- fold: end --8<-- */
 
-  function viewSearch(manifest, initialQuery) {
+  /* ---------------- a reference is not a word ----------------
+
+     Typing "Psalm 23" used to return nothing at all, and "Job 38" nothing,
+     and plain "Job" returned Joshua first -- Jobab king of Madon, because
+     the term test is a prefix and "Job" prefixes "Jobab". Someone who does
+     not already know where a passage sits cannot get to it by searching,
+     which is precisely the reader this arrangement is hardest on: the order
+     is by composition, so there is no shelf to run a finger along.
+
+     A reference is a coordinate rather than a word, so it is answered
+     separately and offered above the word matches rather than instead of
+     them. Both questions are real -- "Job" is a book and also a man who is
+     named in several others -- and only the reader knows which was meant.
+
+     Two properties of this edition do most of the work. Isaiah is three
+     works here and 1 Enoch is four, because they were written at different
+     times, and a reader asking for Isaiah 40 should not have to know that.
+     And every chapter keeps its printed number in its label, so the right
+     work is the one that has a "Chapter 40" in it -- asked for, rather than
+     computed from an offset that the splits would break anyway. */
+
+  /* Forms a prefix of the title cannot reach. A convenience list rather
+     than a claim about anything: the resolver works without it and simply
+     answers fewer of the ways people write a reference. Everything that is
+     already a prefix of a title word -- gen, ex, isa, ps, rev, prov, cor,
+     tim, thess -- needs no entry and has none. */
+  var REF_ALIASES = {
+    mt: "matthew", mk: "mark", lk: "luke", jn: "john",
+    dt: "deuteronomy", jas: "james", phlm: "philemon",
+    song: "song", sos: "song"
+  };
+
+  function refWords(s) {
+    return fold(s).replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).filter(Boolean);
+  }
+
+  /* Does this work's title answer to the words the reader typed?
+
+     Word by word and by prefix, so "1 cor" reaches "1 CORINTHIANS" and
+     "isaiah" reaches all three Isaiahs -- which is wanted, because the
+     chapter number decides between them a moment later. */
+  function titleAnswersTo(title, want) {
+    var have = refWords(title);
+    return want.every(function (w, i) {
+      var probe = REF_ALIASES[w] || w;
+      // A leading numeral has to be the work's own numeral, or "1 John"
+      // matches "2 John" and "3 John" as happily.
+      if (/^\d+$/.test(probe)) return have.indexOf(probe) !== -1;
+      return have.some(function (h) { return h.indexOf(probe) === 0; });
+    });
+  }
+
+  /* Parse "Job 38", "Psalm 23:4", "1 Cor 13", "Isaiah 40", or a bare book
+     name, and return every place in the volume it could mean. */
+  function resolveReference(manifest, query) {
+    var m = String(query).trim()
+      .match(/^([0-9]?\s*[A-Za-z][A-Za-z'’.\- ]*?)\s*(?:(\d+)\s*(?:[:.]\s*(\d+))?)?$/);
+    if (!m) return [];
+
+    var want = refWords(m[1]);
+    if (!want.length) return [];
+    var chapter = m[2] ? parseInt(m[2], 10) : null;
+    var verse = m[3] ? parseInt(m[3], 10) : null;
+
+    var hits = [];
+    manifest.sections.forEach(function (section) {
+      section.works.forEach(function (work) {
+        if (!work.chapters) return;              // an entry with no text
+        if (!titleAnswersTo(work.title, want)) return;
+        hits.push({ work: work, section: section, chapter: chapter, verse: verse });
+      });
+    });
+
+    // A bare book name: offer each work it names, at its first chapter.
+    if (chapter === null) {
+      return hits.slice(0, 6).map(function (h) {
+        return { workId: h.work.id, title: h.work.title, section: h.section,
+                 idx: 0, label: null, verse: null };
+      });
+    }
+    return hits;
+  }
+
+  /* The chapter labels live in the work file rather than the manifest, so
+     which of the matched works actually carries "Chapter 40" is a question
+     that needs the file. Asked for all of them at once, and only for the
+     handful a name can match. */
+  function locateReference(hits) {
+    if (!hits.length || hits[0].label !== undefined) {
+      return Promise.resolve(hits);            // bare book name, already done
+    }
+    return Promise.all(hits.slice(0, 6).map(function (h) {
+      return getJSON("works/" + h.work.id + ".json").catch(function () { return null; });
+    })).then(function (files) {
+      var out = [];
+      files.forEach(function (file, i) {
+        if (!file || !file.chapters) return;
+        var h = hits[i];
+        file.chapters.forEach(function (c, idx) {
+          // The printed number, taken off the label rather than the index,
+          // which is what makes Isaiah 40 land in the second Isaiah.
+          var n = c.n;
+          if (n === null || n === undefined) {
+            var got = String(c.label || "").match(/(\d+)/);
+            n = got ? parseInt(got[1], 10) : null;
+          }
+          if (n !== h.chapter) return;
+          out.push({ workId: h.work.id, title: h.work.title, section: h.section,
+                     idx: idx, label: c.label, verse: h.verse });
+        });
+      });
+      return out;
+    });
+  }
+
+  function viewSearch(manifest, initialQuery, initialScope) {
     var wrap = el("div", { class: "wrap" });
     wrap.appendChild(el("h1", { text: "Search" }));
     wrap.appendChild(el("p", {
       class: "lede",
       text: "Every word of every text, including the deuterocanon, 1 Enoch, " +
             "Jubilees and the Apostolic Fathers. Wrap a phrase in quotes to " +
-            "match it exactly."
+            "match it exactly, or type a reference — Psalm 23, Job 38:4 — to " +
+            "go straight to it."
     }));
 
     var input = el("input", {
-      type: "search", placeholder: '"a still small voice", or: watchers heaven',
+      type: "search", placeholder: 'Psalm 23, "a still small voice", or: watchers heaven',
       value: initialQuery || "", autocomplete: "off", spellcheck: "false"
     });
-    wrap.appendChild(el("div", { class: "toolbar" }, [input]));
+
+    /* Searching one book at a time.
+
+       The whole library is 1.22 million words and the results are capped at
+       three hundred, so a common word answers with three hundred verses from
+       everywhere and the one you wanted is somewhere inside them. Narrowing
+       to a book is the difference between a concordance and a search: it is
+       also the only way to ask "where does Job say this", which is a
+       question about a book rather than about the collection. */
+    var scopeSel = el("select", { "aria-label": "Which book to search" });
+    scopeSel.appendChild(el("option", { value: "", text: "Every book" }));
+    manifest.sections.forEach(function (section) {
+      section.works.forEach(function (work) {
+        if (!work.chapters) return;      // an entry with no text to search
+        scopeSel.appendChild(el("option", {
+          value: work.id, text: titleCase(work.title)
+        }));
+      });
+    });
+    scopeSel.value = initialScope || "";
+
+    wrap.appendChild(el("div", { class: "toolbar search-bar" }, [input, scopeSel]));
 
     var chips = el("div", { class: "chips" });
     ["\"living creatures\"", "watchers", "\"son of man\"", "jubilee", "resurrection", "wisdom"]
@@ -2297,19 +2434,44 @@
       });
     wrap.appendChild(chips);
 
+    var jump = el("div", { class: "jump" });
     var status = el("div", { class: "muted" });
     var bar = el("div", { class: "progress" }, [el("i")]);
     var results = el("div", { class: "results" });
+    wrap.appendChild(jump);
     wrap.appendChild(status);
     wrap.appendChild(bar);
     wrap.appendChild(results);
 
     var runId = 0;
 
-    function run(query) {
+    function run(query, scope) {
       var mine = ++runId;
       results.innerHTML = "";
+      jump.innerHTML = "";
       bar.firstChild.style.width = "0%";
+
+      /* Offered above the word matches, never instead of them. "Job" is a
+         book and also a man named in several others, and only the reader
+         knows which was meant. */
+      locateReference(resolveReference(manifest, query)).then(function (places) {
+        if (mine !== runId || !places.length) return;
+        var box = el("div", { class: "jump-box" });
+        box.appendChild(el("p", { class: "jump-head", text: places.length === 1
+          ? "That is a place in the volume:" : "That could be any of these:" }));
+        places.slice(0, 6).forEach(function (r) {
+          var where = titleCase(r.title) + (r.label ? " · " + r.label : "");
+          box.appendChild(el("a", {
+            class: "jump-link",
+            href: "#/read/" + r.workId + "/" + r.idx + (r.verse ? "/v" + r.verse : "")
+          }, [
+            el("span", { class: "jump-where", text: where +
+              (r.verse ? ":" + r.verse : "") }),
+            el("span", { class: "jump-era", text: r.section.name || r.section.title || "" })
+          ]));
+        });
+        jump.appendChild(box);
+      });
 
       var phrase = null;
       var m = query.match(/^\s*"(.+)"\s*$/);
@@ -2407,6 +2569,16 @@
         });
 
         var workIds = Object.keys(byWork);
+        if (scope) {
+          workIds = workIds.filter(function (w) { return w === scope; });
+        }
+        if (!workIds.length) {
+          bar.firstChild.style.width = "100%";
+          status.textContent = scope
+            ? "No verse in that book matched."
+            : "No verse matched.";
+          return;
+        }
         status.textContent = "Scanning " + fmt(ids.length) + " chapters in " +
                              workIds.length + " works…";
 
@@ -2421,9 +2593,10 @@
           if (mine !== runId) return;
           if (i >= workIds.length || found >= LIMIT) {
             bar.firstChild.style.width = "100%";
+            var where = scope ? " in " + titleCase(scopeSel.options[scopeSel.selectedIndex].text) : "";
             status.textContent = found
-              ? fmt(found) + (found >= LIMIT ? "+ matches (showing the first " + LIMIT + ")" : " matches")
-              : "No verse matched.";
+              ? fmt(found) + (found >= LIMIT ? "+ matches (showing the first " + LIMIT + ")" : " matches") + where
+              : "No verse matched" + (scope ? " in that book." : ".");
             return;
           }
           var wid = workIds[i];
@@ -2520,19 +2693,28 @@
       ]);
     }
 
+    /* The book is in the URL beside the query, so a narrowed search can be
+       kept, shared and come back to -- which is most of what it is for. */
+    function go() {
+      var q = input.value;
+      var target = "#/search" + (q.trim() ? "/" + encodeURIComponent(q) : "");
+      if (q.trim() && scopeSel.value) target += "/" + scopeSel.value;
+      if (location.hash !== target) history.replaceState(null, "", target);
+      run(q, scopeSel.value);
+    }
+
     var timer;
     input.addEventListener("input", function () {
       clearTimeout(timer);
-      var q = input.value;
-      timer = setTimeout(function () {
-        var target = "#/search" + (q.trim() ? "/" + encodeURIComponent(q) : "");
-        if (location.hash !== target) history.replaceState(null, "", target);
-        run(q);
-      }, 220);
+      timer = setTimeout(go, 220);
+    });
+    scopeSel.addEventListener("change", function () {
+      clearTimeout(timer);
+      go();
     });
 
     setTimeout(function () { input.focus(); }, 30);
-    if (initialQuery) run(initialQuery);
+    if (initialQuery) run(initialQuery, scopeSel.value);
 
     return wrap;
   }
@@ -4978,8 +5160,9 @@
       if (view === "search") {
         setNav("search");
         var q = parts[1] ? decodeURIComponent(parts[1]) : "";
+        var scope = parts[2] ? decodeURIComponent(parts[2]) : "";
         setTitle(q ? "Search: " + q : "Search");
-        node = viewSearch(manifest, q);
+        node = viewSearch(manifest, q, scope);
         main.innerHTML = "";
         main.appendChild(node);
         return;

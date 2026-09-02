@@ -35,7 +35,10 @@ function settled(page) {
     const s = document.querySelector('.results');
     const status = document.querySelector('.wrap .muted');
     if (!s || !status) return false;
-    return /matches|No verse matched|No text contains|No chapter contains/
+    // "No verse matched." and "No verse matched in that book." are both
+    // ends of a run; matching the shared opening keeps this helper from
+    // having to be edited every time the sentence gains a clause.
+    return /matches|No verse|No text contains|No chapter contains/
       .test(status.textContent);
   }, null, { timeout: 30000 });
 }
@@ -195,6 +198,100 @@ module.exports = async function search(t, ctx) {
           snippets.length > 0 && balanced && marked && whole,
           snippets.length + ' snippet(s), longest ' +
           Math.max.apply(null, snippets.map(s => s.text.length)) + ' chars');
+
+  /* ---- a reference is a coordinate, not a word ----
+
+     "Psalm 23" returned nothing at all, "Job 38" returned nothing, and a
+     bare "Job" put Joshua first -- Jobab king of Madon, because the term
+     test is a prefix. A reader who does not already know where a passage
+     sits could not reach it by searching, which in an edition ordered by
+     composition is the reader least able to find it any other way. */
+  const jumpsFor = async (q) => {
+    await page.goto(ctx.base + '#/search/' + encodeURIComponent(q));
+    await settled(page);
+    await page.waitForTimeout(400);
+    return page.evaluate(() => Array.from(
+      document.querySelectorAll('.jump-link'),
+      a => a.getAttribute('href')));
+  };
+
+  t.check('a chapter reference goes to the chapter',
+          (await jumpsFor('Psalm 23')).join() === '#/read/psalms/22',
+          (await jumpsFor('Psalm 23')).join() || '(nothing offered)');
+
+  t.check('and a verse reference to the verse',
+          (await jumpsFor('Job 38:4')).join() === '#/read/job/37/v4',
+          (await jumpsFor('Job 38:4')).join() || '(nothing offered)');
+
+  /* The one this edition makes hard, and the one it most needs. Isaiah is
+     three works here because it was written across three periods, and the
+     chapter numbers carry on across them: Isaiah 40 is the first chapter of
+     the second work, not the fortieth of the first. Resolved off the
+     chapter's printed label rather than its index, so the splits -- Isaiah's
+     three and 1 Enoch's four -- need no special case. */
+  t.check('a chapter in a split work lands in the right part of it',
+          (await jumpsFor('Isaiah 40')).join() === '#/read/isaiah-40-55-second-isaiah/0',
+          (await jumpsFor('Isaiah 40')).join() || '(nothing offered)');
+
+  t.check('an abbreviation and a numbered book both resolve',
+          (await jumpsFor('1 Cor 13')).join() === '#/read/1-corinthians/12' &&
+          (await jumpsFor('Mt 5'))[0] === '#/read/matthew/4',
+          (await jumpsFor('1 Cor 13')).join() + ' / ' + (await jumpsFor('Mt 5'))[0]);
+
+  /* Two real answers stay two answers. The volume has both a book of Psalms
+     and a Psalm 151, so "Psalm 1" is genuinely ambiguous and guessing would
+     be worse than offering. */
+  t.check('a genuinely ambiguous reference offers both',
+          (await jumpsFor('Psalm 1')).join() === '#/read/psalms/0,#/read/psalm-151/0',
+          (await jumpsFor('Psalm 1')).join());
+
+  t.check('a book that does not exist is not invented',
+          (await jumpsFor('Nonesuch 3')).length === 0 &&
+          (await jumpsFor('Psalm 999')).length === 0);
+
+  /* The word search still runs underneath: "Job" is a book and also a man
+     named in books that are not his, and only the reader knows which. */
+  await page.goto(ctx.base + '#/search/' + encodeURIComponent('Job'));
+  await settled(page);
+  await page.waitForTimeout(400);
+  t.check('a bare book name offers the book and still searches the word',
+          await page.locator('.jump-link').count() === 1 &&
+          await page.locator('.result').count() > 1,
+          await page.locator('.result').count() + ' verses as well');
+
+  /* ---- one book at a time ---- */
+  await page.goto(ctx.base + '#/search/shepherd/psalms');
+  await settled(page);
+  const scoped = await page.evaluate(() => ({
+    picked: document.querySelector('select[aria-label="Which book to search"]').value,
+    refs: Array.from(document.querySelectorAll('.result-ref'), e => e.textContent)
+  }));
+  t.check('searching one book returns that book and nothing else',
+          scoped.picked === 'psalms' && scoped.refs.length > 0 &&
+          scoped.refs.every(r => /^Psalms/.test(r.trim())),
+          scoped.refs.length + ' results, first ' + (scoped.refs[0] || '').trim());
+
+  t.check('and the same search across everything returns more',
+          await (async () => {
+            await page.goto(ctx.base + '#/search/shepherd');
+            await settled(page);
+            return await page.locator('.result').count() > scoped.refs.length;
+          })());
+
+  // Choosing a book keeps the search shareable rather than losing it.
+  await page.goto(ctx.base + '#/search/shepherd');
+  await settled(page);
+  await page.selectOption('select[aria-label="Which book to search"]', 'job');
+  await settled(page);
+  await page.waitForTimeout(300);
+  t.check('the chosen book is in the URL, so a narrowed search can be kept',
+          await page.evaluate(() => location.hash) === '#/search/shepherd/job',
+          await page.evaluate(() => location.hash));
+
+  t.check('a book with no match says so as a fact about that book',
+          /No verse in that book matched/.test(
+            await page.evaluate(() => document.querySelector('.muted').textContent)),
+          await page.evaluate(() => document.querySelector('.muted').textContent));
 
   await page.close();
 };

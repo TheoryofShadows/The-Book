@@ -579,7 +579,7 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 | `routes` | Every page renders, search returns verses, a saved verse survives a reload, nothing throws |
 | `layout` | At 320–430px every nav link is on screen, nothing scrolls sideways, the bar tucks away as you read, desktop is unchanged |
 | `dating` | The date card against the spans the parser read, the method page, and that a citation names the edition and the era rather than just a URL |
-| `search` | Result counts against known answers rather than "more than zero": phrases against their words, several terms meaning all of them, the three different ways a search can end with nothing, and that an accented or ligatured spelling on the page is reachable by an ordinary one |
+| `search` | Result counts against known answers rather than "more than zero": phrases against their words, several terms meaning all of them, the three different ways a search can end with nothing, that an accented or ligatured spelling on the page is reachable by an ordinary one, and that a reference is answered as a reference — including the split works, where Isaiah 40 has to land in the second Isaiah, and the ambiguous ones, where two answers stay two |
 | `words` | Turning a word on the page into an entry — by selection, by keyboard, by alias — what a missing entry says, and the places panel |
 | `keeping` | Saving, unsaving, notes, the migration from the old bookmarks key, and what happens when the browser refuses to store anything at all |
 | `resilience` | The data failing to load, malformed data, routes that name nothing, the keyboard shortcuts, the skip link, and what a screen reader is actually told |
@@ -710,6 +710,25 @@ search-index shards are fetched on demand, so the first paint is small even
 though the library is seven megabytes. Read-aloud is the browser's own
 `speechSynthesis`, with each passage cut into utterances short enough to clear
 Chrome's fifteen-second cut-off.
+
+**A reference is answered as a reference.** Typing `Psalm 23`, `Job 38:4` or
+`1 Cor 13` offers the passage itself above the word matches, rather than the
+verses that happen to contain the word "psalms" — which is what it used to do,
+and which is no answer to the question. Two things about this edition make
+that more than a lookup: Isaiah is three works here and 1 Enoch is four,
+because they were written at different times, so `Isaiah 40` has to land in
+the second Isaiah rather than forty chapters into the first. It does, because
+every chapter keeps its printed number in its label and the resolver asks
+which work carries a "Chapter 40" instead of counting from an offset. Where a
+reference is genuinely ambiguous — the volume has a book of Psalms and a Psalm
+151, so `Psalm 1` is two places — both are offered rather than one guessed at.
+
+**A search can be asked of one book.** The library is 1.22 million words and
+the results are capped at three hundred, so a common word answered with three
+hundred verses from everywhere and the one you wanted was somewhere inside
+them. The book sits beside the query and in the URL, so a narrowed search can
+be kept and shared: `#/search/shepherd/psalms` is the six verses in the
+Psalter, the first of which is the one everybody means.
 
 Search is a two-stage design: a chapter-granularity inverted index (1.64 MB
 across 27 shards) narrows candidates, then only the matching works are fetched
