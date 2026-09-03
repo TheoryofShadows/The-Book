@@ -202,6 +202,26 @@ function recordedEngine(verses, opts) {
       const FAIL_AUDIO = ${o.failAudio ? 'true' : 'false'};
       const log = []; window.__audio = log;
 
+      /* This stub stands in for a published recording, so the page has to
+         be told there is one. The reader gates the recorded voice on
+         data-audio="published" on <html> -- a deploy-time switch, because
+         nothing has been rendered or uploaded yet and a drawer that offers
+         a voice nobody can hear is a drawer that lies. Setting it here is
+         how the finished recorded path keeps its tests while the audio
+         does not exist. */
+      const publish = () => {
+        if (!document.documentElement) return false;
+        document.documentElement.setAttribute('data-audio', 'published');
+        return true;
+      };
+      // An init script runs before the document element exists, and app.js
+      // reads the attribute while it evaluates -- before DOMContentLoaded --
+      // so the stamp has to land the moment <html> appears.
+      if (!publish()) {
+        new MutationObserver((_records, obs) => { if (publish()) obs.disconnect(); })
+          .observe(document, { childList: true, subtree: true });
+      }
+
       const realFetch = window.fetch;
       window.fetch = function (url, init) {
         const u = String(url);

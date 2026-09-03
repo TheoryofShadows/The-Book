@@ -347,8 +347,16 @@ def urls_in_repo():
     """Every external address the site or its documentation offers."""
     pattern = re.compile(r"https?://[^\s\"'<>)\]}\\]+")
     found = {}
-    for path in ["README.md", "LICENSE-DATA.md", "docs/index.html",
-                 "docs/assets/app.js"]:
+    # The prose files, and the built data -- the manuscript records carry
+    # links to the Israel Museum, the Vatican Library, Cambridge and the
+    # British Library, and those were never being checked because this only
+    # ever read the four files below. A dead link in a citation is worse
+    # than a dead link in a README.
+    sources = ["README.md", "LICENSE-DATA.md", "docs/index.html",
+               "docs/assets/app.js"]
+    sources += sorted(os.path.relpath(f, ROOT) for f in
+                      glob.glob(os.path.join(ROOT, "docs", "data", "*.json")))
+    for path in sources:
         full = os.path.join(ROOT, path)
         if not os.path.exists(full):
             continue

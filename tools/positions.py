@@ -839,6 +839,365 @@ POSITIONS: dict[str, dict] = {
                       "1873",
         "gap": "narrow",
     },
+    # ------------------------------------------------------------------
+    # Added later, and only where the evidence is checkable.
+    #
+    # 104 works carried text and no position. Most of that number is
+    # sub-units -- the Shepherd of Hermas is one book in twenty-seven
+    # entries, Ignatius one corpus in seven letters, the Twelve Patriarchs
+    # one work in twelve -- so the real count of editorial units wanting a
+    # position was about forty-seven.
+    #
+    # These are the ones whose dating rests on something a reader can go
+    # and check: a book that dates itself (Haggai to the day, Sirach's
+    # prologue to the thirty-eighth year of Euergetes, 2 Maccabees to the
+    # Seleucid year 188), a book that fixes itself between two events
+    # anyone can date (Nahum, after Thebes and before Nineveh), or an
+    # ancient witness naming the author (Irenaeus on Polycarp, Eusebius on
+    # Papias, the Talmud on Lamentations).
+    #
+    # Where the honest answer needed a monograph this file could not
+    # verify, no position was written. A record invented to fill a gap
+    # would be exactly the assertion this file exists to refuse, and the
+    # empty ones are visible: the audit prints NO-POSITION for each.
+
+    # ---- prophets whose superscription dates them and whose text fixes it ----
+    "micah": {
+        "trad": "Micah of Moresheth, c. 750-686 BCE",
+        "tradWhy": "The book's own superscription places him in the reigns of "
+                   "Jotham, Ahaz and Hezekiah of Judah. Jeremiah's hearers cite "
+                   "Micah by name as a prophet of Hezekiah's day and quote "
+                   "Micah 3:12 back verbatim, which is the earliest external "
+                   "attestation any writing prophet has.",
+        "tradSource": "Micah 1:1; Jeremiah 26:18-19, quoting Micah 3:12",
+        "crit": "An eighth-century core, c. 740-700 BCE, enlarged in the exile "
+                "and after",
+        "critWhy": "Chapters 1-3 are read as the prophet's own and match the "
+                   "Assyrian crisis they describe. Chapters 4-7 look later: "
+                   "4:10 tells Zion she will go to Babylon and be rescued "
+                   "there, which is the sixth-century exile rather than the "
+                   "eighth-century Assyrian threat the opening chapters face.",
+        "critSource": "Micah 4:10, naming Babylon; the seam between chapters 3 "
+                      "and 4 in the book itself",
+        "gap": "narrow",
+    },
+    "zephaniah": {
+        "trad": "Zephaniah, in the reign of Josiah, 640-609 BCE",
+        "tradWhy": "The superscription names four generations of his ancestry "
+                   "and sets him under Josiah king of Judah.",
+        "tradSource": "Zephaniah 1:1",
+        "crit": "Josiah's reign, c. 640-609 BCE",
+        "critWhy": "The critical reading takes the superscription at its word "
+                   "here. The book attacks foreign cult practice in Jerusalem "
+                   "of exactly the kind Josiah's reform is said to have swept "
+                   "out, so the setting the book claims and the setting its "
+                   "contents fit are the same one.",
+        "critSource": "Zephaniah 1:4-6 against the reform of 2 Kings 23",
+        "gap": "none",
+    },
+    "nahum": {
+        "trad": "Nahum the Elkoshite, before the fall of Nineveh in 612 BCE",
+        "tradWhy": "The book heads itself as his vision, and its subject is the "
+                   "destruction of Nineveh as a thing still to come.",
+        "tradSource": "Nahum 1:1",
+        "crit": "663-612 BCE",
+        "critWhy": "The book dates itself at both ends. It speaks of the fall "
+                   "of No-Amon -- Thebes -- as an event already past, and "
+                   "Thebes fell to Ashurbanipal in 663 BCE; and it speaks of "
+                   "the fall of Nineveh as still to come, and Nineveh fell in "
+                   "612. Between those two the poem must sit.",
+        "critSource": "Nahum 3:8-10 on Thebes, against the fall of Nineveh in "
+                      "612 BCE",
+        "gap": "none",
+    },
+    "habakkuk": {
+        "trad": "Habakkuk the prophet, late 7th century BCE",
+        "tradWhy": "The book heads itself as his oracle, and the Greek addition "
+                   "Bel and the Dragon -- printed in this volume -- names him "
+                   "as a prophet in Judaea.",
+        "tradSource": "Habakkuk 1:1; Bel and the Dragon 33-39",
+        "crit": "c. 605 BCE, as the Chaldeans rise",
+        "critWhy": "The answer the prophet is given names the instrument: God "
+                   "is raising up the Chaldeans, 'that bitter and hasty "
+                   "nation'. Babylon became the power to fear at Carchemish in "
+                   "605 BCE, and the book reads as written while that was new "
+                   "and not yet the exile.",
+        "critSource": "Habakkuk 1:6, naming the Chaldeans as a rising power",
+        "gap": "none",
+    },
+    "obadiah": {
+        "trad": "Obadiah the prophet",
+        "tradWhy": "The book heads itself with his name alone and gives no "
+                   "reign, which is why tradition has placed him anywhere from "
+                   "the ninth century to the sixth.",
+        "tradSource": "Obadiah 1",
+        "crit": "Shortly after 587 BCE",
+        "critWhy": "The charge against Edom is not general: it is that they "
+                   "stood by on the day strangers carried off Jerusalem's "
+                   "wealth, entered the gate of God's people in the day of "
+                   "their calamity, and cut off those who escaped. That is the "
+                   "fall of Jerusalem, described by someone who watched it.",
+        "critSource": "Obadiah 11-14",
+        "gap": "wide",
+    },
+    "lamentations": {
+        "trad": "Jeremiah, shortly after 587 BCE",
+        "tradWhy": "The Talmud's list of who wrote what assigns Lamentations to "
+                   "Jeremiah, and the Greek translation prefaces the book with "
+                   "a line saying Jeremiah sat weeping over Jerusalem and spoke "
+                   "this lament. The Hebrew text carries no such heading.",
+        "tradSource": "Talmud, Bava Batra 15a; the Septuagint superscription to "
+                      "Lamentations",
+        "crit": "Anonymous, shortly after 587 BCE",
+        "critWhy": "The date is not in dispute -- the poems are eyewitness to "
+                   "the siege and its aftermath -- but the authorship is. The "
+                   "book is five acrostics of high formal control rather than "
+                   "prophetic oracle, the Hebrew carries no attribution, and "
+                   "its view of the last kings differs from Jeremiah's.",
+        "critSource": "The absence of any attribution in the Hebrew text; the "
+                      "acrostic form of chapters 1-4",
+        "gap": "none",
+    },
+    "haggai": {
+        "trad": "Haggai the prophet, 520 BCE",
+        "tradWhy": "Every oracle in the book is dated to the day, by regnal "
+                   "year of Darius, and Ezra names Haggai and Zechariah as the "
+                   "prophets who got the temple rebuilt.",
+        "tradSource": "Haggai 1:1, 2:1, 2:10, 2:20; Ezra 5:1, 6:14",
+        "crit": "520 BCE",
+        "critWhy": "One of the few books whose date is not an inference. It "
+                   "dates itself five times to the second year of Darius, and "
+                   "the second year of Darius I is 520 BCE by the Babylonian "
+                   "king lists; the building it urges is the temple finished in "
+                   "516.",
+        "critSource": "The book's own regnal dating against the Babylonian "
+                      "chronology of Darius I",
+        "gap": "none",
+    },
+    "zechariah-1-8": {
+        "trad": "Zechariah son of Berechiah, 520-518 BCE",
+        "tradWhy": "The visions are dated by regnal year of Darius, and Ezra "
+                   "pairs him with Haggai as the prophets of the rebuilding.",
+        "tradSource": "Zechariah 1:1, 1:7, 7:1; Ezra 5:1, 6:14",
+        "crit": "520-518 BCE",
+        "critWhy": "Dated by the book itself, in the same manner as Haggai and "
+                   "to the same years. Chapters 9-14 are a separate matter and "
+                   "are printed separately in this volume: they carry no dates, "
+                   "no Darius and no temple building, and name Greece as the "
+                   "power in view.",
+        "critSource": "The book's own regnal dating; the break in subject at "
+                      "chapter 9, and Zechariah 9:13 naming Greece",
+        "gap": "none",
+    },
+    "malachi": {
+        "trad": "Malachi the prophet, 5th century BCE",
+        "tradWhy": "The book heads itself with the name, and Jewish and "
+                   "Christian tradition reads it as the last of the prophets "
+                   "before the silence.",
+        "tradSource": "Malachi 1:1",
+        "crit": "c. 500-450 BCE, and 'Malachi' may be a title rather than a name",
+        "critWhy": "The temple is standing and its sacrifices have gone stale, "
+                   "so this is after 516; and the governor is called by the "
+                   "Persian title pechah, so this is under Persian rule. The "
+                   "name itself is the difficulty: mal'akhi is Hebrew for 'my "
+                   "messenger', which is what 3:1 calls the figure God will "
+                   "send, so the heading may have been taken from the text "
+                   "rather than the text from an author.",
+        "critSource": "Malachi 1:8 (the Persian title pechah), 1:10 (the temple "
+                      "in use), and 3:1 against the heading at 1:1",
+        "gap": "narrow",
+    },
+
+    # ---- books that date themselves in their own prologues and colophons ----
+    "sirach-ecclesiasticus": {
+        "trad": "Jesus ben Sira of Jerusalem, c. 180 BCE",
+        "tradWhy": "The book names its own author, which almost nothing else in "
+                   "this part of the library does: 'Jesus the son of Sirach, "
+                   "the son of Eleazar, of Jerusalem.'",
+        "tradSource": "Sirach 50:27",
+        "crit": "Hebrew original c. 190-175 BCE; Greek translation after 132 BCE",
+        "critWhy": "The translator's prologue is the clearest self-dating "
+                   "document in the deuterocanon. He says he is the author's "
+                   "grandson, that he came into Egypt in the thirty-eighth year "
+                   "of Euergetes, and that he then translated his grandfather's "
+                   "book. The thirty-eighth year of Ptolemy VIII Euergetes II "
+                   "is 132 BCE, which puts the grandfather two generations "
+                   "earlier -- and the praise of the high priest Simon in "
+                   "chapter 50 reads as a living memory.",
+        "critSource": "The translator's prologue to Sirach; Sirach 50:1-21 on "
+                      "Simon son of Onias",
+        "gap": "none",
+    },
+    "1-maccabees": {
+        "trad": "A Jewish historian of the Hasmonean court, 2nd-1st century BCE",
+        "tradWhy": "The book is anonymous and tradition has not assigned it an "
+                   "author; it is received as a record of the revolt written "
+                   "close to it.",
+        "tradSource": "The book's own anonymity; Josephus uses it as a source "
+                      "in Antiquities 12-13",
+        "crit": "c. 100 BCE, after 134 BCE",
+        "critWhy": "The narrative runs to the death of Simon and the accession "
+                   "of John Hyrcanus, and then refers the reader to the "
+                   "chronicle of Hyrcanus's own high priesthood as a finished "
+                   "record -- so the author is writing after Hyrcanus's reign "
+                   "was under way, which began in 134 BCE.",
+        "critSource": "1 Maccabees 16:23-24",
+        "gap": "none",
+    },
+    "2-maccabees": {
+        "trad": "An epitome of Jason of Cyrene, 2nd-1st century BCE",
+        "tradWhy": "The book says outright what it is: an abridgement into one "
+                   "volume of the five books of Jason of Cyrene, made by an "
+                   "epitomist who describes the labour of doing it.",
+        "tradSource": "2 Maccabees 2:23-31",
+        "crit": "c. 124 BCE or later",
+        "critWhy": "The book opens with two letters to the Jews of Egypt, and "
+                   "the second is dated to the hundred and eighty-eighth year "
+                   "of the Seleucid era, which is 124 BCE. The epitome is "
+                   "prefaced by them, so it is no earlier.",
+        "critSource": "2 Maccabees 1:10, dating the letter to the Seleucid year "
+                      "188",
+        "gap": "none",
+    },
+    "judith": {
+        "trad": "A record of the deliverance of Bethulia",
+        "tradWhy": "The book is received as history in the traditions that "
+                   "carry it, and Clement of Rome -- printed in this volume -- "
+                   "holds Judith up beside Esther as a woman who saved her "
+                   "people.",
+        "tradSource": "1 Clement 55:4-5",
+        "crit": "Hasmonean period, c. 150-100 BCE, and not history",
+        "critWhy": "The opening sentence is impossible on purpose: "
+                   "Nebuchadnezzar is called king of the Assyrians reigning in "
+                   "Nineveh, when he was king of Babylon and Nineveh had fallen "
+                   "before he took the throne. A book that begins by placing "
+                   "the wrong king in a destroyed capital is not attempting a "
+                   "chronicle, and the piety it teaches -- fasting, dietary "
+                   "scruple, holy war -- is Hasmonean.",
+        "critSource": "Judith 1:1, against the Babylonian chronicle of "
+                      "Nebuchadnezzar II and the fall of Nineveh in 612 BCE",
+        "gap": "wide",
+    },
+    "tobit": {
+        "trad": "Tobit and Tobias, in the Assyrian exile, 8th-7th century BCE",
+        "tradWhy": "The book presents itself as Tobit's own account, opening in "
+                   "the first person and setting itself in the deportation "
+                   "under Shalmaneser.",
+        "tradSource": "Tobit 1:1-2",
+        "crit": "c. 225-175 BCE",
+        "critWhy": "Fragments of Tobit were found at Qumran in four Aramaic "
+                   "copies and one Hebrew, which puts the book well before the "
+                   "first century BCE and shows a Semitic original behind the "
+                   "Greek. Its geography and its knowledge of Assyria are those "
+                   "of a much later writer than its setting.",
+        "critSource": "4Q196-200, the Tobit fragments from Qumran Cave 4",
+        "gap": "wide",
+    },
+    "the-wisdom-of-solomon": {
+        "trad": "Solomon",
+        "tradWhy": "The book speaks throughout in the voice of a king chosen to "
+                   "build a temple and given wisdom by prayer, which is "
+                   "Solomon's part in 1 Kings, and the tradition that carries "
+                   "the book names it for him.",
+        "tradSource": "Wisdom of Solomon 9:7-8, echoing 1 Kings 3:6-9",
+        "crit": "Alexandria, 1st century BCE",
+        "critWhy": "The book was composed in Greek rather than translated into "
+                   "it: it works in Greek philosophical vocabulary, argues with "
+                   "Greek terms for the soul and immortality, and quotes the "
+                   "Septuagint rather than the Hebrew. Solomon died some eight "
+                   "centuries before any of that existed.",
+        "critSource": "The book's Greek composition and its use of the "
+                      "Septuagint; its Alexandrian polemic against Egyptian "
+                      "animal cult at 11:15 and 15:18-19",
+        "gap": "wide",
+    },
+    "2-esdras-4-ezra": {
+        "trad": "Ezra the scribe",
+        "tradWhy": "The apocalypse is spoken by Ezra ('I, Salathiel, who am "
+                   "also called Ezra') and dated by its own opening to the "
+                   "thirtieth year after the fall of the city.",
+        "tradSource": "2 Esdras 3:1",
+        "crit": "c. 100 CE, after the fall of Jerusalem in 70",
+        "critWhy": "The eagle of the fifth vision is interpreted in the book "
+                   "itself as the fourth kingdom of Daniel, and its three heads "
+                   "are read as the Flavian emperors -- Vespasian, Titus and "
+                   "Domitian. The city whose fall the seer mourns is not "
+                   "Nebuchadnezzar's Jerusalem but Titus's, and 'the thirtieth "
+                   "year' after 70 CE lands about 100.",
+        "critSource": "2 Esdras 11-12, the eagle vision, read against Daniel 7",
+        "gap": "wide",
+    },
+
+    # ---- the Apostolic Fathers, where the ancient testimony is explicit ----
+    "the-epistle-of-polycarp-to-the-philippians": {
+        "trad": "Polycarp of Smyrna, c. 110-140 CE",
+        "tradWhy": "Irenaeus knew Polycarp personally as a boy and says he "
+                   "wrote letters to the churches; this is the one that "
+                   "survives. The letter accompanies a collection of Ignatius's "
+                   "letters, which Polycarp says he is sending on, and speaks "
+                   "of Ignatius as recently passed.",
+        "tradSource": "Irenaeus, Against Heresies 3.3.4; Eusebius, "
+                      "Ecclesiastical History 4.14; Polycarp, Philippians 13",
+        "crit": "Polycarp, though perhaps two letters joined",
+        "critWhy": "The authorship is not doubted. What is argued is unity: "
+                   "chapter 13 treats Ignatius as newly martyred and asks for "
+                   "news of him, while chapter 9 speaks of him as long since "
+                   "gone to his reward, so the letter is read by some as two "
+                   "notes of different dates joined in transmission.",
+        "critSource": "Polycarp, Philippians 9 against 13",
+        "gap": "none",
+    },
+    "the-martyrdom-of-polycarp": {
+        "trad": "The church of Smyrna, shortly after Polycarp's death",
+        "tradWhy": "The work is a circular letter from one congregation to "
+                   "another, names its own scribes at the end, and says it was "
+                   "written down so the account would not be lost.",
+        "tradSource": "The Martyrdom of Polycarp, opening address and closing "
+                      "chapters 20-22",
+        "crit": "c. 155-177 CE, with the closing chapters added later",
+        "critWhy": "The date of the martyrdom itself is contested within a "
+                   "generation, and the appendices that trace the manuscript's "
+                   "descent through several copyists are plainly later "
+                   "additions to the letter they follow.",
+        "critSource": "The chain of transmission described in chapters 22, "
+                      "naming successive copyists",
+        "gap": "none",
+    },
+    "fragments-of-papias": {
+        "trad": "Papias of Hierapolis, c. 110-130 CE",
+        "tradWhy": "Irenaeus calls him a hearer of John and a companion of "
+                   "Polycarp, and Eusebius preserves the fragments while "
+                   "disputing his judgement. What survives is quotation: the "
+                   "five books of the Exposition of the Oracles of the Lord are "
+                   "lost.",
+        "tradSource": "Irenaeus, Against Heresies 5.33.4; Eusebius, "
+                      "Ecclesiastical History 3.39",
+        "crit": "c. 110-140 CE, surviving only as quotation",
+        "critWhy": "The date is inferred from the people Papias says he "
+                   "questioned -- those who had heard the apostles -- and from "
+                   "Eusebius's placing of him. Nothing here is a text of "
+                   "Papias: every fragment is somebody else quoting him, and "
+                   "the quoters had their own arguments to make.",
+        "critSource": "Eusebius, Ecclesiastical History 3.39, which is the "
+                      "source of most of what survives",
+        "gap": "none",
+    },
+    "the-epistle-of-barnabas": {
+        "trad": "Barnabas the companion of Paul",
+        "tradWhy": "The letter circulated under his name from early on: "
+                   "Clement of Alexandria quotes it as Barnabas, and Codex "
+                   "Sinaiticus binds it into the New Testament.",
+        "tradSource": "Clement of Alexandria, Stromata 2.6-7; Codex Sinaiticus",
+        "crit": "c. 130-132 CE, and not by Barnabas",
+        "critWhy": "The letter is anonymous; the name is attached by later "
+                   "readers. It speaks of the temple as destroyed and of its "
+                   "being rebuilt by the enemies who pulled it down, which fits "
+                   "the years before the Bar Kokhba revolt rather than the "
+                   "lifetime of Paul's companion.",
+        "critSource": "Barnabas 16:3-4 on the destroyed temple; the letter's "
+                      "own anonymity",
+        "gap": "wide",
+    },
 }
 
 

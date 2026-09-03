@@ -394,6 +394,38 @@ h3 { font-size: 1.12rem; margin: var(--gap-wide) 0 var(--gap-hair); }
 
 /* The volume's own aside: not scripture, not a control. Gold leaf, which
    is the one material here that was neither. */
+/* The day's passage: a real verse, picked by what the reader has been
+   searching for. Set as a quotation rather than as a card of furniture,
+   because it is scripture and the page has a way of setting scripture. */
+.today {
+  margin: var(--gap-wide) 0 0;
+  padding: var(--gap) 0 0;
+  border-top: 1px solid var(--rule);
+  max-width: 42rem;
+}
+.today-eyebrow {
+  margin: 0 0 var(--gap-tight); font-family: var(--sans);
+  font-size: .72rem; font-weight: 600; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+.today-text {
+  font-family: var(--serif); font-size: 1.22rem; line-height: 1.55;
+  margin: 0; padding-left: var(--gap); border-left: 2px solid var(--gilt);
+  text-wrap: pretty;
+}
+.today-foot {
+  display: flex; align-items: baseline; gap: var(--gap); flex-wrap: wrap;
+  margin: var(--gap-tight) 0 0; padding-left: calc(var(--gap) + 2px);
+}
+.today-ref { font-family: var(--sans); font-size: .82rem; }
+.today-forget {
+  font: inherit; font-family: var(--sans); font-size: .74rem;
+  background: none; border: 0; padding: 0; cursor: pointer;
+  color: var(--ink-faint); text-decoration: underline;
+  text-underline-offset: 2px; margin-left: auto;
+}
+.today-forget:hover { color: var(--ink); }
+
 .callout {
   border-left: 2px solid var(--gilt);
   background: var(--paper-2);

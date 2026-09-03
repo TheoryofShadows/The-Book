@@ -133,6 +133,23 @@ the critical dating drawn as two bars on one scale, so how far apart they are
 is a thing you see rather than a thing you work out. On Amos the bars sit on
 top of each other. On Genesis they are seven centuries apart.
 
+**79 of the 163 works carrying text now have a dated position, up from 59.**
+The twenty added were chosen on one rule: the dating had to rest on something
+a reader can go and check. A book that dates itself — Haggai to the day by
+regnal year, Sirach's prologue to the thirty-eighth year of Euergetes,
+2 Maccabees to the Seleucid year 188. A book that fixes itself between two
+datable events — Nahum, written after Thebes fell in 663 and before Nineveh
+fell in 612, both of which it names. Or an ancient witness naming the author:
+Irenaeus on Polycarp, Eusebius on Papias, the Talmud on Lamentations, the
+Septuagint's own superscription.
+
+Where the honest answer needed a monograph that could not be verified from
+here, no position was written. The count of works without one is still
+printed by the audit as `NO-POSITION`, work by work, because an invented
+record would be precisely the assertion `tools/positions.py` exists to
+refuse — and a plausible-looking bar with nothing behind it is worse than a
+visible gap.
+
 The bars are read out of the prose positions by `tools/dates.py`, and it
 refuses to guess. Where a position names a person rather than a time — "Samuel",
 "Moses, shortly before his death" — there is no bar and the card says why.
@@ -334,6 +351,30 @@ Gaps inherited from the source editions, left honest rather than invented:
   cites as a source for two other books. "Related ancient texts" is the
   subtitle, and Josephus in Whiston's 1737 English is not here either.
 
+## The day's passage
+
+Ask the site for daily affirmations and it gives you a verse instead.
+
+The home page shows one passage, chosen by what you last searched for, with
+its reference and a link to the chapter it sits in. It appears only once you
+have searched for something; it is the same passage all day rather than a new
+one on every reload; and **Forget my searches** on the card clears the five
+strings it reads from. Nothing leaves the page — the searches are in your own
+browser's storage and the verse is picked out of data the site had already
+fetched.
+
+It is a passage and not an affirmation on purpose, and the reason is this
+volume's own rule, from `tools/positions.py`:
+
+> An interpretive layer that merely asserts things, in the same visual frame
+> as audited text, would be the weakest link in the whole project.
+
+A written affirmation beside forty thousand audited verses would be the one
+sentence on the page with nothing behind it. A verse carries its citation by
+construction, and a browser check follows the card's link and compares the
+quoted text against the verse on the page word for word — so the card cannot
+drift into saying something *about* the text rather than quoting it.
+
 ## Listening to it
 
 Every chapter can be read aloud by the speech engine already in the browser:
@@ -469,24 +510,30 @@ On a phone the reading usually stops when the screen locks or you switch app —
 the browser suspends the page, and this is speech, not a track playing in the
 background.
 
-### The recorded reading, which is built but not yet rendered
+### The recorded reading, which is built, not rendered, and not offered
 
-**Nothing is uploaded yet, and this section describes a plan rather than a
-recording.** The player carries a second voice — **Recorded reading**, a
-neural voice reading the library from files rather than from the device — and
-every part of it is written and under test: the fetch, the per-verse index,
-the seek, the pace control, and the fall back to the device engine when a
-chapter has no reading. What does not exist is the audio. `AUDIO_BASE` in
-`docs/assets/app.js` points at an Internet Archive item that has not been
-created, so the reader's own probe finds nothing there and drops the option
-from the drawer. Choosing it falls back, with a sentence saying why.
+**Nothing is uploaded, and the reader no longer offers it.** The voice is
+gated on `data-audio="published"` on `<html>` in `docs/index.html` — a
+deploy-time switch rather than a constant in the bundle, because it is a fact
+about a deploy and because the browser checks can set it to exercise the
+player's recorded path, which is finished and would otherwise lose its
+hundred tests the moment the voice stopped being offered. The attribute is
+absent, so the drawer shows the device's voices and nothing else. Nobody is
+shown a reading that would fall back the moment they chose it.
 
-`tools/check_audio.py` is the check that says so, and it is failing on
-purpose: it asks the Internet Archive whether the item on the end of
-`AUDIO_BASE` exists, and it does not. It will keep failing until either the
-28 core-hours below are spent and the result uploaded, or the option is taken
-out of the drawer. That is a decision for the owner of the repository, not
-something a build should quietly settle.
+`tools/check_audio.py` is now a gate in both directions rather than a
+permanent failure. No item and no attribute is the state it reports as
+correct. An item with no attribute is a switch somebody forgot to flip; an
+attribute with no item is a broken promise to every reader. Add the audio and
+the attribute in the same commit and the check starts holding the item to its
+word.
+
+**The cheapest way to finish it** is the one the fact-check turned up:
+LibriVox has read the World English Bible through and dedicated it to the
+public domain, and Charles's Enoch and Jubilees besides. A person rather than
+a model, and no rendering cost at all. What stands between that and `true` is
+alignment — an audiobook is continuous speech with no verse boundaries in it,
+and this player marks verses.
 
 Everything below is the design and the arithmetic behind it, kept because it
 is what the code implements and what the rendering will cost — not because

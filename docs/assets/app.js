@@ -239,6 +239,124 @@
      HOME — the chronological timeline
      ================================================================ */
 
+  /* ---------------- the day's passage ----------------
+
+     Asked for as "daily affirmations based off the user's recent searches".
+     What is here instead is a passage: a real verse from this volume, chosen
+     by what the reader has been looking for, with its reference and a link
+     to the chapter it sits in.
+
+     The difference is the whole project. tools/positions.py states the rule
+     this site is built on -- "an interpretive layer that merely asserts
+     things, in the same visual frame as audited text, would be the weakest
+     link in the whole project" -- and a machine-written affirmation beside
+     forty thousand audited verses is exactly that: the one sentence on the
+     page with nothing behind it. A verse has a citation by construction.
+
+     The searches never leave the page. They are five strings in
+     localStorage under the reader's own key, they are used to pick a verse
+     out of data already fetched, and they can be cleared from the card. */
+
+  var SEARCH_MEMORY = 5;
+
+  function rememberSearch(query) {
+    var term = String(query || "").trim();
+    if (term.length < 3) return;
+    var recent = store.get("recent-searches", []);
+    if (!Array.isArray(recent)) recent = [];
+    recent = recent.filter(function (x) { return x !== term; });
+    recent.unshift(term);
+    store.set("recent-searches", recent.slice(0, SEARCH_MEMORY));
+  }
+
+  /* One passage a day, and the same one all day.
+
+     Seeded on the date and the term, so the card does not reshuffle every
+     time the page is opened -- a passage that changes on every reload is a
+     slot machine rather than a reading. */
+  function daySeed(extra) {
+    var key = new Date().toISOString().slice(0, 10) + "|" + (extra || "");
+    var h = 2166136261;
+    for (var i = 0; i < key.length; i++) {
+      h ^= key.charCodeAt(i);
+      h = (h * 16777619) >>> 0;
+    }
+    return h;
+  }
+
+  function todaysPassage(manifest, done) {
+    var recent = store.get("recent-searches", []);
+    if (!Array.isArray(recent) || !recent.length) { done(null); return; }
+
+    // The most recent search that the index actually knows a word of.
+    var term = recent[0];
+    var terms = tokenise(term);
+    if (!terms.length) { done(null); return; }
+    var word = terms[daySeed(term) % terms.length];
+    var shard = /^[a-z]/.test(word) ? word[0] : "0";
+
+    Promise.all([getJSON("chapters.json"),
+                 getJSON("index/" + shard + ".json").catch(function () { return {}; })])
+      .then(function (loaded) {
+        var table = loaded[0], index = loaded[1];
+        var ids = [];
+        Object.keys(index).forEach(function (token) {
+          if (token.indexOf(word) === 0) {
+            ids = ids.concat(index[token] || []);
+          }
+        });
+        if (!ids.length) { done(null); return; }
+
+        var cid = ids[daySeed(term + word) % ids.length];
+        var row = table.chapters[cid];
+        if (!row) { done(null); return; }
+
+        return getJSON("works/" + row[0] + ".json").then(function (work) {
+          var chapter = work.chapters[row[1]];
+          if (!chapter) { done(null); return; }
+          var units = (chapter.verses || []).filter(function (v) {
+            return new RegExp("\\b" + word, "i").test(fold(v.t));
+          });
+          if (!units.length) { done(null); return; }
+          var verse = units[daySeed(term + cid) % units.length];
+          done({
+            work: row[0], workTitle: row[3], chapterIdx: row[1],
+            label: row[2], verse: verse.v, text: verse.t, term: term
+          });
+        });
+      }).catch(function () { done(null); });
+  }
+
+  function passageCard(manifest, found) {
+    var box = el("section", { class: "today" });
+    box.appendChild(el("p", { class: "today-eyebrow", text:
+      "Today, because you searched \u201c" + found.term + "\u201d" }));
+    box.appendChild(el("blockquote", { class: "today-text", text: found.text }));
+
+    var foot = el("p", { class: "today-foot" });
+    foot.appendChild(el("a", {
+      class: "today-ref",
+      href: "#/read/" + found.work + "/" + found.chapterIdx +
+            (found.verse ? "/v" + found.verse : ""),
+      text: titleCase(found.workTitle) + " \u00b7 " + found.label +
+            (found.verse ? ":" + found.verse : "")
+    }));
+    foot.appendChild(el("button", {
+      class: "today-forget", text: "Forget my searches",
+      title: "Clears the searches this card is chosen from",
+      onclick: function () {
+        store.set("recent-searches", []);
+        var note = el("p", { class: "today-eyebrow", text:
+          "Forgotten. The card comes back the next time you search." });
+        box.innerHTML = "";
+        box.appendChild(note);
+        announce("Recent searches cleared.");
+      }
+    }));
+    box.appendChild(foot);
+    return box;
+  }
+
   function viewHome(manifest) {
     var t = manifest.totals;
     var wrap = el("div", { class: "wrap" });
@@ -272,6 +390,17 @@
         ]));
       });
     wrap.appendChild(stats);
+
+    /* Under the colophon and above the threads: it is a way in rather than
+       the point of the page, and a reader who has never searched sees
+       nothing at all rather than an empty frame. */
+    var todaySlot = el("div");
+    wrap.appendChild(todaySlot);
+    todaysPassage(manifest, function (found) {
+      if (found && todaySlot.isConnected) {
+        todaySlot.appendChild(passageCard(manifest, found));
+      }
+    });
 
     // The chronological order is the only thing here no other Bible site can
     // copy. Left as a filing decision it is invisible; this is where a
@@ -2673,6 +2802,10 @@
 
     function run(query, scope) {
       var mine = ++runId;
+      /* Remembered here rather than in the input handler, because a search
+         reached by its URL -- a shared link, a bookmark, the back button --
+         never touches the input handler and is just as much a search. */
+      rememberSearch(query);
       results.innerHTML = "";
       jump.innerHTML = "";
       bar.firstChild.style.width = "0%";
@@ -4114,7 +4247,39 @@
      this is the same rule applied to the one feature the markers in
      index.html cannot reach, because the drawer is built here rather than
      written in the page. */
-  var AUDIO_OK = typeof window.Audio === "function" && !window.__BOOK__;
+  /* Whether the reading has actually been rendered and uploaded.
+     ------------------------------------------------------------------
+     Everything below this line is finished and under test: the fetch, the
+     per-verse index, the seek, the pace control, the fall back to the
+     device engine. What does not exist is the audio. The item at
+     AUDIO_BASE has never been created, and until it is, offering a voice
+     in the drawer is offering something that is not there -- the probe
+     only fires once a reader has already chosen it, so on every ordinary
+     device the drawer went on advertising it for the whole session.
+
+     The switch is data-audio on <html> rather than a constant here: it is
+     a fact about a deploy rather than about the code, it is visible in the
+     served page without reading a bundle, and the browser checks can set it
+     to exercise the player's recorded path -- which is finished, and would
+     otherwise lose its tests the moment the voice stopped being offered.
+     tools/check_audio.py reads it out of docs/index.html and checks it both
+     ways: absent while the item exists is a switch somebody forgot to flip;
+     "published" while the item is missing is a broken promise to every
+     reader. Add the attribute in the same commit that uploads the item.
+
+     A note on what "uploaded" would mean, so the next hand does not repeat
+     the search: LibriVox has read the World English Bible through and
+     dedicated it to the public domain, and Charles's Enoch and Jubilees
+     besides. That is a person rather than a model and costs no rendering
+     at all -- but an audiobook is continuous speech with no verse
+     boundaries in it, so the per-verse marks this player is built on have
+     to be recovered by forced alignment rather than recorded. That is the
+     work between here and true. */
+  var AUDIO_PUBLISHED =
+        document.documentElement.getAttribute("data-audio") === "published";
+
+  var AUDIO_OK = AUDIO_PUBLISHED &&
+                 typeof window.Audio === "function" && !window.__BOOK__;
 
   var aud = {
     el: null,       // one <audio>, reused across chapters

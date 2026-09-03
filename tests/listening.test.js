@@ -189,8 +189,15 @@ module.exports = async function listening(t, ctx) {
      drawer changes shape. */
   const group = label => (drawer.find(g => g[0] === label) || [label, []])[1];
 
-  t.check('the recorded reading is offered first, and to everyone',
-          drawer[0][0] === 'Read aloud' && group('Read aloud').join() === 'recorded',
+  /* The recorded reading is NOT offered, because it does not exist.
+     Nothing has been rendered and nothing uploaded, so the drawer must not
+     advertise a voice that falls back the moment anyone picks it. The
+     player's recorded path is finished and keeps its own tests below, where
+     the stand-in engine stamps data-audio="published" to say a recording is
+     there -- which is what this check confirms is absent by default. */
+  t.check('a voice that does not exist is not offered',
+          drawer.every(g => g[0] !== 'Read aloud') &&
+          group('Read aloud').length === 0,
           JSON.stringify(drawer.map(g => g[0])));
   t.check('the drawer is grouped by what the voices are',
           group('Best on this device').join() === 'google',

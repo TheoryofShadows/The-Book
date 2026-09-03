@@ -125,5 +125,77 @@ module.exports = async function routes(t, ctx) {
     await fresh.close();
   }
 
+  /* ---- the day's passage ----
+
+     Asked for as "daily affirmations based on recent searches". What is
+     built is a passage: a real verse from this volume, chosen by what the
+     reader searched for, carrying its reference and a link to the chapter.
+
+     The substitution is the point, and it is the site's own rule --
+     tools/positions.py: "an interpretive layer that merely asserts things,
+     in the same visual frame as audited text, would be the weakest link in
+     the whole project". A written affirmation beside forty thousand audited
+     verses is the one sentence on the page with nothing behind it. These
+     checks hold the difference: the quoted text has to BE the verse the
+     reference names, not something composed about it. */
+  const daily = await ctx.browser.newPage();
+  await daily.goto(ctx.base + '#/');
+  await daily.waitForSelector('.stats');
+  await daily.waitForTimeout(400);
+  t.check('a reader who has never searched is shown no passage card',
+          await daily.locator('.today').count() === 0);
+
+  await daily.goto(ctx.base + '#/search/covenant');
+  // The search suite's own settled() lives there; here it is enough that a
+  // run happened, which is what puts the term in the reader's memory.
+  await daily.waitForFunction(() =>
+    /matches|No verse|No text contains/.test(
+      (document.querySelector('.wrap .muted') || {}).textContent || ''),
+    null, { timeout: 30000 });
+  await daily.goto(ctx.base + '#/');
+  await daily.waitForSelector('.today-text', { timeout: 15000 });
+  const card = await daily.evaluate(() => ({
+    eyebrow: document.querySelector('.today-eyebrow').textContent,
+    text: document.querySelector('.today-text').textContent.trim(),
+    ref: document.querySelector('.today-ref').textContent,
+    href: document.querySelector('.today-ref').getAttribute('href'),
+  }));
+  t.check('searching gives a passage, named and linked',
+          /covenant/.test(card.eyebrow) && card.text.length > 10 &&
+          /^#\/read\/[a-z0-9-]+\/\d+/.test(card.href),
+          card.ref + ' -> ' + card.href);
+
+  /* The load-bearing one. Follow the link and read the verse off the page:
+     if the card ever quoted anything but the text it cites, this fails. */
+  await daily.goto(ctx.base + card.href);
+  await daily.waitForSelector('.reader .v');
+  const onThePage = await daily.evaluate(() => {
+    const marked = document.querySelector('.reader .v.target');
+    const source = marked || document.querySelector('.reader .v');
+    return source.textContent.replace(/^\s*\d+\s*/, '').trim();
+  });
+  t.check('the passage quoted is the verse it cites, word for word',
+          onThePage.indexOf(card.text.slice(0, 40)) !== -1,
+          'card: ' + card.text.slice(0, 45) + ' | page: ' + onThePage.slice(0, 45));
+
+  /* Same day, same passage: a reading rather than a slot machine. */
+  await daily.goto(ctx.base + '#/');
+  await daily.waitForSelector('.today-ref');
+  t.check('it is the same passage all day, not a new one every reload',
+          await daily.evaluate(() =>
+            document.querySelector('.today-ref').textContent) === card.ref);
+
+  await daily.locator('.today-forget').click();
+  await daily.waitForTimeout(200);
+  await daily.goto(ctx.base + '#/');
+  await daily.waitForSelector('.stats');
+  await daily.waitForTimeout(400);
+  t.check('and the searches it reads can be forgotten, from the card itself',
+          await daily.locator('.today-text').count() === 0 &&
+          (await daily.evaluate(() =>
+            JSON.parse(localStorage.getItem('thebook:recent-searches') || '[]')
+          )).length === 0);
+  await daily.close();
+
   await page.close();
 };
