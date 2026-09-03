@@ -240,6 +240,78 @@ CONTAMINANTS = [
 REMOVALS: list[dict] = []
 
 
+# --------------------------------------------------------------------------
+# The transcription's furniture, inside the sentence rather than after it.
+#
+# CONTAMINANTS above truncate: every one of them is a block of website that
+# begins somewhere and runs to the end of the work, so cutting from the match
+# onwards is right. These are different. They sit mid-sentence, they are a
+# handful of characters each, and there is real scripture on both sides of
+# them -- so they are excised in place and the text closed up behind them.
+#
+# Both come from the sacred-texts.com transcription of R. H. Charles rather
+# than from Charles:
+#
+#   [p. 134]              the page number of the printed leaf, dropped into
+#                         the running text wherever a page turned. 39 of them,
+#                         across 1 Enoch and the Testament of our Lord.
+#   [paragraph continues] the transcriber's note that the printed paragraph
+#                         ran on past a page break. 40 of them, and every one
+#                         lands in the middle of a clause: "I prayed to the
+#                         [paragraph continues] Lord."
+#
+# Both were being shown as scripture and spoken aloud as scripture -- neither
+# is blanked by speakable(), because "p. 134" is letters and digits and the
+# rule only blanks what is neither.
+#
+# What is NOT here, deliberately: Charles's own square brackets. He supplies
+# words the Ethiopic does not have -- "[and]", "[them]", "[for Thou seest
+# everything]" -- and that is the translator's apparatus, which this volume
+# prints and marks rather than silently absorbing or deleting. 962 bracketed
+# strings survive this pass and only 79 are taken out; a rule that took the
+# rest would be rewriting Charles rather than cleaning up after his scanner.
+INLINE_ARTIFACTS = [
+    (re.compile(r"\s*\[p\.\s*\d+\]\s*"),
+     "printed page number from the transcription", " "),
+    (re.compile(r"\s*\[paragraph continues\]\s*"),
+     "transcriber's paragraph-break note", " "),
+]
+
+
+def unfurnish(text: str, where: str) -> str:
+    """Take the transcription's marks out of the middle of the text.
+
+    Logged the same way a truncation is, but aggregated per pattern per
+    chapter: forty separate entries saying "one page number" would bury the
+    four entries that say a page of website was removed.
+
+    Text with none of them in it is returned exactly as it arrived. This ran
+    the paragraph through a whitespace normaliser on the way out for one
+    build, which is the sort of tidying that looks free and is not: this
+    function is called before split_verses, split_verses reads the shape of
+    the paragraph to find where a verse begins, and every work in the volume
+    came out with nought verses in it. The rule is that a paragraph carrying
+    no artifact is not touched, and one that does is changed only where the
+    artifact was.
+    """
+    hit = False
+    for pattern, reason, replacement in INLINE_ARTIFACTS:
+        hits = pattern.findall(text)
+        if not hits:
+            continue
+        hit = True
+        text = pattern.sub(replacement, text)
+        REMOVALS.append({
+            "where": where,
+            "reason": reason,
+            "chars": sum(len(h) for h in hits),
+            "excerpt": "".join(sorted(set(h.strip() for h in hits))[:6]),
+        })
+    # Only the doubled spaces the excision itself just made, and only on a
+    # line that was actually cut.
+    return re.sub(r"[ \t]{2,}", " ", text) if hit else text
+
+
 def decontaminate(text: str, where: str) -> str:
     """Truncate text at the first piece of scrape furniture, logging the cut."""
     for pattern, reason in CONTAMINANTS:
@@ -487,6 +559,7 @@ def parse(path: str) -> dict:
             label, num = parsed
             where = f"{work['title']} / {label}"
             body = [decontaminate(p, where) for p in body]
+            body = [unfurnish(p, where) for p in body]
             body = [p for p in body if p.strip()]
             verses, style = split_verses(body)
             chapter = {"label": label, "n": num, "raw": payload}
@@ -553,10 +626,16 @@ def main() -> None:
                 "chapters": nch,
                 "verses": nv,
                 "words": words,
+                # No chapterLabels here. It held a copy of all 2,537 chapter
+                # labels -- 35 KB, a fifth of this file -- and nothing ever
+                # read it: the reader takes labels off the work file it has
+                # just fetched, which is where they have to come from anyway
+                # because that is the file that has the text under them. The
+                # manifest is fetched before anything can render, so a fifth
+                # of it being dead weight was a fifth of the wait.
                 "versified": nv > 0,
                 "source": src,
                 "positions": stance,
-                "chapterLabels": [c["label"] for c in work["chapters"]],
             })
             with open(os.path.join(OUT, "works", work["id"] + ".json"), "w",
                       encoding="utf-8") as fh:

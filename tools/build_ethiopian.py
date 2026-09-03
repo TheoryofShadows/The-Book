@@ -783,7 +783,8 @@ def build(spec, words):
     mended = sum(report["repairs"].values())
     if mended:
         note.append(
-            f"The scanner's reading was mended in {mended} places. A word "
+            f"The scanner's reading was mended in {mended} "
+            f"{'place' if mended == 1 else 'places'}. A word "
             "is only mended when this volume's own million and a half words "
             "have never seen it, when the change is a substitution this "
             "scanner is known to make, and when exactly one such change "
@@ -879,7 +880,6 @@ def main() -> int:
                 "versified": False,
                 "source": spec["source"],
                 "positions": work.get("positions"),
-                "chapterLabels": [c["label"] for c in work["chapters"]],
                 "verified": False,
             }, spec.get("before"))
 

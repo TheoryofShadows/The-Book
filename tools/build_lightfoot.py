@@ -202,7 +202,6 @@ def restat(work: dict, entry: dict) -> None:
         p.count(" ") + 1
         for c in work["chapters"]
         for p in (c.get("paras", []) + [v["t"] for v in c.get("verses", [])]))
-    entry["chapterLabels"] = [c["label"] for c in work["chapters"]]
 
 
 def chapter(n: int, paras: list[str]) -> dict:

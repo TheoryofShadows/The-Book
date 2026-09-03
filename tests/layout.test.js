@@ -178,5 +178,29 @@ module.exports = async function layout(t, ctx) {
   t.check('desktop: the bar stays where it is',
           await desk.evaluate(() => !document.querySelector('.topbar').classList.contains('tucked') &&
                                     document.querySelector('.topbar').getBoundingClientRect().y === 0));
+
+  /* ---- the chapter you are in is in the strip you are shown ----
+
+     The strip is two rows deep and scrolls past that, so on a long book the
+     chapter you are reading is usually not in the first two rows. It used to
+     open at the top regardless: Psalm 119 showed you 1 to 60 and left you to
+     hunt. Checked on the long book and the short one, because the fix must
+     not scroll a book that fits. */
+  for (const [route, expect] of [['#/read/psalms/118', '119'],
+                                 ['#/read/genesis/0', '1']]) {
+    await desk.goto(ctx.base + route);
+    await desk.waitForSelector('.chapter-strip a[aria-current="true"]');
+    await desk.waitForTimeout(300);
+    const where = await desk.evaluate(() => {
+      const strip = document.querySelector('.chapter-strip');
+      const here = strip.querySelector('[aria-current="true"]');
+      const s = strip.getBoundingClientRect(), h = here.getBoundingClientRect();
+      return { label: here.textContent,
+               inView: h.top >= s.top - 1 && h.bottom <= s.bottom + 1 };
+    });
+    t.check('the chapter strip opens on the chapter you are in',
+            where.label === expect && where.inView,
+            route + ' -> ' + where.label + (where.inView ? ', in view' : ', OFF SCREEN'));
+  }
   await desk.close();
 };

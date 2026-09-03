@@ -133,6 +133,23 @@ the critical dating drawn as two bars on one scale, so how far apart they are
 is a thing you see rather than a thing you work out. On Amos the bars sit on
 top of each other. On Genesis they are seven centuries apart.
 
+**79 of the 163 works carrying text now have a dated position, up from 59.**
+The twenty added were chosen on one rule: the dating had to rest on something
+a reader can go and check. A book that dates itself — Haggai to the day by
+regnal year, Sirach's prologue to the thirty-eighth year of Euergetes,
+2 Maccabees to the Seleucid year 188. A book that fixes itself between two
+datable events — Nahum, written after Thebes fell in 663 and before Nineveh
+fell in 612, both of which it names. Or an ancient witness naming the author:
+Irenaeus on Polycarp, Eusebius on Papias, the Talmud on Lamentations, the
+Septuagint's own superscription.
+
+Where the honest answer needed a monograph that could not be verified from
+here, no position was written. The count of works without one is still
+printed by the audit as `NO-POSITION`, work by work, because an invented
+record would be precisely the assertion `tools/positions.py` exists to
+refuse — and a plausible-looking bar with nothing behind it is worse than a
+visible gap.
+
 The bars are read out of the prose positions by `tools/dates.py`, and it
 refuses to guess. Where a position names a person rather than a time — "Samuel",
 "Moses, shortly before his death" — there is no bar and the card says why.
@@ -175,6 +192,26 @@ precision: Tarshish, Sinai, Horeb, Sodom, Gomorrah, Emmaus and Ararat. A line
 of coordinates reads as a reference; a dot on a coastline reads as a finding,
 and drawing Tarshish in Spain would settle an argument this volume refuses to
 settle everywhere else.
+
+**The places are named on the canvas**, not only in the list underneath. A
+field of unlabelled dots says how many places a chapter names and nothing
+else: to find out which dot on the coast is Ashdod you had to point at it,
+which on a phone means guessing. Names are placed rather than laid out — each
+takes the space beside its pin only if that space is inside the canvas and
+clear of every name already placed — so a crowded coast drops the smaller
+names rather than stacking them into a smear, and zooming in gives them back.
+
+**Choosing a place opens it somewhere real**: Google Maps, Google Earth and
+OpenStreetMap on the coordinate itself, which on a phone hands you to the app
+if it is installed. That has always been there and was hard to reach. On a
+touch screen it was nearly impossible: the pan began on the first pixel of
+movement and the tap that followed was tested against the positions the pan
+had just moved, so a finger that wobbled four pixels slid the map out from
+under itself and missed a seven-pixel target. Nothing pans now until the
+pointer has passed a dead zone, a gesture that crossed it does not also
+choose, and the target a finger is answered by is 22 pixels rather than 7.
+The wheel was also the only way to zoom, which is to say there was no way at
+all on a phone; there are now two fingers and a pair of buttons.
 
 A canvas cannot be read by a screen reader, so everything on it is also on the
 page as a list of links carrying the same three grades. That list is not a
@@ -286,16 +323,79 @@ Gaps inherited from the source editions, left honest rather than invented:
 
 - Polycarp to the Philippians breaks off mid-sentence in chapter 14, where
   the Greek does; the Latin carries on and this volume does not print it.
-- The Psalms of Solomon and Philo are described but have no text.
+- The Psalms of Solomon and Philo are described but have no text. Unlike the
+  gaps below, these two are not forced: Ryle and James printed the Psalms of
+  Solomon in English in 1891 and G. B. Gray again in 1913, and Yonge
+  translated the whole of Philo in 1854. All three are public domain. They
+  are absent because nobody has done the work, which is a different sentence
+  from the one above and should not borrow its excuse.
 - The Dead Sea Scrolls appear as summaries — every English translation of the
   1947-and-later finds is under copyright.
+- **The sayings Gospel of Thomas is not here, and this volume has been
+  silent about that.** The Coptic text came out of Nag Hammadi in 1945 and
+  every English rendering of it is in copyright, which is the same wall the
+  Scrolls are behind. The silence matters more than the absence, because the
+  volume *does* print the Infancy Gospel of Thomas, under a title beginning
+  "THE GOSPEL OF THOMAS" — so a reader looking for the famous one finds a
+  different second-century text and nothing saying so. The one route in that
+  is public domain is partial: Grenfell and Hunt's English of the three Greek
+  Oxyrhynchus fragments, published 1897-1904, which carry about a fifth of
+  the sayings.
+- Whole shelves of the pseudepigrapha are simply not attempted, and the
+  volume says so nowhere. The Odes of Solomon, the Ascension of Isaiah, 2 and
+  3 Baruch, the Apocalypse and Testament of Abraham, Joseph and Aseneth, the
+  Life of Adam and Eve, the Letter of Aristeas and the Sibylline Oracles are
+  all in Charles's 1913 collection and all public domain; so are the Gospel
+  of Peter, the Acts of John, Peter and Andrew, the Epistle to the Laodiceans
+  and 3 Corinthians, in M. R. James's 1924 volume — which this volume already
+  cites as a source for two other books. "Related ancient texts" is the
+  subtitle, and Josephus in Whiston's 1737 English is not here either.
+
+## The day's passage
+
+Ask the site for daily affirmations and it gives you a verse instead.
+
+The home page shows one passage, chosen by what you last searched for, with
+its reference and a link to the chapter it sits in. It appears only once you
+have searched for something; it is the same passage all day rather than a new
+one on every reload; and **Forget my searches** on the card clears the five
+strings it reads from. Nothing leaves the page — the searches are in your own
+browser's storage and the verse is picked out of data the site had already
+fetched.
+
+It is a passage and not an affirmation on purpose, and the reason is this
+volume's own rule, from `tools/positions.py`:
+
+> An interpretive layer that merely asserts things, in the same visual frame
+> as audited text, would be the weakest link in the whole project.
+
+A written affirmation beside forty thousand audited verses would be the one
+sentence on the page with nothing behind it. A verse carries its citation by
+construction, and a browser check follows the card's link and compares the
+quoted text against the verse on the page word for word — so the card cannot
+drift into saying something *about* the text rather than quoting it.
 
 ## Listening to it
 
-Every chapter can be read aloud. There is no audiobook of these translations
-in the public domain and 1.22 million words cannot be recorded, so the reading
-is done by the speech engine already in the browser: press **Listen** in any
-chapter, or `l`.
+Every chapter can be read aloud by the speech engine already in the browser:
+press **Listen** in any chapter, or `l`. Nothing is downloaded, nothing is
+sent anywhere, and it works offline.
+
+This section used to open by saying that no audiobook of these translations
+exists in the public domain and that 1.22 million words cannot be recorded.
+Both halves are false, and the sentence mattered, because it was the stated
+reason nobody looked. LibriVox has read the World English Bible straight
+through and dedicated it to the public domain —
+[99 hours and 37 minutes of it](https://archive.org/details/worldenglishbible_1707_librivox),
+under the Public Domain Mark, with the Old and New Testaments also issued
+separately — and has done the same for
+[the Book of Enoch](https://archive.org/details/bookofenoch_1812_librivox) and
+[the Book of Jubilees](https://archive.org/details/book_jubilees_2108_librivox),
+which are the editions printed here. Read by people, not synthesised.
+
+The device's own voice remains the default and the offline path, and it is
+what every feature described below runs on. But it is a fallback by
+circumstance rather than by necessity, and the volume should say which.
 
 - The verse being spoken is marked, and the word inside it is highlighted where
   the browser supports the Custom Highlight API.
@@ -410,15 +510,37 @@ On a phone the reading usually stops when the screen locks or you switch app —
 the browser suspends the page, and this is speech, not a track playing in the
 background.
 
-### The recorded reading
+### The recorded reading, which is built, not rendered, and not offered
 
-Everything above is the device's own engine, and its ceiling is that the audio
-belongs to the operating system. So there is now a second voice in the drawer,
-offered first and to everyone, which is not the device's: **Recorded reading**,
-a neural voice reading the library, rendered ahead of time and served.
+**Nothing is uploaded, and the reader no longer offers it.** The voice is
+gated on `data-audio="published"` on `<html>` in `docs/index.html` — a
+deploy-time switch rather than a constant in the bundle, because it is a fact
+about a deploy and because the browser checks can set it to exercise the
+player's recorded path, which is finished and would otherwise lose its
+hundred tests the moment the voice stopped being offered. The attribute is
+absent, so the drawer shows the device's voices and nothing else. Nobody is
+shown a reading that would fall back the moment they chose it.
 
-It is the same reading on every device, which is the point — the machines with
-the worst drawers get the same voice as the best.
+`tools/check_audio.py` is now a gate in both directions rather than a
+permanent failure. No item and no attribute is the state it reports as
+correct. An item with no attribute is a switch somebody forgot to flip; an
+attribute with no item is a broken promise to every reader. Add the audio and
+the attribute in the same commit and the check starts holding the item to its
+word.
+
+**The cheapest way to finish it** is the one the fact-check turned up:
+LibriVox has read the World English Bible through and dedicated it to the
+public domain, and Charles's Enoch and Jubilees besides. A person rather than
+a model, and no rendering cost at all. What stands between that and `true` is
+alignment — an audiobook is continuous speech with no verse boundaries in it,
+and this player marks verses.
+
+Everything below is the design and the arithmetic behind it, kept because it
+is what the code implements and what the rendering will cost — not because
+any of it has been served to anybody.
+
+The point of it, once it exists: it is the same reading on every device, and
+the machines with the worst drawers get the same voice as the best.
 
 **Why it is not synthesised in the browser.** That was the first plan and the
 measurements killed it. Both engines were run through the same Chromium the
@@ -435,16 +557,16 @@ Below 1× the engine makes sound more slowly than the sound plays. Kokoro at
 worse again. It loses seven times going to WebAssembly — it is transformer-heavy,
 and there are no threads to be had on a site that cannot send COOP/COEP headers,
 which GitHub Pages cannot. Piper survives that and was the fallback plan; it is
-also not the voice that sounded right. So the arithmetic is done once, by
-[`tools/render_audio.py`](tools/render_audio.py), and the result is served.
+also not the voice that sounded right. So the arithmetic is to be done once, by
+[`tools/render_audio.py`](tools/render_audio.py), and the result served.
 
 **What it costs**, measured over Genesis 1, Daniel 3 and Psalm 23: 4.1× realtime
 on one core, 116 hours of audio for the whole library, 1.79 GB as Opus at 34
 kbps, 28 core-hours to render — and nothing in fees, the model being
-Apache-2.0 and running locally. The audio is not in this repository and not in
-the Pages artifact, which caps at 1 GB; it is an Internet Archive item, which
-is free, permanent, and the right home for a public-domain reading of
-public-domain texts.
+Apache-2.0 and running locally. The audio would not be in this repository and
+not in the Pages artifact, which caps at 1 GB; the intended home is an
+Internet Archive item, which is free, permanent, and the right place for a
+public-domain reading of public-domain texts. That item has not been made.
 
 **Why one file per chapter, with the verses indexed.** The chapter is what you
 fetch and what you sit through, so it is one request and one `<audio>` element:
@@ -456,10 +578,11 @@ alternative — render the chapter whole and recover the boundaries afterwards �
 is forced alignment: a second model, an approximation, and a new way for the
 highlight to drift halfway through Jeremiah.
 
-Two things are honestly worse with it. **There is no word highlight**, because
-an audio file has no word boundaries to report; the verse mark carries the
-reading instead. And **it needs a network**, so the device voice remains the
-default and the offline path, and the single-file copy does not offer it at all.
+Two things would be honestly worse with it. **There is no word highlight**,
+because an audio file has no word boundaries to report; the verse mark carries
+the reading instead. And **it needs a network**, so the device voice remains
+the default and the offline path, and the single-file copy does not offer it
+at all.
 
 Everything that can go wrong lands back on the device voice with a sentence
 saying why: no recording of this chapter, a file that will not play, a fetch
@@ -478,9 +601,10 @@ hundred and sixteen hours of it.
 
 A browser with no speech support at all used to be offered no control. It is
 now offered the recorded reading, which needs no engine — that device is
-exactly who it is for. If there is no recording within reach either, it is told
-so rather than left pressing a button that does nothing; and a device that has
-speech support but no installed voice — a Linux desktop without
+exactly who it is for, and it is the device that loses most by the audio not
+existing yet. With no recording within reach it is told so rather than left
+pressing a button that does nothing, which is what happens today; and a device
+that has speech support but no installed voice — a Linux desktop without
 speech-dispatcher — is still told exactly that.
 
 ## Building it
@@ -497,18 +621,46 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | `tools/scans.py` | Reads a scan by its word coordinates — running heads, marginal numbers and footnotes taken off by where they sit on the leaf |
 | `tools/build_lightfoot.py` | Splices 1 Clement's six recovered chapters in, and restores Smyrnaeans 13 |
 | `tools/audit.py` | Checks chapter and verse counts against reference figures |
+| `tools/verify.py` | Reads every verse and paragraph and asks whether the text is the text and nothing else, and whether every definition, pin and link points at something that exists. `--links` reaches every external address as well |
 | `tools/build_canon.py` | Builds canon membership and checks coverage claims |
 | `tools/build_index.py` | Builds the sharded search index |
 | `tools/build_standalone.py` | Inlines the whole library into one HTML file that runs offline, and cuts out the parts of the page an offline copy cannot honour |
 | `tools/textnorm.py` | The one rule that folds text into a search token or a lookup key |
 | `tools/speakable.py` | The one rule for what a voice is handed, read out of `app.js` so the page and the recording cannot drift apart |
-| `tools/render_audio.py` | Renders the library to audio, one file per chapter with the verses indexed — run by hand, output hosted off this repository |
+| `tools/render_audio.py` | Renders the library to audio, one file per chapter with the verses indexed — run by hand, output to be hosted off this repository. Not yet run |
 | `tools/dates.py` | Reads a numeric span out of a position statement, and refuses to where there is none |
-| `tools/lint.sh` | Everything parses, and every data file is the JSON it claims to be |
+| `tools/check_audio.py` | Asks the Internet Archive whether the recorded reading the player offers is actually there. It is not, and this fails until it is |
+| `tools/lint_css.py` | The two mistakes a stylesheet makes silently: a selector declared twice, and a colour defined and never used |
+| `tools/lint.sh` | Everything parses, the stylesheet says each thing once, and every data file is the JSON it claims to be |
 | `tools/test.sh` | Runs the unit tests and the browser checks in `tests/` |
 
 The audit is the point: if a count on the site is wrong, `tools/audit.py` will
 say so, and the build will stop. Findings are stated so they can be falsified.
+
+`tools/verify.py` is the same idea one level in. The audit asks whether the
+*shape* of the library matches the reference figures — does Genesis have fifty
+chapters, does Psalms have 2,461 verses. It cannot see what is inside them. So
+this reads all 40,124 verses and every paragraph and asks whether the text is
+the text and nothing else, and whether every one of the 3,851 definitions, 114
+aliases, 1,232 places, 4,684 pins and every internal link points at something
+that exists.
+
+It found seventy-nine pieces of the transcription's own furniture being
+printed as scripture and read aloud as scripture. Thirty-nine were printed
+page numbers — `[p. 134]` — dropped into the running text of 1 Enoch and the
+Testament of our Lord wherever a leaf turned. Forty were `[paragraph
+continues]`, the transcriber's note that a paragraph ran on past a page break,
+and every one of them lands mid-clause: *"And regarding them I prayed to the
+[paragraph continues] Lord."* Neither is blanked before speaking, because
+`speakable()` blanks what is neither letter nor digit and `p. 134` is both.
+
+What it deliberately does **not** touch is Charles's own square brackets. He
+supplies words the Ethiopic does not have — `[and]`, `[them]`, `[for Thou
+seest everything]` — and that is the translator's apparatus, which this volume
+prints. 962 bracketed strings survive the pass and 79 were taken out; a rule
+that took the rest would be rewriting Charles rather than cleaning up after
+his scanner. `tests/python/test_verify.py` holds both halves of that: the
+planted furniture must be found, and the planted brackets must not be.
 
 `tools/audit-baseline.txt` is what makes that a gate rather than a report.
 Every finding the audit produces is either a defect or a known property of the
@@ -541,17 +693,18 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 
 | Suite | Checks |
 | --- | --- |
-| `tests/python` | The parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. One of them runs the reader's own copy of the folding rule against the Python one, because the two are written in different languages and a divergence between them is silent. Another holds the seam where 1 Clement changes translator: the six recovered chapters are checked against the volume's own text of the chapters either side of them, because a splice made one chapter out of step would still read as English |
+| `tests/python` | The verifier against planted defects — a page number, a paragraph note, an advertisement, a duplicated verse number, a dangling alias, a pin on a chapter that is not there — including the control that a clean library reports nothing, and the negative case that a translator's square brackets are never mistaken for a scanner's. And the parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. One of them runs the reader's own copy of the folding rule against the Python one, because the two are written in different languages and a divergence between them is silent. Another holds the seam where 1 Clement changes translator: the six recovered chapters are checked against the volume's own text of the chapters either side of them, because a splice made one chapter out of step would still read as English. Two more hold things the parser has no opinion about: every number this README states, against the data it is describing, and every colour in the stylesheet's palette against the contrast it has to clear — both of which are claims, and both of which had rotted |
 | `routes` | Every page renders, search returns verses, a saved verse survives a reload, nothing throws |
 | `layout` | At 320–430px every nav link is on screen, nothing scrolls sideways, the bar tucks away as you read, desktop is unchanged |
 | `dating` | The date card against the spans the parser read, the method page, and that a citation names the edition and the era rather than just a URL |
-| `search` | Result counts against known answers rather than "more than zero": phrases against their words, several terms meaning all of them, the three different ways a search can end with nothing, and that an accented or ligatured spelling on the page is reachable by an ordinary one |
+| `search` | Result counts against known answers rather than "more than zero": phrases against their words, several terms meaning all of them, the three different ways a search can end with nothing, that an accented or ligatured spelling on the page is reachable by an ordinary one, and that a reference is answered as a reference — including the split works, where Isaiah 40 has to land in the second Isaiah, and the ambiguous ones, where two answers stay two |
 | `words` | Turning a word on the page into an entry — by selection, by keyboard, by alias — what a missing entry says, and the places panel |
 | `keeping` | Saving, unsaving, notes, the migration from the old bookmarks key, and what happens when the browser refuses to store anything at all |
 | `resilience` | The data failing to load, malformed data, routes that name nothing, the keyboard shortcuts, the skip link, and what a screen reader is actually told |
+| `access` | Every route run through axe-core against WCAG A and AA, in both themes, with the map open — plus the first tab stop and whether a sideways-scrolling table can be scrolled without a pointer. It found one thing on its first run and it was real |
 | `listening` | What is spoken and in what order, which voice out of a bad drawer is picked, that the apparatus is never read out, where long passages are broken and how long the pauses are at each pace, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |
 | `offline` | The single-file build opens from `file://` and every feature in it works with no network at all |
-| `map` | Land is actually painted, the frame chooses itself from what the chapter names, every place on the canvas is also a link on the page — checked against the canvas and against the mention index, not against itself — a disputed identification is not drawn as a settled one, panning cannot lose the map, zooming culls pins without inventing them, the first-appearance layer rings places rather than removing them and says it means composition order, relating two places draws no line between them, the canvas follows the theme, and all of it works from `file://` |
+| `map` | Land is actually painted, the names are painted on it and not only listed under it, a drag does not also choose a place, the scale can be changed with two fingers and with buttons rather than only a wheel, choosing a place offers Google Maps, Earth and OpenStreetMap on its real coordinates, the frame chooses itself from what the chapter names, every place on the canvas is also a link on the page — checked against the canvas and against the mention index, not against itself — a disputed identification is not drawn as a settled one, panning cannot lose the map, zooming culls pins without inventing them, the first-appearance layer rings places rather than removing them and says it means composition order, relating two places draws no line between them, the canvas follows the theme, and all of it works from `file://` |
 
 The unit tests and the lint run on every pull request and again before every
 deploy. The browser checks used to run on pull requests only, which meant
@@ -585,6 +738,28 @@ starts. Everything on a reading page is the width of that leaf: the title,
 the chapter strip, the controls and the pager all line up with it, so the
 page reads as one object.
 
+**A control filled with the accent takes the ground colour for its type**,
+never a literal white. The accent is a deep purple in the light theme and a
+pale pink in the dark one, so `#fff` on it measures 10.5:1 in one and
+**2.30:1** in the other — and 1.72:1 on the hover accent, which is a button
+whose label has effectively gone. That was written correctly once, on the
+player's play button, with a comment saying why; five other rules went on
+using white, among them the skip link, which is the first thing a keyboard
+user reaches, and the chip that carries *Open in Google Maps*. The palette
+test only compared tokens against tokens, so a rule that ignored the palette
+was invisible to it. It reads the literals out of the stylesheet now.
+
+**One type for what is written, another for what operates it.** The
+scripture was always set in the book's own serif; everything around it —
+the lead paragraphs, the note on a work, the reasoning under a thread stop,
+the findings in the accuracy report, the footer — was set in the
+interface's sans, so the codex stopped at the edge of the leaf and the rest
+of the site read like a form wrapped round it. The division is a printed
+book's now: text face for anything written to be read, sans for the
+apparatus that works it — labels, buttons, table heads, counts, dates.
+Those are read by glance rather than by line, and they are the one place a
+second voice belongs.
+
 **Two accents, and the difference between them is the whole system.**
 Rubric red is the colour a scribe changed pens for, and it does here what
 it did there: the chapter heading, the verse numbers, the section numerals,
@@ -596,11 +771,38 @@ and neither is ever used for the other's work. Open a verse's menu and its
 number turns from red to purple, because at that moment it has stopped
 being a numeral and become a control.
 
+That rule is easy to state and had been broken in two places: a thread card
+ruled in rubric and an editorial callout ruled in rubric, neither of which
+is the structure of a text. They are furniture, and they are purple now.
+
+A third was claimed here and was not real. `.player-bar i` — the hairline
+that fills as a chapter plays — was declared twice, twenty-six lines apart,
+and the second declaration already said purple and won on source order. The
+rubric one had never painted a pixel. It was read, believed, and written up
+as a fix, and what actually happened was a dead line being edited rather
+than deleted. It is deleted now, and `tools/lint_css.py` fails the build on
+any selector declared twice, which is how the other four turned up.
+
+The callouts take
+**gilt** instead, which is the third material and the one that had been
+defined in the stylesheet and used nowhere: gold leaf, which a scribe put
+on neither the text nor the rubric but on the border of the leaf. It rules
+the volume's own asides and it does nothing else.
+
 The rest follows from materials: unbleached parchment for the ground, iron
 gall — which oxidises violet-black rather than grey — for type. Dark is the
 same room unlit, and it inverts the two, which is what a photographic
 negative of a manuscript looks like: the leaf goes to the colour of the ink
 and the ink to the colour of the leaf.
+
+**The way into the other chapters costs two rows, not four.** The strip of
+chapter numbers above the text used to stand at its full height — fifty
+numbers on Genesis, a hundred and fifty on Psalms — so on a laptop the
+scripture began below the fold. It is two rows deep now and scrolls past
+that, with the row under them showing half and fading, which is what says
+there are more. It also opens on the chapter you are in: it did not
+before, so Psalm 119 showed you the first sixty numbers and left you to
+find your own.
 
 **Nothing is fetched to do any of it.** The site ships no dependencies and
 its single-file build has to open from `file://` with the network off, so
@@ -648,7 +850,44 @@ though the library is seven megabytes. Read-aloud is the browser's own
 `speechSynthesis`, with each passage cut into utterances short enough to clear
 Chrome's fifteen-second cut-off.
 
-Search is a two-stage design: a chapter-granularity inverted index (1.45 MB
+**A reference is answered as a reference.** Typing `Psalm 23`, `Job 38:4` or
+`1 Cor 13` offers the passage itself above the word matches, rather than the
+verses that happen to contain the word "psalms" — which is what it used to do,
+and which is no answer to the question. Two things about this edition make
+that more than a lookup: Isaiah is three works here and 1 Enoch is four,
+because they were written at different times, so `Isaiah 40` has to land in
+the second Isaiah rather than forty chapters into the first. It does, because
+every chapter keeps its printed number in its label and the resolver asks
+which work carries a "Chapter 40" instead of counting from an offset. Where a
+reference is genuinely ambiguous — the volume has a book of Psalms and a Psalm
+151, so `Psalm 1` is two places — both are offered rather than one guessed at.
+
+**A search can be asked of one book.** The library is 1.22 million words and
+the results are capped at three hundred, so a common word answered with three
+hundred verses from everywhere and the one you wanted was somewhere inside
+them. The book sits beside the query and in the URL, so a narrowed search can
+be kept and shared: `#/search/shepherd/psalms` is the six verses in the
+Psalter, the first of which is the one everybody means.
+
+**What it costs, measured rather than asserted.** Against a server that
+gzips, which is what GitHub Pages does, on a phone-sized viewport: the home
+page is **150 KB over six requests** and a chapter **210 KB over eight**,
+first contentful paint about 100 ms in both Chromium and Firefox. A search
+for a common word is the expensive thing here — **1.6 MB over sixty-one
+requests** — because the second stage fetches every work containing a hit.
+That is the price of a concordance over 1.22 million words, and it is paid
+on a search rather than on arrival. The `routes` suite holds the first two
+to a budget, so a data file cannot quietly wander onto the critical path.
+
+Three things were being shipped and never read, and are not shipped now: the
+manifest carried a copy of all 2,537 chapter labels (35 KB of a 170 KB file
+fetched before anything can render), and each of the lexicon's 20,120
+references was stored twice, as Easton's abbreviation and as the expansion,
+where only the expansion can be resolved. The manifest is 20% smaller, the
+lexicon 21%, and the single-file offline copy went from 13.33 MB to 12.59 —
+which also moved it from 89% of its build ceiling to 84%.
+
+Search is a two-stage design: a chapter-granularity inverted index (1.64 MB
 across 27 shards) narrows candidates, then only the matching works are fetched
 and scanned for exact verses. Quote a phrase to match it exactly.
 
@@ -691,6 +930,8 @@ no single label would be true of all of it. The full account is in
   relicensing downstream, so everything in `docs/data/` is offered under
   CC BY 4.0 to match. The site names the source of every definition and every
   coordinate at the point of use, not only in aggregate.
-- **The recorded reading is CC BY 4.0** — public-domain words, synthesised
-  with an Apache-2.0 model whose licence governs the weights this repository
-  does not ship, and asserts nothing over what the model produces.
+- **The recorded reading, when it exists, will be CC BY 4.0** — public-domain
+  words, synthesised with an Apache-2.0 model whose licence governs the weights
+  this repository does not ship, and asserts nothing over what the model
+  produces. Nothing has been rendered or published yet; see *The recorded
+  reading* above.

@@ -99,11 +99,32 @@ def skip(why):
     return 0
 
 
+INDEX_HTML = os.path.join("docs", "index.html")
+
+
+def declared_published(path=INDEX_HTML):
+    """Does the served page say a recording exists?
+
+    The reader gates the recorded voice on data-audio="published" on <html>.
+    That is a fact about a deploy rather than about the code, so it lives in
+    the page, and this check reads it from the same place the browser does.
+    """
+    try:
+        with open(path, encoding="utf-8") as fh:
+            html = fh.read()
+    except OSError as exc:
+        sys.exit("check_audio: cannot read %s: %s" % (path, exc))
+    return re.search(r'<html[^>]*\bdata-audio\s*=\s*"published"', html) is not None
+
+
 def check(sample, app_js):
     base = audio_base(app_js)
     meta_url, item = metadata_url(base)
+    published = declared_published()
     print("AUDIO_BASE in %s -> %s" % (app_js, base))
     print("item: %s" % item)
+    print("docs/index.html declares the reading %s"
+          % ("published" if published else "not published"))
 
     try:
         raw = fetch(meta_url)
@@ -121,21 +142,35 @@ def check(sample, app_js):
     # {} is the Internet Archive's answer for an item that does not exist.
     # That is a definite answer, and it is the finding.
     if not (meta.get("files") or meta.get("metadata")):
+        if not published:
+            print()
+            print("ok: there is no item at %r, and the page does not claim"
+                  % item)
+            print("    there is. The recorded voice is not offered, so nobody")
+            print("    is shown a reading that would fall back the moment they")
+            print("    chose it.")
+            print()
+            print("    To publish: render the audio, upload it to that item,")
+            print("    and add data-audio=\"published\" to <html> in")
+            print("    docs/index.html in the same commit. This check then")
+            print("    holds the item to its promise instead.")
+            return 0
         print()
-        print("FAIL: there is no Internet Archive item called %r." % item)
+        print("FAIL: docs/index.html declares the reading published and there")
+        print("      is no Internet Archive item called %r." % item)
         print()
-        print("  The reader offers 'Recorded reading' first, to everyone, and")
-        print("  fetches it from %s" % base)
-        print("  Nothing is there, so choosing it plays silence and falls back")
-        print("  to the device's own voice.")
+        print("  Every reader is being offered a voice that is not there, and")
+        print("  choosing it plays nothing and falls back to the device.")
+        print("  Either upload the audio or take the attribute back off.")
+        return 1
+
+    if not published:
         print()
-        print("  Two ways out, and they are the owner's call:")
-        print("    - render and upload the readings (tools/render_audio.py),")
-        print("      or point AUDIO_BASE at wherever they end up; or")
-        print("    - drop the option from fillVoices() in docs/assets/app.js.")
+        print("FAIL: the item %r exists and the page does not offer it." % item)
         print()
-        print("  Until one of those happens this check will keep failing,")
-        print("  which is the point of it.")
+        print("  data-audio=\"published\" is missing from <html> in")
+        print("  docs/index.html, so the reader hides a reading that is")
+        print("  sitting there ready. Add the attribute.")
         return 1
 
     print("the item exists: %d files"

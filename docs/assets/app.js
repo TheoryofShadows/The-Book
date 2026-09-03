@@ -28,6 +28,19 @@
     return n;
   }
 
+  /* A table too wide for the screen is put in a box that scrolls sideways.
+     A box that scrolls and cannot be focused is a box a keyboard cannot
+     scroll -- axe calls it scrollable-region-focusable and it is right: on
+     the accuracy report the only way to reach the right-hand columns was a
+     pointer. Focusable, named, and announced as a region it is a thing you
+     can tab to and then use the arrow keys in. */
+  function scroller(inner, label) {
+    return el("div", {
+      class: "scroller", tabindex: "0", role: "region",
+      "aria-label": label || "Table, scrollable sideways"
+    }, [inner]);
+  }
+
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -226,6 +239,124 @@
      HOME — the chronological timeline
      ================================================================ */
 
+  /* ---------------- the day's passage ----------------
+
+     Asked for as "daily affirmations based off the user's recent searches".
+     What is here instead is a passage: a real verse from this volume, chosen
+     by what the reader has been looking for, with its reference and a link
+     to the chapter it sits in.
+
+     The difference is the whole project. tools/positions.py states the rule
+     this site is built on -- "an interpretive layer that merely asserts
+     things, in the same visual frame as audited text, would be the weakest
+     link in the whole project" -- and a machine-written affirmation beside
+     forty thousand audited verses is exactly that: the one sentence on the
+     page with nothing behind it. A verse has a citation by construction.
+
+     The searches never leave the page. They are five strings in
+     localStorage under the reader's own key, they are used to pick a verse
+     out of data already fetched, and they can be cleared from the card. */
+
+  var SEARCH_MEMORY = 5;
+
+  function rememberSearch(query) {
+    var term = String(query || "").trim();
+    if (term.length < 3) return;
+    var recent = store.get("recent-searches", []);
+    if (!Array.isArray(recent)) recent = [];
+    recent = recent.filter(function (x) { return x !== term; });
+    recent.unshift(term);
+    store.set("recent-searches", recent.slice(0, SEARCH_MEMORY));
+  }
+
+  /* One passage a day, and the same one all day.
+
+     Seeded on the date and the term, so the card does not reshuffle every
+     time the page is opened -- a passage that changes on every reload is a
+     slot machine rather than a reading. */
+  function daySeed(extra) {
+    var key = new Date().toISOString().slice(0, 10) + "|" + (extra || "");
+    var h = 2166136261;
+    for (var i = 0; i < key.length; i++) {
+      h ^= key.charCodeAt(i);
+      h = (h * 16777619) >>> 0;
+    }
+    return h;
+  }
+
+  function todaysPassage(manifest, done) {
+    var recent = store.get("recent-searches", []);
+    if (!Array.isArray(recent) || !recent.length) { done(null); return; }
+
+    // The most recent search that the index actually knows a word of.
+    var term = recent[0];
+    var terms = tokenise(term);
+    if (!terms.length) { done(null); return; }
+    var word = terms[daySeed(term) % terms.length];
+    var shard = /^[a-z]/.test(word) ? word[0] : "0";
+
+    Promise.all([getJSON("chapters.json"),
+                 getJSON("index/" + shard + ".json").catch(function () { return {}; })])
+      .then(function (loaded) {
+        var table = loaded[0], index = loaded[1];
+        var ids = [];
+        Object.keys(index).forEach(function (token) {
+          if (token.indexOf(word) === 0) {
+            ids = ids.concat(index[token] || []);
+          }
+        });
+        if (!ids.length) { done(null); return; }
+
+        var cid = ids[daySeed(term + word) % ids.length];
+        var row = table.chapters[cid];
+        if (!row) { done(null); return; }
+
+        return getJSON("works/" + row[0] + ".json").then(function (work) {
+          var chapter = work.chapters[row[1]];
+          if (!chapter) { done(null); return; }
+          var units = (chapter.verses || []).filter(function (v) {
+            return new RegExp("\\b" + word, "i").test(fold(v.t));
+          });
+          if (!units.length) { done(null); return; }
+          var verse = units[daySeed(term + cid) % units.length];
+          done({
+            work: row[0], workTitle: row[3], chapterIdx: row[1],
+            label: row[2], verse: verse.v, text: verse.t, term: term
+          });
+        });
+      }).catch(function () { done(null); });
+  }
+
+  function passageCard(manifest, found) {
+    var box = el("section", { class: "today" });
+    box.appendChild(el("p", { class: "today-eyebrow", text:
+      "Today, because you searched \u201c" + found.term + "\u201d" }));
+    box.appendChild(el("blockquote", { class: "today-text", text: found.text }));
+
+    var foot = el("p", { class: "today-foot" });
+    foot.appendChild(el("a", {
+      class: "today-ref",
+      href: "#/read/" + found.work + "/" + found.chapterIdx +
+            (found.verse ? "/v" + found.verse : ""),
+      text: titleCase(found.workTitle) + " \u00b7 " + found.label +
+            (found.verse ? ":" + found.verse : "")
+    }));
+    foot.appendChild(el("button", {
+      class: "today-forget", text: "Forget my searches",
+      title: "Clears the searches this card is chosen from",
+      onclick: function () {
+        store.set("recent-searches", []);
+        var note = el("p", { class: "today-eyebrow", text:
+          "Forgotten. The card comes back the next time you search." });
+        box.innerHTML = "";
+        box.appendChild(note);
+        announce("Recent searches cleared.");
+      }
+    }));
+    box.appendChild(foot);
+    return box;
+  }
+
   function viewHome(manifest) {
     var t = manifest.totals;
     var wrap = el("div", { class: "wrap" });
@@ -242,15 +373,34 @@
       })
     ]));
 
+    /* Counted, not typed. Every other figure in this row comes from the
+       manifest and moves when the library moves; this one was the literal
+       10, which is right today and is the only number on the front page
+       nothing checks. The eras are the sections that carry a numeral --
+       I to X -- as against the collections after them, which are grouped by
+       author or book rather than by date. */
+    var eras = manifest.sections.filter(function (s) { return !!s.roman; }).length;
+
     var stats = el("div", { class: "stats" });
     [[t.works, "works"], [t.chapters, "chapters"], [t.verses, "numbered verses"],
-     [t.words, "words"], [10, "eras, before the collections"]]
+     [t.words, "words"], [eras, "eras, before the collections"]]
       .forEach(function (p) {
         stats.appendChild(el("div", { class: "stat" }, [
           el("b", { text: fmt(p[0]) }), el("span", { text: p[1] })
         ]));
       });
     wrap.appendChild(stats);
+
+    /* Under the colophon and above the threads: it is a way in rather than
+       the point of the page, and a reader who has never searched sees
+       nothing at all rather than an empty frame. */
+    var todaySlot = el("div");
+    wrap.appendChild(todaySlot);
+    todaysPassage(manifest, function (found) {
+      if (found && todaySlot.isConnected) {
+        todaySlot.appendChild(passageCard(manifest, found));
+      }
+    });
 
     // The chronological order is the only thing here no other Bible site can
     // copy. Left as a filing decision it is invisible; this is where a
@@ -412,8 +562,9 @@
       if (mode === "chrono") {
         table.appendChild(el("thead", {}, [el("tr", {}, [
           el("th", { text: "Era" }), el("th", { text: "Work" }),
-          el("th", { text: "Dated" }), el("th", { text: "Chapters" }),
-          el("th", { text: "Words" })
+          el("th", { text: "Dated" }),
+          el("th", { class: "num", text: "Chapters" }),
+          el("th", { class: "num", text: "Words" })
         ])]));
         var tb = el("tbody");
         manifest.sections.forEach(function (s) {
@@ -422,8 +573,8 @@
               el("td", { class: "muted", text: s.roman || "—" }),
               el("td", {}, [el("a", { href: "#/read/" + w.id + "/0", text: titleCase(w.title) })]),
               el("td", { class: "muted", text: s.dates || "—" }),
-              el("td", { text: w.chapters || "—" }),
-              el("td", { text: w.words ? fmt(w.words) : "—" })
+              el("td", { class: "num", text: w.chapters || "—" }),
+              el("td", { class: "num", text: w.words ? fmt(w.words) : "—" })
             ]));
           });
         });
@@ -460,7 +611,7 @@
         });
         table.appendChild(tb2);
       }
-      body.appendChild(el("div", { class: "scroller" }, [table]));
+      body.appendChild(scroller(table, "Contents, scrollable sideways"));
     }
 
     render();
@@ -594,17 +745,36 @@
 
       if (work.chapters.length > 1) {
         var strip = el("div", { class: "chapter-strip" });
+        var hereLink = null;
         work.chapters.forEach(function (c, i) {
-          strip.appendChild(el("a", {
+          var a = el("a", {
             href: "#/read/" + workId + "/" + i,
             "aria-current": i === idx ? "true" : null,
             title: c.label,
             text: c.n === null || c.n === undefined
               ? c.label.replace(/^.*?(\d+).*$/, "$1") || "·"
               : String(c.n)
-          }));
+          });
+          if (i === idx) hereLink = a;
+          strip.appendChild(a);
         });
         head.appendChild(strip);
+
+        /* The strip scrolls once it is past two rows, and it used to open at
+           the top of itself whatever chapter you were in: Psalm 119 showed
+           you the first sixty numbers and left you to hunt for the one you
+           were reading. Put the current chapter in view instead -- after the
+           strip is in the document, because until then it has no height to
+           scroll. Not scrollIntoView, which would take the whole page with
+           it and move the chapter you are reading off the screen. */
+        if (hereLink) {
+          setTimeout(function () {
+            if (!strip.isConnected) return;
+            var want = hereLink.offsetTop -
+                       (strip.clientHeight - hereLink.offsetHeight) / 2;
+            strip.scrollTop = Math.max(0, want);
+          }, 0);
+        }
       }
 
       var perLine = store.get("verse-per-line", false);
@@ -1296,6 +1466,49 @@
      western and eastern horizon, and they are why the world layer exists. */
   var LEVANT = { w: 20, s: 12, e: 55, n: 42 };
 
+  /* Every map ever drawn has to follow the theme and the window, and it used
+     to arrange that for itself: three listeners added when the map opened --
+     the theme button, the system colour-scheme query, the window resize --
+     and none ever taken off again. They close over the canvas, the places and
+     the redraw, so nothing on a chapter you have left can be collected, and
+     every theme toggle repaints every map you have ever opened. Reading down
+     Psalms with the map open leaves a hundred and fifty of them wired up.
+
+     So the three listeners are registered once, here, and the maps register
+     with them instead. A map whose element has left the document is dropped
+     the next time anything fires, which is the only moment the answer
+     matters. */
+  /* Asked each time rather than once: a laptop with a touchscreen answers
+     differently depending on what the reader last used, and the answer only
+     ever costs a media query. */
+  function coarsePointer() {
+    return !!(window.matchMedia &&
+              window.matchMedia("(pointer: coarse)").matches);
+  }
+
+  var liveMaps = [];
+
+  function watchMap(wrap, redraw) {
+    liveMaps.push({ wrap: wrap, redraw: redraw });
+  }
+
+  function redrawLiveMaps() {
+    liveMaps = liveMaps.filter(function (m) { return m.wrap.isConnected; });
+    liveMaps.forEach(function (m) { if (m.wrap.open) m.redraw(); });
+  }
+
+  document.getElementById("theme").addEventListener("click", function () {
+    // After the class has actually changed, not while it is being changed.
+    setTimeout(redrawLiveMaps, 0);
+  });
+  if (window.matchMedia) {
+    var schemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    if (schemeQuery.addEventListener) {
+      schemeQuery.addEventListener("change", redrawLiveMaps);
+    }
+  }
+  window.addEventListener("resize", redrawLiveMaps);
+
   function inFrame(p, f) {
     return p.lon >= f.w && p.lon <= f.e && p.lat >= f.s && p.lat <= f.n;
   }
@@ -1336,7 +1549,12 @@
          dark ground. */
       coast: pick("--ink-faint", "#857c8a"),
       pin: pick("--accent", "#6b2d5b"),
-      faint: pick("--ink-faint", "#857c8a")
+      faint: pick("--ink-faint", "#857c8a"),
+      /* Names are drawn on top of land, sea and pins, so they carry a halo
+         of the ground behind them rather than relying on contrast with
+         whatever they happen to land on. */
+      text: pick("--ink", "#1d1822"),
+      halo: pick("--paper", "#eee7d9")
     };
   }
 
@@ -1408,7 +1626,14 @@
       var x = pr.x(p.lon), y = pr.y(p.lat);
       if (x < -20 || y < -20 || x > w + 20 || y > h + 20) return;
       var r = 2.2 + Math.log(1 + (p.mentions || 1)) * 1.15;
-      state.hit.push({ x: x, y: y, r: Math.max(r, 7), place: p });
+      /* The dot is small because the map is small. The target it answers to
+         is not the dot: seven pixels is a comfortable mouse target and a
+         quarter of a fingertip, and this map is most often read on a phone.
+         Apple asks for 44 and Android for 48; a pin cannot have that without
+         swallowing its neighbours, so 22 is the compromise -- four times the
+         area, still smaller than the gap between two nearby places. */
+      state.hit.push({ x: x, y: y, r: Math.max(r, coarsePointer() ? 22 : 9),
+                       place: p });
 
       /* With a place chosen, the ones it shares a chapter with keep their
          weight and the rest fall back. Nothing is drawn between them: a line
@@ -1476,6 +1701,67 @@
         ctx.lineWidth = 2;
         ctx.stroke();
       }
+    });
+
+    /* Names.
+
+       A field of unlabelled dots is a picture of how many places a chapter
+       names, and nothing else: to find out that the dot on the coast is
+       Ashdod you had to point at it, which on a phone means guessing. The
+       names are the map.
+
+       They are placed rather than laid out: each is offered the space to the
+       right of its pin and takes it only if that box is inside the canvas and
+       clear of every box already taken, so a crowded coast drops the smaller
+       names instead of stacking them into a smear. The chosen place is
+       written first and therefore never dropped; the rest are written in the
+       order the volume names them most often, which is the order in which
+       knowing the name is worth most.
+
+       Not a substitute for the list under the canvas. That list is still
+       every place, still in the DOM, and still what a screen reader reads. */
+    var labels = state.places.slice().sort(function (a, b) {
+      if (a === state.chosen) return -1;
+      if (b === state.chosen) return 1;
+      return (b.mentions || 0) - (a.mentions || 0);
+    });
+    var taken = [];
+    ctx.font = "500 11px " + (getComputedStyle(canvas).fontFamily || "sans-serif");
+    ctx.textBaseline = "middle";
+    labels.forEach(function (p) {
+      var hit = null;
+      state.hit.forEach(function (h) { if (h.place === p) hit = h; });
+      if (!hit) return;                       // off the canvas at this zoom
+
+      // Dimmed places are context rather than subject: naming them all
+      // would undo the emphasis the choosing just made.
+      var kin = state.kin && state.kin.counts;
+      if (kin && p !== state.chosen && !(kin[p.key] > 0)) return;
+
+      var pad = 3;
+      var wide = ctx.measureText(p.name).width;
+      var bx = hit.x + hit.r * 0.5 + 5, by = hit.y;
+      var box = { l: bx - pad, r: bx + wide + pad, t: by - 7, b: by + 7 };
+      // Flip to the left rather than run off the edge.
+      if (box.r > canvas.clientWidth - 2) {
+        bx = hit.x - hit.r * 0.5 - 5 - wide;
+        box = { l: bx - pad, r: bx + wide + pad, t: by - 7, b: by + 7 };
+      }
+      if (box.l < 2 || box.t < 2 || box.b > canvas.clientHeight - 2) return;
+      var clash = taken.some(function (t) {
+        return !(box.r < t.l || box.l > t.r || box.b < t.t || box.t > t.b);
+      });
+      if (clash) return;
+      taken.push(box);
+
+      ctx.globalAlpha = p === state.chosen ? 1 : 0.88;
+      ctx.lineJoin = "round";
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = ink.halo;
+      ctx.strokeText(p.name, bx, by);
+      ctx.fillStyle = p === state.chosen ? ink.pin : ink.text;
+      ctx.fillText(p.name, bx, by);
+      ctx.globalAlpha = 1;
     });
 
     /* What the canvas actually put down, in its own words. The page claims
@@ -1555,7 +1841,30 @@
 
   function chapterMap(workId, chapterIdx, chapterLabel) {
     var wrap = el("details", { class: "chapter-map" });
-    wrap.appendChild(el("summary", { text: "Where this chapter happens" }));
+    var summary = el("summary", {}, [
+      el("span", { text: "Where this chapter happens" })
+    ]);
+    var tally = el("span", { class: "map-tally" });
+    summary.appendChild(tally);
+    wrap.appendChild(summary);
+
+    /* How many places, before it is opened rather than after.
+
+       The gazetteer covers the Hebrew Bible and the New Testament, so 1,718
+       of the 2,537 chapters have nothing to draw -- and Job has seven maps
+       across forty-two chapters, Psalms fifty-five across a hundred and
+       fifty. Opening the panel to be told there is nothing, over and over,
+       is what a removed feature feels like. The index this counts from is
+       60 KB and is the same file the map itself opens with, so the answer
+       costs one fetch that was going to happen anyway. */
+    getJSON("mentions.json").then(function (table) {
+      if (!tally.isConnected) return;
+      var n = (table[workId + "/" + chapterIdx] || []).length;
+      tally.textContent = n
+        ? n + (n === 1 ? " place" : " places")
+        : "none in the gazetteer";
+      if (!n) tally.className = "map-tally none";
+    }).catch(function () { /* the panel still opens and says so itself */ });
 
     var body = el("div", { class: "map-body" });
     wrap.appendChild(body);
@@ -1774,7 +2083,13 @@
                  " The full list is in the panel.");
       }
 
+      /* A gesture that panned or pinched is not also a choice. Set by the
+         pointer handlers below and read here; it used to be set and read by
+         nothing at all. */
+      var gestured = false;
+
       canvas.addEventListener("click", function (ev) {
+        if (gestured) { gestured = false; return; }
         var b = canvas.getBoundingClientRect();
         var x = ev.clientX - b.left, y = ev.clientY - b.top;
         var best = null, bestD = Infinity;
@@ -1821,24 +2136,84 @@
                (ev.clientY - b.top) / b.height);
       }, { passive: false });
 
+      /* Pan, and pinch, and the difference between a tap and either.
+
+         Every tap on a touch screen travels a few pixels. The pan used to
+         begin on the first of them, and the click that followed was tested
+         against the positions the pan had just moved -- so a finger that
+         wobbled four pixels slid the map out from under itself and then
+         missed a seven-pixel target. Nothing was wrong with the choosing;
+         it was being asked where a place had been a moment ago.
+
+         So the pointer has to travel past a dead zone before anything pans,
+         and a gesture that crossed it does not also choose. A pinch is two
+         pointers, which is the only zoom a phone has: the wheel below is a
+         mouse, and until now the wheel was the only way to zoom this map at
+         all. */
+      var DEAD = 5;
+      var pointers = {};
+      var live = function () { return Object.keys(pointers); };
       var dragging = null;
+      var pinching = null;
+
+      function spread() {
+        var ids = live();
+        if (ids.length < 2) return null;
+        var a = pointers[ids[0]], b2 = pointers[ids[1]];
+        return {
+          d: Math.hypot(a.x - b2.x, a.y - b2.y),
+          mx: (a.x + b2.x) / 2, my: (a.y + b2.y) / 2
+        };
+      }
+
       canvas.addEventListener("pointerdown", function (ev) {
-        dragging = { x: ev.clientX, y: ev.clientY, moved: false };
+        pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
         canvas.setPointerCapture(ev.pointerId);
+        if (live().length === 2) {
+          pinching = spread();
+          dragging = null;
+          gestured = true;
+        } else if (live().length === 1) {
+          dragging = { x: ev.clientX, y: ev.clientY,
+                       fromX: ev.clientX, fromY: ev.clientY, panning: false };
+        }
       });
+
       canvas.addEventListener("pointermove", function (ev) {
-        if (!dragging) return;
+        if (!pointers[ev.pointerId]) return;
+        pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
         var b = canvas.getBoundingClientRect();
+
+        if (pinching) {
+          var now = spread();
+          if (!now || !now.d || !pinching.d) return;
+          zoomBy(pinching.d / now.d,
+                 (now.mx - b.left) / b.width, (now.my - b.top) / b.height);
+          pinching = now;
+          return;
+        }
+        if (!dragging) return;
+
+        // Nothing moves until the finger has meant it.
+        if (!dragging.panning) {
+          if (Math.abs(ev.clientX - dragging.fromX) < DEAD &&
+              Math.abs(ev.clientY - dragging.fromY) < DEAD) return;
+          dragging.panning = true;
+          gestured = true;
+        }
         var v = state.view;
         var dx = (ev.clientX - dragging.x) / b.width * (v.e - v.w);
         var dy = (ev.clientY - dragging.y) / b.height * (v.n - v.s);
-        if (Math.abs(ev.clientX - dragging.x) > 3 ||
-            Math.abs(ev.clientY - dragging.y) > 3) dragging.moved = true;
         state.view = clamp({ w: v.w - dx, e: v.e - dx, n: v.n + dy, s: v.s + dy });
         dragging.x = ev.clientX; dragging.y = ev.clientY;
         redraw();
       });
-      var endDrag = function () { dragging = null; };
+
+      var endDrag = function (ev) {
+        if (ev && ev.pointerId !== undefined) delete pointers[ev.pointerId];
+        if (live().length < 2) pinching = null;
+        if (!live().length) dragging = null;
+      };
       canvas.addEventListener("pointerup", endDrag);
       canvas.addEventListener("pointercancel", endDrag);
 
@@ -1881,7 +2256,26 @@
         }
       });
 
+      /* Zoom without a wheel and without two hands.
+
+         The wheel was the only way to change the scale, which means a phone
+         had no way at all and a keyboard had none either. These are the same
+         zoomBy the wheel and the pinch call, centred on the middle of the
+         canvas rather than on a pointer, because a button has no position on
+         the map. */
+      function zoomChip(label, factor, said) {
+        return el("button", {
+          class: "chip", text: label, "aria-label": said,
+          onclick: function () {
+            zoomBy(factor, 0.5, 0.5);
+            announce(said);
+          }
+        });
+      }
+
       var tools = el("div", { class: "map-tools" }, [
+        zoomChip("−", 1.35, "Zoom out"),
+        zoomChip("+", 0.74, "Zoom in"),
         el("button", { class: "chip", text: "Reset", onclick: function () {
           /* The view and the chosen place, not the layer: the reader turned
              that on deliberately and did not ask for it to go away. */
@@ -1977,16 +2371,10 @@
       redraw();
 
       /* The theme is a button and a system setting, and the canvas has to
-         follow both or it is the one element stuck in the old palette. */
-      var themeWatch = function () { if (wrap.open) redraw(); };
-      document.getElementById("theme").addEventListener("click", function () {
-        setTimeout(themeWatch, 0);
-      });
-      if (window.matchMedia) {
-        var mq = window.matchMedia("(prefers-color-scheme: dark)");
-        if (mq.addEventListener) mq.addEventListener("change", themeWatch);
-      }
-      window.addEventListener("resize", function () { if (wrap.open) redraw(); });
+         follow both or it is the one element stuck in the old palette. The
+         three listeners that watch for it are registered once for the whole
+         page rather than once per map -- see watchMap below. */
+      watchMap(wrap, redraw);
     }
 
     return wrap;
@@ -2023,12 +2411,18 @@
       (p.mentions ? "  ·  named in " + p.mentions +
         (p.mentions === 1 ? " passage" : " passages") : "") }));
 
+    /* Three ways out to a real map of the world. Google Maps is first and
+       says so in full: it was labelled "Maps" and sat third, which is a
+       label you have to already know the meaning of, in the position you
+       look at last. On a phone both Google links open the app if it is
+       installed. */
     var links = el("div", { class: "place-links" }, [
-      el("a", { class: "chip primary", href: earth,
+      el("a", { class: "chip primary", href: maps,
                 target: "_blank", rel: "noopener noreferrer",
-                text: "🌍  Open in Google Earth" }),
-      el("a", { class: "chip", href: maps,
-                target: "_blank", rel: "noopener noreferrer", text: "Maps" }),
+                text: "📍  Open in Google Maps" }),
+      el("a", { class: "chip", href: earth,
+                target: "_blank", rel: "noopener noreferrer",
+                text: "🌍  Google Earth" }),
       el("a", { class: "chip", href: osm,
                 target: "_blank", rel: "noopener noreferrer",
                 text: "OpenStreetMap" })
@@ -2223,21 +2617,168 @@
   }
   /* --8<-- fold: end --8<-- */
 
-  function viewSearch(manifest, initialQuery) {
+  /* ---------------- a reference is not a word ----------------
+
+     Typing "Psalm 23" used to return nothing at all, and "Job 38" nothing,
+     and plain "Job" returned Joshua first -- Jobab king of Madon, because
+     the term test is a prefix and "Job" prefixes "Jobab". Someone who does
+     not already know where a passage sits cannot get to it by searching,
+     which is precisely the reader this arrangement is hardest on: the order
+     is by composition, so there is no shelf to run a finger along.
+
+     A reference is a coordinate rather than a word, so it is answered
+     separately and offered above the word matches rather than instead of
+     them. Both questions are real -- "Job" is a book and also a man who is
+     named in several others -- and only the reader knows which was meant.
+
+     Two properties of this edition do most of the work. Isaiah is three
+     works here and 1 Enoch is four, because they were written at different
+     times, and a reader asking for Isaiah 40 should not have to know that.
+     And every chapter keeps its printed number in its label, so the right
+     work is the one that has a "Chapter 40" in it -- asked for, rather than
+     computed from an offset that the splits would break anyway. */
+
+  /* Forms a prefix of the title cannot reach. A convenience list rather
+     than a claim about anything: the resolver works without it and simply
+     answers fewer of the ways people write a reference. Everything that is
+     already a prefix of a title word -- gen, ex, isa, ps, rev, prov, cor,
+     tim, thess -- needs no entry and has none. */
+  var REF_ALIASES = {
+    mt: "matthew", mk: "mark", lk: "luke", jn: "john",
+    dt: "deuteronomy", jas: "james", phlm: "philemon",
+    song: "song", sos: "song"
+  };
+
+  function refWords(s) {
+    return fold(s).replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).filter(Boolean);
+  }
+
+  /* Does this work's title answer to the words the reader typed?
+
+     Word by word and by prefix, so "1 cor" reaches "1 CORINTHIANS" and
+     "isaiah" reaches all three Isaiahs -- which is wanted, because the
+     chapter number decides between them a moment later. */
+  function titleAnswersTo(title, want) {
+    var have = refWords(title);
+    return want.every(function (w, i) {
+      var probe = REF_ALIASES[w] || w;
+      // A leading numeral has to be the work's own numeral, or "1 John"
+      // matches "2 John" and "3 John" as happily.
+      if (/^\d+$/.test(probe)) return have.indexOf(probe) !== -1;
+      return have.some(function (h) { return h.indexOf(probe) === 0; });
+    });
+  }
+
+  /* Parse "Job 38", "Psalm 23:4", "1 Cor 13", "Isaiah 40", or a bare book
+     name, and return every place in the volume it could mean. */
+  function resolveReference(manifest, query) {
+    var m = String(query).trim()
+      .match(/^([0-9]?\s*[A-Za-z][A-Za-z'’.\- ]*?)\s*(?:(\d+)\s*(?:[:.]\s*(\d+))?)?$/);
+    if (!m) return [];
+
+    var want = refWords(m[1]);
+    if (!want.length) return [];
+    var chapter = m[2] ? parseInt(m[2], 10) : null;
+    var verse = m[3] ? parseInt(m[3], 10) : null;
+
+    var hits = [];
+    manifest.sections.forEach(function (section) {
+      section.works.forEach(function (work) {
+        if (!work.chapters) return;              // an entry with no text
+        if (!titleAnswersTo(work.title, want)) return;
+        hits.push({ work: work, section: section, chapter: chapter, verse: verse });
+      });
+    });
+
+    // A bare book name: offer each work it names, at its first chapter.
+    if (chapter === null) {
+      return hits.slice(0, 6).map(function (h) {
+        return { workId: h.work.id, title: h.work.title, section: h.section,
+                 idx: 0, label: null, verse: null };
+      });
+    }
+    return hits;
+  }
+
+  /* The chapter labels live in the work file rather than the manifest, so
+     which of the matched works actually carries "Chapter 40" is a question
+     that needs the file. Asked for all of them at once, and only for the
+     handful a name can match. */
+  function locateReference(hits) {
+    if (!hits.length || hits[0].label !== undefined) {
+      return Promise.resolve(hits);            // bare book name, already done
+    }
+    return Promise.all(hits.slice(0, 6).map(function (h) {
+      return getJSON("works/" + h.work.id + ".json").catch(function () { return null; });
+    })).then(function (files) {
+      var out = [];
+      files.forEach(function (file, i) {
+        if (!file || !file.chapters) return;
+        var h = hits[i];
+        file.chapters.forEach(function (c, idx) {
+          // The printed number, taken off the label rather than the index,
+          // which is what makes Isaiah 40 land in the second Isaiah.
+          var n = c.n;
+          if (n === null || n === undefined) {
+            var got = String(c.label || "").match(/(\d+)/);
+            n = got ? parseInt(got[1], 10) : null;
+          }
+          if (n !== h.chapter) return;
+          out.push({ workId: h.work.id, title: h.work.title, section: h.section,
+                     idx: idx, label: c.label, verse: h.verse });
+        });
+      });
+      return out;
+    });
+  }
+
+  function viewSearch(manifest, initialQuery, initialScope) {
     var wrap = el("div", { class: "wrap" });
     wrap.appendChild(el("h1", { text: "Search" }));
     wrap.appendChild(el("p", {
       class: "lede",
       text: "Every word of every text, including the deuterocanon, 1 Enoch, " +
             "Jubilees and the Apostolic Fathers. Wrap a phrase in quotes to " +
-            "match it exactly."
+            "match it exactly, or type a reference — Psalm 23, Job 38:4 — to " +
+            "go straight to it."
     }));
 
     var input = el("input", {
-      type: "search", placeholder: '"a still small voice", or: watchers heaven',
+      type: "search", placeholder: 'Psalm 23, "a still small voice", or: watchers heaven',
       value: initialQuery || "", autocomplete: "off", spellcheck: "false"
     });
-    wrap.appendChild(el("div", { class: "toolbar" }, [input]));
+
+    /* Searching one book at a time.
+
+       The whole library is 1.22 million words and the results are capped at
+       three hundred, so a common word answers with three hundred verses from
+       everywhere and the one you wanted is somewhere inside them. Narrowing
+       to a book is the difference between a concordance and a search: it is
+       also the only way to ask "where does Job say this", which is a
+       question about a book rather than about the collection. */
+    var scopeSel = el("select", { "aria-label": "Which book to search" });
+    scopeSel.appendChild(el("option", { value: "", text: "Every book" }));
+    /* Grouped by era, because a flat list of a hundred and sixty-three is a
+       list you scroll rather than one you read -- and because the grouping
+       is the volume's own argument: the order here is the order of
+       composition, so the heading a book sits under says when it was
+       written. */
+    manifest.sections.forEach(function (section) {
+      var withText = section.works.filter(function (w) { return !!w.chapters; });
+      if (!withText.length) return;
+      var label = section.name || section.title || "";
+      if (section.roman) label = section.roman + ". " + label;
+      var group = el("optgroup", { label: titleCase(label) });
+      withText.forEach(function (work) {
+        group.appendChild(el("option", {
+          value: work.id, text: titleCase(work.title)
+        }));
+      });
+      scopeSel.appendChild(group);
+    });
+    scopeSel.value = initialScope || "";
+
+    wrap.appendChild(el("div", { class: "toolbar search-bar" }, [input, scopeSel]));
 
     var chips = el("div", { class: "chips" });
     ["\"living creatures\"", "watchers", "\"son of man\"", "jubilee", "resurrection", "wisdom"]
@@ -2248,19 +2789,48 @@
       });
     wrap.appendChild(chips);
 
+    var jump = el("div", { class: "jump" });
     var status = el("div", { class: "muted" });
     var bar = el("div", { class: "progress" }, [el("i")]);
     var results = el("div", { class: "results" });
+    wrap.appendChild(jump);
     wrap.appendChild(status);
     wrap.appendChild(bar);
     wrap.appendChild(results);
 
     var runId = 0;
 
-    function run(query) {
+    function run(query, scope) {
       var mine = ++runId;
+      /* Remembered here rather than in the input handler, because a search
+         reached by its URL -- a shared link, a bookmark, the back button --
+         never touches the input handler and is just as much a search. */
+      rememberSearch(query);
       results.innerHTML = "";
+      jump.innerHTML = "";
       bar.firstChild.style.width = "0%";
+
+      /* Offered above the word matches, never instead of them. "Job" is a
+         book and also a man named in several others, and only the reader
+         knows which was meant. */
+      locateReference(resolveReference(manifest, query)).then(function (places) {
+        if (mine !== runId || !places.length) return;
+        var box = el("div", { class: "jump-box" });
+        box.appendChild(el("p", { class: "jump-head", text: places.length === 1
+          ? "That is a place in the volume:" : "That could be any of these:" }));
+        places.slice(0, 6).forEach(function (r) {
+          var where = titleCase(r.title) + (r.label ? " · " + r.label : "");
+          box.appendChild(el("a", {
+            class: "jump-link",
+            href: "#/read/" + r.workId + "/" + r.idx + (r.verse ? "/v" + r.verse : "")
+          }, [
+            el("span", { class: "jump-where", text: where +
+              (r.verse ? ":" + r.verse : "") }),
+            el("span", { class: "jump-era", text: r.section.name || r.section.title || "" })
+          ]));
+        });
+        jump.appendChild(box);
+      });
 
       var phrase = null;
       var m = query.match(/^\s*"(.+)"\s*$/);
@@ -2358,6 +2928,16 @@
         });
 
         var workIds = Object.keys(byWork);
+        if (scope) {
+          workIds = workIds.filter(function (w) { return w === scope; });
+        }
+        if (!workIds.length) {
+          bar.firstChild.style.width = "100%";
+          status.textContent = scope
+            ? "No verse in that book matched."
+            : "No verse matched.";
+          return;
+        }
         status.textContent = "Scanning " + fmt(ids.length) + " chapters in " +
                              workIds.length + " works…";
 
@@ -2372,9 +2952,10 @@
           if (mine !== runId) return;
           if (i >= workIds.length || found >= LIMIT) {
             bar.firstChild.style.width = "100%";
+            var where = scope ? " in " + titleCase(scopeSel.options[scopeSel.selectedIndex].text) : "";
             status.textContent = found
-              ? fmt(found) + (found >= LIMIT ? "+ matches (showing the first " + LIMIT + ")" : " matches")
-              : "No verse matched.";
+              ? fmt(found) + (found >= LIMIT ? "+ matches (showing the first " + LIMIT + ")" : " matches") + where
+              : "No verse matched" + (scope ? " in that book." : ".");
             return;
           }
           var wid = workIds[i];
@@ -2418,20 +2999,49 @@
       var href = "#/read/" + wid + "/" + chIdx + (unit.ref ? "/v" + unit.ref : "");
       var label = titleCase(row[3]) + " · " + row[2] + (unit.ref ? ":" + unit.ref : "");
 
-      var html = esc(unit.t);
+      /* Cut the verse down before it is marked up, never after.
+
+         This used to escape, mark, and then slice 420 characters off the
+         finished HTML, which counts "&amp;" as five characters and "<mark>"
+         as six and will cut through the middle of either. Nothing in the
+         library is currently long enough to make it happen, so this is
+         hardening rather than a repair -- but the window is a fact about the
+         verse, not about its markup, and taken on the verse it also stops
+         cutting words in half at both edges and stops promising a "..." when
+         the window has in fact reached the end of the verse. */
+      var quote = function (t) { return t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); };
+      var finder = phrase
+        ? new RegExp(quote(phrase), "i")
+        : (terms.length ? new RegExp("\\b" + quote(terms[0]) + "\\w*", "i") : null);
+
+      var text = unit.t;
+      var WINDOW = 420;
+      if (text.length > WINDOW) {
+        var at = finder ? text.search(finder) : -1;
+        var from = at > 160 ? at - 160 : 0;
+        // Never leave a word cut in half at either edge.
+        if (from) {
+          var space = text.indexOf(" ", from);
+          from = space === -1 ? from : space + 1;
+        }
+        var to = from + WINDOW;
+        if (to < text.length) {
+          var back = text.lastIndexOf(" ", to);
+          to = back > from ? back : to;
+        }
+        text = (from ? "… " : "") + text.slice(from, to) +
+               (to < unit.t.length ? " …" : "");
+      }
+
+      var html = esc(text);
       if (phrase) {
-        html = html.replace(new RegExp("(" + phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi"),
+        html = html.replace(new RegExp("(" + quote(esc(phrase)) + ")", "gi"),
                             "<mark>$1</mark>");
       } else {
         terms.forEach(function (t) {
-          html = html.replace(new RegExp("(\\b" + t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\w*)", "gi"),
+          html = html.replace(new RegExp("(\\b" + quote(esc(t)) + "\\w*)", "gi"),
                               "<mark>$1</mark>");
         });
-      }
-      if (html.length > 420) {
-        var at = html.indexOf("<mark>");
-        var from = Math.max(0, at - 160);
-        html = (from ? "… " : "") + html.slice(from, from + 420) + " …";
       }
 
       return el("div", { class: "result" }, [
@@ -2442,19 +3052,28 @@
       ]);
     }
 
+    /* The book is in the URL beside the query, so a narrowed search can be
+       kept, shared and come back to -- which is most of what it is for. */
+    function go() {
+      var q = input.value;
+      var target = "#/search" + (q.trim() ? "/" + encodeURIComponent(q) : "");
+      if (q.trim() && scopeSel.value) target += "/" + scopeSel.value;
+      if (location.hash !== target) history.replaceState(null, "", target);
+      run(q, scopeSel.value);
+    }
+
     var timer;
     input.addEventListener("input", function () {
       clearTimeout(timer);
-      var q = input.value;
-      timer = setTimeout(function () {
-        var target = "#/search" + (q.trim() ? "/" + encodeURIComponent(q) : "");
-        if (location.hash !== target) history.replaceState(null, "", target);
-        run(q);
-      }, 220);
+      timer = setTimeout(go, 220);
+    });
+    scopeSel.addEventListener("change", function () {
+      clearTimeout(timer);
+      go();
     });
 
     setTimeout(function () { input.focus(); }, 30);
-    if (initialQuery) run(initialQuery);
+    if (initialQuery) run(initialQuery, scopeSel.value);
 
     return wrap;
   }
@@ -2589,7 +3208,7 @@
         ])));
       });
       table.appendChild(tb);
-      tableBox.appendChild(el("div", { class: "scroller" }, [table]));
+      tableBox.appendChild(scroller(table, "Canon comparison, scrollable sideways"));
       tableBox.appendChild(el("p", { class: "tiny", text:
         "● received as scripture   ◐ printed but outside the canon, or received in some branches only   · absent" }));
     }
@@ -2647,7 +3266,7 @@
       ]));
     });
     table.appendChild(tb);
-    wrap.appendChild(el("div", { class: "scroller" }, [table]));
+    wrap.appendChild(scroller(table, "Findings, scrollable sideways"));
 
     if (splices && splices.length) {
       wrap.appendChild(el("hr", { class: "rule" }));
@@ -2676,7 +3295,7 @@
         ]));
       });
       stable.appendChild(sb);
-      wrap.appendChild(el("div", { class: "scroller" }, [stable]));
+      wrap.appendChild(scroller(stable, "Table, scrollable sideways"));
     }
 
     wrap.appendChild(el("hr", { class: "rule" }));
@@ -2955,7 +3574,7 @@
       ]));
     });
     table.appendChild(tb);
-    wrap.appendChild(el("div", { class: "scroller" }, [table]));
+    wrap.appendChild(scroller(table, "Sources, scrollable sideways"));
     wrap.appendChild(el("p", { class: "muted", text:
       "Where a boundary is itself argued, the span is drawn wide rather than " +
       "picking a side." }));
@@ -3241,11 +3860,17 @@
   /* ================================================================
      LISTEN — the text read aloud
      ------------------------------------------------------------------
-     An audiobook of a 1.13-million-word library cannot be recorded, and
-     no recording of these translations exists in the public domain. What
-     every modern browser does ship is a speech engine, so the chapter is
-     narrated by the voices already installed on the machine. Nothing is
-     downloaded, nothing is sent anywhere, and it works offline.
+     Every modern browser ships a speech engine, so the chapter is narrated
+     by the voices already installed on the machine. Nothing is downloaded,
+     nothing is sent anywhere, and it works offline.
+
+     This comment used to justify that by saying an audiobook of a library
+     this size cannot be recorded and that no recording of these translations
+     exists in the public domain. Neither is true: LibriVox has read the
+     World English Bible through -- 99 hours, Public Domain Mark -- and has
+     done Charles's Enoch and Jubilees as well. The device voice is still the
+     right default, because it is the one that needs no network and works in
+     the single-file copy. It is not the only thing there is.
 
      The narration is verse-granular on purpose: it is the unit the reader
      already navigates by, it is what gets highlighted as the voice moves,
@@ -3622,7 +4247,39 @@
      this is the same rule applied to the one feature the markers in
      index.html cannot reach, because the drawer is built here rather than
      written in the page. */
-  var AUDIO_OK = typeof window.Audio === "function" && !window.__BOOK__;
+  /* Whether the reading has actually been rendered and uploaded.
+     ------------------------------------------------------------------
+     Everything below this line is finished and under test: the fetch, the
+     per-verse index, the seek, the pace control, the fall back to the
+     device engine. What does not exist is the audio. The item at
+     AUDIO_BASE has never been created, and until it is, offering a voice
+     in the drawer is offering something that is not there -- the probe
+     only fires once a reader has already chosen it, so on every ordinary
+     device the drawer went on advertising it for the whole session.
+
+     The switch is data-audio on <html> rather than a constant here: it is
+     a fact about a deploy rather than about the code, it is visible in the
+     served page without reading a bundle, and the browser checks can set it
+     to exercise the player's recorded path -- which is finished, and would
+     otherwise lose its tests the moment the voice stopped being offered.
+     tools/check_audio.py reads it out of docs/index.html and checks it both
+     ways: absent while the item exists is a switch somebody forgot to flip;
+     "published" while the item is missing is a broken promise to every
+     reader. Add the attribute in the same commit that uploads the item.
+
+     A note on what "uploaded" would mean, so the next hand does not repeat
+     the search: LibriVox has read the World English Bible through and
+     dedicated it to the public domain, and Charles's Enoch and Jubilees
+     besides. That is a person rather than a model and costs no rendering
+     at all -- but an audiobook is continuous speech with no verse
+     boundaries in it, so the per-verse marks this player is built on have
+     to be recovered by forced alignment rather than recorded. That is the
+     work between here and true. */
+  var AUDIO_PUBLISHED =
+        document.documentElement.getAttribute("data-audio") === "published";
+
+  var AUDIO_OK = AUDIO_PUBLISHED &&
+                 typeof window.Audio === "function" && !window.__BOOK__;
 
   var aud = {
     el: null,       // one <audio>, reused across chapters
@@ -4894,8 +5551,9 @@
       if (view === "search") {
         setNav("search");
         var q = parts[1] ? decodeURIComponent(parts[1]) : "";
+        var scope = parts[2] ? decodeURIComponent(parts[2]) : "";
         setTitle(q ? "Search: " + q : "Search");
-        node = viewSearch(manifest, q);
+        node = viewSearch(manifest, q, scope);
         main.innerHTML = "";
         main.appendChild(node);
         return;

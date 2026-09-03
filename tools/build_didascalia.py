@@ -532,7 +532,6 @@ def main() -> int:
             "versified": False,
             "source": "platt",
             "positions": stance,
-            "chapterLabels": [c["label"] for c in chapters],
             "verified": False,
         })
 

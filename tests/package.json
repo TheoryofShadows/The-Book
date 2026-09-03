@@ -8,5 +8,8 @@
   },
   "devDependencies": {
     "playwright": "^1.49.0"
+  },
+  "dependencies": {
+    "axe-core": "^4.13.0"
   }
 }

@@ -132,10 +132,21 @@ def main() -> int:
                 continue
 
             flags = flags_for(text)
+            # The upstream dataset gives each reference twice: the
+            # abbreviation Easton printed ("Ex. 6:20") and the expansion
+            # ("Exodus 6:20"). Only the expansion can be resolved against
+            # this volume's own book names, and the abbreviation was
+            # 0.47 MiB shipped to every reader, and inlined into the
+            # offline copy, for nothing at all -- the definition sheet
+            # renders a name, a text and its flags, and has never rendered
+            # a reference. Kept as a flat list of the expansions, so the
+            # data is a third of the size and still says the same thing.
             record = {
                 "name": name,
                 "text": text,
-                "refs": entry.get("scripture_refs", [])[:12],
+                "refs": [r["reference"] for r
+                         in entry.get("scripture_refs", [])[:12]
+                         if isinstance(r, dict) and r.get("reference")],
             }
             if flags:
                 record["flags"] = flags
