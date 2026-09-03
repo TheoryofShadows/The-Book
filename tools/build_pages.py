@@ -35,6 +35,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import stamp_assets  # noqa: E402
+
 BASE = "https://theoryofshadows.github.io/The-Book"
 SITE = "The Book"
 
@@ -196,7 +199,7 @@ def head(title, description, canonical, depth, extra_head="", og_type="article")
         "<title>%s</title>" % e(title),
         '<meta name="description" content="%s">' % e(description),
         '<link rel="canonical" href="%s">' % e(canonical),
-        '<link rel="stylesheet" href="%sassets/app.css">' % up,
+        '<link rel="stylesheet" href="%sassets/app.css?v=%s">' % (up, ASSET_V["app.css"]),
         '<link rel="icon" href="%sassets/favicon.svg" type="image/svg+xml">' % up,
         '<link rel="apple-touch-icon" href="%sassets/icon-180.png">' % up,
         '<meta name="theme-color" content="#6b2d5b">',
@@ -571,7 +574,7 @@ def not_found_page(out_dir):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Not found — {site}</title>
 <meta name="robots" content="noindex">
-<link rel="stylesheet" href="{base}/assets/app.css">
+<link rel="stylesheet" href="{base}/assets/app.css?v={css_v}">
 <link rel="icon" href="{base}/assets/favicon.svg" type="image/svg+xml">
 </head>
 <body>
@@ -591,7 +594,7 @@ def not_found_page(out_dir):
 </main>
 </body>
 </html>
-""".format(base=BASE, site=SITE)
+""".format(base=BASE, site=SITE, css_v=ASSET_V["app.css"])
     write(os.path.join(out_dir, "404.html"), page)
 
 
@@ -695,10 +698,18 @@ def build(out_dir):
     print("  %d pages" % (works + chapters_written + 1))
 
 
+# The content hashes the generated pages fetch the stylesheet by. Read at
+# import time from the same helper docs/index.html is stamped with, so the
+# 2,709 pages and the one hand-written page cannot disagree about which
+# stylesheet they want.
+ASSET_V = {"app.css": "0", "app.js": "0"}
+
+
 def main(argv):
     out_dir = argv[1] if len(argv) > 1 else "docs"
     if not os.path.isdir(os.path.join(out_dir, "data")):
         raise SystemExit("no %s/data -- give me the docs directory" % out_dir)
+    ASSET_V.update(stamp_assets.stamps(out_dir))
     build(out_dir)
 
 

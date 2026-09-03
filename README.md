@@ -630,6 +630,7 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | `tools/render_audio.py` | Renders the library to audio, one file per chapter with the verses indexed — run by hand, output to be hosted off this repository. Not yet run |
 | `tools/dates.py` | Reads a numeric span out of a position statement, and refuses to where there is none |
 | `tools/check_audio.py` | Asks the Internet Archive whether the recorded reading the player offers is actually there. It is not, and this fails until it is |
+| `tools/stamp_assets.py` | Puts each asset's own content hash into the URL that fetches it, so a deploy is visible to a reader who has been here before |
 | `tools/lint_css.py` | The two mistakes a stylesheet makes silently: a selector declared twice, and a colour defined and never used |
 | `tools/lint.sh` | Everything parses, the stylesheet says each thing once, and every data file is the JSON it claims to be |
 | `tools/test.sh` | Runs the unit tests and the browser checks in `tests/` |
@@ -890,6 +891,33 @@ which also moved it from 89% of its build ceiling to 84%.
 Search is a two-stage design: a chapter-granularity inverted index (1.64 MB
 across 27 shards) narrows candidates, then only the matching works are fetched
 and scanned for exact verses. Quote a phrase to match it exactly.
+
+## Why a deploy used to be invisible
+
+Every deploy of this site shipped `app.css` and `app.js` under those two
+names. GitHub Pages serves them with `Cache-Control: max-age=600` and an
+`Expires` about ten hours out, so a reader who had been here before got the
+copy their own browser was already holding. The deploy succeeded, the files
+on the server were right, the repository and the served site agreed — and the
+person looking at it saw the version they saw last time. Nothing errors and
+nothing logs. The only symptom is somebody saying they see no changes, which
+is what happened.
+
+The URL now carries eight characters of the asset's own SHA-256:
+
+```html
+<link rel="stylesheet" href="assets/app.css?v=729eec5b">
+<script src="assets/app.js?v=914abb3d"></script>
+```
+
+Change a byte and the URL changes with it, so no cache anywhere can serve the
+old one; change nothing and the URL is identical, so a deploy that touches no
+assets costs returning readers nothing. `tools/stamp_assets.py` writes it into
+`docs/index.html`, `tools/build_pages.py` reads the same hashes so all 2,709
+generated pages agree, and `tools/build_standalone.py` strips the tag by
+pattern rather than by literal string — which is what it had to become, since
+the literal it used to match no longer existed and the offline copy would have
+shipped a `<script src>` pointing at a file that is not beside it.
 
 ## Deploying
 

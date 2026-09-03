@@ -9,6 +9,7 @@ opens from a file:// URL or any host with no network access at all.
 from __future__ import annotations
 
 import json
+import re
 import os
 import sys
 from urllib.parse import quote
@@ -77,7 +78,18 @@ def main() -> int:
     payload = payload.replace("</", "<\\/")
 
     body = html.split("<body>", 1)[1].split("</body>", 1)[0]
-    body = body.replace('<script src="assets/app.js"></script>', "")
+    # The tag, however it is spelt. It carries a ?v= content hash now, so
+    # matching the literal string silently stopped removing it -- and the
+    # offline copy would have kept a <script src="assets/app.js"> pointing
+    # at a file that is not beside it, on top of the inlined copy below.
+    before = body
+    body = re.sub(r'<script src="assets/app\.js(?:\?v=[0-9a-f]+)?"></script>',
+                  "", body)
+    if body == before:
+        raise SystemExit(
+            "build_standalone: could not find the app.js script tag in "
+            "docs/index.html. The offline copy must not ship a reference to "
+            "a file that will not be beside it.")
     body = strip_online_only(body)
 
     # Only the body survives the split above, so the tab icon has to be put

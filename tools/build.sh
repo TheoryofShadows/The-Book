@@ -72,6 +72,15 @@ python3 tools/verify.py "$OUT"
 # from. Building it locally too means the link in the footer works while you
 # are developing, and means this script fails here rather than in CI if the
 # page ever stops being self-contained.
+# The URL each asset is fetched by carries eight characters of its own
+# content hash. Without it, app.css and app.js keep the same two names for
+# ever, GitHub Pages serves them with a ten-minute max-age and a ten-hour
+# Expires, and a reader who has been here before gets the copy their browser
+# already had -- a correct deploy that nobody can see. Stamped before the
+# pages and the offline copy are built, because both read index.html.
+echo "==> asset versions"
+python3 tools/stamp_assets.py "$(dirname "$OUT")"
+
 echo "==> the single-file offline build"
 python3 tools/build_standalone.py docs docs/the-book.html
 
