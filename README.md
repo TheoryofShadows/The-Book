@@ -4,9 +4,7 @@
 
 <br clear="left">
 
-## Read it here → https://theoryofshadows.github.io/The-Book/
-
-The link is case sensitive. `/The-Book/` works; `/the-book/` does not.
+## Read it here → https://thebookandme.com/
 
 ---
 
@@ -240,7 +238,7 @@ rest fall back. There are no itineraries here, and a test counts the map's own
 line segments to keep it that way, because on a 430-pixel canvas a wrong
 hairline is invisible and still wrong.
 
-[How the dating was decided](https://theoryofshadows.github.io/The-Book/#/method) is a page of its own: what the arrangement is
+[How the dating was decided](https://thebookandme.com/#/method) is a page of its own: what the arrangement is
 and is not, where each date comes from, how the bars are derived, the boundary
 of every named period and the event that fixes it, and the two things the bars
 cannot tell you — that a composite book has one bar and several dates, and that
@@ -815,7 +813,7 @@ the way a psalter sets them.
 
 ## Taking it offline
 
-**[Download the whole library as one file](https://theoryofshadows.github.io/The-Book/the-book.html)** —
+**[Download the whole library as one file](https://thebookandme.com/the-book.html)** —
 13 MB of HTML with every text, the search index, the definitions, the
 gazetteer and the land outlines inlined into it. Open it from your own disk
 with the network off and everything works: search, the map, the word lookup,
@@ -906,8 +904,39 @@ until the switch is flipped the deploy job fails with *"Get Pages site failed"*.
 The verify job runs regardless, so the data is still checked on every push.
 
 Once enabled, re-run the workflow (Actions → Deploy site to GitHub Pages →
-Run workflow) and the site appears at
-`https://theoryofshadows.github.io/The-Book/`.
+Run workflow).
+
+### The domain
+
+The site is served from **`thebookandme.com`**. Two things hold that in place,
+and they are separate: `docs/CNAME` names the domain inside the Pages artifact,
+and the DNS records point the domain at GitHub. The file is not decoration — a
+custom domain set only in the repository settings can be cleared by a later
+deploy that does not carry one, so the file is what makes the domain survive
+every deploy.
+
+The DNS behind it is the apex pointed at GitHub's Pages addresses — `A` records
+to `185.199.108.153`, `185.199.109.153`, `185.199.110.153` and
+`185.199.111.153` — with a `CNAME` on `www` to `theoryofshadows.github.io`,
+which GitHub redirects to the apex. The apex cannot itself be a `CNAME`; DNS
+forbids one on the root of a domain, which is why the root takes address
+records and only `www` takes a `CNAME`.
+
+Two things are still outstanding, neither of them blocking:
+
+- **Enforce HTTPS is not on.** The certificate has been issued and
+  `https://thebookandme.com/` serves normally, but `http://` answers with the
+  page rather than redirecting to it. The tick box is in **Settings → Pages**,
+  under the domain field.
+- **There are no `AAAA` records**, so the site is reachable over IPv4 only.
+  Adding `2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153`
+  and `2606:50c0:8003::153` covers IPv6-only visitors.
+
+The old address, `https://theoryofshadows.github.io/The-Book/`, still works:
+GitHub redirects it to the custom domain. Every absolute address the site
+states about itself — canonicals, the sitemap, `robots.txt`, the share card —
+is built from one constant, `BASE` in `tools/build_pages.py`, so moving the
+site again is that line and the `CNAME` file and nothing else.
 
 ## Licence
 

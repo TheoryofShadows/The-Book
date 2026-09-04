@@ -110,7 +110,7 @@ module.exports = async function crawlable(t, ctx) {
 
   const canonical = await page.getAttribute('link[rel=canonical]', 'href');
   t.check('and a canonical pointing at its own absolute address',
-          canonical === 'https://theoryofshadows.github.io/The-Book/read/genesis/1/',
+          canonical === 'https://thebookandme.com/read/genesis/1/',
           canonical);
 
   const ld = await page.locator('script[type="application/ld+json"]').textContent();
@@ -157,7 +157,7 @@ module.exports = async function crawlable(t, ctx) {
           new Set(locs).size === locs.length,
           (locs.length - new Set(locs).size) + ' duplicates');
 
-  const BASE = 'https://theoryofshadows.github.io/The-Book';
+  const BASE = 'https://thebookandme.com';
   const missing = locs.filter(u => {
     let rel = u.slice(BASE.length).replace(/^\//, '');
     if (rel === '') rel = 'index.html';
@@ -170,7 +170,12 @@ module.exports = async function crawlable(t, ctx) {
   const robots = fs.readFileSync(path.join(docs, 'robots.txt'), 'utf8');
   t.check('robots.txt points at the sitemap and keeps crawlers off the 13 MB copy',
           robots.indexOf(BASE + '/sitemap.xml') !== -1 &&
-          /Disallow:\s*\/The-Book\/the-book\.html/.test(robots));
+          /* The path the site is served from, which is nothing at all on the
+             custom domain and was /The-Book on the project Pages address.
+             robots.txt paths are site-relative, so the rule has to follow
+             whatever BASE says rather than name a prefix of its own. */
+          robots.indexOf('Disallow: ' + new URL(BASE).pathname.replace(/\/$/, '') +
+                         '/the-book.html') !== -1);
 
   t.check('there is a 404 page for the addresses that are not there',
           fs.existsSync(path.join(docs, '404.html')));

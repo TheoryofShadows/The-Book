@@ -34,8 +34,15 @@ import json
 import os
 import re
 import sys
+import urllib.parse
 
-BASE = "https://theoryofshadows.github.io/The-Book"
+BASE = "https://thebookandme.com"
+
+# Everything after the host in BASE: empty on the custom domain, "/The-Book"
+# on the project Pages address it used to be served from. robots.txt takes
+# site-relative paths rather than absolute ones, so the rule below has to be
+# built from this rather than spelt out beside it and left to rot.
+PREFIX = urllib.parse.urlsplit(BASE).path.rstrip("/")
 SITE = "The Book"
 
 # The reader's own title, for the pages that are not a single chapter.
@@ -615,9 +622,9 @@ def robots(out_dir):
     write(os.path.join(out_dir, "robots.txt"),
           "User-agent: *\n"
           "Allow: /\n"
-          "Disallow: /The-Book/the-book.html\n"
+          "Disallow: {prefix}/the-book.html\n"
           "\n"
-          "Sitemap: %s/sitemap.xml\n" % BASE)
+          "Sitemap: {base}/sitemap.xml\n".format(prefix=PREFIX, base=BASE))
 
 
 # ---------------------------------------------------------------- main
