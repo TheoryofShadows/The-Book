@@ -904,29 +904,39 @@ until the switch is flipped the deploy job fails with *"Get Pages site failed"*.
 The verify job runs regardless, so the data is still checked on every push.
 
 Once enabled, re-run the workflow (Actions → Deploy site to GitHub Pages →
-Run workflow) and the site appears at `https://thebookandme.com/`.
+Run workflow).
 
-**The custom domain needs two more things, one in DNS and one on GitHub.**
-`docs/CNAME` is published inside the Pages artifact, which is what keeps the
-domain attached across deploys, but it cannot create the DNS records and it
-cannot issue the certificate:
+### The domain
 
-1. At the registrar for `thebookandme.com`, point the apex at GitHub's Pages
-   addresses — `A` records to `185.199.108.153`, `185.199.109.153`,
-   `185.199.110.153` and `185.199.111.153`, and the `AAAA` equivalents
-   `2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153` and
-   `2606:50c0:8003::153`. A `CNAME` record on `www` pointing at
-   `theoryofshadows.github.io` picks up the `www.` spelling as well; GitHub
-   redirects it to the apex.
-2. In **Settings → Pages**, enter `thebookandme.com` as the custom domain and
-   tick **Enforce HTTPS** once the certificate has been issued — that can take
-   up to an hour after the DNS records resolve.
+The site is served from **`thebookandme.com`**. Two things hold that in place,
+and they are separate: `docs/CNAME` names the domain inside the Pages artifact,
+and the DNS records point the domain at GitHub. The file is not decoration — a
+custom domain set only in the repository settings can be cleared by a later
+deploy that does not carry one, so the file is what makes the domain survive
+every deploy.
 
-The old address, `https://theoryofshadows.github.io/The-Book/`, keeps working:
-GitHub redirects it to the custom domain once the domain is set. Every absolute
-address the site generates — canonicals, the sitemap, `robots.txt`, the share
-card — is built from one constant, `BASE` in `tools/build_pages.py`, so a
-future move is that line and nothing else.
+The DNS behind it is the apex pointed at GitHub's Pages addresses — `A` records
+to `185.199.108.153`, `185.199.109.153`, `185.199.110.153` and
+`185.199.111.153` — with a `CNAME` on `www` to `theoryofshadows.github.io`,
+which GitHub redirects to the apex. The apex cannot itself be a `CNAME`; DNS
+forbids one on the root of a domain, which is why the root takes address
+records and only `www` takes a `CNAME`.
+
+Two things are still outstanding, neither of them blocking:
+
+- **Enforce HTTPS is not on.** The certificate has been issued and
+  `https://thebookandme.com/` serves normally, but `http://` answers with the
+  page rather than redirecting to it. The tick box is in **Settings → Pages**,
+  under the domain field.
+- **There are no `AAAA` records**, so the site is reachable over IPv4 only.
+  Adding `2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153`
+  and `2606:50c0:8003::153` covers IPv6-only visitors.
+
+The old address, `https://theoryofshadows.github.io/The-Book/`, still works:
+GitHub redirects it to the custom domain. Every absolute address the site
+states about itself — canonicals, the sitemap, `robots.txt`, the share card —
+is built from one constant, `BASE` in `tools/build_pages.py`, so moving the
+site again is that line and the `CNAME` file and nothing else.
 
 ## Licence
 
