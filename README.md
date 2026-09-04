@@ -922,15 +922,14 @@ which GitHub redirects to the apex. The apex cannot itself be a `CNAME`; DNS
 forbids one on the root of a domain, which is why the root takes address
 records and only `www` takes a `CNAME`.
 
-Two things are still outstanding, neither of them blocking:
+The certificate is issued and **Enforce HTTPS** is on, so `http://` answers
+with a redirect to `https://` rather than with the page, and the old address
+lands on the secure one.
 
-- **Enforce HTTPS is not on.** The certificate has been issued and
-  `https://thebookandme.com/` serves normally, but `http://` answers with the
-  page rather than redirecting to it. The tick box is in **Settings → Pages**,
-  under the domain field.
-- **There are no `AAAA` records**, so the site is reachable over IPv4 only.
-  Adding `2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153`
-  and `2606:50c0:8003::153` covers IPv6-only visitors.
+One thing is still outstanding, and it is not blocking: **there are no `AAAA`
+records**, so the site is reachable over IPv4 only. Adding
+`2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153` and
+`2606:50c0:8003::153` alongside the `A` records covers IPv6-only visitors.
 
 The old address, `https://theoryofshadows.github.io/The-Book/`, still works:
 GitHub redirects it to the custom domain. Every absolute address the site
