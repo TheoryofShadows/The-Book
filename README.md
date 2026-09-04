@@ -867,6 +867,25 @@ them. The book sits beside the query and in the URL, so a narrowed search can
 be kept and shared: `#/search/shepherd/psalms` is the six verses in the
 Psalter, the first of which is the one everybody means.
 
+**A crawler is served a different half of the same site.** The reader is a
+hash-routed single page, and a fragment is never sent to a server, so every
+one of the 172 works and 2,537 chapters lived at an address no crawler could
+ask for: the whole library was one indexable URL with no scripture on it.
+`tools/build_pages.py` writes the other half — a plain page per work and per
+chapter with the text really in the HTML, a contents page linking all of them
+as the hub a crawler starts from, and `sitemap.xml`, `robots.txt` and a 404.
+That is 2,709 pages plus the hub, and none of it is in this repository: it is
+derived, it is regenerated whenever the text changes, and the deploy builds it
+into the Pages artifact, exactly as it does the offline copy.
+
+They are not a second site. The pages load `docs/assets/app.css` and use the
+reader's own class names, so they are the same object seen without JavaScript,
+and each carries a link into the reader for the search, the map and the
+definitions. There is deliberately no script redirecting into the reader: a
+page whose text is replaced the moment JavaScript runs is what a search engine
+calls cloaking, and the penalty for it is the whole site. The `crawlable`
+suite blocks every script and then checks the scripture is still there.
+
 **What it costs, measured rather than asserted.** Against a server that
 gzips, which is what GitHub Pages does, on a phone-sized viewport: the home
 page is **150 KB over six requests** and a chapter **210 KB over eight**,
@@ -893,9 +912,11 @@ and scanned for exact verses. Quote a phrase to match it exactly.
 
 `.github/workflows/pages.yml` runs the lint and the unit tests, rebuilds the
 data from source, fails the build if `docs/data` has drifted or the audit finds
-anything not in the baseline, runs the browser checks, then builds the
-single-file offline copy from the committed data and publishes `docs/` with it
-inside.
+anything not in the baseline, and runs the browser checks. Then it builds the
+two derived things that are never committed — the 2,709 crawlable pages, their
+contents hub, sitemap and `robots.txt`, and the single-file offline copy — and
+publishes `docs/` with both inside. Neither exists anywhere else: the only
+copy of either is the one in the artifact that goes live.
 
 **One manual step is required before the site can go live:** open
 **Settings → Pages** and set **Source: GitHub Actions**. The workflow cannot do
@@ -937,7 +958,7 @@ The old address, `https://theoryofshadows.github.io/The-Book/`, still works:
 GitHub redirects it to the custom domain.
 
 Moving the site again is three places, and it is worth knowing which three.
-Every absolute address the 2,709 generated pages state about themselves —
+Every absolute address the 2,710 generated pages state about themselves —
 canonical, `og:url`, the sitemap, `robots.txt`, the 404 — comes from one
 constant, `BASE` in `tools/build_pages.py`. `docs/CNAME` is the second. The
 third is `docs/index.html`, which is the one hand-written page in the site and

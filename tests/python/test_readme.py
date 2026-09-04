@@ -430,5 +430,77 @@ class TheSizesInMegabytes(unittest.TestCase):
         self.assertEqual(claim.group(1), gate.group(1))
 
 
+class TheCrawlablePageCount(unittest.TestCase):
+    """How many pages the deploy generates, in the seven places that say so.
+
+    The number is stated in the README twice, in two comments in
+    docs/index.html, twice in .gitignore and once in the deploy workflow --
+    and nothing rebuilds any of those sentences. It is works plus chapters,
+    so it moves every time the parse finds another chapter, which is the same
+    way the headline used to rot before the tests above were written.
+
+    Two values are correct and they are one apart, which is exactly how an
+    off-by-one survives review: 2,709 is one page per work and one per
+    chapter, and 2,710 is those plus the contents hub. A sentence about what
+    the deploy writes wants the first; a sentence about which pages carry a
+    canonical or structured data wants the second, because the hub carries
+    both. Saying "2,709 pages under /read/ and /contents/" is the mistake this
+    catches, and it was in docs/index.html for as long as the comment existed.
+    """
+
+    def setUp(self):
+        t = totals()
+        self.per_work_and_chapter = t["works"] + t["chapters"]
+        self.including_the_hub = self.per_work_and_chapter + 1
+
+    def read(self, *parts):
+        with open(os.path.join(ROOT, *parts), encoding="utf-8") as fh:
+            return fh.read()
+
+    def check(self, text, pattern, expected, where):
+        found = re.search(pattern, text)
+        self.assertIsNotNone(
+            found,
+            f"{where}: the page count is no longer stated in the form this "
+            f"test can read; rewrite the test or restore the sentence")
+        self.assertEqual(
+            found.group(1), f"{expected:,}",
+            f"{where}: says {found.group(1)}, the build writes "
+            f"{expected:,}")
+
+    def test_the_readme_says_what_the_deploy_writes(self):
+        text = self.read("README.md")
+        self.check(text, r"That is ([\d,]+) pages plus the hub",
+                   self.per_work_and_chapter, "README.md")
+        self.check(text, r"the ([\d,]+) crawlable pages",
+                   self.per_work_and_chapter, "README.md")
+
+    def test_the_readme_says_how_many_state_their_own_address(self):
+        self.check(self.read("README.md"),
+                   r"the ([\d,]+) generated pages state about themselves",
+                   self.including_the_hub, "README.md")
+
+    def test_the_front_pages_comments_count_the_hub_in(self):
+        text = self.read("docs", "index.html")
+        self.check(text, r"Every one of the ([\d,]+) generated pages",
+                   self.including_the_hub, "docs/index.html")
+        self.check(text,
+                   r"The ([\d,]+) generated pages under /read/ and /contents/",
+                   self.including_the_hub, "docs/index.html")
+
+    def test_the_gitignore_counts_what_it_holds_out(self):
+        text = self.read(".gitignore")
+        self.check(text,
+                   r"one per work and one per chapter, ([\d,]+) files",
+                   self.per_work_and_chapter, ".gitignore")
+        self.check(text, r"these are ([\d,]+) files rather than one",
+                   self.per_work_and_chapter, ".gitignore")
+
+    def test_the_deploy_workflow_counts_what_it_rebuilds(self):
+        self.check(self.read(".github", "workflows", "pages.yml"),
+                   r"([\d,]+) files rebuilt on every text change",
+                   self.per_work_and_chapter, ".github/workflows/pages.yml")
+
+
 if __name__ == "__main__":
     unittest.main()
