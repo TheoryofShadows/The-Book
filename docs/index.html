@@ -8,6 +8,12 @@
 <link rel="stylesheet" href="assets/app.css">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
+<!-- Every one of the 2,709 generated pages states its own address and this
+     one, which is the page people actually link to, did not. It is reachable
+     at more than one: the old project Pages address redirects here, www
+     redirects to the apex, and the reader hangs a hash route off it for every
+     view in the site. A canonical is what says which of those is the page. -->
+<link rel="canonical" href="https://thebookandme.com/">
 <!-- The light theme's accent, and it has to be spelt out: a browser reads
      this before any stylesheet, so it cannot be var(--accent). Held to that
      token by tests/python/test_palette.py, having drifted from #632a55. -->
@@ -18,6 +24,7 @@
 <meta property="og:title" content="The Book — the library in the order it was written">
 <meta property="og:description" content="172 works, 2,537 chapters, 1.22 million words of the Jewish, Protestant, Catholic, Orthodox and Ethiopian canons, arranged by date of composition. Public domain, searchable, and audited.">
 <meta property="og:image" content="https://thebookandme.com/assets/icon-512.png">
+<meta property="og:url" content="https://thebookandme.com/">
 <meta name="twitter:card" content="summary">
 
 <!-- The 2,709 generated pages under /read/ and /contents/ each carry
