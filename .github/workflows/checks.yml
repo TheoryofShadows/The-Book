@@ -3,17 +3,15 @@ name: Checks
 # The deploy workflow rebuilds the data on main. This runs on the branches
 # and pull requests where a mistake can still be caught before it is merged,
 # and adds the browser checks, which the deploy workflow does not run.
-# Pull requests only: a branch push with a pull request open would otherwise
-# run everything twice for the same commit.
 on:
   pull_request:
   # A branch pushed before its pull request exists was tested by nothing:
-  # checks.yml ran on pull_request only and pages.yml covers main. The
-  # comment above explained the choice as avoiding a double run, and the
-  # modern form of that is to trigger on the push and skip the job when a
-  # pull request for the same head is already open -- which is what the
-  # `if` on each job below does. main is excluded because pages.yml runs
-  # everything here on it already.
+  # checks.yml ran on pull_request only and pages.yml covers main. So the
+  # push is a trigger too, and the double run it would cause is settled by
+  # the concurrency group below rather than by a condition here -- there is
+  # no expression available to a workflow that can ask whether a pull
+  # request is already open for the head being pushed. main is excluded
+  # because pages.yml runs everything here on it already.
   push:
     branches-ignore:
       - main
@@ -27,6 +25,12 @@ permissions:
 # request. A push is refs/heads/x and a pull request is refs/pull/N/merge --
 # different refs, the same branch, the same commit -- so keying on the ref
 # deduplicated nothing and keying on the branch deduplicates both.
+#
+# The deduplication is a cancellation, so opening a pull request on a branch
+# whose push is still running leaves that push run in the history marked
+# cancelled. That is this working, not a failure: the run that survives
+# checks the same commit. Read the newest run for the commit, not the count
+# of red marks against it.
 concurrency:
   group: checks-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
