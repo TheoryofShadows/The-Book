@@ -915,21 +915,23 @@ custom domain set only in the repository settings can be cleared by a later
 deploy that does not carry one, so the file is what makes the domain survive
 every deploy.
 
-The DNS behind it is the apex pointed at GitHub's Pages addresses — `A` records
-to `185.199.108.153`, `185.199.109.153`, `185.199.110.153` and
-`185.199.111.153` — with a `CNAME` on `www` to `theoryofshadows.github.io`,
-which GitHub redirects to the apex. The apex cannot itself be a `CNAME`; DNS
-forbids one on the root of a domain, which is why the root takes address
-records and only `www` takes a `CNAME`.
+The DNS behind it, at the registrar rather than in this repository:
 
-The certificate is issued and **Enforce HTTPS** is on, so `http://` answers
-with a redirect to `https://` rather than with the page, and the old address
-lands on the secure one.
+    A      @      185.199.108.153       AAAA   @   2606:50c0:8000::153
+    A      @      185.199.109.153       AAAA   @   2606:50c0:8001::153
+    A      @      185.199.110.153       AAAA   @   2606:50c0:8002::153
+    A      @      185.199.111.153       AAAA   @   2606:50c0:8003::153
+    CNAME  www    theoryofshadows.github.io
 
-One thing is still outstanding, and it is not blocking: **there are no `AAAA`
-records**, so the site is reachable over IPv4 only. Adding
-`2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153` and
-`2606:50c0:8003::153` alongside the `A` records covers IPv6-only visitors.
+Four addresses each way, so the site answers over IPv4 and IPv6 alike. The
+apex cannot itself be a `CNAME` — DNS forbids one on the root of a domain —
+which is why the root takes address records and only `www` takes a `CNAME`;
+GitHub redirects `www` to the apex. The certificate is issued and Enforce
+HTTPS is on, so `http://` answers with a redirect rather than with the page.
+
+Those addresses are GitHub's and can change; the current set is in GitHub's
+own Pages documentation, which is the thing to check against if the site ever
+stops resolving for no reason visible here.
 
 The old address, `https://theoryofshadows.github.io/The-Book/`, still works:
 GitHub redirects it to the custom domain. Every absolute address the site
