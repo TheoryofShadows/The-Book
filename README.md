@@ -934,10 +934,16 @@ own Pages documentation, which is the thing to check against if the site ever
 stops resolving for no reason visible here.
 
 The old address, `https://theoryofshadows.github.io/The-Book/`, still works:
-GitHub redirects it to the custom domain. Every absolute address the site
-states about itself — canonicals, the sitemap, `robots.txt`, the share card —
-is built from one constant, `BASE` in `tools/build_pages.py`, so moving the
-site again is that line and the `CNAME` file and nothing else.
+GitHub redirects it to the custom domain.
+
+Moving the site again is three places, and it is worth knowing which three.
+Every absolute address the 2,709 generated pages state about themselves —
+canonical, `og:url`, the sitemap, `robots.txt`, the 404 — comes from one
+constant, `BASE` in `tools/build_pages.py`. `docs/CNAME` is the second. The
+third is `docs/index.html`, which is the one hand-written page in the site and
+so is the one place a domain is spelt out by hand rather than derived: its
+canonical, its `og:url`, its share-card image and its structured data all name
+the address in full. Grepping the domain finds all three.
 
 ## Licence
 
