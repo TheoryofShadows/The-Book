@@ -2960,7 +2960,9 @@
     wrap.appendChild(el("p", {
       class: "lede",
       text: "Every word of every text, including the deuterocanon, 1 Enoch, " +
-            "Jubilees and the Apostolic Fathers. Wrap a phrase in quotes to " +
+            "Jubilees and the Apostolic Fathers — or only one book, only the " +
+            "books one tradition receives, or only the ones left out of every " +
+            "canon. Wrap a phrase in quotes to " +
             "match it exactly, or type a reference — Psalm 23, Job 38:4 — to " +
             "go straight to it."
     }));
@@ -2970,15 +2972,31 @@
       value: initialQuery || "", autocomplete: "off", spellcheck: "false"
     });
 
-    /* Searching one book at a time.
+    /* Searching less than the whole library.
 
        The whole library is 1.22 million words and the results are capped at
        three hundred, so a common word answers with three hundred verses from
        everywhere and the one you wanted is somewhere inside them. Narrowing
        to a book is the difference between a concordance and a search: it is
        also the only way to ask "where does Job say this", which is a
-       question about a book rather than about the collection. */
-    var scopeSel = el("select", { "aria-label": "Which book to search" });
+       question about a book rather than about the collection.
+
+       One book was the only narrowing on offer, and it is the wrong size for
+       the commonest way of reading here. A reader who keeps one canon is not
+       asking about Job; they are asking about their Bible, and this edition
+       prints five of them interleaved with books that belong to none. Asking
+       that question one entry at a time is forty-two searches for the Tanakh
+       and sixty-nine for the Protestant canon -- the works this select
+       lists, Isaiah's three among them -- so the canons are scopes as well:
+       the same five the Canons page compares, each holding exactly the books
+       that page marks as theirs.
+
+       And the sixth entry, which is the question asked the other way round.
+       Reading every book is how somebody finds out what their Bible leaves
+       out, and the answer was there to be read off the results a work at a
+       time, if you already knew which titles those were. It is a scope
+       instead: everything no canon holds. */
+    var scopeSel = el("select", { "aria-label": "Which books to search" });
     scopeSel.appendChild(el("option", { value: "", text: "Every book" }));
     /* Grouped by era, because a flat list of a hundred and sixty-three is a
        list you scroll rather than one you read -- and because the grouping
@@ -2998,9 +3016,218 @@
       });
       scopeSel.appendChild(group);
     });
-    scopeSel.value = initialScope || "";
+
+    /* A canon is a scope too, and it is told apart from a book by this
+       prefix -- in the select and in the URL segment, which are the same
+       string. No work id contains a colon: slugify() in tools/parse_book.py
+       makes them out of [a-z0-9] and hyphens and can make nothing else. */
+    var CANON_SCOPE = "canon:";
+    var canonWorks = null;               // canon key -> { workId: 1 }
+    var excerptWorks = {};               // chapters printed twice; see below
+
+    function isCanonScope(s) {
+      return String(s).lastIndexOf(CANON_SCOPE, 0) === 0;
+    }
+
+    /* Whose Bible the results are measured against.
+
+       The mark on a result says a work is outside a canon, and until now the
+       canon was all five at once: outside every one of them. That is the only
+       thing the data can say about a reader it knows nothing about, and it is
+       not what most readers are asking. Somebody who keeps the Protestant
+       canon is not helped by 1 Enoch going unmarked because the Ethiopian
+       church receives it -- for them that is exactly a book their Bible does
+       not have.
+
+       So they can say which one is theirs, and it is remembered, because a
+       question about your own Bible has the same answer tomorrow. Empty is
+       the honest default for a reader who has not said: mark what no canon
+       holds. */
+    var markCanon = store.get("mark-canon", "");
+
+    /* The scope, held here rather than read off the select, because for a
+       moment it is something the select cannot yet say: a link narrowed to a
+       canon arrives before the file naming that canon's books does. */
+    var scope = initialScope || "";
+    scopeSel.value = scope;
+    /* An id in the URL that names nothing this select offers -- a stale
+       link, a mistyped slug -- is dropped rather than kept as a scope no
+       verse can ever be in. A canon is the one thing not offered yet, so it
+       is kept until canon.json has had its chance below. */
+    if (!scopeSel.value && !isCanonScope(scope)) scope = "";
+
+    /* Which works each tradition receives, from the file the Canons page
+       draws -- so the two can never disagree about what is Catholic -- and
+       asked for after the page is up, so a reader who never opens this
+       select does not wait on it. */
+    var canonReady = getJSON("canon.json").then(function (canon) {
+      canonWorks = {};
+      canon.canons.forEach(function (c) { canonWorks[c] = {}; });
+      var held = {};
+      canon.books.forEach(function (b) {
+        Object.keys(b.canons).forEach(function (c) {
+          if (!canonWorks[c]) return;
+          // Present in that canon's column at all -- received, printed as an
+          // appendix, or received in some branches -- which is the same rule
+          // the Canons page filters by, and the same one a reader means by
+          // "the books in my Bible".
+          b.works.forEach(function (w) { canonWorks[c][w] = 1; held[w] = 1; });
+        });
+      });
+
+      /* And the other side of the same question, which is the one somebody
+         reading every book is usually asking: which of these did no canon
+         take? Everything the volume prints, less everything any canon holds.
+
+         Less one more thing. Five works here are a chapter of a canonical
+         book printed a second time beside the excavated object or the early
+         poem it belongs with -- the Decalogue, the Shema, the priestly
+         blessing, the Song of the Sea, the Song of Deborah. No canon lists
+         them because the whole book is elsewhere in the volume and that is
+         where they are counted, so by subtraction alone they would arrive
+         here as books left out of every Bible, which is the opposite of true
+         and the exact error this scope exists to prevent. canon.json names
+         them; tools/build_canon.py refuses to build if a sixth appears
+         without being classed. */
+      excerptWorks = canon.excerpts || {};
+      canonWorks[CANON_NONE] = {};
+      manifest.sections.forEach(function (section) {
+        section.works.forEach(function (w) {
+          if (!w.chapters || held[w.id] || excerptWorks[w.id]) return;
+          canonWorks[CANON_NONE][w.id] = 1;
+        });
+      });
+
+      var group = el("optgroup", { label: "By canon" });
+      canon.canons.forEach(function (c) {
+        group.appendChild(el("option", {
+          value: CANON_SCOPE + c,
+          text: "The " + (CANON_IN_FULL[c] || c) + " canon"
+        }));
+      });
+      // Last, because it is what the five leave over.
+      group.appendChild(el("option", {
+        value: CANON_SCOPE + CANON_NONE,
+        text: "The books left out of every canon"
+      }));
+      // Under every book and above the books themselves: the list runs from
+      // the widest scope to the narrowest.
+      scopeSel.insertBefore(group, scopeSel.children[1] || null);
+
+      /* And the sentence that says what the marking means, which is a
+         sentence rather than a labelled control because the rule is short
+         enough to read: "Mark verses not in the Protestant canon". */
+      markSel.appendChild(el("option", { value: "", text: "any canon" }));
+      canon.canons.forEach(function (c) {
+        markSel.appendChild(el("option", {
+          value: c, text: "the " + (CANON_IN_FULL[c] || c) + " canon"
+        }));
+      });
+      // A key from an older build, or from another tab's future one, is not
+      // a canon this file knows: fall back rather than measure against a set
+      // that does not exist.
+      markSel.value = markCanon;
+      if (!markSel.value) markCanon = "";
+      markRow.hidden = false;
+
+      if (isCanonScope(scope)) {
+        scopeSel.value = scope;              // now that the option exists
+        if (!scopeSel.value) scope = "";     // a canon key nothing here knows
+      }
+    }).catch(function () {
+      /* No list, no canon entries. An option that would quietly search the
+         whole library under a tradition's name is worse than not offering
+         the tradition at all. */
+      canonWorks = {};
+    });
+
+    /* What the scope means, and what the results have to say for themselves
+       under it. Both come out of canon.json, so both are answered together
+       and after it has landed.
+
+       keep: a test on a work id. A book is itself, a canon is every work it
+       receives, null is no narrowing -- including when the canon list failed
+       to arrive, which run() notices and stops claiming a scope for.
+
+       mark: whether a work is outside the canon the reader measures by. With
+       no canon of their own that is all five at once, and the answer is the
+       set built above. With one, it is that canon's own books, and every
+       work it does not receive is outside it -- Enoch and Jubilees included,
+       which is the whole reason for asking.
+
+       Either way the five chapters printed twice are never marked. They are
+       Deuteronomy and Numbers and Exodus, in every canon there is, and no
+       canon's book list names the second printing because the whole book is
+       elsewhere in the volume. A mark on the Decalogue would be this feature
+       telling a reader the Ten Commandments are not in their Bible. */
+    function scopeReady(want) {
+      return canonReady.then(function () {
+        var keep = null;
+        if (want && !isCanonScope(want)) {
+          keep = function (w) { return w === want; };
+        } else if (want) {
+          var set = canonWorks && canonWorks[want.slice(CANON_SCOPE.length)];
+          if (set) keep = function (w) { return !!set[w]; };
+        }
+        var mine = canonWorks && canonWorks[markCanon || CANON_NONE];
+        return {
+          keep: keep,
+          mark: function (w) {
+            if (!mine || excerptWorks[w]) return false;
+            return markCanon ? !mine[w] : !!mine[w];
+          }
+        };
+      });
+    }
+
+    /* What the mark says: the same canon the control names, said about one
+       verse instead of about the search. */
+    function markLabel() {
+      return markCanon
+        ? "outside the " + (CANON_IN_FULL[markCanon] || markCanon) + " canon"
+        : "outside every canon";
+    }
+
+    /* How a scope is named back to the reader: a book by its title, a canon
+       by the tradition's name. Read from the data rather than from the
+       select, which is a moment behind it. */
+    function scopeTitle(want) {
+      if (isCanonScope(want)) {
+        var key = want.slice(CANON_SCOPE.length);
+        if (key === CANON_NONE) return CANON_NONE_TITLE;
+        return "the " + (CANON_IN_FULL[key] || key) + " canon";
+      }
+      var title = want;
+      manifest.sections.forEach(function (s) {
+        s.works.forEach(function (w) {
+          if (w.id === want) title = titleCase(w.title);
+        });
+      });
+      return title;
+    }
+
+    /* Nothing found, said as a fact about what was searched. A reader who
+       narrowed to Psalms has not learnt that the word is absent from the
+       volume, and must not be told that it is. */
+    function nothingMatched(want) {
+      if (!want) return "No verse matched.";
+      return "No verse in " +
+             (isCanonScope(want) ? scopeTitle(want) : "that book") + " matched.";
+    }
 
     wrap.appendChild(el("div", { class: "toolbar search-bar" }, [input, scopeSel]));
+
+    /* Hidden until canon.json fills it: a select with nothing in it is a
+       control that cannot answer the question it asks. */
+    var markSel = el("select", { "aria-label": "Mark verses not in this canon" });
+    markSel.addEventListener("change", function () {
+      markCanon = markSel.value;
+      store.set("mark-canon", markCanon);
+      go();
+    });
+    var markRow = el("p", { class: "marking", hidden: true },
+                     ["Mark verses not in ", markSel]);
+    wrap.appendChild(markRow);
 
     var chips = el("div", { class: "chips" });
     ["\"living creatures\"", "watchers", "\"son of man\"", "jubilee", "resurrection", "wisdom"]
@@ -3074,7 +3301,7 @@
 
       status.textContent = "Looking up terms…";
 
-      getJSON("chapters.json").then(function (tbl) {
+      var index = getJSON("chapters.json").then(function (tbl) {
         var shards = {};
         terms.forEach(function (t) {
           var k = /^[a-z]/.test(t) ? t[0] : "0";
@@ -3087,8 +3314,15 @@
           Object.keys(shards).forEach(function (k, i) { lookup[k] = loaded[i]; });
           return { tbl: tbl, lookup: lookup };
         });
-      }).then(function (ctx) {
+      });
+
+      Promise.all([scopeReady(scope), index]).then(function (both) {
         if (mine !== runId) return;
+        var keep = both[0].keep, mark = both[0].mark, ctx = both[1];
+        /* The canon list never arrived, so the scope cannot be honoured.
+           Searching everything and saying so is better than printing a
+           tradition's name over results from outside it. */
+        if (isCanonScope(scope) && !keep) scope = "";
         var tbl = ctx.tbl, lookup = ctx.lookup;
 
         // Narrow to candidate chapters using the selective terms only.
@@ -3158,18 +3392,34 @@
         });
 
         var workIds = Object.keys(byWork);
-        if (scope) {
-          workIds = workIds.filter(function (w) { return w === scope; });
-        }
+        if (keep) workIds = workIds.filter(keep);
         if (!workIds.length) {
           bar.firstChild.style.width = "100%";
-          status.textContent = scope
-            ? "No verse in that book matched."
-            : "No verse matched.";
+          status.textContent = nothingMatched(scope);
           return;
         }
-        status.textContent = "Scanning " + fmt(ids.length) + " chapters in " +
-                             workIds.length + " works…";
+        /* Counted over the works about to be read rather than over every
+           candidate the index returned. The index knows nothing about the
+           scope, so under one its count is the size of a search nobody
+           asked for: "shepherd" in the Jewish canon said it was scanning
+           124 chapters when 53 of them were in a book it would open. */
+        var scanning = 0;
+        workIds.forEach(function (w) { scanning += byWork[w].length; });
+        status.textContent = "Scanning " + fmt(scanning) + " chapters in " +
+                             fmt(workIds.length) +
+                             (workIds.length === 1 ? " work…" : " works…");
+
+        /* The mark earns its place only where it divides the results. Under
+           every book it does. Inside one book, inside the reader's own
+           canon, or under the books left out, it would land on all of the
+           rows or on none of them -- which is the scope's own sentence,
+           printed again on every line. Asked of the works this run will
+           actually read rather than of the scope, because that is the same
+           question with fewer special cases: a canon scope wider than the
+           reader's own canon does divide, and does get marked. */
+        var flags = {}, flagged = 0;
+        workIds.forEach(function (w) { if (mark(w)) { flags[w] = 1; flagged++; } });
+        if (!flagged || flagged === workIds.length) flags = {};
 
         var found = 0, done = 0, LIMIT = 300;
         var order = {};
@@ -3182,13 +3432,16 @@
           if (mine !== runId) return;
           if (i >= workIds.length || found >= LIMIT) {
             bar.firstChild.style.width = "100%";
-            var where = scope ? " in " + titleCase(scopeSel.options[scopeSel.selectedIndex].text) : "";
+            var where = scope ? " in " + scopeTitle(scope) : "";
             status.textContent = found
               ? fmt(found) + (found >= LIMIT ? "+ matches (showing the first " + LIMIT + ")" : " matches") + where
-              : "No verse matched" + (scope ? " in that book." : ".");
+              : nothingMatched(scope);
             return;
           }
           var wid = workIds[i];
+          // One question per work rather than per verse: which canon holds a
+          // book is a fact about the book.
+          var uncanonical = !!flags[wid];
           getJSON("works/" + wid + ".json").then(function (work) {
             if (mine !== runId) return;
             byWork[wid].forEach(function (pair) {
@@ -3212,7 +3465,8 @@
                   : terms.every(function (t) { return new RegExp("\\b" + t, "i").test(low); });
                 if (!ok) return;
                 found++;
-                results.appendChild(resultRow(tbl, pair[0], wid, pair[1], u, phrase, terms));
+                results.appendChild(resultRow(tbl, pair[0], wid, pair[1], u,
+                                             phrase, terms, uncanonical));
               });
             });
             done++;
@@ -3224,7 +3478,7 @@
       });
     }
 
-    function resultRow(tbl, cid, wid, chIdx, unit, phrase, terms) {
+    function resultRow(tbl, cid, wid, chIdx, unit, phrase, terms, uncanonical) {
       var row = tbl.chapters[cid];
       var href = "#/read/" + wid + "/" + chIdx + (unit.ref ? "/v" + unit.ref : "");
       var label = titleCase(row[3]) + " · " + row[2] + (unit.ref ? ":" + unit.ref : "");
@@ -3274,22 +3528,35 @@
         });
       }
 
+      var ref = el("div", { class: "result-ref" }, [
+        el("a", { href: href, text: label })
+      ]);
+      /* Which of these is in my Bible is the question somebody searching the
+         whole library is usually holding in their head, and until now it was
+         answered by recognising the title -- which works for Psalms and not
+         for Barnabas, and so works least well for the reader who most needs
+         it. The mark is on the verses outside the canon being measured by,
+         and on nothing else: a page where every row carries a badge says
+         nothing at all. */
+      if (uncanonical) {
+        ref.appendChild(el("span", { class: "result-outside", text: markLabel() }));
+      }
+
       return el("div", { class: "result" }, [
-        el("div", { class: "result-ref" }, [
-          el("a", { href: href, text: label })
-        ]),
+        ref,
         el("div", { class: "result-text", html: html })
       ]);
     }
 
-    /* The book is in the URL beside the query, so a narrowed search can be
-       kept, shared and come back to -- which is most of what it is for. */
+    /* The scope is in the URL beside the query -- a work id, or "canon:" and
+       a canon's key -- so a narrowed search can be kept, shared and come
+       back to, which is most of what it is for. */
     function go() {
       var q = input.value;
       var target = "#/search" + (q.trim() ? "/" + encodeURIComponent(q) : "");
-      if (q.trim() && scopeSel.value) target += "/" + scopeSel.value;
+      if (q.trim() && scope) target += "/" + scope;
       if (location.hash !== target) history.replaceState(null, "", target);
-      run(q, scopeSel.value);
+      run(q, scope);
     }
 
     var timer;
@@ -3298,12 +3565,13 @@
       timer = setTimeout(go, 220);
     });
     scopeSel.addEventListener("change", function () {
+      scope = scopeSel.value;
       clearTimeout(timer);
       go();
     });
 
     setTimeout(function () { input.focus(); }, 30);
-    if (initialQuery) run(initialQuery, scopeSel.value);
+    if (initialQuery) run(initialQuery, scope);
 
     return wrap;
   }
@@ -3316,6 +3584,25 @@
     tanakh: "Jewish", protestant: "Protestant", catholic: "Catholic",
     orthodox: "E. Orthodox", ethiopian: "Ethiopian"
   };
+
+  /* The same five, unabbreviated. The labels above head a table whose
+     columns have to fit a phone; these are read in sentences -- the search
+     scope, and what the search says it searched -- where "E. Orthodox" is
+     an abbreviation nobody asked for. */
+  var CANON_IN_FULL = {
+    tanakh: "Jewish", protestant: "Protestant", catholic: "Catholic",
+    orthodox: "Eastern Orthodox", ethiopian: "Ethiopian"
+  };
+
+  /* The sixth entry in the search's list of canons, which is not a canon: the
+     works this volume prints that none of the five receive -- the Apostolic
+     Fathers, the New Testament apocrypha, the Testaments of the Twelve
+     Patriarchs, Hermas, Ignatius. Keyed like a canon so that one prefix, one
+     set of work ids and one URL segment carry both, and named "none" because
+     canon.json's own keys are the five traditions and cannot collide with
+     it. */
+  var CANON_NONE = "none";
+  var CANON_NONE_TITLE = "the books left out of every canon";
 
   function viewCanons(manifest, canon) {
     var wrap = el("div", { class: "wrap-wide" });

@@ -1150,6 +1150,21 @@ table.grid tbody tr:last-child td { border-bottom: 0; }
 }
 .result-ref a { font-weight: 600; text-decoration: none; }
 .result-era { color: var(--ink-faint); }
+/* Beside the reference on a result from a work no canon receives. Quiet on
+   purpose: it is a note about where the verse comes from, not a warning
+   about it, and the works it lands on are half of what this volume is for. */
+/* The sentence that says what the mark is measured against, under the search
+   controls: "Mark verses not in [any canon]". A sentence rather than a
+   labelled box, because the rule is short enough to read as one. */
+.marking {
+  margin: -.6rem 0 0; font-size: .82rem; color: var(--ink-soft);
+}
+.marking select { font-size: .82rem; padding: .15rem .45rem; width: auto; }
+.result-outside {
+  font-family: var(--sans); font-size: .72rem; color: var(--ink-faint);
+  border: 1px solid var(--rule-soft); border-radius: 999px;
+  padding: 0 .45rem; white-space: nowrap;
+}
 .result-text { font-family: var(--serif); font-size: 1rem; line-height: 1.62; }
 mark { background: var(--mark); color: inherit; padding: 0 .1em; border-radius: 2px; }
 

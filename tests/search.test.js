@@ -24,7 +24,26 @@ const EXPECT = {
      verse that changed it before touching the number. */
   caesar: 60,
   mastema: 11,
-  behemothLeviathan: 2
+  behemothLeviathan: 2,
+  /* "shepherd" across everything, and across the books the Tanakh receives.
+     Thirty of the ninety-nine verses between those two figures are in works
+     no canon holds at all, twenty-five of them in the Shepherd of Hermas --
+     which is the reason a canon is worth being able to search on its own. */
+  shepherd: 175,
+  shepherdJewish: 76,
+  /* And in the works no canon holds at all, which is the same question asked
+     from the other side. */
+  shepherdLeftOut: 30,
+  /* And the verses outside one reader's own canon rather than outside all
+     five: 175 less the 99 the Protestant canon holds. Sirach, Judith,
+     Jubilees and Enoch are in it and not in the thirty above, which is the
+     difference the setting exists to make. */
+  shepherdOutsideProtestant: 76,
+  /* Horeb is named in Deuteronomy 5, which this volume prints twice: once in
+     Deuteronomy and once on its own beside the Nash Papyrus. The second
+     printing belongs to no canon's book list, and must still never be
+     offered as a book left out of every canon. */
+  horeb: 20
 };
 
 /* Search does work rather than just drawing, so every assertion waits for it
@@ -295,7 +314,7 @@ module.exports = async function search(t, ctx) {
   await page.goto(ctx.base + '#/search/shepherd/psalms');
   await settled(page);
   const scoped = await page.evaluate(() => ({
-    picked: document.querySelector('select[aria-label="Which book to search"]').value,
+    picked: document.querySelector('select[aria-label="Which books to search"]').value,
     refs: Array.from(document.querySelectorAll('.result-ref'), e => e.textContent)
   }));
   t.check('searching one book returns that book and nothing else',
@@ -313,7 +332,7 @@ module.exports = async function search(t, ctx) {
   // Choosing a book keeps the search shareable rather than losing it.
   await page.goto(ctx.base + '#/search/shepherd');
   await settled(page);
-  await page.selectOption('select[aria-label="Which book to search"]', 'job');
+  await page.selectOption('select[aria-label="Which books to search"]', 'job');
   await settled(page);
   await page.waitForTimeout(300);
   t.check('the chosen book is in the URL, so a narrowed search can be kept',
@@ -324,6 +343,327 @@ module.exports = async function search(t, ctx) {
           /No verse in that book matched/.test(
             await page.evaluate(() => document.querySelector('.muted').textContent)),
           await page.evaluate(() => document.querySelector('.muted').textContent));
+
+  /* ---- one canon at a time ----
+
+     A book was the only narrowing there was, and it is the wrong size for
+     the way most people read: somebody who keeps one canon is not asking
+     about Job, they are asking about their Bible, and this edition prints
+     five of them interleaved with books that belong to none of them. Asked
+     one entry at a time that is forty-two searches for the Tanakh.
+
+     Which works belong to which canon is read here out of canon.json rather
+     than listed, because that is where the site reads it too: a check with
+     its own copy of the answer would pass while the two disagreed. */
+  const { canonWorks, excerpts } = await page.evaluate(async () => {
+    const canon = await (await fetch('data/canon.json')).json();
+    const out = {};
+    canon.canons.forEach(c => { out[c] = []; });
+    canon.books.forEach(b => Object.keys(b.canons).forEach(
+      c => out[c] && b.works.forEach(w => out[c].push(w))));
+    return { canonWorks: out, excerpts: Object.keys(canon.excerpts) };
+  });
+  const inSomeCanon = (w) => Object.keys(canonWorks).some(
+    c => canonWorks[c].indexOf(w) >= 0);
+
+  // The work id is the third segment of "#/read/<work>/<chapter>".
+  const worksIn = () => page.evaluate(() => Array.from(
+    document.querySelectorAll('.result-ref a'),
+    a => a.getAttribute('href').split('/')[2]));
+
+  await page.goto(ctx.base + '#/search/shepherd');
+  await settled(page);
+  const everywhere = await worksIn();
+  const uncanonical = everywhere.filter(w => !inSomeCanon(w));
+
+  t.check('the whole library answers with books no canon holds',
+          everywhere.length === EXPECT.shepherd && uncanonical.length > 0,
+          everywhere.length + ' hits, ' + uncanonical.length + ' outside every canon');
+
+  await page.goto(ctx.base + '#/search/shepherd/canon:tanakh');
+  await settled(page);
+  const jewish = await worksIn();
+
+  t.check('searching a canon returns that canon and nothing else',
+          jewish.length === EXPECT.shepherdJewish &&
+          jewish.every(w => canonWorks.tanakh.indexOf(w) >= 0),
+          jewish.length + ' of ' + EXPECT.shepherdJewish + ', ' +
+          jewish.filter(w => canonWorks.tanakh.indexOf(w) < 0).length + ' from outside it');
+
+  t.check('and the canon it names, not one of the wider ones',
+          await page.evaluate(() =>
+            document.querySelector('select[aria-label="Which books to search"]').value) ===
+          'canon:tanakh' &&
+          /in the Jewish canon/.test(
+            await page.evaluate(() => document.querySelector('.muted').textContent)),
+          await page.evaluate(() => document.querySelector('.muted').textContent));
+
+  /* The canons nest, in canon.json and in history: every book of the Tanakh
+     is in the Protestant canon, that inside the Catholic, that inside the
+     Orthodox, that inside the Ethiopian. So a wider canon can never answer
+     with less than a narrower one, and for a word this common it answers
+     with more at every step. */
+  const scopedCount = async (scope) => {
+    await page.goto(ctx.base + '#/search/shepherd/canon:' + scope);
+    await settled(page);
+    return page.locator('.result').count();
+  };
+  const protestant = await scopedCount('protestant');
+  const ethiopian = await scopedCount('ethiopian');
+  t.check('a wider canon answers with at least as much as a narrower one',
+          jewish.length < protestant && protestant < ethiopian &&
+          ethiopian < EXPECT.shepherd,
+          [EXPECT.shepherdJewish, protestant, ethiopian, EXPECT.shepherd].join(' < '));
+
+  /* Absent from your canon and absent from the volume are different facts,
+     and a reader told the second when the first is true goes away believing
+     the library does not have the book. Mastema is all through Jubilees,
+     which the Ethiopian canon receives and the Tanakh does not. */
+  await page.goto(ctx.base + '#/search/mastema/canon:tanakh');
+  await settled(page);
+  t.check('a canon with no match says so about the canon, not the library',
+          await page.locator('.result').count() === 0 &&
+          /No verse in the Jewish canon matched/.test(
+            await page.evaluate(() => document.querySelector('.muted').textContent)),
+          await page.evaluate(() => document.querySelector('.muted').textContent));
+
+  // Kept in the URL, like the book, so it can be shared and come back to.
+  await page.goto(ctx.base + '#/search/shepherd');
+  await settled(page);
+  await page.selectOption('select[aria-label="Which books to search"]', 'canon:ethiopian');
+  await settled(page);
+  await page.waitForTimeout(300);
+  t.check('the chosen canon is in the URL, so a narrowed search can be kept',
+          await page.evaluate(() => location.hash) === '#/search/shepherd/canon:ethiopian',
+          await page.evaluate(() => location.hash));
+
+  /* And every book is still every book -- the thing the narrowing is there
+     to be an alternative to, not a replacement for. */
+  await page.selectOption('select[aria-label="Which books to search"]', '');
+  await settled(page);
+  await page.waitForTimeout(300);
+  t.check('and every book is still one of the choices',
+          await page.locator('.result').count() === EXPECT.shepherd &&
+          await page.evaluate(() => location.hash) === '#/search/shepherd',
+          await page.locator('.result').count() + ' hits at ' +
+          await page.evaluate(() => location.hash));
+
+  /* ---- and the books no canon holds ----
+
+     The same question from the other side, and the one somebody reading
+     every book is usually asking: which of these did my Bible leave out?
+     The answer was readable off the results a work at a time, if you already
+     knew which of the titles were which -- which is precisely what a reader
+     who recognises some of the books does not know. */
+  await page.goto(ctx.base + '#/search/shepherd/canon:none');
+  await settled(page);
+  const leftOut = await worksIn();
+
+  t.check('searching the books left out returns only books no canon holds',
+          leftOut.length === EXPECT.shepherdLeftOut &&
+          leftOut.every(w => !inSomeCanon(w)),
+          leftOut.length + ' of ' + EXPECT.shepherdLeftOut + ', ' +
+          leftOut.filter(inSomeCanon).length + ' from inside a canon');
+
+  t.check('and says which side of the question it answered',
+          /in the books left out of every canon/.test(
+            await page.evaluate(() => document.querySelector('.muted').textContent)),
+          await page.evaluate(() => document.querySelector('.muted').textContent));
+
+  /* Every work the library answered with is in a canon, or is one of the
+     five reprinted chapters, or is left out -- and the three do not overlap.
+     A work that fell between them would be invisible to both scopes while
+     still turning up under every book. */
+  const strays = everywhere.filter(w => !inSomeCanon(w) &&
+                                        excerpts.indexOf(w) < 0 &&
+                                        leftOut.indexOf(w) < 0);
+  t.check('the two scopes divide the library between them, with no remainder',
+          strays.length === 0, strays.join(' ') || 'nothing unaccounted for');
+
+  /* The trap this scope walks into if it is only subtraction. Deuteronomy 5
+     is printed twice here: in Deuteronomy, and again on its own beside the
+     Nash Papyrus. The second printing is in no canon's book list, because
+     the canons are counted on the whole book -- so a search for the books no
+     canon holds would offer the Decalogue as one of them, and tell a reader
+     that the Ten Commandments are not in their Bible. */
+  await page.goto(ctx.base + '#/search/horeb');
+  await settled(page);
+  const horeb = await worksIn();
+  t.check('a chapter printed twice is in the results under every book',
+          horeb.length === EXPECT.horeb &&
+          horeb.indexOf('deuteronomy-5-the-decalogue') >= 0,
+          horeb.length + ' hits, ' +
+          (horeb.indexOf('deuteronomy-5-the-decalogue') >= 0 ? 'the Decalogue among them'
+                                                             : 'and the Decalogue is not'));
+
+  await page.goto(ctx.base + '#/search/horeb/canon:none');
+  await settled(page);
+  const horebLeftOut = await worksIn();
+  t.check('and is never one of the books left out, because it is scripture',
+          horebLeftOut.length === 0 &&
+          /No verse in the books left out of every canon matched/.test(
+            await page.evaluate(() => document.querySelector('.muted').textContent)),
+          horebLeftOut.join(' ') ||
+          await page.evaluate(() => document.querySelector('.muted').textContent));
+
+  // Chosen from the select, kept in the URL, like every other scope.
+  await page.goto(ctx.base + '#/search/shepherd');
+  await settled(page);
+  await page.selectOption('select[aria-label="Which books to search"]', 'canon:none');
+  await settled(page);
+  await page.waitForTimeout(300);
+  t.check('the books left out are a choice in the list, and stay in the URL',
+          await page.evaluate(() => location.hash) === '#/search/shepherd/canon:none' &&
+          await page.locator('.result').count() === EXPECT.shepherdLeftOut,
+          await page.locator('.result').count() + ' hits at ' +
+          await page.evaluate(() => location.hash));
+
+  /* ---- and the same fact on the row, under every book ----
+
+     Narrowing is one answer to "which of these is in my Bible" and it is not
+     the answer for somebody who wants to read the whole library and know
+     what they are reading. On that page the question was answered by
+     recognising the title, which works for Psalms and not for Barnabas --
+     so it worked least well for the reader who most needed it. */
+  const rows = () => page.evaluate(() => Array.from(
+    document.querySelectorAll('.result'), r => ({
+      work: r.querySelector('.result-ref a').getAttribute('href').split('/')[2],
+      marked: !!r.querySelector('.result-outside'),
+      said: (r.querySelector('.result-outside') || {}).textContent || ''
+    })));
+
+  await page.goto(ctx.base + '#/search/shepherd');
+  await settled(page);
+  const everyBook = await rows();
+
+  t.check('every book marks the verses no canon holds, and only those',
+          everyBook.filter(r => r.marked).length === EXPECT.shepherdLeftOut &&
+          everyBook.every(r => r.marked === !inSomeCanon(r.work)),
+          everyBook.filter(r => r.marked).length + ' marked of ' +
+          EXPECT.shepherdLeftOut + ', ' +
+          everyBook.filter(r => r.marked && inSomeCanon(r.work)).length + ' wrongly');
+
+  t.check('and says what the mark means rather than drawing a symbol',
+          /outside every canon/.test((everyBook.find(r => r.marked) || {}).said || ''),
+          (everyBook.find(r => r.marked) || {}).said || '(nothing said)');
+
+  /* The same trap as the scope, on the row this time: a chapter of
+     Deuteronomy printed twice is scripture in both places, and a mark on the
+     second printing would tell a reader the Decalogue is in no Bible. */
+  await page.goto(ctx.base + '#/search/horeb');
+  await settled(page);
+  const horebRows = await rows();
+  t.check('a chapter printed twice is never marked as outside every canon',
+          horebRows.length === EXPECT.horeb &&
+          horebRows.every(r => !r.marked),
+          horebRows.filter(r => r.marked).map(r => r.work).join(' ') ||
+          horebRows.length + ' rows, none marked');
+
+  /* Under a scope the marking would be a fact the page has already stated,
+     on every row or on none of them. */
+  for (const [scope, what] of [['canon:tanakh', 'a canon'],
+                               ['canon:none', 'the books left out'],
+                               ['psalms', 'one book']]) {
+    await page.goto(ctx.base + '#/search/shepherd/' + scope);
+    await settled(page);
+    const scopedRows = await rows();
+    t.check('no verse is marked when the scope has already said it: ' + what,
+            scopedRows.length > 0 && scopedRows.every(r => !r.marked),
+            scopedRows.length + ' rows, ' +
+            scopedRows.filter(r => r.marked).length + ' marked');
+  }
+
+  /* ---- measured against the reader's own canon ----
+
+     "Outside every canon" is the only thing the page can say to a reader it
+     knows nothing about, and it is not the question most people are asking.
+     Somebody who keeps the Protestant canon is not helped by 1 Enoch going
+     unmarked because the Ethiopian church receives it: for them that is
+     precisely a book their Bible does not have. So they can say which canon
+     is theirs, and the mark is measured against that instead. */
+  const mine = 'select[aria-label="Mark verses not in this canon"]';
+
+  await page.goto(ctx.base + '#/search/shepherd');
+  await settled(page);
+  t.check('the page asks whose canon to measure by, and assumes none',
+          await page.locator(mine).count() === 1 &&
+          await page.inputValue(mine) === '' &&
+          /Mark verses not in/.test(await page.textContent('.marking')),
+          (await page.textContent('.marking') || '').slice(0, 30));
+
+  await page.selectOption(mine, 'protestant');
+  await settled(page);
+  await page.waitForTimeout(300);
+  const byProtestant = await rows();
+  const inProtestant = (w) => canonWorks.protestant.indexOf(w) >= 0;
+
+  t.check('choosing a canon marks what that canon does not hold',
+          byProtestant.filter(r => r.marked).length === EXPECT.shepherdOutsideProtestant &&
+          byProtestant.every(r => r.marked ===
+            (!inProtestant(r.work) && excerpts.indexOf(r.work) < 0)),
+          byProtestant.filter(r => r.marked).length + ' of ' +
+          EXPECT.shepherdOutsideProtestant);
+
+  t.check('and the mark names the canon it was measured against',
+          /outside the Protestant canon/.test(
+            (byProtestant.find(r => r.marked) || {}).said || ''),
+          (byProtestant.find(r => r.marked) || {}).said || '(nothing said)');
+
+  /* The books the five canons disagree about are the point of the setting:
+     under "every canon" Sirach and Enoch go unmarked, because somebody
+     receives them. Under a Protestant reader's canon they do not. */
+  t.check('a book another tradition receives is outside this reader\'s canon',
+          ['sirach-ecclesiasticus', 'jubilees', 'judith'].every(w =>
+            byProtestant.some(r => r.work === w && r.marked)),
+          ['sirach-ecclesiasticus', 'jubilees', 'judith']
+            .filter(w => byProtestant.some(r => r.work === w && r.marked)).join(' '));
+
+  /* A question about your own Bible has the same answer tomorrow. */
+  await page.goto(ctx.base + '#/search/horeb');
+  await settled(page);
+  const horebMine = await rows();
+  t.check('the answer is remembered, and applies to the next search',
+          await page.inputValue(mine) === 'protestant' &&
+          horebMine.some(r => r.marked),
+          await page.inputValue(mine) + ', ' +
+          horebMine.filter(r => r.marked).length + ' marked');
+
+  t.check('and the chapter printed twice is still never marked',
+          horebMine.every(r => r.work !== 'deuteronomy-5-the-decalogue' || !r.marked),
+          horebMine.filter(r => r.marked).map(r => r.work).join(' '));
+
+  /* Inside the reader's own canon there is nothing to mark; inside a wider
+     one there is, and that is the case the scope cannot answer on its own. */
+  await page.goto(ctx.base + '#/search/shepherd/canon:protestant');
+  await settled(page);
+  const insideMine = await rows();
+  await page.goto(ctx.base + '#/search/shepherd/canon:ethiopian');
+  await settled(page);
+  const widerThanMine = await rows();
+
+  t.check('a scope inside the reader\'s canon marks nothing',
+          insideMine.length > 0 && insideMine.every(r => !r.marked),
+          insideMine.filter(r => r.marked).length + ' marked of ' + insideMine.length);
+
+  t.check('and a canon wider than theirs marks what it adds',
+          widerThanMine.some(r => r.marked) &&
+          widerThanMine.every(r => r.marked ===
+            (!inProtestant(r.work) && excerpts.indexOf(r.work) < 0)),
+          widerThanMine.filter(r => r.marked).length + ' marked of ' +
+          widerThanMine.length);
+
+  // And back to no canon of one's own, which is where every reader starts.
+  await page.goto(ctx.base + '#/search/shepherd');
+  await settled(page);
+  await page.selectOption(mine, '');
+  await settled(page);
+  await page.waitForTimeout(300);
+  const backToAny = await rows();
+  t.check('and it can be given back, leaving the honest default',
+          backToAny.filter(r => r.marked).length === EXPECT.shepherdLeftOut &&
+          /outside every canon/.test((backToAny.find(r => r.marked) || {}).said || ''),
+          backToAny.filter(r => r.marked).length + ' marked, ' +
+          ((backToAny.find(r => r.marked) || {}).said || '(nothing said)'));
 
   await page.close();
 };
