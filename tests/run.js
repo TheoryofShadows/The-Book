@@ -16,7 +16,7 @@ const { serve, launch, Tally } = require('./harness');
    first of the two. run.js clears what it left behind at the end. */
 const SUITES = ['routes', 'layout', 'search', 'words', 'keeping',
                 'dating', 'resilience', 'listening', 'access', 'crawlable',
-                'installable', 'offline', 'map'];
+                'installable', 'caching', 'offline', 'map'];
 
 async function main() {
   const wanted = process.argv.slice(2);
@@ -37,6 +37,25 @@ async function main() {
   }
 
   const root = path.resolve(__dirname, '..');
+
+  /* The worker is generated and gitignored, so a clean checkout does not have
+     one -- and the page registers it from the head of index.html, so without
+     this every suite that opens the site logs a 404 for a script and every
+     watched page reports it as a failure. That is exactly what happened: this
+     passed locally, where tools/build.sh had already made the file, and
+     failed in CI, where the reader job runs these checks without building
+     anything. The suite needs the file, so the suite makes it, the same way
+     offline.test.js makes the single-file copy it opens. */
+  try {
+    require('child_process').execFileSync(
+      'python3', [path.join(root, 'tools', 'build_sw.py'), path.join(root, 'docs')],
+      { stdio: 'pipe' });
+  } catch (e) {
+    console.error('Could not build the service worker: ' +
+                  String(e.message).split('\n')[0]);
+    process.exit(2);
+  }
+
   const site = await serve(path.join(root, 'docs'));
   let browser;
   try {

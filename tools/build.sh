@@ -86,4 +86,12 @@ python3 tools/build_standalone.py docs docs/the-book.html
 echo "==> the crawlable static pages"
 python3 tools/build_pages.py docs
 
+# The worker is stamped with a hash of the files it serves, so it has to be
+# built after them: run before the data is rebuilt it would carry the stamp
+# of the previous parse and a deploy would ship a cache key for a site that
+# no longer exists. Gitignored and made here and by the deploy, like the two
+# above.
+echo "==> the service worker"
+python3 tools/build_sw.py docs
+
 echo "==> done"

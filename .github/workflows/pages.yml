@@ -102,6 +102,11 @@ jobs:
         run: python3 tools/build_pages.py docs
       - name: Build the single-file offline copy
         run: python3 tools/build_standalone.py docs docs/the-book.html
+      # Stamped with a hash of what it serves, so it is built after the pages
+      # above and shipped inside the same artifact. Without this step the
+      # live site has a registration pointing at a worker that is not there.
+      - name: Build the service worker
+        run: python3 tools/build_sw.py docs
       # Pages must already be enabled for the repository, under
       # Settings -> Pages -> Source: GitHub Actions. The workflow cannot turn
       # it on itself: GITHUB_TOKEN lacks the admin right to create the Pages
