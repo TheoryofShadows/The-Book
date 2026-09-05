@@ -1823,3 +1823,34 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
     padding: .18rem .5rem;
   }
 }
+
+/* ---------- the transport, under a thumb ----------
+
+   The player's buttons were 2.2rem, which measures 35px on a phone, and the
+   play button 42. These are the controls somebody uses one-handed while
+   listening, often without looking straight at the screen -- a stronger case
+   for a thumb-sized target than anything else on the site, and they were the
+   smallest things on it after the chapter numbers.
+
+   Keyed on the pointer rather than on the width, because the thing that
+   decides this is what is touching the screen and not how wide it is: a
+   tablet is a coarse pointer at desk width and wants the same 44px, and a
+   narrow window on a laptop has a mouse and does not. A mouse keeps the
+   smaller buttons, which are easier to fit and no harder to hit with a
+   cursor.
+
+   Free of the fold, like the chapter numbers and for the same reason: the
+   player is position: fixed, so its height is drawn over the page rather
+   than pushed into it, and nothing here moves the scripture down. */
+@media (pointer: coarse) {
+  .player-btn { width: 44px; height: 44px; }
+  .player-play { width: 52px; height: 52px; }
+
+  /* The settings row is not the transport. Rate, pace, voice, the sample and
+     the sleep timer are chosen once and then left alone, and sizing them like
+     the controls a thumb reaches for every verse took the panel from 177px to
+     254 -- which, fixed over a 568px phone, is nearly half the screen covered
+     while the highlight is trying to show somebody where the voice has got
+     to. They keep the size a settings row can have. */
+  .player-opts .player-btn { width: 2.2rem; height: 2.2rem; }
+}
