@@ -225,6 +225,25 @@ class TheBrowserIsToldTheRightColour(unittest.TestCase):
         light, _media, _chosen = palettes()
         self.assertEqual(stated.group(1).lower(), light["accent"].lower())
 
+    def test_the_generated_pages_are_told_the_same_colour(self):
+        """The front page is one page; tools/build_pages.py writes 2,709 more.
+
+        Its copy of this value was spelt out beside the other one and was not
+        corrected when the other one was, so every generated page painted the
+        address bar #6b2d5b while the page they all link to painted it
+        #632a55. Nothing compared them, because the test above reads only
+        docs/index.html. This reads the generator.
+        """
+        with open(os.path.join(ROOT, "tools", "build_pages.py"),
+                  encoding="utf-8") as fh:
+            source = fh.read()
+        stated = re.search(
+            r'theme-color" content="(#[0-9a-fA-F]{6})"', source)
+        self.assertIsNotNone(
+            stated, "tools/build_pages.py no longer writes a theme-color")
+        light, _media, _chosen = palettes()
+        self.assertEqual(stated.group(1).lower(), light["accent"].lower())
+
 
 if __name__ == "__main__":
     unittest.main()

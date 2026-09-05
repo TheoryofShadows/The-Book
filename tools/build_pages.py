@@ -206,7 +206,23 @@ def head(title, description, canonical, depth, extra_head="", og_type="article")
         '<link rel="stylesheet" href="%sassets/app.css">' % up,
         '<link rel="icon" href="%sassets/favicon.svg" type="image/svg+xml">' % up,
         '<link rel="apple-touch-icon" href="%sassets/icon-180.png">' % up,
-        '<meta name="theme-color" content="#6b2d5b">',
+        # Most phones reach the library through one of these pages rather
+        # than through the front page, so the manifest has to be reachable
+        # from here too or there is nothing for Android to offer to install.
+        # start_url in it is relative to the manifest, not to this page, so
+        # installing from a chapter still opens the reader at its root.
+        '<link rel="manifest" href="%ssite.webmanifest">' % up,
+        '<meta name="mobile-web-app-capable" content="yes">',
+        '<meta name="apple-mobile-web-app-capable" content="yes">',
+        '<meta name="apple-mobile-web-app-status-bar-style" content="default">',
+        '<meta name="apple-mobile-web-app-title" content="The Book">',
+        # The light accent, spelt out because a browser reads it before any
+        # stylesheet. docs/index.html carries the same value and is held to
+        # it by tests/python/test_palette.py; this copy said #6b2d5b for as
+        # long as that one did, was not corrected with it, and so shipped a
+        # different colour on all 2,709 of these pages than on the page they
+        # link to. Both are gated now.
+        '<meta name="theme-color" content="#632a55">',
         '<meta property="og:type" content="%s">' % e(og_type),
         '<meta property="og:site_name" content="%s">' % e(SITE),
         '<meta property="og:title" content="%s">' % e(title),

@@ -112,7 +112,7 @@ class Committed(unittest.TestCase):
 
     def test_pngs_are_reproducible(self):
         """Deterministic output, or a rebuild shows up as a diff every time."""
-        for size in (180, 512):
+        for size in build_logo.ICON_SIZES:
             self.assertEqual(read(f"icon-{size}.png", "rb"),
                              build_logo.png(size), size)
 
