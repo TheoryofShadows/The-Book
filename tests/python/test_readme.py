@@ -439,19 +439,25 @@ class TheCrawlablePageCount(unittest.TestCase):
     so it moves every time the parse finds another chapter, which is the same
     way the headline used to rot before the tests above were written.
 
-    Two values are correct and they are one apart, which is exactly how an
+    Two values are correct and they are fourteen apart, which is exactly how an
     off-by-one survives review: 2,709 is one page per work and one per
-    chapter, and 2,710 is those plus the contents hub. A sentence about what
-    the deploy writes wants the first; a sentence about which pages carry a
-    canonical or structured data wants the second, because the hub carries
-    both. Saying "2,709 pages under /read/ and /contents/" is the mistake this
-    catches, and it was in docs/index.html for as long as the comment existed.
+    chapter, and 2,723 is those plus the eleven threads and the three hubs at
+    /contents/, /threads/ and /timeline/. A sentence about what the deploy
+    writes under /read/ wants the first; a sentence about which pages carry a
+    canonical or structured data wants the second, because the threads and the
+    hubs carry both. Saying "2,709 pages under /read/ and /contents/" is the
+    mistake this catches, and it was in docs/index.html for as long as the
+    comment existed.
     """
 
     def setUp(self):
         t = totals()
         self.per_work_and_chapter = t["works"] + t["chapters"]
-        self.including_the_hub = self.per_work_and_chapter + 1
+        with open(os.path.join(ROOT, "docs", "data", "threads.json"),
+                  encoding="utf-8") as fh:
+            threads = len(json.load(fh))
+        # contents, threads, timeline
+        self.all_generated = self.per_work_and_chapter + threads + 3
 
     def read(self, *parts):
         with open(os.path.join(ROOT, *parts), encoding="utf-8") as fh:
@@ -478,15 +484,17 @@ class TheCrawlablePageCount(unittest.TestCase):
     def test_the_readme_says_how_many_state_their_own_address(self):
         self.check(self.read("README.md"),
                    r"the ([\d,]+) generated pages state about themselves",
-                   self.including_the_hub, "README.md")
+                   self.all_generated, "README.md")
 
-    def test_the_front_pages_comments_count_the_hub_in(self):
+    def test_the_front_pages_comments_count_the_hubs_in(self):
         text = self.read("docs", "index.html")
         self.check(text, r"Every one of the ([\d,]+) generated pages",
-                   self.including_the_hub, "docs/index.html")
+                   self.all_generated, "docs/index.html")
         self.check(text,
-                   r"The ([\d,]+) generated pages under /read/ and /contents/",
-                   self.including_the_hub, "docs/index.html")
+                   r"The ([\d,]+) generated pages under /read/, /contents/",
+                   self.all_generated, "docs/index.html")
+        self.check(text, r"including the ([\d,]+) static ones",
+                   self.all_generated, "docs/index.html")
 
     def test_the_gitignore_counts_what_it_holds_out(self):
         text = self.read(".gitignore")

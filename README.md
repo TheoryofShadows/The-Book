@@ -28,6 +28,18 @@ printed, and what has not been checked about it. The four still absent are
 absent for reasons the canon table names and cites: no English translation of
 them is old enough to be public domain.
 
+The front page said none of that. Its first sentence called all five canons
+"complete" while `docs/data/canon.json` — built from this same table — recorded
+the Ethiopian at 90 of 94, and the accuracy report two clicks away corrected
+it. On a site whose argument is that it would rather print a hole than a
+plausible sentence, that is the project disagreeing with itself, and a reader
+who notices trusts the wrong half. The sentence now says what the table says,
+and `tests/python/test_hero.py` holds it there: a canon may be called complete
+only when every one of its units is present, and a canon that is short has to
+be named with the number of books it is short. Ingest the Meqabyan and the
+test fails until the sentence is rewritten, which is the direction that
+failure should point.
+
 It opens with the Song of the Sea, not with Genesis.
 
 **172 works · 2,537 chapters · 40,124 numbered verses · 1.22 million words**
@@ -100,9 +112,22 @@ them against the published text, pulls the verse out of the same JSON the
 reader loads, and refuses to write the file if a single reference does not
 exist — so a thread cannot quote a verse this volume does not contain, or
 drift when the parse changes. It also checks that the stops run forward
-through the sections, and fails a thread that goes backwards without saying
-why. The connective prose between the stops is editorial, and the page says
-so.
+through the sections, and fails a thread that goes backwards unless the stop
+carries `outOfOrder` and an aside saying why — two stops in the volume do, and
+both explain themselves on the page. The permission used to be the presence of
+an aside alone, which meant the next aside written about a variant reading
+would have waved a genuinely misordered stop through; a flag on a stop that in
+fact runs forward is a finding too, because a stale permission is how a gate
+stops being one. The connective prose between the stops is editorial, and the
+page says so.
+
+Each thread also records the earliest and latest era it actually reaches,
+rather than the eras of its first and last stop. *Where do the dead go?* takes
+its third stop in the Isaiah apocalypse, which this volume files back in
+Section II with the rest of Isaiah 1-39, so reading the ends of the list
+advertised a thread running IV to IX when it runs II to IX — understating the
+one thread that travels furthest, on the card whose only job is to say how far
+it travels.
 
 Five of the eleven start from what people actually ask, and because that is an
 editorial claim it carries citations. *What may a woman do?* is first on the
@@ -163,6 +188,32 @@ by a work's own dated position is drawn solid; one placed by the era it is
 filed under is drawn fainter, because it is a looser claim; a range with one
 end unstated runs off the edge rather than stopping at a year nobody named.
 The works that carry no date under a column are listed rather than dropped.
+
+It is the first item in the navigation, which it was not. The bar's
+"Timeline" pointed at the front page — a manifesto, a row of statistics and an
+accordion of eras — and this page, which is the argument the whole
+arrangement exists to make, was reachable only from a link in the second
+paragraph of a callout half way down it. It had been built, tested and
+effectively hidden. The front page is still there behind the wordmark, which
+is the home link on every page of the site including the generated ones.
+
+**Seventeen bars are hatched rather than solid, because those books are not
+one date.** A range is drawn from one position, and a solid bar across
+Genesis is the most confident mark on the page and the least true: the same
+position records call it *Composite*, call the Psalms *a collection spanning
+centuries*, call Polycarp *perhaps two letters joined*, and place the Isaiah
+apocalypse of chapters 24-27 centuries after the eighth-century oracles it
+sits inside. The method page always admitted this; the drawing said nothing,
+so Amos, whose bar is ten years, and the Psalms were the same shape.
+
+The mark is a quotation, not a new claim. The value of `composite` in a
+position record has to appear verbatim inside that record's own critical
+position, which already carries a citation, and
+`tests/python/test_composite.py` enforces that both ways: nothing may be
+marked on a sentence that does not say so, and a record whose own words are
+unambiguous — *Composite*, *a compilation of several*, *collection spanning* —
+may not go unmarked and quietly get a solid bar. The timeline counts them,
+names them, and quotes the phrase.
 
 ### The map
 
@@ -329,16 +380,23 @@ Gaps inherited from the source editions, left honest rather than invented:
   from the one above and should not borrow its excuse.
 - The Dead Sea Scrolls appear as summaries — every English translation of the
   1947-and-later finds is under copyright.
-- **The sayings Gospel of Thomas is not here, and this volume has been
-  silent about that.** The Coptic text came out of Nag Hammadi in 1945 and
-  every English rendering of it is in copyright, which is the same wall the
-  Scrolls are behind. The silence matters more than the absence, because the
-  volume *does* print the Infancy Gospel of Thomas, under a title beginning
-  "THE GOSPEL OF THOMAS" — so a reader looking for the famous one finds a
-  different second-century text and nothing saying so. The one route in that
-  is public domain is partial: Grenfell and Hunt's English of the three Greek
-  Oxyrhynchus fragments, published 1897-1904, which carry about a fifth of
-  the sayings.
+- **The sayings Gospel of Thomas is not here, and the volume now says so
+  where a reader meets the problem.** The Coptic text came out of Nag Hammadi
+  in 1945 and every English rendering of it is in copyright, which is the same
+  wall the Scrolls are behind. The silence mattered more than the absence,
+  because the volume *does* print the Infancy Gospel of Thomas, under a title
+  beginning "THE GOSPEL OF THOMAS" — so a reader looking for the famous one
+  found a different second-century text and nothing saying so. Adding
+  "(INFANCY)" to the title corrected a reader who already knew there were two,
+  which is not the reader this costs. `tools/build_cautions.py` attaches the
+  sentence itself to the work: a paragraph above the text saying which Thomas
+  this is, what is missing, and why, marked as a correction rather than as one
+  more remark; and a line under the search result, because typing "gospel of
+  thomas" resolves to exactly one place under a heading reading *that is a
+  place in the volume*. The one route in that is public domain is partial and
+  is still not taken: Grenfell and Hunt's English of the three Greek
+  Oxyrhynchus fragments, published 1897-1904, which carry about a fifth of the
+  sayings.
 - Whole shelves of the pseudepigrapha are simply not attempted, and the
   volume says so nowhere. The Odes of Solomon, the Ascension of Isaiah, 2 and
   3 Baruch, the Apocalypse and Testament of Abraham, Joseph and Aseneth, the
@@ -691,7 +749,7 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 
 | Suite | Checks |
 | --- | --- |
-| `tests/python` | The verifier against planted defects — a page number, a paragraph note, an advertisement, a duplicated verse number, a dangling alias, a pin on a chapter that is not there — including the control that a clean library reports nothing, and the negative case that a translator's square brackets are never mistaken for a scanner's. And the parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. One of them runs the reader's own copy of the folding rule against the Python one, because the two are written in different languages and a divergence between them is silent. Another holds the seam where 1 Clement changes translator: the six recovered chapters are checked against the volume's own text of the chapters either side of them, because a splice made one chapter out of step would still read as English. Two more hold things the parser has no opinion about: every number this README states, against the data it is describing, and every colour in the stylesheet's palette against the contrast it has to clear — both of which are claims, and both of which had rotted |
+| `tests/python` | The verifier against planted defects — a page number, a paragraph note, an advertisement, a duplicated verse number, a dangling alias, a pin on a chapter that is not there — including the control that a clean library reports nothing, and the negative case that a translator's square brackets are never mistaken for a scanner's. And the parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. Two of them run the reader's own copies of a rule against the Python ones, because each is written in two languages and a divergence between them is silent: the folding rule that decides what the search index is keyed on, and the one that turns a span of years back into words like "before c. 900 BCE" — where printing the figure alone would state a date the position never gave. Another holds the seam where 1 Clement changes translator: the six recovered chapters are checked against the volume's own text of the chapters either side of them, because a splice made one chapter out of step would still read as English. And several hold things the parser has no opinion about: every number this README states, against the data it is describing; every colour in the stylesheet's palette against the contrast it has to clear; the first sentence of the site against the coverage table it describes, so that no canon can be called complete while `canon.json` records a book missing from it; and every mark saying a book is not one composition, against the sourced sentence it is quoted from |
 | `routes` | Every page renders, search returns verses, a saved verse survives a reload, nothing throws |
 | `layout` | At 320–430px every nav link is on screen, nothing scrolls sideways, the bar tucks away as you read, desktop is unchanged |
 | `dating` | The date card against the spans the parser read, the method page, and that a citation names the edition and the era rather than just a URL |
@@ -929,9 +987,38 @@ ask for: the whole library was one indexable URL with no scripture on it.
 `tools/build_pages.py` writes the other half — a plain page per work and per
 chapter with the text really in the HTML, a contents page linking all of them
 as the hub a crawler starts from, and `sitemap.xml`, `robots.txt` and a 404.
-That is 2,709 pages plus the hub, and none of it is in this repository: it is
-derived, it is regenerated whenever the text changes, and the deploy builds it
-into the Pages artifact, exactly as it does the offline copy.
+It writes the threads and the timeline too. Those were the last part of the
+site with no address a crawler could ask for or a preview could unfurl, which
+was the wrong way round: the chapters are in every Bible ever printed and the
+eleven threads are the thing this arrangement exists to make possible. Each
+thread is a page with its passages in the HTML and every stop linking the
+chapter it quotes; the timeline is the same reordering the reader draws as
+positioned bars, written out as a table with the ranges in words, because a
+crawler sees no bars and neither does anybody with the stylesheet off.
+
+That is 2,709 pages plus the hubs — one per work, one per chapter, one per
+thread, and three hubs at contents, threads and the timeline — and none of it
+is in this repository: it is derived, it is regenerated whenever the text
+changes, and the deploy builds it into the Pages artifact, exactly as it does
+the offline copy.
+
+**The link a reader copies is one of those pages.** "Copy link to this verse"
+used to hand back the reader's own route — `/#/read/amos/4/v13` — which is the
+one address in this site a crawler cannot ask for, nothing unfurling a link
+can preview, and which counts chapters from zero, so the link to Amos 5 said
+4. The page built for exactly that purpose was sitting at `/read/amos/5/` the
+whole time, with a canonical, an `id` on every verse and an entry in the
+sitemap. It is now what the button gives you, verse fragment and all, and the
+citation and the BibTeX entry carry the same address.
+
+The two numbering schemes are real and neither can be derived from the other,
+so they are written down once rather than worked out twice.
+`tools/build_slugs.py` puts the printed address of every chapter into the
+manifest; `tools/build_pages.py` reads it to name the file it writes and the
+reader reads it to name the file that was written. Recomputing it in the
+reader would have been a second copy of a rule with a nasty edge in it —
+Jubilees opens with a prologue numbered 0, and `n if n > 0 else i + 1` files
+it at chapter 1's address, where chapter 1 then lands on top of it.
 
 They are not a second site. The pages load `docs/assets/app.css` and use the
 reader's own class names, so they are the same object seen without JavaScript,
@@ -968,8 +1055,8 @@ and scanned for exact verses. Quote a phrase to match it exactly.
 `.github/workflows/pages.yml` runs the lint and the unit tests, rebuilds the
 data from source, fails the build if `docs/data` has drifted or the audit finds
 anything not in the baseline, and runs the browser checks. Then it builds the
-three derived things that are never committed — the 2,709 crawlable pages with
-their contents hub, sitemap and `robots.txt`; the single-file offline copy; and
+three derived things that are never committed — the 2,709 crawlable pages
+with their threads, their three hubs, sitemap and `robots.txt`; the single-file offline copy; and
 the service worker, stamped last because the stamp is a hash of the rest — and
 publishes `docs/` with all of them inside. None of the three exists anywhere
 else: the only copy of each is the one in the artifact that goes live.
@@ -1013,14 +1100,19 @@ stops resolving for no reason visible here.
 The old address, `https://theoryofshadows.github.io/The-Book/`, still works:
 GitHub redirects it to the custom domain.
 
-Moving the site again is three places, and it is worth knowing which three.
-Every absolute address the 2,710 generated pages state about themselves —
+Moving the site again is four places, and it is worth knowing which four.
+Every absolute address the 2,723 generated pages state about themselves —
 canonical, `og:url`, the sitemap, `robots.txt`, the 404 — comes from one
 constant, `BASE` in `tools/build_pages.py`. `docs/CNAME` is the second. The
 third is `docs/index.html`, which is the one hand-written page in the site and
 so is the one place a domain is spelt out by hand rather than derived: its
 canonical, its `og:url`, its share-card image and its structured data all name
-the address in full. Grepping the domain finds all three.
+the address in full. The fourth is `SITE` in `docs/assets/app.js`, which the
+offline single-file copy needs: that build lives at a `file://` path on the
+reader's own disk, and a link copied from it has to name the published site
+rather than a folder nobody else has. `tests/python/test_addresses.py` holds
+that last one to the canonical the page declares, so the two cannot drift.
+Grepping the domain finds all four.
 
 ## Licence
 

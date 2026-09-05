@@ -245,6 +245,38 @@ module.exports = async function search(t, ctx) {
           (await jumpsFor('Psalm 1')).join() === '#/read/psalms/0,#/read/psalm-151/0',
           (await jumpsFor('Psalm 1')).join());
 
+  /* The one place a confident answer is the wrong answer. The famous Gospel
+     of Thomas is the sayings gospel from Nag Hammadi, every English of which
+     is in copyright; what this volume prints is the Infancy Gospel, which the
+     Ante-Nicene Fathers gives a title beginning "THE GOSPEL OF THOMAS". So
+     the reference resolved to exactly one place, under a heading reading
+     "That is a place in the volume", and nothing on the page said it was a
+     different second-century text. */
+  await page.goto(ctx.base + '#/search/' + encodeURIComponent('gospel of thomas'));
+  await settled(page);
+  await page.waitForTimeout(400);
+  const caution = await page.evaluate(() => ({
+    jumps: document.querySelectorAll('.jump-link').length,
+    said: (document.querySelector('.jump-caution') || {}).textContent || ''
+  }));
+  t.check('a title that names a more famous book says so at the search',
+          caution.jumps === 1 && /Infancy/.test(caution.said),
+          caution.said || '(nothing said)');
+
+  /* And on the work itself, where a reader who arrived by any other route
+     meets it -- marked as a correction rather than as one more remark. */
+  await page.goto(ctx.base +
+    '#/read/the-gospel-of-thomas-infancy-first-greek-form/0');
+  await page.waitForSelector('.note-block');
+  const onWork = await page.evaluate(() => ({
+    marked: !!document.querySelector('.note-block.is-caution'),
+    text: (document.querySelector('.note-block') || {}).innerText || ''
+  }));
+  t.check('and on the work, with what is missing and why',
+          onWork.marked && /Nag Hammadi/.test(onWork.text) &&
+          /copyright/.test(onWork.text),
+          onWork.text.slice(0, 60).replace(/\s+/g, ' '));
+
   t.check('a book that does not exist is not invented',
           (await jumpsFor('Nonesuch 3')).length === 0 &&
           (await jumpsFor('Psalm 999')).length === 0);

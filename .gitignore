@@ -14,6 +14,8 @@ docs/the-book.html
 # above, and with more force, since these are 2,709 files rather than one.
 docs/read/
 docs/contents/
+docs/threads/
+docs/timeline/
 docs/sitemap.xml
 docs/robots.txt
 docs/404.html

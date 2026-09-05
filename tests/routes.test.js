@@ -5,7 +5,7 @@
    without needing a check of its own. */
 
 const ROUTES = [
-  ['the timeline', '#/', 'Every text'],
+  ['the front page', '#/', 'Every text'],
   ['threads', '#/threads', 'Threads'],
   ['one thread', '#/thread/sacrifice-or-justice', ''],
   ['contents', '#/contents', 'Contents'],

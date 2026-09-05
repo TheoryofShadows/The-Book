@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Book — Biblical and Related Ancient Texts in Order of Composition</title>
-<meta name="description" content="Every text of the Jewish, Protestant, Catholic, Orthodox and Ethiopian canons, together with the apocrypha and the Apostolic Fathers, arranged by when they were written. Fully searchable, with a published accuracy audit.">
+<meta name="description" content="The Jewish, Protestant, Catholic and Eastern Orthodox canons complete, the Ethiopian all but four books that survive in no public-domain English, together with the apocrypha and the Apostolic Fathers, arranged by when they were written. Fully searchable, with a published accuracy audit.">
 <link rel="stylesheet" href="assets/app.css">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
@@ -30,7 +30,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="The Book">
-<!-- Every one of the 2,710 generated pages states its own address and this
+<!-- Every one of the 2,723 generated pages states its own address and this
      one, which is the page people actually link to, did not. It is reachable
      at more than one: the old project Pages address redirects here, www
      redirects to the apex, and the reader hangs a hash route off it for every
@@ -49,8 +49,9 @@
 <meta property="og:url" content="https://thebookandme.com/">
 <meta name="twitter:card" content="summary">
 
-<!-- The 2,710 generated pages under /read/ and /contents/ each carry
-     Chapter, Book or CollectionPage structured data, and this page -- the
+<!-- The 2,723 generated pages under /read/, /contents/, /threads/ and
+     /timeline/ each carry Chapter, Book, Article or CollectionPage
+     structured data, and this page -- the
      one everybody links to -- carried none. Written out here rather than
      built, because this file is the one hand-written page in the site; the
      counts in it are held against the manifest by test_readme.py, which is
@@ -62,7 +63,7 @@
   "name": "The Book",
   "alternateName": "The Book \u2014 the library in the order it was written",
   "url": "https://thebookandme.com/",
-  "description": "Every text of the Jewish, Protestant, Catholic, Orthodox and Ethiopian canons, together with the apocrypha and the Apostolic Fathers, arranged by when they were written.",
+  "description": "The Jewish, Protestant, Catholic and Eastern Orthodox canons complete, the Ethiopian all but four books that survive in no public-domain English, together with the apocrypha and the Apostolic Fathers, arranged by when they were written.",
   "inLanguage": "en",
   "license": "https://creativecommons.org/licenses/by/4.0/",
   "isAccessibleForFree": true,
@@ -120,7 +121,17 @@
   </a>
 
   <nav class="nav" aria-label="Main">
-    <a href="#/" data-route="home">Timeline</a>
+    <!-- "Timeline" pointed at the front page, which is a manifesto, a row of
+         statistics and an accordion of eras. The thing this site exists to
+         argue -- every work drawn as a bar against one scale, reordered under
+         the traditional column or the critical one -- was built, tested and
+         reachable only from a link in the second paragraph of a callout half
+         way down that page. A visitor who came to see eight hundred years
+         read a pitch instead. The label now goes where the label says.
+
+         The front page keeps the wordmark to its left, which is the home
+         link on every page of the site including the 2,723 static ones. -->
+    <a href="#/timeline" data-route="timeline">Timeline</a>
     <a href="#/threads" data-route="threads">Threads</a>
     <a href="#/contents" data-route="contents">Contents</a>
     <a href="#/search" data-route="search">Search</a>

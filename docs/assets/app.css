@@ -769,6 +769,14 @@ table.grid tbody tr:last-child td { border-bottom: 0; }
 }
 .reader .v { transition: background-color .25s; }
 .reader .v.target { background: var(--mark); border-radius: 3px; }
+/* The same mark on the plain pages, where the browser rather than the reader
+   decides which verse was asked for. "Copy link to this verse" now hands out
+   /read/amos/5/#v13 -- a real page with a real anchor -- so the verse that
+   address names has to be visible on arrival, and clear of the sticky bar
+   that would otherwise be sitting on top of it. */
+.reader .v:target {
+  background: var(--mark); border-radius: 3px; scroll-margin-top: 5.5rem;
+}
 .reader p { margin: 0 0 1.05rem; }
 
 /* The verse number is a button now, but must still read as a superscript
@@ -869,6 +877,16 @@ table.grid tbody tr:last-child td { border-bottom: 0; }
   font-family: var(--sans); font-weight: 700;
   padding-bottom: .5rem; border-bottom: 1px solid var(--rule-soft);
 }
+/* A note that is a correction rather than a remark. One work here is printed
+   under a title that names a different and far more famous text, and the
+   paragraph saying so has to read as a warning rather than as more
+   commentary. The warn pair is the one the accuracy report already uses and
+   is held to contrast by tests/python/test_palette.py. */
+.note-block.is-caution {
+  border-left-color: var(--warn); background: var(--warn-bg);
+  color: var(--warn); padding-right: var(--gap); border-radius: var(--radius);
+}
+
 .note-block p { margin: .4rem 0; }
 .note-block p:first-child { margin-top: 0; }
 .note-block p:last-child { margin-bottom: 0; }
@@ -1104,6 +1122,14 @@ table.grid tbody tr:last-child td { border-bottom: 0; }
   border-top: 1px solid var(--rule-soft);
 }
 .jump-link:first-of-type { border-top: 0; }
+/* The one-line form of the same correction, under a reference that resolved
+   to a work whose name is doing double duty. The heading above it says "that
+   is a place in the volume", which for this one work is a confident answer to
+   a question the reader did not ask. */
+.jump-caution {
+  margin: .4rem 0 0; font-family: var(--sans); font-size: .78rem;
+  line-height: 1.45; color: var(--warn);
+}
 .jump-where {
   font-family: var(--serif); font-size: 1.06rem; color: var(--accent);
   text-decoration: underline; text-underline-offset: 2px;
@@ -1532,6 +1558,18 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
 .tl-bar.century, .tl-bar.period, .tl-bar.decade { opacity: .7; }
 .tl-row.placed-section .tl-bar { background: var(--ink-faint); opacity: .45; }
 
+/* A book the volume's own position calls composite -- the Torah, the Psalms,
+   Isaiah 1-39 with the apocalypse inside it -- is not one composition, and a
+   solid bar across it is the most confident mark on the page and the least
+   true. Hatched, so the drawing says what the method page says. The stripe
+   runs at 45 degrees in the bar's own colour against a lighter cut of it, so
+   it reads as texture on both themes rather than as a second colour, and the
+   row's own opacity rules still apply on top of it. */
+.tl-bar.composite {
+  background-image: repeating-linear-gradient(
+    45deg, transparent 0 3px, var(--paper) 3px 5px);
+}
+
 /* An open end runs off the edge instead of stopping at a year nobody stated. */
 .tl-bar.open-before {
   border-top-left-radius: 0; border-bottom-left-radius: 0;
@@ -1554,6 +1592,11 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
   font-size: .8rem; color: var(--ink-soft);
 }
 .tl-note a { color: inherit; }
+
+.tl-layered { margin-top: .8rem; font-size: .82rem; }
+.tl-layered summary { cursor: pointer; color: var(--ink-soft); }
+.tl-layered-list { margin: .5rem 0 0; padding-left: 1.1rem; }
+.tl-layered-list li { margin-bottom: .25rem; }
 
 .tl-undated { margin-top: .8rem; font-size: .82rem; }
 .tl-undated summary { cursor: pointer; color: var(--ink-soft); }

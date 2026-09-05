@@ -36,6 +36,9 @@ import re
 import sys
 import urllib.parse
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import dates                                                # noqa: E402
+
 BASE = "https://thebookandme.com"
 
 # Everything after the host in BASE: empty on the custom domain, "/The-Book"
@@ -77,11 +80,6 @@ def _words(s):
     """The lowercase word sequence of a string, punctuation dropped, so that
     "SIMILITUDE 1" and "Similitude 1" are the same thing said twice."""
     return [w for w in re.split(r"[^a-z0-9]+", s.lower()) if w]
-
-
-def slugify(s):
-    s = re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
-    return s or "chapter"
 
 
 def chapter_heading(work_title, label):
@@ -149,44 +147,27 @@ def e(s):
 
 # ---------------------------------------------------------------- slugs
 
-def chapter_slugs(chapters):
-    """One URL segment per chapter, in the order they are printed.
+def chapter_slugs(meta, chapters):
+    """The addresses of this work's chapters, read rather than worked out.
 
-    The printed number when there is one, the label otherwise. Do not be
-    tempted by `n if n > 0 else i + 1`: Jubilees opens with a prologue
-    numbered 0, and that formula quietly files it at chapter 1's address,
-    where the real chapter 1 then overwrites it. The count of pages written
-    still looks right, and a chapter is simply gone.
+    They used to be computed here, on the way to naming a file, and thrown
+    away -- so the reader, which is where a person actually presses "copy
+    link to this verse", had no way to name the page this script had just
+    built for that purpose and handed out its own array index in a fragment
+    instead. tools/build_slugs.py now writes the list into the manifest, both
+    halves read it from there, and there is one list rather than two rules.
     """
-    slugs = []
-    for c in chapters:
-        n = c.get("n")
-        if isinstance(n, int) and not isinstance(n, bool) and n > 0:
-            slugs.append(str(n))
-        else:
-            slugs.append(slugify(c.get("label") or ""))
-
-    # Whatever the two rules above collide on gets -2, -3, and so on, so that
-    # the number of addresses is always the number of chapters.
-    seen = {}
-    out = []
-    for s in slugs:
-        if s not in seen:
-            seen[s] = 1
-            out.append(s)
-            continue
-        while True:
-            seen[s] += 1
-            candidate = "%s-%d" % (s, seen[s])
-            if candidate not in seen:
-                break
-        seen[candidate] = 1
-        out.append(candidate)
-
-    if len(set(out)) != len(chapters):
-        raise SystemExit("chapter_slugs: %d chapters, %d addresses"
-                         % (len(chapters), len(set(out))))
-    return out
+    slugs = meta.get("slugs")
+    if slugs is None:
+        raise SystemExit(
+            "%s has no chapter addresses in the manifest -- run "
+            "tools/build_slugs.py (./tools/build.sh does)" % meta["id"])
+    if len(slugs) != len(chapters):
+        raise SystemExit("%s: %d addresses for %d chapters"
+                         % (meta["id"], len(slugs), len(chapters)))
+    if len(set(slugs)) != len(slugs):
+        raise SystemExit("%s: two chapters share an address" % meta["id"])
+    return slugs
 
 
 # ---------------------------------------------------------------- the shell
@@ -239,9 +220,15 @@ def topbar(depth):
     """The reader's header, with the links that have a real page pointing at
     one and the rest going to the reader's own routes."""
     up = "../" * depth
+    # Timeline and Threads have real pages of their own now, so they point at
+    # them rather than at a fragment, the way Contents always has. A link to
+    # #/threads from a static page is a link a crawler cannot follow and a
+    # preview cannot unfurl, which for the eleven threads -- the one thing
+    # here a canonical Bible cannot do -- meant the argument of the site was
+    # the only part of it with no indexable address.
     nav = [
-        ("%s#/" % up, "Timeline"),
-        ("%s#/threads" % up, "Threads"),
+        ("%stimeline/" % up, "Timeline"),
+        ("%sthreads/" % up, "Threads"),
         ("%scontents/" % up, "Contents"),
         ("%s#/search" % up, "Search"),
         ("%s#/canons" % up, "Canons"),
@@ -264,7 +251,7 @@ def topbar(depth):
 """.format(up=e(up or "./"), links=links)
 
 
-def footer(depth):
+def footer(depth, what="a plain page of one chapter"):
     up = "../" * depth
     return """<footer class="foot">
   <p>
@@ -274,14 +261,14 @@ def footer(depth):
     sets out what was verified, what was corrected, and what is still missing.
   </p>
   <p class="muted">
-    This is a plain page of one chapter. The
+    This is {what}. The
     <a href="{up}">reader</a> has the search, the map, the word definitions,
     the saved verses and the reading aloud.
   </p>
 </footer>
 </body>
 </html>
-""".format(up=e(up or "./"))
+""".format(up=e(up or "./"), what=e(what))
 
 
 def ld(obj):
@@ -326,7 +313,9 @@ def write(path, text):
 def crumbs(depth, section, work=None):
     up = "../" * depth
     bits = ['<div class="crumbs">',
-            '<a href="%s">Timeline</a> → ' % e(up or "./"),
+            # Not "Timeline": that name belongs to /timeline/, which draws the
+            # library against a scale. This is the front page.
+            '<a href="%s">The Book</a> → ' % e(up or "./"),
             '<a href="%scontents/">Contents</a>' % e(up)]
     if section:
         name = ((("Section " + section["roman"] + ". ") if section.get("roman") else "")
@@ -583,6 +572,256 @@ def contents_page(manifest, out_dir):
     return url
 
 
+# ------------------------------------------------- threads and the timeline
+#
+# These two are the site's argument, and until now they were the two parts of
+# it with no address a crawler, a preview card or a footnote could use. The
+# reader has 2,537 chapters at real URLs and eleven threads at fragments --
+# which is the wrong way round, because the chapters are in every Bible and
+# the threads are the thing this arrangement exists to make possible.
+
+
+def thread_hub_page(threads, out_dir):
+    url = "%s/threads/" % BASE
+    description = describe(
+        "%d questions followed across the whole collection in the order the "
+        "texts were written: where the dead go, whether God wants sacrifice "
+        "or justice, where Satan comes from." % len(threads))
+
+    body = ['<div class="wrap">',
+            crumbs(1, None),
+            "<h1>Threads</h1>",
+            '<p class="lede">One question, followed across the whole collection '
+            'in the order the texts were written. This is the thing a '
+            'chronological arrangement can show and a normal Bible cannot: an '
+            'idea being asked, answered, contradicted and answered again over '
+            'eight hundred years.</p>',
+            '<ul class="thread-list">']
+    for t in threads:
+        span = t.get("sections") or {}
+        meta = "%d passages" % len(t["stops"])
+        if span.get("earliest"):
+            meta += " · " + (span["earliest"] if span["earliest"] == span["latest"]
+                             else "%s to %s" % (span["earliest"], span["latest"]))
+        body.append('<li><a href="%s/">%s</a> <span class="muted">%s</span>'
+                    '<p class="muted">%s</p></li>'
+                    % (e(t["id"]), e(t["title"]), e(meta), e(t["question"])))
+    body.append("</ul>")
+    body.append('<p><a class="chip" href="../#/threads">Open in the reader</a></p>')
+    body.append("</div>")
+
+    schema = {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "Threads — " + SITE,
+        "url": url,
+        "description": description,
+        "inLanguage": "en",
+        "isPartOf": {"@type": "WebSite", "name": SITE, "url": BASE + "/"},
+    }
+    page = "\n".join([
+        head("Threads — " + SITE, description, url, 1, ld(schema),
+             og_type="website"),
+        "<body>",
+        topbar(1),
+        '<main id="main">',
+        "\n".join(body),
+        "</main>",
+        footer(1, "the list of threads"),
+    ])
+    write(os.path.join(out_dir, "threads", "index.html"), page)
+    return url
+
+
+def thread_page(manifest, slugs_by_work, t, out_dir):
+    """One thread, with the passages really in the HTML.
+
+    Every stop links to the chapter page for the passage it quotes, which is
+    what makes this worth crawling rather than a wall of text: the thread is
+    a path through the library and the path is made of anchors.
+    """
+    url = "%s/threads/%s/" % (BASE, t["id"])
+    title = t["title"] + " — " + SITE
+    description = describe(t["question"])
+
+    body = ['<div class="wrap">',
+            '<div class="crumbs"><a href="../../">The Book</a> → '
+            '<a href="../">Threads</a></div>',
+            "<h1>%s</h1>" % e(t["title"]),
+            '<p class="lede">%s</p>' % e(t["question"]),
+            '<ol class="thread">']
+
+    for stop in t["stops"]:
+        slug = slugs_by_work.get(stop["work"], [])
+        where = ("../../read/%s/%s/" % (stop["work"], slug[stop["chapter"]])
+                 if stop["chapter"] < len(slug) else "../../read/%s/" % stop["work"])
+        body.append('<li class="stop">')
+        body.append('<div class="stop-when"><span class="stop-era">%s</span>'
+                    '<span class="stop-date">%s</span></div>'
+                    % (e(stop["section"] or "＋"), e(stop["dates"])))
+        body.append('<div class="stop-card">')
+        body.append('<a class="stop-ref" href="%s#v%s">%s · %s</a>'
+                    % (e(where), e(stop["verses"][0]["v"]),
+                       e(title_case(stop["workTitle"])), e(stop["label"])))
+        for v in stop["verses"]:
+            body.append('<blockquote class="stop-text">'
+                        '<span class="stop-vnum">%s</span> %s</blockquote>'
+                        % (e(v["v"]), e(v["t"])))
+        body.append('<p class="stop-why">%s</p>' % e(stop["why"]))
+        if stop.get("aside"):
+            body.append('<p class="stop-aside">%s</p>' % e(stop["aside"]))
+        body.append("</div></li>")
+
+    body.append("</ol>")
+    body.append('<div class="callout"><p>%s</p></div>' % e(t["closing"]))
+    body.append('<p class="tiny">The passages above are the text, reproduced '
+                'exactly and checked against the same files the reader uses; '
+                'every reference is verified when the site is built. The '
+                'commentary between them is editorial, written for this '
+                'volume.</p>')
+    body.append('<p><a class="chip" href="../../#/thread/%s">Open in the '
+                'reader</a> <a class="chip" href="../">All the threads</a></p>'
+                % e(t["id"]))
+    body.append("</div>")
+
+    schema = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": t["title"],
+        "url": url,
+        "description": description,
+        "inLanguage": "en",
+        "isPartOf": {"@type": "CollectionPage", "name": "Threads — " + SITE,
+                     "url": "%s/threads/" % BASE},
+    }
+    page = "\n".join([
+        head(title, description, url, 2, ld(schema)),
+        "<body>",
+        topbar(2),
+        '<main id="main">',
+        "\n".join(body),
+        "</main>",
+        footer(2, "one thread, as a plain page"),
+    ])
+    write(os.path.join(out_dir, "threads", t["id"], "index.html"), page)
+    return url
+
+
+def timeline_page(manifest, out_dir):
+    """Every work against the critical column, in the order the bars start.
+
+    The reader draws this; a crawler cannot see a canvas of positioned spans
+    and neither can a person with the stylesheet off, so the same reordering
+    is written out here as a table with the ranges in words. The dates are
+    read from the manifest -- the same spans the reader positions its bars
+    from -- and formatted by tools/dates.py, which is the function the
+    reader's own spanText() is held against by
+    tests/python/test_span_agreement.py.
+    """
+    url = "%s/timeline/" % BASE
+    title = "The library on one axis — " + SITE
+    description = describe(
+        "Every work in The Book against time, in the order the critical "
+        "positions start rather than the order tradition files them.")
+
+    rows = []
+    undated = []
+    for section in manifest["sections"]:
+        for w in section["works"]:
+            positions = w.get("positions") or {}
+            own = (positions.get("span") or {}).get("crit")
+            span = own or section.get("span")
+            row = {"w": w, "section": section, "span": span,
+                   "own": bool(own), "composite": positions.get("composite")}
+            (rows if span else undated).append(row)
+
+    rows.sort(key=lambda r: (r["span"]["frm"], r["span"]["to"]))
+
+    body = ['<div class="wrap-wide">',
+            crumbs(1, None),
+            "<h1>The library on one axis</h1>",
+            '<p class="lede">Every work in the volume, against time. A range '
+            'is a range and not a date: its width is how much the position it '
+            'comes from actually commits to. This page is the critical column, '
+            'which is the one that reorders the library; the reader draws both '
+            'and lets you switch between them.</p>',
+            '<table class="grid"><thead><tr>'
+            "<th>Work</th><th>When</th><th>Era it is filed under</th>"
+            "<th>How it is placed</th></tr></thead><tbody>"]
+
+    for r in rows:
+        placed = ("its own dated position" if r["own"]
+                  else "the era it is filed under")
+        when = e(dates.describe(r["span"]))
+        if r["composite"]:
+            when += (' <span class="muted">— not one date: %s</span>'
+                     % e(r["composite"]))
+        body.append("<tr><td><a href=\"../read/%s/\">%s</a></td>"
+                    "<td>%s</td><td>%s</td><td>%s</td></tr>"
+                    % (e(r["w"]["id"]), e(title_case(r["w"]["title"])), when,
+                       e(((r["section"]["roman"] + ". ") if r["section"].get("roman") else "")
+                         + title_case(r["section"].get("name")
+                                      or r["section"].get("title") or "")),
+                       e(placed)))
+    body.append("</tbody></table>")
+
+    layered = [r for r in rows if r["composite"]]
+    if layered:
+        body.append("<h2>%d of these are not one date</h2>" % len(layered))
+        body.append('<p class="muted">A range is drawn from one position, and '
+                    'some of these books are not one composition. Where a '
+                    "work's own critical position says so, it is quoted here. "
+                    'This volume keeps such books whole rather than splitting '
+                    'them, so saying it is the only warning the arrangement '
+                    'can give.</p>')
+        body.append("<ul>")
+        for r in layered:
+            body.append('<li><a href="../read/%s/">%s</a> '
+                        '<span class="muted">— %s</span></li>'
+                        % (e(r["w"]["id"]), e(title_case(r["w"]["title"])),
+                           e(r["composite"])))
+        body.append("</ul>")
+
+    if undated:
+        body.append("<h2>%d works carry no date under this column</h2>"
+                    % len(undated))
+        body.append('<p class="muted">Nothing here is a gap in the data. The '
+                    'later collections — the Testaments, the Apostolic '
+                    'Fathers, the Shepherd — are filed after the numbered eras '
+                    'and have no era range to fall back on.</p>')
+        body.append("<ul>")
+        for r in undated:
+            body.append('<li><a href="../read/%s/">%s</a></li>'
+                        % (e(r["w"]["id"]), e(title_case(r["w"]["title"]))))
+        body.append("</ul>")
+
+    body.append('<p><a class="chip" href="../#/timeline">Open in the reader</a> '
+                '<a class="chip" href="../#/method">How the dating was '
+                'decided</a></p>')
+    body.append("</div>")
+
+    schema = {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "The library on one axis — " + SITE,
+        "url": url,
+        "description": description,
+        "inLanguage": "en",
+        "isPartOf": {"@type": "WebSite", "name": SITE, "url": BASE + "/"},
+    }
+    page = "\n".join([
+        head(title, description, url, 1, ld(schema), og_type="website"),
+        "<body>",
+        topbar(1),
+        '<main id="main">',
+        "\n".join(body),
+        "</main>",
+        footer(1, "the timeline as a plain page"),
+    ])
+    write(os.path.join(out_dir, "timeline", "index.html"), page)
+    return url
+
+
 def not_found_page(out_dir):
     """Served by Pages from any depth, so its links and its stylesheet are
     absolute -- a relative path here resolves against whatever address was
@@ -608,7 +847,7 @@ def not_found_page(out_dir):
   <p>
     <a class="chip" href="{base}/contents/">Everything in the volume</a>
     <a class="chip" href="{base}/#/search">Search the text</a>
-    <a class="chip" href="{base}/">The timeline</a>
+    <a class="chip" href="{base}/timeline/">The timeline</a>
   </p>
 </div>
 </main>
@@ -655,7 +894,16 @@ def build(out_dir):
         for w in s["works"]:
             ordered.append((s, w))
 
-    urls = [BASE + "/", contents_page(manifest, out_dir)]
+    with open(os.path.join(data, "threads.json"), encoding="utf-8") as fh:
+        threads = json.load(fh)
+    slugs_by_work = {w["id"]: (w.get("slugs") or [])
+                     for sec in manifest["sections"] for w in sec["works"]}
+
+    urls = [BASE + "/", contents_page(manifest, out_dir),
+            timeline_page(manifest, out_dir),
+            thread_hub_page(threads, out_dir)]
+    for t in threads:
+        urls.append(thread_page(manifest, slugs_by_work, t, out_dir))
     works = 0
     chapters_written = 0
     chapters_expected = 0
@@ -666,7 +914,7 @@ def build(out_dir):
             work = json.load(fh)
         chapters = work.get("chapters") or []
         chapters_expected += len(chapters)
-        slugs = chapter_slugs(chapters)
+        slugs = chapter_slugs(meta, chapters)
 
         # Two chapters of one work must never end up with the same title.
         # The rule that drops a repeated work name is what could cause it --
@@ -714,8 +962,9 @@ def build(out_dir):
 
     print("  %d work pages" % works)
     print("  %d chapter pages" % chapters_written)
+    print("  the timeline, and %d thread pages under a hub" % len(threads))
     print("  %d URLs in sitemap.xml, plus robots.txt and 404.html" % len(urls))
-    print("  %d pages" % (works + chapters_written + 1))
+    print("  %d pages" % (works + chapters_written + len(threads) + 4))
 
 
 def main(argv):
