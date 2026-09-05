@@ -939,6 +939,25 @@ page compares, each covering exactly the books that page marks as theirs and
 read from the same `canon.json`, so the two cannot drift apart. Every book
 remains the default, and sits one entry above them in the list.
 
+**And the same question from the other side.** A sixth entry under the five
+is the books left out of every canon — `#/search/shepherd/canon:none`, the
+thirty verses above — because "which of these is not in my Bible" is what
+reading every book is usually for, and answering it meant already knowing
+which of the titles were which. It is subtraction: everything the volume
+prints, less everything any canon lists. Subtraction alone gets it wrong,
+though, and wrong in the worst available direction. Five works here are a
+chapter of a canonical book printed a second time beside the excavated object
+or the early poem it belongs with — the Decalogue, the Shema, the priestly
+blessing, the Song of the Sea, the Song of Deborah. No canon lists them,
+because coverage is counted on the whole book, which is elsewhere in the
+volume; left to the arithmetic they would come out as books left out of every
+Bible. So `tools/build_canon.py` names all five in `canon.json`, and refuses
+to build when a sixth appears that is classed neither way — a work whose title
+names a canonical book and a chapter of it, sitting in no canon, stops the
+build until somebody says which it is. Searching `horeb` returns the Decalogue
+among twenty verses under every book, and nothing at all under the books left
+out.
+
 **It can be installed to a home screen, on both kinds of phone.**
 `docs/site.webmanifest` names the site, its two colours and its icons, and
 that is the half Android reads: Chrome offers to install from it, which is why

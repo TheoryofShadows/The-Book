@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 
 DATA = sys.argv[1] if len(sys.argv) > 1 else "docs/data"
@@ -183,6 +184,30 @@ FOLDED = {
     "Bel and the Dragon": "Daniel",
 }
 
+# Chapters of canonical books that this volume also prints on their own,
+# beside the early poem or the excavated object they belong with. They are
+# not books, and the table above rightly does not list them as anybody's
+# text: the whole book is elsewhere in the volume and that is where a canon's
+# coverage is counted.
+#
+# They have to be named all the same, because a work in none of the lists
+# above looks exactly like a work no canon receives, and these five are the
+# opposite of that. The Decalogue is in every Bible there is. Anything that
+# reads the gap between the manifest and this table as "the books left out" --
+# the search does -- would otherwise hand a reader Deuteronomy 5 as a book
+# their Bible does not have, which is a worse error than the one it fixes.
+#
+# The book each reproduces is named so the claim can be checked against the
+# work's own note, and main() refuses to build if a sixth appears without
+# being classed either way.
+EXCERPTS = {
+    "the-song-of-the-sea-exodus-15": "Exodus",
+    "the-song-of-deborah-judges-5": "Judges",
+    "numbers-6-the-priestly-blessing-is-verses-24-26": "Numbers",
+    "deuteronomy-5-the-decalogue": "Deuteronomy",
+    "deuteronomy-6-the-shema-is-verses-4-9": "Deuteronomy",
+}
+
 # Why each absent book is absent, and what is missing from each book that is
 # here in part.
 #
@@ -322,6 +347,46 @@ def main() -> int:
         if missing:
             print(f"BAD-REF  {name}: work ids not in data: {missing}")
 
+    # ---- the excerpts, and the gate that keeps their list complete --------
+    in_canon = {w for b in books for w in b["works"]}
+    named = {b["name"] for b in books}
+
+    stray_ids = sorted(w for w in EXCERPTS if w not in have)
+    if stray_ids:
+        print(f"BAD-REF  excerpts: work ids not in data: {stray_ids}")
+        return 1
+    stray_books = sorted({b for b in EXCERPTS.values() if b not in named})
+    if stray_books:
+        print(f"BAD-REF  excerpts: not books in this table: {stray_books}")
+        return 1
+    both = sorted(set(EXCERPTS) & in_canon)
+    if both:
+        print(f"BAD-REF  excerpts also listed as a book's own text: {both}")
+        return 1
+
+    # A work that is in no canon and in no line above is a book no canon
+    # receives -- the Apostolic Fathers, the apocrypha, Hermas. A work whose
+    # title names a canonical book and a chapter of it is not, and the cost of
+    # the two being confused falls entirely on the reader. So the confusable
+    # case is a build failure rather than a silent one: "ISAIAH 53" added to
+    # the discoveries section stops the build until somebody says which it is.
+    chapter_of = re.compile(
+        r"\b(" + "|".join(re.escape(n) for n in sorted(named, key=len, reverse=True))
+        + r")\s+\d+\b", re.I)
+    unclassed = []
+    for wid, work in have.items():
+        if not work.get("chapters") or wid in in_canon or wid in EXCERPTS:
+            continue
+        hit = chapter_of.search(work["title"])
+        if hit:
+            unclassed.append((wid, hit.group(0)))
+    if unclassed:
+        for wid, hit in sorted(unclassed):
+            print(f"UNCLASSED  {wid}: the title names {hit!r}, so this is "
+                  "either a book's own text or an excerpt of one. Add it to "
+                  "BOOKS or to EXCERPTS.")
+        return 1
+
     counts = {}
     for canon in ALL:
         got = [b for b in books if b["canons"].get(canon) == "canon"]
@@ -336,7 +401,8 @@ def main() -> int:
             "absent": [b["name"] for b in got if not b["present"]],
         }
 
-    out = {"canons": ALL, "books": books, "coverage": counts}
+    out = {"canons": ALL, "books": books, "coverage": counts,
+           "excerpts": EXCERPTS}
     with open(os.path.join(DATA, "canon.json"), "w", encoding="utf-8") as fh:
         json.dump(out, fh, ensure_ascii=False, indent=1)
 

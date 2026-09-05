@@ -2960,8 +2960,9 @@
     wrap.appendChild(el("p", {
       class: "lede",
       text: "Every word of every text, including the deuterocanon, 1 Enoch, " +
-            "Jubilees and the Apostolic Fathers — or only one book, or only " +
-            "the books one tradition receives. Wrap a phrase in quotes to " +
+            "Jubilees and the Apostolic Fathers — or only one book, only the " +
+            "books one tradition receives, or only the ones left out of every " +
+            "canon. Wrap a phrase in quotes to " +
             "match it exactly, or type a reference — Psalm 23, Job 38:4 — to " +
             "go straight to it."
     }));
@@ -2988,7 +2989,13 @@
        and sixty-nine for the Protestant canon -- the works this select
        lists, Isaiah's three among them -- so the canons are scopes as well:
        the same five the Canons page compares, each holding exactly the books
-       that page marks as theirs. */
+       that page marks as theirs.
+
+       And the sixth entry, which is the question asked the other way round.
+       Reading every book is how somebody finds out what their Bible leaves
+       out, and the answer was there to be read off the results a work at a
+       time, if you already knew which titles those were. It is a scope
+       instead: everything no canon holds. */
     var scopeSel = el("select", { "aria-label": "Which books to search" });
     scopeSel.appendChild(el("option", { value: "", text: "Every book" }));
     /* Grouped by era, because a flat list of a hundred and sixty-three is a
@@ -3039,6 +3046,7 @@
     var canonReady = getJSON("canon.json").then(function (canon) {
       canonWorks = {};
       canon.canons.forEach(function (c) { canonWorks[c] = {}; });
+      var held = {};
       canon.books.forEach(function (b) {
         Object.keys(b.canons).forEach(function (c) {
           if (!canonWorks[c]) return;
@@ -3046,17 +3054,45 @@
           // appendix, or received in some branches -- which is the same rule
           // the Canons page filters by, and the same one a reader means by
           // "the books in my Bible".
-          b.works.forEach(function (w) { canonWorks[c][w] = 1; });
+          b.works.forEach(function (w) { canonWorks[c][w] = 1; held[w] = 1; });
         });
       });
 
-      var group = el("optgroup", { label: "A whole canon" });
+      /* And the other side of the same question, which is the one somebody
+         reading every book is usually asking: which of these did no canon
+         take? Everything the volume prints, less everything any canon holds.
+
+         Less one more thing. Five works here are a chapter of a canonical
+         book printed a second time beside the excavated object or the early
+         poem it belongs with -- the Decalogue, the Shema, the priestly
+         blessing, the Song of the Sea, the Song of Deborah. No canon lists
+         them because the whole book is elsewhere in the volume and that is
+         where they are counted, so by subtraction alone they would arrive
+         here as books left out of every Bible, which is the opposite of true
+         and the exact error this scope exists to prevent. canon.json names
+         them; tools/build_canon.py refuses to build if a sixth appears
+         without being classed. */
+      var excerpts = canon.excerpts || {};
+      canonWorks[CANON_NONE] = {};
+      manifest.sections.forEach(function (section) {
+        section.works.forEach(function (w) {
+          if (!w.chapters || held[w.id] || excerpts[w.id]) return;
+          canonWorks[CANON_NONE][w.id] = 1;
+        });
+      });
+
+      var group = el("optgroup", { label: "By canon" });
       canon.canons.forEach(function (c) {
         group.appendChild(el("option", {
           value: CANON_SCOPE + c,
           text: "The " + (CANON_IN_FULL[c] || c) + " canon"
         }));
       });
+      // Last, because it is what the five leave over.
+      group.appendChild(el("option", {
+        value: CANON_SCOPE + CANON_NONE,
+        text: "The books left out of every canon"
+      }));
       // Under every book and above the books themselves: the list runs from
       // the widest scope to the narrowest.
       scopeSel.insertBefore(group, scopeSel.children[1] || null);
@@ -3093,6 +3129,7 @@
     function scopeTitle(want) {
       if (isCanonScope(want)) {
         var key = want.slice(CANON_SCOPE.length);
+        if (key === CANON_NONE) return CANON_NONE_TITLE;
         return "the " + (CANON_IN_FULL[key] || key) + " canon";
       }
       var title = want;
@@ -3451,6 +3488,16 @@
     tanakh: "Jewish", protestant: "Protestant", catholic: "Catholic",
     orthodox: "Eastern Orthodox", ethiopian: "Ethiopian"
   };
+
+  /* The sixth entry in the search's list of canons, which is not a canon: the
+     works this volume prints that none of the five receive -- the Apostolic
+     Fathers, the New Testament apocrypha, the Testaments of the Twelve
+     Patriarchs, Hermas, Ignatius. Keyed like a canon so that one prefix, one
+     set of work ids and one URL segment carry both, and named "none" because
+     canon.json's own keys are the five traditions and cannot collide with
+     it. */
+  var CANON_NONE = "none";
+  var CANON_NONE_TITLE = "the books left out of every canon";
 
   function viewCanons(manifest, canon) {
     var wrap = el("div", { class: "wrap-wide" });
