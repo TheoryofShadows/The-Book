@@ -1133,6 +1133,39 @@
      SAVING -- verses, not just chapters
      ================================================================ */
 
+  /* ---------------- asking not to be thrown away ----------------
+
+     Everything the reader keeps is in local storage, and local storage is
+     not permanent. Safari caps script-writable storage for a site at about
+     seven days without a first-party visit and then deletes it -- notes,
+     saved verses, reading position, all of it -- and nothing fails while it
+     happens. The store above reports a write that is refused; there is no
+     event at all for a write that succeeded and was collected later, so
+     that failure cannot be caught, only prevented or survived.
+
+     This is the prevention, and it is the whole of what a page is allowed to
+     ask for: persist() marks the origin as one the browser should not clear
+     to reclaim room. Where it is granted the seven days stop applying. It is
+     feature-detected and its answer is ignored on purpose -- browsers differ
+     on whether they grant it, on whether they ask the reader first, and on
+     whether they answer at all, and there is nothing useful to say to
+     somebody whose browser declined. What there is to say is on the saved
+     page, next to the button that writes a file: surviving it is the half of
+     this that does not depend on a browser agreeing to anything.
+
+     Asked after a save rather than on load, because that is the first moment
+     there is anything worth keeping, and because a browser weighing the
+     request looks kindly on a page the reader has just used. */
+  var askedToPersist = false;
+
+  function keepStorage() {
+    if (askedToPersist) return;
+    askedToPersist = true;
+    try {
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+    } catch (e) { /* older browsers, and private modes that refuse to answer */ }
+  }
+
   function savedItems() { return store.get("saved", []); }
 
   function isSaved(id) {
@@ -1150,6 +1183,7 @@
       announce(STORAGE_FAILED);
       return wasSaved;          // nothing changed, so neither does the button
     }
+    if (!wasSaved) keepStorage();
     announce(wasSaved ? "Removed from saved" : "Saved");
     return !wasSaved;
   }
@@ -1244,6 +1278,43 @@
     };
     if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, done);
     else done();
+  }
+
+  /* The same button feedback copyText() gives, for the things that are not a
+     copy: a word in place of the label, put back after a moment. Saying it
+     on the button as well as to the screen reader, because a file written to
+     a downloads folder is otherwise a button that appears to do nothing. */
+  function flash(button, word) {
+    if (!button) return;
+    var was = button.textContent;
+    button.textContent = word;
+    setTimeout(function () { button.textContent = was; }, 1600);
+  }
+
+  /* A file, rather than the clipboard. Everything the reader keeps lives in
+     one browser's storage and can be cleared by it without warning, so this
+     is the copy that survives that -- and the only way to carry saved verses
+     to another browser, or between this site and the same site installed to
+     a home screen, which do not share storage. */
+  function saveFile(text, button, name) {
+    var stamp = new Date().toISOString().slice(0, 10);
+    var url;
+    try {
+      url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+    } catch (e) {
+      announce("This browser would not let the page write a file.");
+      flash(button, "Could not write");
+      return;
+    }
+    var a = el("a", { href: url, download: name || ("the-book-saved-" + stamp + ".json") });
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    /* Revoked late: a browser that has not finished reading the blob when
+       the URL goes gets an empty file. */
+    setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+    announce("Backup written.");
+    flash(button, "Written");
   }
 
   var menu = null;
@@ -3756,6 +3827,105 @@
       wrap.appendChild(el("p", { class: "empty", text: STORAGE_FAILED }));
     }
 
+    /* ---------------- a copy that can be read back ----------------
+
+       The three below are for putting a passage somewhere else: a document,
+       a bibliography, a citation. All three are prose, all three go to the
+       clipboard, and none of them can be turned back into saved verses --
+       which is fine for what they are for and no use at all for the thing
+       this pair is for.
+
+       A browser can drop everything here without warning. Safari's seven-day
+       cap is the common way, a cleared site, a new phone or a reinstall are
+       the others, and the reader is not told by any of them. keepStorage()
+       asks the browser not to; this is what to do when it does anyway, and
+       it is the half that works whatever the browser decides.
+
+       The file is the stored array as it stands, so a restore is exact
+       rather than a reconstruction: every note, every reference, in the
+       shape the reader wrote them. It is also the only way to carry saved
+       verses between Safari and the same site installed to the home screen,
+       which do not share storage with each other. */
+    var BACKUP_FORMAT = "thebook.saved";
+
+    var backup = function () {
+      return JSON.stringify({
+        format: BACKUP_FORMAT,
+        version: 1,
+        exported: new Date().toISOString(),
+        items: savedItems()
+      }, null, 2);
+    };
+
+    /* Merged rather than replaced, and by id, so restoring onto a browser
+       that already has notes adds what is missing instead of choosing one of
+       the two sets to lose. */
+    var restore = function (text, button) {
+      var parsed;
+      try { parsed = JSON.parse(text); }
+      catch (e) {
+        announce("That file is not a backup this page can read.");
+        flash(button, "Not a backup");
+        return;
+      }
+      var incoming = parsed && parsed.items;
+      if (!parsed || parsed.format !== BACKUP_FORMAT || !Array.isArray(incoming)) {
+        announce("That file is not a backup of saved verses.");
+        flash(button, "Not a backup");
+        return;
+      }
+      var usable = incoming.filter(function (i) {
+        return i && typeof i.id === "string";
+      });
+      var have = savedItems();
+      var known = {};
+      have.forEach(function (i) { known[i.id] = true; });
+      var added = usable.filter(function (i) { return !known[i.id]; });
+      var merged = have.concat(added);
+      merged.sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
+
+      if (!added.length) {
+        announce(usable.length
+          ? "Everything in that file was already here."
+          : "That backup has nothing in it.");
+        flash(button, usable.length ? "Already here" : "Nothing to add");
+        return;
+      }
+      if (!store.set("saved", merged.slice(0, 500))) {
+        announce(STORAGE_FAILED);
+        flash(button, "Could not save");
+        return;
+      }
+      keepStorage();
+      announce("Restored " + added.length + " saved item" +
+               (added.length === 1 ? "" : "s") + ".");
+      route();
+    };
+
+    /* Hidden from the accessibility tree rather than merely off-screen. It
+       is not a control: the button beside it is, and this is the thing that
+       button reaches for. Left visible to a screen reader it is an unlabelled
+       file input in the tab order -- which is what axe called critical, and
+       it was right. */
+    var picker = el("input", {
+      type: "file", accept: ".json,application/json", class: "sr-only",
+      tabindex: "-1", "aria-hidden": "true"
+    });
+    picker.addEventListener("change", function () {
+      var file = picker.files && picker.files[0];
+      if (!file) return;
+      var button = picker.__button;
+      var reader = new FileReader();
+      reader.onload = function () { restore(String(reader.result), button); };
+      reader.onerror = function () {
+        announce("That file could not be read.");
+        flash(button, "Could not read");
+      };
+      reader.readAsText(file);
+      /* Cleared so choosing the same file twice in a row still fires. */
+      picker.value = "";
+    });
+
     var items = savedItems();
     if (!items.length) {
       wrap.appendChild(el("p", { class: "empty", text:
@@ -3763,6 +3933,21 @@
         "Save at the top of a chapter to keep the whole thing. Everything is " +
         "stored in this browser only — nothing is sent anywhere, and nobody " +
         "else can see it." }));
+      /* Restoring has to be offered here above all. An empty list is not
+         only the state before anybody has saved anything -- it is also
+         exactly what a reader sees after a browser has cleared its storage,
+         which is the one moment a backup is for. Returning before this was
+         built put the file picker on every screen except the one where it
+         was needed, and nothing said so: the button was simply not there,
+         on a page whose emptiness was the reason to look for it. */
+      wrap.appendChild(el("div", { class: "toolbar" }, [
+        el("button", {
+          class: "chip", text: "Restore from a file",
+          title: "Bring back saved verses from a backup file",
+          onclick: function (e) { picker.__button = e.currentTarget; picker.click(); }
+        })
+      ]));
+      wrap.appendChild(picker);
       return wrap;
     }
 
@@ -3794,6 +3979,16 @@
 
     var tools = el("div", { class: "toolbar" }, [
       el("button", {
+        class: "chip", text: "Back up to a file",
+        title: "Write everything saved here to a file you keep",
+        onclick: function (e) { saveFile(backup(), e.currentTarget); }
+      }),
+      el("button", {
+        class: "chip", text: "Restore from a file",
+        title: "Add the saved verses in a backup file to the ones here",
+        onclick: function (e) { picker.__button = e.currentTarget; picker.click(); }
+      }),
+      el("button", {
         class: "chip", text: "Copy all as text",
         onclick: function (e) { copyText(asText(), e.currentTarget,
                                          "All saved items copied"); }
@@ -3810,6 +4005,18 @@
       })
     ]);
     wrap.appendChild(tools);
+    wrap.appendChild(picker);
+
+    /* Said once, here, where the button that answers it is. Not on the verse
+       menu and not after every save: a reader saving a verse is told the true
+       thing already, which is that it was saved. This is the standing fact
+       about where it was saved to, and it belongs beside the way out. */
+    wrap.appendChild(el("p", { class: "muted tiny", text:
+      "Saved verses live in this browser and nowhere else. A browser can "
+      + "clear them without warning — Safari removes a site's storage after "
+      + "about a week without a visit — and they do not follow you to another "
+      + "device, or to this site installed to a home screen. Backing up to a "
+      + "file is what survives that." }));
 
     var list = el("div", { class: "results" });
     items.forEach(function (item) {

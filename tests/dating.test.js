@@ -277,8 +277,15 @@ module.exports = async function dating(t, ctx) {
   await page.waitForSelector('.saved-row');
 
   const buttons = await page.locator('.toolbar .chip').allTextContents();
+  /* By name rather than by counting. The count was standing in for "the
+     three ways out are offered", and it broke the moment a fourth button
+     arrived that was not one of them -- reporting a new feature as a lost
+     one. What matters is that these three are here, not that nothing else
+     is. */
   t.check('saved verses can leave as text, as citations, or as BibTeX',
-          buttons.length === 3, buttons.join(' | '));
+          ['Copy all as text', 'Copy as citations', 'Copy as BibTeX']
+            .every(name => buttons.indexOf(name) !== -1),
+          buttons.join(' | '));
 
   await page.locator('.toolbar .chip', { hasText: 'BibTeX' }).click();
   await page.waitForTimeout(300);

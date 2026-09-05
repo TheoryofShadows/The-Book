@@ -235,4 +235,112 @@ module.exports = async function keeping(t, ctx) {
             await page.getAttribute('html', 'data-theme') === before);
     await page.close();
   }
+
+  /* ---- the backup, and surviving a browser that clears itself ----
+
+     Saved verses are in local storage and nowhere else, and local storage is
+     not permanent: Safari drops a site's after about a week without a visit,
+     and a cleared site, a new phone or a reinstall do the same thing on any
+     browser. None of them warn anybody. The three copy buttons beside these
+     are prose for a document and cannot be read back, so the file is the
+     only thing between an eviction and somebody's notes.
+
+     Which makes the round trip the check that matters. Writing a file that
+     cannot be restored would look exactly like this working. */
+  {
+    const page = ctx.tally.watch(await ctx.browser.newPage(), 'backup');
+    await saveFirstVerse(page, ctx.base, '#/read/amos/2');
+    await saveFirstVerse(page, ctx.base, '#/read/hosea/1');
+    await page.goto(ctx.base + '#/saved');
+    await page.waitForSelector('.saved-row');
+
+    /* A note, so the check is that the reader's own words come back and not
+       merely that two rows do. */
+    const note = page.locator('.saved-note').first();
+    await note.fill('the thing I was thinking');
+    await note.blur();
+
+    const before = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('thebook:saved')).length);
+
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.locator('button:has-text("Back up to a file")').click()
+    ]);
+    t.check('the backup is offered as a file, named for the day',
+            /^the-book-saved-\d{4}-\d{2}-\d{2}\.json$/.test(download.suggestedFilename()),
+            download.suggestedFilename());
+
+    const file = await download.path();
+    const text = require('fs').readFileSync(file, 'utf8');
+    let parsed = null;
+    try { parsed = JSON.parse(text); } catch (e) { /* reported next */ }
+    t.check('and it is JSON that says what it is',
+            !!parsed && parsed.format === 'thebook.saved' && parsed.version === 1,
+            parsed ? parsed.format : 'did not parse');
+    t.check('and holds everything that was saved',
+            !!parsed && parsed.items.length === before,
+            parsed ? parsed.items.length + ' of ' + before : 'none');
+    t.check('including the note, which is the part nothing else can rebuild',
+            /the thing I was thinking/.test(text));
+
+    /* The eviction, done to the browser rather than waited for. Reloaded
+       rather than navigated: the page is already at #/saved, and going to
+       the hash it is on is not a navigation, so nothing would re-render and
+       the check would be reading the rows from before the clear. */
+    await page.evaluate(() => localStorage.removeItem('thebook:saved'));
+    await page.reload();
+    await page.waitForSelector('.empty');
+    t.check('with the storage cleared, the saved page is empty',
+            (await page.locator('.saved-row').count()) === 0);
+
+    await page.locator('input[type=file]').setInputFiles(file);
+    await page.waitForSelector('.saved-row');
+    t.check('restoring the file brings the verses back',
+            (await page.locator('.saved-row').count()) === before,
+            (await page.locator('.saved-row').count()) + ' of ' + before);
+    t.check('and brings the note back with them',
+            (await page.locator('.saved-note').first().inputValue() || '')
+              .indexOf('the thing I was thinking') !== -1);
+
+    /* Restoring the same file again must not double everything: somebody
+       who is not sure whether it worked will press it twice. */
+    await page.locator('input[type=file]').setInputFiles(file);
+    await page.waitForTimeout(300);
+    t.check('restoring the same file twice adds nothing the second time',
+            (await page.locator('.saved-row').count()) === before,
+            (await page.locator('.saved-row').count()) + ' of ' + before);
+
+    await page.close();
+  }
+
+  /* A file that is not a backup has to be refused rather than obeyed: this
+     is a file picker pointed at a reader's own disk, and the shapes it will
+     be handed include every other JSON file they have. */
+  {
+    const page = await ctx.browser.newPage();
+    const dir = require('fs').mkdtempSync(require('path').join(require('os').tmpdir(), 'bk-'));
+    ctx.cleanup.push(dir);
+    const junk = require('path').join(dir, 'not-a-backup.json');
+    const broken = require('path').join(dir, 'broken.json');
+    require('fs').writeFileSync(junk, JSON.stringify({ hello: 'world' }));
+    require('fs').writeFileSync(broken, '{ this is not json');
+
+    await saveFirstVerse(page, ctx.base, '#/read/amos/2');
+    await page.goto(ctx.base + '#/saved');
+    await page.waitForSelector('.saved-row');
+
+    for (const [what, file] of [['a JSON file that is not a backup', junk],
+                                ['a file that is not JSON at all', broken]]) {
+      await page.locator('input[type=file]').setInputFiles(file);
+      await page.waitForTimeout(250);
+      t.check(what + ' is refused rather than obeyed',
+              (await page.locator('.saved-row').count()) === 1,
+              (await page.locator('.saved-row').count()) + ' row(s) left');
+    }
+    t.check('and the saved verse is still there afterwards',
+            (await page.locator('.saved-row').count()) === 1);
+    await page.close();
+  }
+
 };
