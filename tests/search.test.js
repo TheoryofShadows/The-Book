@@ -910,5 +910,90 @@ module.exports = async function search(t, ctx) {
   t.check('a letter with no entries is answered, not 404ed',
           noise.length === 0, noise.join(' | ') || 'no console errors');
 
+  /* ---------------- the name a reader has for their own Bible ----------
+
+     The Canons page compares five canons and nobody has one: they have a
+     church, and the word for it is "Baptist" or "Pentecostal" or "Reform",
+     none of which is one of the five and none of which found anything.
+
+     The fix is deliberately not a filter. Thirty of these names read one of
+     five canons, so a dropdown of them would return identical results for
+     most entries and would tell the reader their tradition has a canon of
+     its own, which for most of them is false. */
+
+  a = await answers('baptist');
+  t.check('the name of a church reaches the canon it reads',
+          rowsOf(a).indexOf('Baptist churches') >= 0,
+          rowsOf(a).join(' | ') || '(nothing offered)');
+
+  const saidsFor = async (q) => {
+    await page.goto(ctx.base + '#/search/' + encodeURIComponent(q));
+    await settled(page);
+    await page.waitForTimeout(600);
+    return page.$$eval('.jump-box.is-tradition .jump-said',
+                       ps => ps.map(p => p.textContent));
+  };
+
+  /* The sentence the whole design rests on: your canon is shared, and that
+     is why this is an answer and not a filter. */
+  let s1 = await saidsFor('baptist');
+  t.check('and says the canon is shared rather than implying it is theirs',
+          /Reads the Protestant canon, as do \d+ other traditions/.test(s1[0] || ''),
+          s1[0] || '(said nothing)');
+
+  const s2 = await saidsFor('pentecostal');
+  t.check('two churches that share a canon are told the same thing',
+          (s1[0] || '') === (s2[0] || ''), s2[0] || '(said nothing)');
+
+  t.check('and the answer links to that canon, ready to search',
+          hrefsOf(await answers('pentecostal'))
+            .indexOf('#/search//canon:protestant') >= 0,
+          hrefsOf(await answers('pentecostal')).join(' '));
+
+  /* Where a tradition really does differ, it says how. */
+  s1 = await saidsFor('anglican');
+  t.check('a tradition whose Bible is not simply the sixty-six says so',
+          /example of life/.test(s1[0] || ''), (s1[0] || '').slice(0, 80));
+
+  s1 = await saidsFor('messianic judaism');
+  t.check('and a tradition that reads across two of them is placed, not refused',
+          /Tanakh and the New Testament/.test(s1[0] || ''),
+          (s1[0] || '').slice(0, 80));
+
+  /* Three land nowhere, on purpose. Offering the nearest column would hand
+     a reader books their tradition does not receive. */
+  s1 = await saidsFor('church of the east');
+  t.check('it says which books its New Testament does not have',
+          /twenty-two books/.test(s1[0] || '') && /Revelation/.test(s1[0] || ''),
+          (s1[0] || '').slice(0, 80));
+
+  t.check('and offers no link, because there is nowhere honest to send it',
+          await page.locator('.jump-box.is-tradition a.jump-link').count() === 0 &&
+          await page.locator('.jump-box.is-tradition .is-unplaced').count() === 1,
+          await page.locator('.jump-box.is-tradition a.jump-link').count() +
+          ' links');
+
+  s1 = await saidsFor('islam');
+  t.check('a religion whose scripture is not in this volume is told plainly',
+          /Qur/.test(s1[0] || '') && /not in this volume/.test(s1[0] || ''),
+          (s1[0] || '').slice(0, 80));
+
+  /* An approximation is never announced as the tradition's own canon. */
+  s1 = await saidsFor('coptic');
+  t.check('a nearest-column answer leads with being a nearest column',
+          /^Nearest column here/.test(s1[0] || ''), (s1[0] || '').slice(0, 60));
+
+  /* Singular for plural is how these are actually typed. */
+  t.check('"quaker" reaches Quakers, and "orthodox jew" Orthodox Judaism',
+          rowsOf(await answers('quaker')).some(r => /Quakers/.test(r)) &&
+          rowsOf(await answers('orthodox jew'))
+            .indexOf('Orthodox Judaism') >= 0);
+
+  /* And a religion nobody is asking this page about stays quiet rather than
+     matching on a word inside a note. */
+  t.check('a word that is only inside a note does not summon a tradition',
+          !rowsOf(await answers('liturgy')).some(r => /Catholic/.test(r)),
+          rowsOf(await answers('liturgy')).join(' | ') || '(quiet)');
+
   await page.close();
 };

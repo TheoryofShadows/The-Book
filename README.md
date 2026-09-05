@@ -679,6 +679,7 @@ python3 -m http.server 8000 -d docs # then open http://localhost:8000
 | `tools/audit.py` | Checks chapter and verse counts against reference figures |
 | `tools/verify.py` | Reads every verse and paragraph and asks whether the text is the text and nothing else, and whether every definition, pin and link points at something that exists. `--links` reaches every external address as well |
 | `tools/build_canon.py` | Builds canon membership and checks coverage claims |
+| `tools/build_traditions.py` | Checks each tradition against the canon keys and emits `traditions.json` |
 | `tools/build_index.py` | Builds the sharded search index |
 | `tools/build_standalone.py` | Inlines the whole library into one HTML file that runs offline, and cuts out the parts of the page an offline copy cannot honour |
 | `tools/textnorm.py` | The one rule that folds text into a search token or a lookup key |
@@ -749,11 +750,11 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 
 | Suite | Checks |
 | --- | --- |
-| `tests/python` | The verifier against planted defects — a page number, a paragraph note, an advertisement, a duplicated verse number, a dangling alias, a pin on a chapter that is not there — including the control that a clean library reports nothing, and the negative case that a translator's square brackets are never mistaken for a scanner's. And the parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. Two of them run the reader's own copies of a rule against the Python ones, because each is written in two languages and a divergence between them is silent: the folding rule that decides what the search index is keyed on, and the one that turns a span of years back into words like "before c. 900 BCE" — where printing the figure alone would state a date the position never gave. Another holds the seam where 1 Clement changes translator: the six recovered chapters are checked against the volume's own text of the chapters either side of them, because a splice made one chapter out of step would still read as English. And several hold things the parser has no opinion about: every number this README states, against the data it is describing; every colour in the stylesheet's palette against the contrast it has to clear; the first sentence of the site against the coverage table it describes, so that no canon can be called complete while `canon.json` records a book missing from it; and every mark saying a book is not one composition, against the sourced sentence it is quoted from |
+| `tests/python` | The verifier against planted defects — a page number, a paragraph note, an advertisement, a duplicated verse number, a dangling alias, a pin on a chapter that is not there — including the control that a clean library reports nothing, and the negative case that a translator's square brackets are never mistaken for a scanner's. And the parser function by function: where a verse begins, what is a chapter heading and what is an OCR artifact, what gets cut out as scrape furniture, and how a word becomes a key. Two of them run the reader's own copies of a rule against the Python ones, because each is written in two languages and a divergence between them is silent: the folding rule that decides what the search index is keyed on, and the one that turns a span of years back into words like "before c. 900 BCE" — where printing the figure alone would state a date the position never gave. Another holds the seam where 1 Clement changes translator: the six recovered chapters are checked against the volume's own text of the chapters either side of them, because a splice made one chapter out of step would still read as English. And one holds a file that is not derived from the texts at all: the tradition table is editorial, thirty-odd sentences saying which books a church reads, and its failure mode is not a broken build but a page telling a Baptist their Bible is something it is not — so the gates that can be checked mechanically are checked here, that no tradition names a canon `canon.json` lacks, that no note is made without a source, that no two traditions answer to one word, and that an approximation says it is one. And several hold things the parser has no opinion about: every number this README states, against the data it is describing; every colour in the stylesheet's palette against the contrast it has to clear; the first sentence of the site against the coverage table it describes, so that no canon can be called complete while `canon.json` records a book missing from it; and every mark saying a book is not one composition, against the sourced sentence it is quoted from |
 | `routes` | Every page renders, search returns verses, a saved verse survives a reload, nothing throws |
 | `layout` | At 320–430px every nav link is on screen, nothing scrolls sideways, the bar tucks away as you read, desktop is unchanged |
 | `dating` | The date card against the spans the parser read, the method page, and that a citation names the edition and the era rather than just a URL |
-| `search` | Result counts against known answers rather than "more than zero": phrases against their words, several terms meaning all of them, the three different ways a search can end with nothing, that an accented or ligatured spelling on the page is reachable by an ordinary one, and that a reference is answered as a reference — including the split works, where Isaiah 40 has to land in the second Isaiah, and the ambiguous ones, where two answers stay two — and that a search answers the questions that are not word searches at all: a collection by the names readers give it, so that `new testament` reaches the twenty-seven books and this edition's section of the same name both; a collection as a scope and as a page, in composition order rather than bound order; a passage by a name the text never prints; a manuscript, a thread, a dictionary headword and a page of this site; and that a query meaning none of those offers nothing rather than guessing |
+| `search` | Result counts against known answers rather than "more than zero": phrases against their words, several terms meaning all of them, the three different ways a search can end with nothing, that an accented or ligatured spelling on the page is reachable by an ordinary one, and that a reference is answered as a reference — including the split works, where Isaiah 40 has to land in the second Isaiah, and the ambiguous ones, where two answers stay two — and that a search answers the questions that are not word searches at all: a collection by the names readers give it, so that `new testament` reaches the twenty-seven books and this edition's section of the same name both; a collection as a scope and as a page, in composition order rather than bound order; a passage by a name the text never prints; a manuscript, a thread, a dictionary headword and a page of this site; and that a query meaning none of those offers nothing rather than guessing; and that the name a reader has for their own Bible reaches the canon it reads, says when that canon is shared rather than implying it is theirs, leads with being an approximation where it is one, and offers no link at all for the three traditions none of the five columns can stand in for |
 | `words` | Turning a word on the page into an entry — by selection, by keyboard, by alias — what a missing entry says, and the places panel |
 | `keeping` | Saving, unsaving, notes, the migration from the old bookmarks key, and what happens when the browser refuses to store anything at all |
 | `resilience` | The data failing to load, malformed data, routes that name nothing, the keyboard shortcuts, the skip link, and what a screen reader is actually told |
@@ -1020,6 +1021,57 @@ a reference is, each checked against this volume's own parse. All of it is
 offered above the word matches and none of it replaces them: `enoch` is three
 works, a person with an entry, and a word in ninety verses, and the reader is
 the only one who knows which was meant.
+
+**And the name a reader actually has for their Bible.** The Canons page
+compares five canons. Nobody has one. They have a church, or a synagogue, or
+neither, and the word for it is `Baptist` or `Pentecostal` or `Reform` — none
+of which is one of the five, and none of which found anything at all.
+
+The obvious fix is the wrong one. Adding Baptist, Pentecostal, Methodist,
+Presbyterian and thirty more as filters would put forty entries in a list
+where most return byte-identical results, because those churches disagree
+about a great deal and not about which books are in the Bible; Orthodox,
+Conservative, Reform and Reconstructionist Judaism likewise differ on much,
+and not on the contents of the Tanakh. A control offering a distinction the
+data cannot make is worse than no control — it tells the reader their
+tradition has its own canon, which for most of them is false, and it is the
+kind of false precision this volume exists to argue against.
+
+So it is a way in by the name rather than a filter, and it says where the
+name lands — including, and especially, when it lands where a dozen others
+do. `baptist` answers *Reads the Protestant canon, as do 15 other traditions
+listed here*, with a link to that canon scoped and ready for the next word
+typed. The count is computed from the table rather than written into fifteen
+notes, so it cannot fall out of step with what it describes.
+
+Where a tradition really does differ, the note says how, and carries a source
+for saying it. Anglican and Lutheran Bibles print the apocrypha and deny it
+doctrinal authority — *read for example of life and instruction of manners;
+but yet doth it not apply them to establish any doctrine*, Article VI, and
+Luther's *not held equal to the Scriptures, but useful and good to read* —
+which is a third category the five-column table has no room for, so the note
+carries it and the scope does not pretend to. The Coptic and Armenian
+churches are Oriental Orthodox, close to the Eastern column and not identical
+to it, so their answer leads with *Nearest column here* rather than claiming a
+canon the next sentence takes back.
+
+And three land nowhere on purpose. The Assyrian Church of the East reads a
+Peshitta whose New Testament has twenty-two books — 2 Peter, 2 John, 3 John,
+Jude and Revelation are not in it, and all five are printed here, so any of
+the five columns would hand a reader books that church does not receive. The
+Samaritan Torah is a different recension of the text, and pointing at the
+Torah here would be showing somebody a different book under their name. The
+Qur'an is not in this volume at all. Each says so, and each is rendered
+without a link, because there is nowhere honest to send it.
+
+`tools/traditions.py` carries the table and a source for every claim;
+`tools/build_traditions.py` refuses to build one that names a canon
+`canon.json` does not have, makes a note without a source, marks itself an
+approximation in silence, or answers to a word another tradition already
+answers to. `tests/python/test_traditions.py` holds all four gates and the
+premise underneath them — that a canon shared by many traditions is the
+common case, which is the fact that makes this an answer rather than a
+filter.
 
 **And under every book, each result says which it is.** Narrowing is one
 answer to "is this in my Bible"; it is not the answer for somebody who wants

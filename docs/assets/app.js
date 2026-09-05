@@ -3361,6 +3361,98 @@
     return out.slice(0, 3);
   }
 
+  /* ---------------- and the name a reader actually uses ----------------
+
+     The Canons page compares five canons. Nobody has one. They have a
+     church, or a synagogue, or neither, and the word for it is "Baptist" or
+     "Pentecostal" or "Reform" -- none of which is one of the five, and none
+     of which found anything at all.
+
+     The obvious fix is the wrong one. Baptist, Pentecostal, Methodist,
+     Presbyterian and thirty more as filters would be a list where most
+     entries return identical results, because those churches disagree about
+     a great deal and not about which books are in the Bible. A control that
+     offers a distinction the data cannot make tells the reader their
+     tradition has its own canon, which for most of them is false.
+
+     So this is a way in by the name, not a filter, and it says where the
+     name lands -- including, and especially, when it lands where a dozen
+     others do. Three traditions land nowhere on purpose: the Church of the
+     East reads a New Testament of twenty-two books, the Samaritan Torah is
+     a different recension of the text, and the Qur'an is not in this
+     volume. Each says so instead of being pointed at the nearest column.
+     See tools/traditions.py, which carries a source for every claim, and
+     tools/build_traditions.py, which will not build one that names a canon
+     canon.json does not have. */
+
+  function resolveTraditions(table, query) {
+    var key = normTerm(query);
+    if (!key || key.length < 3 || !table || tooCommonToAnswer(key)) return [];
+    var out = [];
+    table.traditions.forEach(function (t) {
+      if (out.length >= 3) return;
+      var words = [normTerm(t.name)].concat(
+        (t.also || []).map(function (a) { return normTerm(a); }));
+      var hit = words.some(function (w) {
+        var bare = w.replace(/^the /, "");
+        // The whole name, or the whole name less a leading "the", so
+        // "catholic church" and "the catholic church" are one question.
+        if (w === key || bare === key) return true;
+        // A word of it, once the reader has typed enough of one to have
+        // meant it: "baptist" out of "baptist churches".
+        if (key.length > 4 && (" " + w + " ").indexOf(" " + key + " ") !== -1) {
+          return true;
+        }
+        // And singular for plural, which is the commonest way of typing
+        // one of these: "quaker" for Quakers, "copt" for Copts.
+        return (" " + w + " ").indexOf(" " + key + "s ") !== -1;
+      });
+      if (hit) out.push(t);
+    });
+    return out;
+  }
+
+  /* What the answer says, which is a different sentence depending on
+     whether the tradition has a canon here at all. */
+  /* How many other traditions in the table read the same canon.
+
+     This is the sentence the whole design rests on. A reader who types
+     "Baptist" is asking whether their Bible is in here, and the true and
+     useful answer is that it is, and that it is the same one twelve other
+     names in this list are asking about. Counted from the file rather than
+     written into twelve notes, so it cannot fall out of step with the
+     table it describes. */
+  function sharedWith(table, t) {
+    if (!t.canon || !table) return 0;
+    var n = 0;
+    table.traditions.forEach(function (o) {
+      if (o.id !== t.id && o.canon === t.canon && !o.approx) n++;
+    });
+    return n;
+  }
+
+  function traditionSaid(table, t) {
+    if (!t.canon) return t.note;
+    var name = CANON_IN_FULL[t.canon] || t.canon;
+    /* An approximate canon is never announced as the tradition's own. The
+       Coptic and Armenian churches are Oriental Orthodox and this volume
+       compares the Eastern column; saying "reads the Eastern Orthodox
+       canon" and then taking it back in the next sentence is the lead
+       asserting what the note denies. */
+    if (t.approx) {
+      return "Nearest column here: the " + name + " canon." +
+             (t.note ? " " + t.note : "");
+    }
+    /* Said on every row that has nothing else to say, which is most of
+       them, and which is the point rather than a gap: these names differ
+       over a great deal and not over which books are in the Bible. */
+    var also = sharedWith(table, t);
+    var lead = "Reads the " + name + " canon" +
+      (also ? ", as do " + fmt(also) + " other " +
+              (also === 1 ? "tradition" : "traditions") + " listed here." : ".");
+    return lead + (t.note ? " " + t.note : "");
+  }
+
   /* Passages known by a name the text itself never uses.
 
      "The sermon on the mount" appears nowhere in Matthew, "the beatitudes"
@@ -3798,7 +3890,7 @@
          should read, and filled as each resolves. Appending on arrival
          would shuffle the page under a reader already looking at it. */
       var slots = {};
-      ["reference", "passage", "collection", "thread", "entry",
+      ["reference", "passage", "collection", "tradition", "thread", "entry",
        "witness", "page"].forEach(function (k) {
         slots[k] = el("div");
         jump.appendChild(slots[k]);
@@ -3879,6 +3971,39 @@
                 (c.works.length === 1 ? " work" : " works") })
             ]);
           }));
+      }).catch(function () {});
+
+      /* The name a reader has for their own Bible. Offered under the
+         collection it usually resolves to, because "Baptist" is a question
+         about which books, and the answer is a set of them. */
+      getJSON("traditions.json").then(function (table) {
+        var found = resolveTraditions(table, query);
+        if (!found.length) return;
+        var rows = [];
+        found.forEach(function (t) {
+          /* A canon means somewhere to go: that canon's books, scoped and
+             ready for the next word the reader types. Without one there is
+             no honest destination, so the row is not a link -- a row that
+             looks like a link and lands on the nearest column would be the
+             exact error the note is there to prevent. */
+          var head = t.canon
+            ? el("a", { class: "jump-link",
+                        href: "#/search//" + CANON_SCOPE + t.canon }, [
+                el("span", { class: "jump-where", text: t.name }),
+                el("span", { class: "jump-era", text: (t.approx ? "nearest: the " : "the ") +
+                  (CANON_IN_FULL[t.canon] || t.canon) + " canon" })
+              ])
+            : el("div", { class: "jump-link is-unplaced" }, [
+                el("span", { class: "jump-where", text: t.name }),
+                el("span", { class: "jump-era", text: "not one of the five" })
+              ]);
+          rows.push(head);
+          var said = traditionSaid(table, t);
+          if (said) rows.push(el("p", { class: "jump-said", text: said }));
+        });
+        answerBox("tradition", found.length === 1
+          ? "Which books that tradition reads:"
+          : "Which books those traditions read:", rows);
       }).catch(function () {});
 
       /* A thread. "Where do the dead go" is the exact title of one and
