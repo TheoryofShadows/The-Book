@@ -206,32 +206,83 @@ module.exports = async function layout(t, ctx) {
 
   /* ---- how far down the scripture starts on a phone ----
 
-     A number rather than an opinion, because this is the kind of thing that
-     drifts back a row at a time and nobody notices until a reader opens
-     Genesis on a phone and sees a header, a breadcrumb, a title, a chapter
-     box, fifty chapter numbers, a note, a dating panel and five buttons.
      Measured at 743px on a 568px iPhone SE, which is a Bible you arrive at
-     and see no Bible on.
+     and see no Bible on. Gated as a number because it drifts back a row at a
+     time and is noticed by nobody until somebody opens Genesis on a phone.
 
-     The budget is per device and deliberately not "above the fold on all of
-     them": clearing it on the smallest phone needs either the nav in one
-     scrolling row or the apparatus moved below the text, and both reverse a
-     decision this site has made on purpose and written down. What is gated
-     is what was won without reversing anything -- so that it stays won. */
+     Two checks rather than one. The budget catches slow drift; the fold
+     catches the thing the budget is a proxy for, and says it in the terms
+     that matter -- there is scripture on the screen when the page opens. */
   {
     const { devices } = require('playwright');
-    const BUDGET = [['iPhone SE', 710], ['iPhone 14 Pro', 670], ['Pixel 7', 670]];
-    for (const [name, budget] of BUDGET) {
+    for (const name of ['iPhone SE', 'iPhone 14 Pro', 'Pixel 7']) {
       const phone = await ctx.browser.newContext({ ...devices[name] });
       const page = await phone.newPage();
       await page.goto(ctx.base + '#/read/genesis/0');
       await page.waitForSelector('.reader .v');
-      const top = await page.evaluate(() => Math.round(
-        document.querySelector('.reader .v').getBoundingClientRect().top + window.scrollY));
+      const seen = await page.evaluate(() => ({
+        top: Math.round(document.querySelector('.reader .v')
+               .getBoundingClientRect().top + window.scrollY),
+        vh: window.innerHeight
+      }));
       t.check('on ' + name + ', the scripture starts within its budget',
-              top <= budget, top + 'px, budget ' + budget);
+              seen.top <= 420, seen.top + 'px, budget 420');
+      t.check('and is on screen when the page opens',
+              seen.top < seen.vh, seen.top + 'px into a ' + seen.vh + 'px screen');
       await phone.close();
     }
+  }
+
+  /* ---- and where the apparatus went to make room ----
+
+     Reordered rather than removed, so what has to be checked is that it is
+     still all there and still reachable, on both sides of the breakpoint. A
+     phone turned on its side crosses it -- a 14 Pro is 393px upright and 852
+     across -- so the move has to work in both directions and not once. */
+  {
+    const { devices } = require('playwright');
+    const look = () => ({
+      navInHead: !!document.querySelector('.reader-head .chapter-nav'),
+      notesFirst: !!(document.querySelector('.work-notes') &&
+        (document.querySelector('.work-notes').compareDocumentPosition(
+          document.querySelector('.reader')) & Node.DOCUMENT_POSITION_FOLLOWING)),
+      links: document.querySelectorAll('.chapter-strip a').length,
+      note: !!document.querySelector('.note-block')
+    });
+
+    const desk = await ctx.browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const wide = await desk.newPage();
+    await wide.goto(ctx.base + '#/read/genesis/0');
+    await wide.waitForSelector('.reader .v');
+    const onDesk = await wide.evaluate(look);
+    t.check('on a wide screen the apparatus is where it always was',
+            onDesk.navInHead && onDesk.notesFirst, JSON.stringify(onDesk));
+    await desk.close();
+
+    const phone = await ctx.browser.newContext({ ...devices['iPhone 14 Pro'] });
+    const page = await phone.newPage();
+    await page.goto(ctx.base + '#/read/genesis/0');
+    await page.waitForSelector('.reader .v');
+
+    const up = await page.evaluate(look);
+    t.check('on a phone it is after the chapter instead',
+            !up.navInHead && !up.notesFirst, JSON.stringify(up));
+    t.check('and nothing was dropped to get it there',
+            up.links === 50 && up.note, up.links + ' chapter links, note ' + up.note);
+
+    await page.setViewportSize({ width: 852, height: 393 });
+    await page.waitForTimeout(250);
+    const turned = await page.evaluate(look);
+    t.check('turning the phone sideways puts it back above',
+            turned.navInHead && turned.notesFirst, JSON.stringify(turned));
+
+    await page.setViewportSize({ width: 393, height: 852 });
+    await page.waitForTimeout(250);
+    const back = await page.evaluate(look);
+    t.check('and turning it upright moves it down again',
+            !back.navInHead && !back.notesFirst && back.links === 50,
+            JSON.stringify(back));
+    await phone.close();
   }
 
   /* The chapter numbers are the control a thumb uses most and were the
