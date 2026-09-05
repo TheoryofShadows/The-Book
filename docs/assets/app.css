@@ -1150,6 +1150,14 @@ table.grid tbody tr:last-child td { border-bottom: 0; }
 }
 .result-ref a { font-weight: 600; text-decoration: none; }
 .result-era { color: var(--ink-faint); }
+/* Beside the reference on a result from a work no canon receives. Quiet on
+   purpose: it is a note about where the verse comes from, not a warning
+   about it, and the works it lands on are half of what this volume is for. */
+.result-outside {
+  font-family: var(--sans); font-size: .72rem; color: var(--ink-faint);
+  border: 1px solid var(--rule-soft); border-radius: 999px;
+  padding: 0 .45rem; white-space: nowrap;
+}
 .result-text { font-family: var(--serif); font-size: 1rem; line-height: 1.62; }
 mark { background: var(--mark); color: inherit; padding: 0 .1em; border-radius: 2px; }
 

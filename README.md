@@ -958,6 +958,18 @@ build until somebody says which it is. Searching `horeb` returns the Decalogue
 among twenty verses under every book, and nothing at all under the books left
 out.
 
+**And under every book, each result says which it is.** Narrowing is one
+answer to "is this in my Bible"; it is not the answer for somebody who wants
+to read the whole library and know what they are reading. On that page the
+question was answered by recognising the title, which works for Psalms and
+not for Barnabas — so it worked least well for the reader who most needed it.
+A verse from a work no canon receives now carries `outside every canon` beside
+its reference. Only under every book: inside a canon nothing is outside it,
+inside one book the answer is the same on every row, and under the books left
+out every row would carry the same badge. And only on the works that earn it —
+the Decalogue reprinted beside the Nash Papyrus is scripture in both places
+and is marked in neither.
+
 **It can be installed to a home screen, on both kinds of phone.**
 `docs/site.webmanifest` names the site, its two colours and its icons, and
 that is the half Android reads: Chrome offers to install from it, which is why

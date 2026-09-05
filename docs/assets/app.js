@@ -3108,18 +3108,32 @@
       canonWorks = {};
     });
 
-    /* The scope as a test on a work id: a book is itself, a canon is every
-       work it receives. A promise, because that answer can still be in
-       flight. Null means no narrowing -- including when the canon list
-       failed, which run() notices and stops claiming a scope for. */
-    function workFilter(want) {
-      if (!want) return Promise.resolve(null);
-      if (!isCanonScope(want)) {
-        return Promise.resolve(function (w) { return w === want; });
-      }
+    /* What the scope means, and what the results have to say for themselves
+       under it. Both come out of canon.json, so both are answered together
+       and after it has landed.
+
+       keep: a test on a work id. A book is itself, a canon is every work it
+       receives, null is no narrowing -- including when the canon list failed
+       to arrive, which run() notices and stops claiming a scope for.
+
+       outside: the works to mark as held by no canon. Only under Every book.
+       Inside a canon nothing is outside it; inside one book the answer is
+       the same on every row; under the books left out every row would carry
+       the same badge. All three would be printing a fact the scope has
+       already stated at the top of the page. */
+    function scopeReady(want) {
       return canonReady.then(function () {
-        var set = canonWorks && canonWorks[want.slice(CANON_SCOPE.length)];
-        return set ? function (w) { return !!set[w]; } : null;
+        var keep = null;
+        if (want && !isCanonScope(want)) {
+          keep = function (w) { return w === want; };
+        } else if (want) {
+          var set = canonWorks && canonWorks[want.slice(CANON_SCOPE.length)];
+          if (set) keep = function (w) { return !!set[w]; };
+        }
+        return {
+          keep: keep,
+          outside: want ? null : (canonWorks && canonWorks[CANON_NONE]) || null
+        };
       });
     }
 
@@ -3239,9 +3253,9 @@
         });
       });
 
-      Promise.all([workFilter(scope), index]).then(function (both) {
+      Promise.all([scopeReady(scope), index]).then(function (both) {
         if (mine !== runId) return;
-        var keep = both[0], ctx = both[1];
+        var keep = both[0].keep, outside = both[0].outside, ctx = both[1];
         /* The canon list never arrived, so the scope cannot be honoured.
            Searching everything and saying so is better than printing a
            tradition's name over results from outside it. */
@@ -3350,6 +3364,9 @@
             return;
           }
           var wid = workIds[i];
+          /* One question per work rather than per verse: whether any canon
+             receives this book is a fact about the book. */
+          var uncanonical = !!(outside && outside[wid]);
           getJSON("works/" + wid + ".json").then(function (work) {
             if (mine !== runId) return;
             byWork[wid].forEach(function (pair) {
@@ -3373,7 +3390,8 @@
                   : terms.every(function (t) { return new RegExp("\\b" + t, "i").test(low); });
                 if (!ok) return;
                 found++;
-                results.appendChild(resultRow(tbl, pair[0], wid, pair[1], u, phrase, terms));
+                results.appendChild(resultRow(tbl, pair[0], wid, pair[1], u,
+                                             phrase, terms, uncanonical));
               });
             });
             done++;
@@ -3385,7 +3403,7 @@
       });
     }
 
-    function resultRow(tbl, cid, wid, chIdx, unit, phrase, terms) {
+    function resultRow(tbl, cid, wid, chIdx, unit, phrase, terms, uncanonical) {
       var row = tbl.chapters[cid];
       var href = "#/read/" + wid + "/" + chIdx + (unit.ref ? "/v" + unit.ref : "");
       var label = titleCase(row[3]) + " · " + row[2] + (unit.ref ? ":" + unit.ref : "");
@@ -3435,10 +3453,23 @@
         });
       }
 
+      var ref = el("div", { class: "result-ref" }, [
+        el("a", { href: href, text: label })
+      ]);
+      /* Which of these is in my Bible is the question somebody searching the
+         whole library is usually holding in their head, and until now it was
+         answered by recognising the title -- which works for Psalms and not
+         for Barnabas, and so works least well for the reader who most needs
+         it. The mark says what no canon holds. It is not on the ones a canon
+         does hold, because a page where every row carries a badge says
+         nothing, and this is the smaller half of the library. */
+      if (uncanonical) {
+        ref.appendChild(el("span", { class: "result-outside",
+                                     text: "outside every canon" }));
+      }
+
       return el("div", { class: "result" }, [
-        el("div", { class: "result-ref" }, [
-          el("a", { href: href, text: label })
-        ]),
+        ref,
         el("div", { class: "result-text", html: html })
       ]);
     }

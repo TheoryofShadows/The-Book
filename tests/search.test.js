@@ -513,5 +513,60 @@ module.exports = async function search(t, ctx) {
           await page.locator('.result').count() + ' hits at ' +
           await page.evaluate(() => location.hash));
 
+  /* ---- and the same fact on the row, under every book ----
+
+     Narrowing is one answer to "which of these is in my Bible" and it is not
+     the answer for somebody who wants to read the whole library and know
+     what they are reading. On that page the question was answered by
+     recognising the title, which works for Psalms and not for Barnabas --
+     so it worked least well for the reader who most needed it. */
+  const rows = () => page.evaluate(() => Array.from(
+    document.querySelectorAll('.result'), r => ({
+      work: r.querySelector('.result-ref a').getAttribute('href').split('/')[2],
+      marked: !!r.querySelector('.result-outside'),
+      said: (r.querySelector('.result-outside') || {}).textContent || ''
+    })));
+
+  await page.goto(ctx.base + '#/search/shepherd');
+  await settled(page);
+  const everyBook = await rows();
+
+  t.check('every book marks the verses no canon holds, and only those',
+          everyBook.filter(r => r.marked).length === EXPECT.shepherdLeftOut &&
+          everyBook.every(r => r.marked === !inSomeCanon(r.work)),
+          everyBook.filter(r => r.marked).length + ' marked of ' +
+          EXPECT.shepherdLeftOut + ', ' +
+          everyBook.filter(r => r.marked && inSomeCanon(r.work)).length + ' wrongly');
+
+  t.check('and says what the mark means rather than drawing a symbol',
+          /outside every canon/.test((everyBook.find(r => r.marked) || {}).said || ''),
+          (everyBook.find(r => r.marked) || {}).said || '(nothing said)');
+
+  /* The same trap as the scope, on the row this time: a chapter of
+     Deuteronomy printed twice is scripture in both places, and a mark on the
+     second printing would tell a reader the Decalogue is in no Bible. */
+  await page.goto(ctx.base + '#/search/horeb');
+  await settled(page);
+  const horebRows = await rows();
+  t.check('a chapter printed twice is never marked as outside every canon',
+          horebRows.length === EXPECT.horeb &&
+          horebRows.every(r => !r.marked),
+          horebRows.filter(r => r.marked).map(r => r.work).join(' ') ||
+          horebRows.length + ' rows, none marked');
+
+  /* Under a scope the marking would be a fact the page has already stated,
+     on every row or on none of them. */
+  for (const [scope, what] of [['canon:tanakh', 'a canon'],
+                               ['canon:none', 'the books left out'],
+                               ['psalms', 'one book']]) {
+    await page.goto(ctx.base + '#/search/shepherd/' + scope);
+    await settled(page);
+    const scopedRows = await rows();
+    t.check('no verse is marked when the scope has already said it: ' + what,
+            scopedRows.length > 0 && scopedRows.every(r => !r.marked),
+            scopedRows.length + ' rows, ' +
+            scopedRows.filter(r => r.marked).length + ' marked');
+  }
+
   await page.close();
 };
