@@ -124,6 +124,22 @@ module.exports = async function dating(t, ctx) {
           })());
 
   /* ---- the whole library on one axis ---- */
+
+  /* Reachable from the bar, which is the fix this needed most. The axis was
+     built, tested and linked from one sentence in the second paragraph of a
+     callout half way down the front page, while the bar's own "Timeline"
+     pointed at that front page -- a manifesto, a row of statistics and an
+     accordion of eras. A visitor who came to see eight hundred years read a
+     pitch instead. */
+  await page.goto(ctx.base + '#/');
+  await page.waitForSelector('.nav');
+  await page.locator('.nav a', { hasText: 'Timeline' }).click();
+  await page.waitForSelector('.tl-row');
+  t.check('the bar\'s Timeline link goes to the axis',
+          /#\/timeline$/.test(page.url()), page.url());
+  t.check('and the bar marks it as the page you are on',
+          await page.locator('.nav a[aria-current="page"]').count() === 1);
+
   await page.goto(ctx.base + '#/timeline');
   await page.waitForSelector('.tl-row');
   await page.waitForTimeout(400);
@@ -148,6 +164,28 @@ module.exports = async function dating(t, ctx) {
           crit.bars.length === crit.rows &&
           crit.bars.every(b => b.left >= 0 && b.left <= 100 && b.width > 0),
           crit.bars.length + ' bars');
+
+  /* A book the volume's own position calls composite -- the Torah, the
+     Psalms, Isaiah 1-39 with the apocalypse inside it -- is not one
+     composition, and a solid bar across it is the most confident mark on the
+     page and the least true. The method page always admitted that; the
+     drawing said nothing, so Amos, whose bar is ten years, and the Psalms,
+     which the same records call a collection spanning centuries, were drawn
+     as the same kind of object. */
+  const layered = await page.evaluate(() => ({
+    bars: document.querySelectorAll('.tl-bar.composite').length,
+    summary: (document.querySelector('.tl-layered summary') || {}).textContent || '',
+    named: Array.from(document.querySelectorAll('.tl-layered-list li'))
+                .map(li => li.textContent)
+  }));
+  t.check('a composite book is not drawn as one solid bar',
+          layered.bars >= 10, layered.bars + ' hatched');
+  t.check('and the page counts them rather than leaving it to be noticed',
+          /are not one date/.test(layered.summary), layered.summary);
+  t.check('and quotes what the work\'s own position says is layered',
+          layered.named.length === layered.bars &&
+          layered.named.some(n => /Isaiah/.test(n) && /24-27/.test(n)),
+          layered.named.find(n => /Isaiah/.test(n)) || '');
 
   t.check('the works come out in date order',
           await page.evaluate(() => {
@@ -251,8 +289,16 @@ module.exports = async function dating(t, ctx) {
           /world english bible/i.test(cite));
   t.check('and where it sits in the composition order',
           /arranged under/i.test(cite), cite.slice(-90));
-  t.check('and links back to the exact verse',
-          /#\/read\/amos\/2\/v\d+/.test(cite));
+  /* The reader is at #/read/amos/2 -- the third chapter, counted from zero --
+     and the address in the citation is the page built for it, which counts
+     the way the book counts. A citation that named the reader's route was a
+     citation nothing could crawl, nothing could preview, and that said 2 for
+     a chapter printed as 3. */
+  t.check('and links back to the exact verse, as a page rather than a route',
+          /\/read\/amos\/3\/#v\d+$/.test(cite.trim().replace(/ \(accessed.*$/, '')),
+          cite.slice(-70));
+  t.check('and not to a fragment no crawler can ask for',
+          !/#\/read\//.test(cite));
 
   await page.keyboard.press('Escape');
   await page.locator('.reader .v .vnum').first().click();

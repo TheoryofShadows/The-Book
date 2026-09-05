@@ -70,26 +70,64 @@ def main() -> int:
                 "why": stop["why"],
                 "aside": stop.get("aside"),
                 "_order": order[wid],
+                "_deliberate": bool(stop.get("outOfOrder")),
             })
 
         # The premise of a thread is that it runs forward in time. A stop that
         # goes backwards has to say why, or the thread is quietly lying about
         # the one thing it exists to show.
+        #
+        # The permission is a flag of its own rather than the presence of an
+        # aside. It used to be the aside: any non-empty one let a stop past,
+        # and an aside is a general-purpose note -- the next one written about
+        # a translation or a variant reading would have waved a genuinely
+        # misordered stop through without anybody meaning it to. So the author
+        # has to say "this one goes back, and here is why" in two fields, and
+        # a flag on a stop that does not in fact go back is a finding too:
+        # a stale permission is how a gate stops being a gate.
         prev = -1
         for s in stops:
-            if s["_order"] < prev and not s.get("aside"):
+            backwards = s["_order"] < prev
+            if backwards and not s.pop("_deliberate", False):
                 problems.append(
                     f"{thread['id']}: {s['work']} goes backwards in the "
-                    f"sequence with no 'aside' explaining why")
+                    f"sequence without 'outOfOrder': True saying it is meant to")
+            elif backwards and not s.get("aside"):
+                problems.append(
+                    f"{thread['id']}: {s['work']} is marked 'outOfOrder' but "
+                    f"carries no 'aside' telling the reader why")
+            elif not backwards and s.pop("_deliberate", False):
+                problems.append(
+                    f"{thread['id']}: {s['work']} is marked 'outOfOrder' and "
+                    f"runs forward; the flag is stale")
             prev = max(prev, s["_order"])
         for s in stops:
+            s.pop("_deliberate", None)
             del s["_order"]
 
+        # The earliest and latest era the thread actually reaches, rather than
+        # the era of its first and last stop. The reader's own thread card
+        # printed the latter, so "Where do the dead go?" -- whose third stop
+        # is the Isaiah apocalypse, filed back in Section II -- advertised
+        # itself as running from IV to IX when it runs from II to IX. The
+        # card's whole job is to say how far across the library the question
+        # travels, and it was understating it on the one thread that goes
+        # furthest. Worked out here, where the section order is known, rather
+        # than in a view that only has the stops.
+        eras = [s["section"] for s in stops if s["section"]]
+        by_order = sorted(
+            (s for s in stops if s["section"]),
+            key=lambda s: order[s["work"]])
         out.append({
             "id": thread["id"],
             "title": thread["title"],
             "question": thread["question"],
             "closing": thread["closing"],
+            "sections": {
+                "earliest": by_order[0]["section"] if by_order else "",
+                "latest": by_order[-1]["section"] if by_order else "",
+                "count": len(set(eras)),
+            },
             "stops": stops,
         })
 

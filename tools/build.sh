@@ -48,6 +48,19 @@ python3 tools/build_canon.py "$OUT"
 echo "==> search index"
 python3 tools/build_index.py "$OUT"
 
+# One work in this volume is printed under a title that names a different and
+# far more famous text. The reader cannot be expected to know that, so the work
+# says it itself. Before the addresses below, because it edits the manifest.
+echo "==> cautions"
+python3 tools/build_cautions.py "$OUT"
+
+# The public address of every chapter, written into the manifest so that the
+# reader and the page builder name the same file. Must run after every script
+# that can add, remove or renumber a chapter -- which is all of the repairs
+# above -- because it is a list indexed by chapter position.
+echo "==> chapter addresses"
+python3 tools/build_slugs.py "$OUT"
+
 # The audit is a gate, not a report: it exits non-zero when a finding is not
 # in tools/audit-baseline.txt. Piping it through tail used to hide both the
 # findings and, because the exit status came from tail, the failure itself.

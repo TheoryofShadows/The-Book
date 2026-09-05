@@ -220,6 +220,7 @@ POSITIONS: dict[str, dict] = {
         "critSource": "Julius Wellhausen, Prolegomena to the History of Israel, "
                       "1878, building on Astruc 1753 and Graf 1866",
         "gap": "wide",
+        "composite": 'Composite',
     },
     "exodus": {
         "trad": "Moses, 15th-13th century BCE",
@@ -232,6 +233,7 @@ POSITIONS: dict[str, dict] = {
         "critSource": "Frank Moore Cross and David Noel Freedman, Studies in "
                       "Ancient Yahwistic Poetry, 1950",
         "gap": "wide",
+        "composite": 'Composite',
     },
     "leviticus": {
         "trad": "Moses, 15th-13th century BCE",
@@ -253,6 +255,7 @@ POSITIONS: dict[str, dict] = {
         "critSource": "William F. Albright, 'The Oracles of Balaam', Journal of "
                       "Biblical Literature, 1944",
         "gap": "wide",
+        "composite": 'Composite',
     },
     "deuteronomy": {
         "trad": "Moses, shortly before his death",
@@ -288,6 +291,7 @@ POSITIONS: dict[str, dict] = {
                    "the prose account of the same events in chapter 4.",
         "critSource": "Noth, 1943; on the antiquity of chapter 5, Albright, 1936",
         "gap": "wide",
+        "composite": 'around older material',
     },
     "1-samuel": {
         "trad": "Samuel, continued by the prophets Nathan and Gad",
@@ -322,6 +326,7 @@ POSITIONS: dict[str, dict] = {
         "critSource": "Frank Moore Cross, Canaanite Myth and Hebrew Epic, 1973, "
                       "revising Noth's single-exilic model",
         "gap": "narrow",
+        "composite": 'a first edition under Josiah, a second in exile',
     },
     "2-kings": {
         "trad": "Jeremiah",
@@ -344,6 +349,7 @@ POSITIONS: dict[str, dict] = {
                    "promise of restoration is often judged a later addition.",
         "critSource": "Amos 9:11-15; Wellhausen, Die kleinen Propheten, 1892",
         "gap": "none",
+        "composite": 'later editorial additions',
     },
     "hosea": {
         "trad": "Hosea, 8th century BCE",
@@ -354,6 +360,7 @@ POSITIONS: dict[str, dict] = {
                    "taken as southern additions.",
         "critSource": "Hosea 1:1, 1:7; Wellhausen, Die kleinen Propheten, 1892",
         "gap": "none",
+        "composite": 'later Judean editing',
     },
     "isaiah-1-39-first-isaiah": {
         "trad": "Isaiah son of Amoz wrote the whole book, 8th century BCE",
@@ -367,9 +374,14 @@ POSITIONS: dict[str, dict] = {
         "crit": "Isaiah of Jerusalem, c. 740-700 BCE",
         "critWhy": "Chapters 1-39 address the 8th-century Assyrian crisis; from "
                    "chapter 40 the audience is in Babylonian exile 150 years "
-                   "later, with different vocabulary and theology.",
+                   "later, with different vocabulary and theology. Within "
+                   "1-39, chapters 24-27 -- the Isaiah apocalypse -- are "
+                   "themselves widely dated centuries after the oracles "
+                   "around them, and this volume keeps the book whole rather "
+                   "than splitting it a fourth time.",
         "critSource": "J. C. Doderlein, 1775; Bernhard Duhm, Das Buch Jesaia, 1892",
         "gap": "wide",
+        "composite": 'chapters 24-27',
     },
     "isaiah-40-55-second-isaiah": {
         "trad": "Isaiah son of Amoz, writing prophetically of the exile",
@@ -404,6 +416,7 @@ POSITIONS: dict[str, dict] = {
         "critSource": "4QJer-b (short form) and 4QJer-a (long form); Emanuel Tov, "
                       "Textual Criticism of the Hebrew Bible, 1992",
         "gap": "narrow",
+        "composite": 'substantial later editing',
     },
     "ezekiel": {
         "trad": "Ezekiel the priest, in exile, 593-571 BCE",
@@ -416,6 +429,7 @@ POSITIONS: dict[str, dict] = {
                    "else in the prophets.",
         "critSource": "Walther Zimmerli, Ezechiel, 1969",
         "gap": "none",
+        "composite": 'a later editorial school',
     },
     "daniel": {
         "trad": "Daniel, 6th century BCE, in Babylon and Persia",
@@ -479,6 +493,7 @@ POSITIONS: dict[str, dict] = {
         "critSource": "Job 1-2 and 42:7-17 against 3:1-42:6; Marvin Pope, Job, "
                       "Anchor Bible, 1965",
         "gap": "wide",
+        "composite": 'around an older folk tale',
     },
     "psalms": {
         "trad": "David wrote most, with Asaph, the sons of Korah, Solomon and Moses",
@@ -491,6 +506,7 @@ POSITIONS: dict[str, dict] = {
                    "of' as readily as 'by'.",
         "critSource": "Psalm 137:1; Hermann Gunkel, Einleitung in die Psalmen, 1933",
         "gap": "narrow",
+        "composite": 'A collection spanning centuries',
     },
     "proverbs": {
         "trad": "Solomon, 10th century BCE",
@@ -503,6 +519,7 @@ POSITIONS: dict[str, dict] = {
                    "some two and a half centuries after Solomon.",
         "critSource": "Proverbs 25:1, 30:1, 31:1",
         "gap": "narrow",
+        "composite": 'A compilation of several collections',
     },
     "ecclesiastes": {
         "trad": "Solomon in old age",
@@ -880,6 +897,7 @@ POSITIONS: dict[str, dict] = {
         "critSource": "Micah 4:10, naming Babylon; the seam between chapters 3 "
                       "and 4 in the book itself",
         "gap": "narrow",
+        "composite": 'enlarged in the exile and after',
     },
     "zephaniah": {
         "trad": "Zephaniah, in the reign of Josiah, 640-609 BCE",
@@ -1027,6 +1045,7 @@ POSITIONS: dict[str, dict] = {
         "critSource": "The translator's prologue to Sirach; Sirach 50:1-21 on "
                       "Simon son of Onias",
         "gap": "none",
+        "composite": 'Greek translation after 132 BCE',
     },
     "1-maccabees": {
         "trad": "A Jewish historian of the Hasmonean court, 2nd-1st century BCE",
@@ -1146,6 +1165,7 @@ POSITIONS: dict[str, dict] = {
                    "notes of different dates joined in transmission.",
         "critSource": "Polycarp, Philippians 9 against 13",
         "gap": "none",
+        "composite": 'perhaps two letters joined',
     },
     "the-martyrdom-of-polycarp": {
         "trad": "The church of Smyrna, shortly after Polycarp's death",
@@ -1162,6 +1182,7 @@ POSITIONS: dict[str, dict] = {
         "critSource": "The chain of transmission described in chapters 22, "
                       "naming successive copyists",
         "gap": "none",
+        "composite": 'the closing chapters added later',
     },
     "fragments-of-papias": {
         "trad": "Papias of Hierapolis, c. 110-130 CE",

@@ -361,17 +361,37 @@
     var t = manifest.totals;
     var wrap = el("div", { class: "wrap" });
 
+    /* --8<-- hero: start --8<--
+
+       The first sentence of the site, and for a long time the only claim in
+       it that nothing checked. It said all five canons were "complete" while
+       docs/data/canon.json -- built from the same coverage table the canons
+       page draws -- recorded the Ethiopian at 90 of 94 units, four of them
+       absent because no English translation of them is old enough to be
+       public domain. The accuracy report said one thing and the first
+       paragraph said another, on a site whose whole argument is that it
+       would rather show a hole than fill it with a plausible sentence.
+
+       tests/python/test_hero.py now reads this sentence and canon.json and
+       holds them together: a canon may be called complete here only when the
+       coverage table says every one of its units is present, and the one
+       that is not must be named with the exact number of books it is short.
+       Ingest the three Meqabyan and Josippon and this test fails until the
+       sentence is updated, which is the direction the failure should point.
+       --8<-- */
     wrap.appendChild(el("section", { class: "hero" }, [
       el("h1", { text: "Every text, in the order it was written." }),
       el("p", {
         class: "lede",
-        text: "The Jewish, Protestant, Catholic, Eastern Orthodox and Ethiopian " +
-              "canons complete, together with the pseudepigrapha, the New Testament " +
-              "apocrypha and the Apostolic Fathers — arranged not by where tradition " +
-              "filed them, but by when scholars believe they were composed. " +
-              "It opens with a war poem, not with Genesis."
+        text: "The Jewish, Protestant, Catholic and Eastern Orthodox canons " +
+              "complete, and the Ethiopian all but four books that survive in " +
+              "no public-domain English — together with the pseudepigrapha, " +
+              "the New Testament apocrypha and the Apostolic Fathers, arranged " +
+              "not by where tradition filed them, but by when scholars believe " +
+              "they were composed. It opens with a war poem, not with Genesis."
       })
     ]));
+    /* --8<-- hero: end --8<-- */
 
     /* Counted, not typed. Every other figure in this row comes from the
        manifest and moves when the library moves; this one was the literal
@@ -678,7 +698,11 @@
       body.appendChild(workNotes);
 
       if (meta.note && meta.note.length) {
-        var nb = el("div", { class: "note-block" });
+        /* A work carrying a caution is being corrected, not annotated: the
+           note above its text is the sentence saying this is not the book you
+           came for. Marked so it reads as one. */
+        var nb = el("div", { class: "note-block" +
+                                    (meta.caution ? " is-caution" : "") });
         meta.note.forEach(function (p) { nb.appendChild(el("p", { text: p })); });
         workNotes.appendChild(nb);
       }
@@ -1023,6 +1047,14 @@
      "Moses, shortly before his death" -- there is no bar, and the card says
      so. Drawing a plausible one would be inventing evidence. */
 
+  /* --8<-- span: start --8<--
+     The same two functions live in tools/dates.py as label() and describe(),
+     because the static timeline page has to write these ranges out in a
+     language the reader is not running. Two copies of a rule is two rules
+     unless something checks, so tests/python/test_span_agreement.py runs this
+     block in Node against the Python over a sample built out of the awkward
+     cases: an open end, a range crossing the era boundary, a single year, an
+     approximate one. If this block moves, move the markers with it. */
   function yearText(y) {
     return Math.abs(y) + (y < 0 ? " BCE" : " CE");
   }
@@ -1039,6 +1071,7 @@
     }
     return head + yearText(sp.frm) + " – " + yearText(sp.to);
   }
+  /* --8<-- span: end --8<-- */
 
   /* How firm the span is, in the reader's terms rather than the parser's. */
   var SPAN_KIND = {
@@ -1304,9 +1337,50 @@
     return found;
   }
 
+  /* The address this site is published at.
+
+     A link is copied in order to be given to somebody else, and the offline
+     single-file copy lives at a file:// path on the reader's own disk, which
+     is an address that means nothing to anybody else. So that build hands out
+     this instead of where it happens to be sitting. Held to the canonical in
+     docs/index.html by tests/python/test_site_url.py, for the same reason
+     AUDIO_BASE is read out of this file rather than copied into the checker:
+     a second copy of an address is a second thing to remember. */
+  var SITE = "https://thebookandme.com/";
+
+  function siteRoot() {
+    if (location.protocol === "file:") return SITE;
+    /* Everything up to the last slash: "/" on the custom domain, "/The-Book/"
+       on the project Pages address that still redirects here, and whatever a
+       local server is serving from while this is being worked on. */
+    return location.origin + location.pathname.replace(/[^/]*$/, "");
+  }
+
+  /* Where a verse lives, as a page rather than as a route.
+
+     This used to return the reader's own hash -- .../#/read/amos/4/v13 --
+     which is the one URL in the site that cannot be crawled, cannot be
+     previewed by anything that unfurls a link, and counts chapters from zero,
+     so the link to Amos 5 said 4. All the while tools/build_pages.py was
+     writing a real page for that verse at /read/amos/5/, with the text in the
+     HTML, a canonical tag, an id on every verse and an entry in the sitemap.
+     The address a reader is handed is now that page.
+
+     The chapter's printed address comes from the manifest rather than from
+     arithmetic here: see tools/build_slugs.py for why the two numbers differ
+     and why neither can be derived from the other. If the manifest has not
+     loaded yet, or names a work this reader does not have, the reader's own
+     route is still a working link and is better than a broken one. */
   function permalink(ref) {
-    return location.origin + location.pathname + "#/read/" + ref.work + "/" +
-           ref.chapter + (ref.v ? "/v" + ref.v : "");
+    var ctx = workContext(null, ref.work);
+    var slugs = ctx && ctx.work.slugs;
+    var slug = slugs && slugs[ref.chapter];
+    if (!slug) {
+      return siteRoot() + "#/read/" + ref.work + "/" + ref.chapter +
+             (ref.v ? "/v" + ref.v : "");
+    }
+    return siteRoot() + "read/" + ref.work + "/" + slug + "/" +
+           (ref.v ? "#v" + ref.v : "");
   }
 
   /* A stable key, so two people citing the same verse produce the same one. */
@@ -2841,7 +2915,7 @@
     if (chapter === null) {
       return hits.slice(0, 6).map(function (h) {
         return { workId: h.work.id, title: h.work.title, section: h.section,
-                 idx: 0, label: null, verse: null };
+                 idx: 0, label: null, verse: null, caution: h.work.caution };
       });
     }
     return hits;
@@ -2872,7 +2946,8 @@
           }
           if (n !== h.chapter) return;
           out.push({ workId: h.work.id, title: h.work.title, section: h.section,
-                     idx: idx, label: c.label, verse: h.verse });
+                     idx: idx, label: c.label, verse: h.verse,
+                     caution: h.work.caution });
         });
       });
       return out;
@@ -2975,6 +3050,14 @@
               (r.verse ? ":" + r.verse : "") }),
             el("span", { class: "jump-era", text: r.section.name || r.section.title || "" })
           ]));
+          /* One work here is printed under a title that names a different and
+             much more famous text, so "gospel of thomas" resolved to a single
+             confident answer -- the Infancy Gospel -- under a heading saying
+             that is a place in the volume, with nothing correcting it. The
+             correction travels with the work: see tools/build_cautions.py. */
+          if (r.caution) {
+            box.appendChild(el("p", { class: "jump-caution", text: r.caution }));
+          }
         });
         jump.appendChild(box);
       });
@@ -3507,6 +3590,17 @@
         rows.push({
           id: w.id, title: w.title, section: s, span: sp,
           placed: own ? "own" : (s.span ? "section" : null),
+          /* What this work's own critical position says is not one date:
+             "Composite" for the Torah books, "perhaps two letters joined"
+             for Polycarp, "chapters 24-27" for the Isaiah apocalypse sitting
+             inside the eighth-century oracles. A solid bar across a book like
+             that is a lie of resolution -- it draws the confidence of a single
+             range over an object the volume itself says is layered. The phrase
+             is a quotation from the position record rather than a new claim,
+             so the citation under the work covers it: see tools/positions.py
+             and tests/python/test_composite.py, which holds every one of them
+             to being a verbatim piece of the sentence it comes from. */
+          composite: (w.positions && w.positions.composite) || null,
           words: w.words
         });
       });
@@ -3594,7 +3688,8 @@
 
         var track = el("span", { class: "tl-track" });
         var bar = el("span", {
-          class: "tl-bar " + r.span.kind + (r.span.open ? " open-" + r.span.open : "")
+          class: "tl-bar " + r.span.kind + (r.span.open ? " open-" + r.span.open : "") +
+                 (r.composite ? " composite" : "")
         });
         var left = r.span.open === "before" ? 0 : at(r.span.frm);
         var right = r.span.open === "after" ? 100 : at(r.span.to);
@@ -3603,9 +3698,14 @@
         track.appendChild(bar);
         row.appendChild(track);
 
-        row.appendChild(el("span", { class: "tl-when", text: spanText(r.span) }));
+        row.appendChild(el("span", { class: "tl-when",
+          text: spanText(r.span) + (r.composite ? " · not one date" : "") }));
         row.title = titleCase(r.title) + " — " + spanText(r.span) + "\n" +
-                    PLACED[r.placed];
+                    PLACED[r.placed] +
+                    (r.composite
+                      ? "\nNot one date: the position for this work says " +
+                        r.composite + "."
+                      : "");
         list.appendChild(row);
       });
       body.appendChild(list);
@@ -3617,6 +3717,35 @@
         "on the work itself. The rest are placed by the era they are filed " +
         "under, which is a looser claim, and are drawn fainter. " +
         "<a href=\"#/method\">How the dating was decided</a>." }));
+
+      /* A composite book drawn as one solid bar is the most confident thing
+         on this page and the least true. The volume does not split Genesis
+         into its sources or Isaiah 1-39 into its apocalypse, and says so on
+         the method page -- but the drawing said nothing, so the reader saw
+         the same shape for Amos, whose bar is ten years, and for the Psalms,
+         which the same records call a collection spanning centuries. These
+         are hatched instead, and counted here rather than left to be noticed. */
+      var layered = dated.filter(function (r) { return r.composite; });
+      if (layered.length) {
+        var note = el("details", { class: "tl-layered" });
+        note.appendChild(el("summary", { text:
+          fmt(layered.length) + " of these bars are not one date" }));
+        note.appendChild(el("p", { class: "muted", text:
+          "A bar is drawn from one position, and some of these books are not " +
+          "one composition. Where a work's own critical position says so, the " +
+          "bar is hatched rather than solid and the phrase is quoted below. " +
+          "This volume keeps such books whole rather than splitting them, so " +
+          "the hatching is the only warning the drawing can give." }));
+        var list = el("ul", { class: "tl-layered-list" });
+        layered.forEach(function (r) {
+          list.appendChild(el("li", {}, [
+            el("a", { href: "#/read/" + r.id + "/0", text: titleCase(r.title) }),
+            el("span", { class: "muted", text: " — " + r.composite })
+          ]));
+        });
+        note.appendChild(list);
+        body.appendChild(note);
+      }
 
       if (undated.length) {
         body.appendChild(el("details", { class: "tl-undated" }, [
@@ -3778,6 +3907,15 @@
     ["roman period", "63 BCE – 324 CE", "Pompey to Constantine"]
   ];
 
+  /* "II to IX", or just "IX" for a thread that stays inside one era. */
+  function threadSpan(t) {
+    var sp = t.sections || {};
+    if (!sp.earliest) return t.stops.length ? "one era" : "";
+    return sp.earliest === sp.latest
+      ? sp.earliest
+      : sp.earliest + " to " + sp.latest;
+  }
+
   function viewThreads(threads) {
     var wrap = el("div", { class: "wrap" });
     wrap.appendChild(el("h1", { text: "Threads" }));
@@ -3792,9 +3930,16 @@
       grid.appendChild(el("a", { class: "thread-card", href: "#/thread/" + t.id }, [
         el("h2", { text: t.title }),
         el("p", { text: t.question }),
+        /* The eras the thread reaches, not the eras its first and last stop
+           happen to sit in. "Where do the dead go?" takes its third stop in
+           the Isaiah apocalypse, which this volume files back in Section II
+           with the rest of Isaiah 1-39, so reading the ends of the list gave
+           "IV to IX" for a thread that runs II to IX -- understating the one
+           thread that travels furthest, on the card whose only job is to say
+           how far it travels. tools/build_threads.py works it out where the
+           section order is actually known. */
         el("span", { class: "thread-meta", text:
-          t.stops.length + " passages · " +
-          t.stops[0].section + " to " + t.stops[t.stops.length - 1].section })
+          t.stops.length + " passages · " + threadSpan(t) })
       ]));
     });
     wrap.appendChild(grid);
@@ -5874,7 +6019,7 @@
         });
       }
       if (view === "timeline") {
-        setNav("");
+        setNav("timeline");
         setTitle("The timeline");
         main.innerHTML = "";
         main.appendChild(viewTimeline(manifest));
@@ -5908,7 +6053,11 @@
             window.scrollTo(0, 0);
           });
       }
-      setNav("home");
+      /* Nothing in the bar to mark: the front page's link in it is the
+         wordmark on the left, which is where a reader looks for home and is
+         the one link present on all 2,710 static pages too. The nav's
+         "Timeline" now goes to the axis, which is what it says. */
+      setNav("");
       // The front page, and anything that named no route at all: the full
       // title, which is the description of the whole library.
       setTitle("");

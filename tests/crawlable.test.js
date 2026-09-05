@@ -130,6 +130,52 @@ module.exports = async function crawlable(t, ctx) {
           two.indexOf('Now the serpent was more subtle') === -1,
           two.slice(0, 50).replace(/\s+/g, ' '));
 
+  /* The threads are the argument. Eleven of them, each following one
+     question across eight hundred years of writing, and until now the only
+     part of the site with no address a crawler could ask for or a preview
+     could unfurl -- while 2,537 chapters, which are in every Bible ever
+     printed, all had one. The passages have to be here with the scripts
+     blocked for the same reason the scripture does. */
+  await page.goto(ctx.base + 'threads/the-dead/');
+  const thread = await page.locator('body').innerText();
+  t.check('a thread is a real page, with its passages in the HTML',
+          thread.indexOf('You dry bones, hear Yahweh') !== -1 &&
+          thread.indexOf('Where do the dead go?') !== -1,
+          thread.slice(0, 40).replace(/\s+/g, ' '));
+
+  const stopLinks = await page.locator('a[href*="../read/"], a[href*="read/"]').count();
+  t.check('and every stop links the chapter it quotes',
+          stopLinks >= 10, stopLinks + ' links');
+
+  t.check('the thread page names itself rather than the site',
+          (await page.title()).indexOf('Where do the dead go?') === 0,
+          await page.title());
+
+  await page.goto(ctx.base + 'threads/');
+  const hub = await page.locator('body').innerText();
+  t.check('the threads hub lists all eleven as real anchors',
+          (await page.locator('.thread-list a').count()) === 11,
+          await page.locator('.thread-list a').count() + ' of 11');
+
+  /* The one thread that reaches furthest back reads its span off the eras it
+     actually touches. Its third stop is the Isaiah apocalypse, which this
+     volume files in Section II with the rest of Isaiah 1-39, so reading the
+     ends of the list gave "IV to IX" for a thread that runs II to IX. */
+  t.check('and says how far each one travels, from the eras it reaches',
+          hub.indexOf('II to IX') !== -1, hub.slice(0, 60).replace(/\s+/g, ' '));
+
+  /* The axis, which the reader draws as positioned bars: a crawler sees no
+     canvas and neither does anybody with the stylesheet off, so the same
+     reordering is written out in words. */
+  await page.goto(ctx.base + 'timeline/');
+  const axis = await page.locator('body').innerText();
+  t.check('the timeline is a real page with the ranges in words',
+          /760.760.750 BCE|760-750 BCE|760–750 BCE/.test(axis) &&
+          axis.indexOf('Amos') !== -1,
+          axis.slice(0, 50).replace(/\s+/g, ' '));
+  t.check('and says which of its ranges are not one date',
+          /are not one date/.test(axis));
+
   /* Two hops from here to any chapter in the library: this page links every
      work, and every work page links every one of its chapters. */
   await page.goto(ctx.base + 'contents/');
@@ -145,19 +191,35 @@ module.exports = async function crawlable(t, ctx) {
 
   await page.close();
 
+  const BASE_URL = 'https://thebookandme.com';
+
   /* The sitemap is the list handed to a crawler that has not found the
      contents page. A URL in it with nothing behind it is a 404 reported by
      the site about itself. */
   const xml = fs.readFileSync(path.join(docs, 'sitemap.xml'), 'utf8');
   const locs = (xml.match(/<loc>([^<]+)<\/loc>/g) || [])
     .map(m => m.replace(/<\/?loc>/g, ''));
-  t.check('the sitemap lists the root, the contents and every page',
-          locs.length === expected + 2, locs.length + ' of ' + (expected + 2));
+  /* The root, the contents hub, the timeline, the threads hub, and one page
+     per thread -- on top of the work and chapter pages. The threads were the
+     last part of the site with no address a crawler could ask for, which was
+     the wrong way round: the chapters are in every Bible and the threads are
+     the thing this arrangement exists to make possible. */
+  const threads = JSON.parse(
+    fs.readFileSync(path.join(docs, 'data', 'threads.json'), 'utf8'));
+  const extras = 2 + 2 + threads.length;
+  t.check('the sitemap lists the root, the hubs, the threads and every page',
+          locs.length === expected + extras,
+          locs.length + ' of ' + (expected + extras));
+  t.check('the timeline and every thread are among them',
+          locs.indexOf(BASE_URL + '/timeline/') !== -1 &&
+          locs.indexOf(BASE_URL + '/threads/') !== -1 &&
+          threads.every(x => locs.indexOf(BASE_URL + '/threads/' + x.id + '/') !== -1),
+          threads.length + ' threads');
   t.check('and lists nothing twice',
           new Set(locs).size === locs.length,
           (locs.length - new Set(locs).size) + ' duplicates');
 
-  const BASE = 'https://thebookandme.com';
+  const BASE = BASE_URL;
   const missing = locs.filter(u => {
     let rel = u.slice(BASE.length).replace(/^\//, '');
     if (rel === '') rel = 'index.html';

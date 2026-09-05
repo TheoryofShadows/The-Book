@@ -87,6 +87,7 @@ THREADS = [
              "why": "The Isaiah apocalypse. Here the dead themselves rise, "
                     "stated without hedging, though still tied to the fate of "
                     "the nation.",
+             "outOfOrder": True,
              "aside": "Filed in Section II with the rest of Isaiah 1-39, but "
                       "chapters 24-27 are widely dated centuries later than "
                       "the eighth-century oracles around them. This volume "
@@ -353,6 +354,7 @@ THREADS = [
              "why": "The Watchers narrative that Jude and 2 Peter both allude "
                     "to when they mention angels who left their proper "
                     "dwelling. Without Enoch, those verses have no referent.",
+             "outOfOrder": True,
              "aside": "This thread deliberately alternates between a source and "
                       "the text quoting it, so it moves back and forth in time "
                       "rather than running straight forward. That is the point "
