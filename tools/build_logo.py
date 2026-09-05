@@ -8,6 +8,7 @@ Emits:
     logo.svg        the mark alone, in its own navy and gold
     favicon.svg     the mark on its tile, for the browser tab
     icon-180.png    the tile, full bleed, for an iOS home screen
+    icon-192.png    the tile, the size Chrome's install criteria name
     icon-512.png    the tile, full bleed, for link previews and elsewhere
     lockup.svg      the mark over the wordmark, for a press kit or a card
 
@@ -34,6 +35,14 @@ from logo import (BOX, GOLD, NAVY, PAPER, flatten,  # noqa: E402
 # Read in main() rather than here, so importing this module cannot pick
 # up the arguments of whatever imported it.
 OUT = "docs/assets"
+
+# The sizes emitted, named once because two places count on them: main()
+# below writes them and test_logo.py asserts each one is reproducible. 180 is
+# Apple's home-screen tile. 512 is the link preview and the manifest's large
+# icon. 192 is the size Chrome's install criteria name, and a manifest
+# without one is a site Android will not offer to install -- which is the
+# whole point of having a manifest.
+ICON_SIZES = (180, 192, 512)
 
 # The tile: the mark inset in a square. 1/8 of the square on every side is
 # the padding Apple's own icons use, and it survives the corner rounding
@@ -233,7 +242,7 @@ def main() -> int:
         paths=svg_paths(scale=64 * (1 - 2 * PAD) / BOX, dx=inset, dy=inset))
     _write(os.path.join(OUT, "favicon.svg"), tile.encode("utf-8"), written)
 
-    for size in (180, 512):
+    for size in ICON_SIZES:
         _write(os.path.join(OUT, f"icon-{size}.png"), png(size), written)
 
     # The mark sits in the top third of the lockup, 300 wide and centred.

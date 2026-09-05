@@ -8,6 +8,23 @@
 <link rel="stylesheet" href="assets/app.css">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="manifest" href="site.webmanifest">
+<!-- Installing is two mechanisms rather than one, and the standard half does
+     not cover Apple. Android reads the manifest above and offers to install
+     from it. iOS reads almost none of it: Add to Home Screen is driven by
+     these apple- tags, the title under the icon comes from -title rather than
+     from the manifest's short_name, and standalone comes from -capable rather
+     than from the manifest's display. mobile-web-app-capable is the
+     standardised spelling of the same thing and is what Chrome asks for; both
+     are here because dropping either loses a platform.
+
+     -status-bar-style is "default" on purpose. "black-translucent" puts the
+     page under the status bar, which on this layout would slide the header
+     beneath the clock. -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="The Book">
 <!-- Every one of the 2,710 generated pages states its own address and this
      one, which is the page people actually link to, did not. It is reachable
      at more than one: the old project Pages address redirects here, www

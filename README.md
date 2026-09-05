@@ -867,6 +867,28 @@ them. The book sits beside the query and in the URL, so a narrowed search can
 be kept and shared: `#/search/shepherd/psalms` is the six verses in the
 Psalter, the first of which is the one everybody means.
 
+**It can be installed to a home screen, on both kinds of phone.**
+`docs/site.webmanifest` names the site, its two colours and its icons, and
+that is the half Android reads: Chrome offers to install from it, which is why
+`icon-192.png` exists at all — the install criteria name that size and 512
+alone will not do. iOS reads almost none of the manifest and installs from the
+`apple-` meta tags instead, so the title under the icon comes from
+`apple-mobile-web-app-title` rather than from the manifest's `short_name`, and
+the standalone window from `apple-mobile-web-app-capable` rather than from
+`display`. Both halves are on the front page and on every generated page,
+because a phone usually arrives from a search result rather than at the root,
+and a manifest it cannot reach from there is one it cannot install from.
+
+Nothing here is cached yet: installing gets an icon and a window, not an
+offline copy. What the manifest claims is checked rather than assumed — the
+`installable` suite asks the browser to resolve the link at each of the three
+depths the generated pages sit at, fetches every icon and reads its real
+pixel size out of the PNG header, and asks Chrome itself whether its parser
+raised any error. What no check here can do is install anything: there is no
+Add to Home Screen in a headless browser and no iOS in this repository at
+all, so the install itself is a thing to try on a phone and is claimed
+nowhere.
+
 **A crawler is served a different half of the same site.** The reader is a
 hash-routed single page, and a fragment is never sent to a server, so every
 one of the 172 works and 2,537 chapters lived at an address no crawler could

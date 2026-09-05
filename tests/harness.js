@@ -21,7 +21,14 @@ const TYPES = {
   '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.xml': 'application/xml; charset=utf-8',
-  '.txt': 'text/plain; charset=utf-8'
+  '.txt': 'text/plain; charset=utf-8',
+  /* The manifest and the icons it names. Without these two the server hands
+     back application/octet-stream and the install checks are testing
+     something no real host does: GitHub Pages serves both with their proper
+     types, so serving them wrongly here would let a check pass that the
+     live site would fail, or fail one it would pass. */
+  '.webmanifest': 'application/manifest+json',
+  '.png': 'image/png'
 };
 
 /* A static file server, so the checks need nothing installed to serve with. */
