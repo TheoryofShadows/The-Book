@@ -45,6 +45,11 @@ python3 tools/build_threads.py "$OUT"
 echo "==> canon membership"
 python3 tools/build_canon.py "$OUT"
 
+# After the canons, because it checks every tradition against the canon keys
+# that file has just written and fails on one it does not.
+echo "==> traditions"
+python3 tools/build_traditions.py "$OUT"
+
 echo "==> search index"
 python3 tools/build_index.py "$OUT"
 

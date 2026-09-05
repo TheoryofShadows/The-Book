@@ -1160,6 +1160,28 @@ table.grid tbody tr:last-child td { border-bottom: 0; }
   margin: -.6rem 0 0; font-size: .82rem; color: var(--ink-soft);
 }
 .marking select { font-size: .82rem; padding: .15rem .45rem; width: auto; }
+/* What a tradition's answer says under its name: which canon, and what the
+   canon key alone does not say -- that the apocrypha are read and not
+   doctrinal, that this church's New Testament is five books shorter. Set as
+   prose rather than as another label, because it is a sentence. */
+.jump-said {
+  margin: .25rem 0 .55rem; font-family: var(--sans); font-size: .82rem;
+  line-height: 1.5; color: var(--ink-soft);
+}
+/* A tradition with no column of its own. Not a link, because there is
+   nowhere honest to send it, and marked so that it does not read as one
+   that failed to load. */
+.jump-link.is-unplaced { cursor: default; }
+.jump-link.is-unplaced .jump-where {
+  color: var(--ink); text-decoration: none;
+}
+
+/* A date carried down from the era a work is filed under, rather than read
+   off a dated position of its own. The timeline draws these fainter for the
+   same reason: it is a looser claim, and printing it in the same ink as a
+   cited one says the volume knows something it does not. */
+.grid td.is-era { opacity: .72; font-style: italic; }
+
 .result-outside {
   font-family: var(--sans); font-size: .72rem; color: var(--ink-faint);
   border: 1px solid var(--rule-soft); border-radius: 999px;
