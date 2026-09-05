@@ -254,4 +254,50 @@ module.exports = async function layout(t, ctx) {
     await phone.close();
   }
 
+
+  /* ---- the transport, under a thumb ----
+
+     The player is what somebody holds a phone for: it is fixed over the page
+     while the voice reads, and its buttons are pressed one-handed, often
+     without looking straight at them. They were 35px, and the play button 42
+     -- the smallest controls on the site after the chapter numbers, on the
+     panel where a mis-tap stops the reading.
+
+     Two numbers are gated because the fix has a cost and the cost has a
+     limit. Making them thumb-sized took the panel from 177px to 254, which
+     over a 568px phone is nearly half the screen covered while the highlight
+     is trying to show where the voice has got to; scoping it to the transport
+     and leaving the settings row alone brought it back to 209. So: the
+     controls are 44px, and the panel does not grow past what that costs. */
+  {
+    const { devices } = require('playwright');
+    const phone = await ctx.browser.newContext({ ...devices['iPhone SE'] });
+    await phone.addInitScript(workingEngine(20));
+    const page = await phone.newPage();
+    await page.goto(ctx.base + '#/read/genesis/0');
+    await page.waitForSelector('.reader .v');
+    await page.locator('button[data-listen]').first().click();
+    await page.waitForSelector('.player:not([hidden])');
+
+    const seen = await page.evaluate(() => {
+      const p = document.querySelector('.player');
+      const small = [...p.querySelectorAll('.player-line:not(.player-opts) .player-btn')]
+        .map(b => { const r = b.getBoundingClientRect();
+                    return { n: b.getAttribute('aria-label') || '?',
+                             w: Math.round(r.width), h: Math.round(r.height) }; })
+        .filter(b => b.w < 44 || b.h < 44);
+      return { small, height: Math.round(p.getBoundingClientRect().height),
+               fixed: getComputedStyle(p).position === 'fixed' };
+    });
+
+    t.check('every transport control is a 44px target on a touch screen',
+            seen.small.length === 0,
+            seen.small.map(b => b.n + ' ' + b.w + 'x' + b.h).join(', ') || 'all 44+');
+    t.check('and the panel is drawn over the page rather than pushed into it',
+            seen.fixed, seen.fixed ? 'fixed' : 'NOT fixed');
+    t.check('and does not cover more of the phone than that costs',
+            seen.height <= 215, seen.height + 'px, budget 215');
+    await phone.close();
+  }
+
 };

@@ -442,7 +442,16 @@ module.exports = async function listening(t, ctx) {
 
   /* Changing the speed re-cuts the queue, so the index the reader is on
      stops meaning what it meant. The place has to survive that. */
-  page = await open(ctx, '#/read/the-testament-of-issachar/0', workingEngine(40));
+  /* A slow engine on purpose, and it is the difference between this check
+     asking its question and asking the clock. Each piece takes this long to
+     speak, so pausing has to land somewhere inside one: at 40ms a piece
+     finished about as often as not before the click arrived, and resuming
+     then correctly begins the next piece -- which failed an assertion about
+     picking up where it was, on behaviour that was right. It passed alone
+     and failed in a full run, because a busier machine lands on the boundary
+     more often. The assertion is unchanged; what is fixed is that the pause
+     now reliably happens mid-piece, which is the case it is about. */
+  page = await open(ctx, '#/read/the-testament-of-issachar/0', workingEngine(400));
   await page.locator('[data-listen]').click();
   await page.waitForFunction(() => window.__spoken.length >= 2);
   await page.locator('.player-play').click();
