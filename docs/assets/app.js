@@ -2838,6 +2838,34 @@
   }
   /* --8<-- fold: end --8<-- */
 
+  /* One word that is mostly grammar is not a question about the volume's
+     arrangement, and answering it as though it were fills the page with
+     boxes nobody asked for: "the" is the opening word of four collection
+     titles and of half the threads. A phrase is different -- somebody who
+     typed several words meant them -- so this only ever silences a query
+     that is a single common word. */
+  var STOP_ANSWERS = {
+    the: 1, and: 1, but: 1, for: 1, not: 1, all: 1, any: 1, are: 1, was: 1,
+    were: 1, that: 1, this: 1, with: 1, from: 1, into: 1, unto: 1, they: 1,
+    them: 1, their: 1, you: 1, your: 1, his: 1, her: 1, him: 1, she: 1,
+    who: 1, what: 1, when: 1, why: 1, how: 1, shall: 1, will: 1, have: 1,
+    has: 1, had: 1, out: 1, one: 1, two: 1, said: 1, say: 1, saith: 1
+  };
+
+  /* Asked of the table itself and not of everything it inherits. A plain
+     object answers to "constructor" with a function, so `TABLE[key]` is
+     truthy for a word nobody put in the table -- which silenced a search
+     for "constructor" here, and two tables down would have handed
+     `(ALIASES[key] || []).forEach` a Function and thrown. Neither is a bug
+     anybody would meet on purpose, and both are one call to avoid. */
+  function own(table, key) {
+    return Object.prototype.hasOwnProperty.call(table, key) ? table[key] : null;
+  }
+
+  function tooCommonToAnswer(key) {
+    return key.indexOf(" ") === -1 && !!own(STOP_ANSWERS, key);
+  }
+
   /* ---------------- a reference is not a word ----------------
 
      Typing "Psalm 23" used to return nothing at all, and "Job 38" nothing,
@@ -2899,6 +2927,13 @@
 
     var want = refWords(m[1]);
     if (!want.length) return [];
+    /* A title match is by prefix, so a single common word matches on the
+       article: "the" answered with the Song of the Sea, both Enochs, Bel
+       and the Dragon and two more, under a heading saying that could be any
+       of these. It could not. The same guard the other answers use, and for
+       the same reason -- a phrase is somebody being specific, one very
+       common word is not. */
+    if (tooCommonToAnswer(normTerm(m[1]))) return [];
     var chapter = m[2] ? parseInt(m[2], 10) : null;
     var verse = m[3] ? parseInt(m[3], 10) : null;
 
@@ -2947,11 +2982,454 @@
           if (n !== h.chapter) return;
           out.push({ workId: h.work.id, title: h.work.title, section: h.section,
                      idx: idx, label: c.label, verse: h.verse,
-                     caution: h.work.caution });
+                     caution: h.work.caution, name: h.name || null });
         });
       });
       return out;
     });
+  }
+
+  /* ---------------- a collection is not a word either ----------------
+
+     Searching for "new testament" answered with two verses: a line in the
+     Apostolic Canons listing which books a church receives, and one in the
+     Testament of Our Lord. Both contain the words. Neither is what anybody
+     typing them is looking for, and from that search there was no way at all
+     into the twenty-seven books -- which are all here, and were reachable
+     only by knowing one of their names first.
+
+     The same hole swallowed "torah", "the gospels", "minor prophets",
+     "deuterocanon", "epistles of paul", "apostolic fathers" and "shepherd of
+     hermas". A search that indexes every word of the text and nothing about
+     the text's own arrangement cannot answer a question about the
+     arrangement, and readers ask those constantly: a collection is the unit
+     people actually hold in their heads, and this edition -- which reorders
+     the whole library by date of composition -- scatters every one of them.
+     That is exactly the reader this arrangement is hardest on, and it is the
+     same reader the reference resolver was written for.
+
+     So collections are resolved the way references are, and offered above
+     the word matches rather than instead of them. Like references they are
+     read off data the volume already keeps rather than asserted here:
+
+       - every section of this edition, which is its own chronological
+         argument: SECTION IX, the Apostolic Fathers, Hermas, the Testaments
+         of the Twelve Patriarchs;
+       - every division named in canon.json, which is how the printed Bibles
+         divide themselves: Torah, The Twelve, Gospels, Pauline epistles,
+         Deuterocanon;
+       - and the two nobody would think to look up by a division's name, the
+         Old and New Testaments, which are those divisions added up and are
+         nothing else.
+
+     What is asserted here is the alias table: the words people type for
+     these things. That is a convenience list rather than a claim, in exactly
+     the sense REF_ALIASES is one. Everything works without it and simply
+     answers fewer of the ways a reader phrases the question. */
+
+  function slugify(s) {
+    return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  /* Which divisions add up to which testament. Named rather than computed:
+     canon.json's divisions are a flat list and nothing in it says that the
+     Gospels are in the New Testament and the Torah is not, because for the
+     table that file draws the question never comes up. */
+  var OT_DIVISIONS = ["Torah", "Former Prophets", "Latter Prophets",
+                      "The Twelve", "Writings"];
+  var NT_DIVISIONS = ["Gospels", "Acts", "Pauline epistles",
+                      "General epistles", "Apocalypse"];
+
+  /* The whole table, built once per page from the two files that already
+     know the answers. Keyed by slug, and one flat namespace: a section slug
+     and a division slug have never collided, and add() refuses the second
+     comer if they ever do rather than quietly redefining the first. */
+  function buildCollections(manifest, canon) {
+    var table = {}, order = [];
+
+    function add(id, title, note, works, kind) {
+      if (!id || own(table, id) || !works || !works.length) return;
+      table[id] = { id: id, title: title, note: note || "",
+                    works: works, kind: kind };
+      order.push(id);
+    }
+
+    /* The volume's own arrangement. Sections with no text under them -- the
+       file map, the appendices, the front matter -- are headings rather than
+       collections and are not offered as somewhere to go. */
+    manifest.sections.forEach(function (s) {
+      var ids = s.works.filter(function (w) { return !!w.chapters; })
+                       .map(function (w) { return w.id; });
+      var name = s.name || s.title || "";
+      add(s.id, titleCase(name),
+          s.roman ? "Section " + s.roman + (s.dates ? " · " + s.dates : "")
+                  : (s.dates || ""),
+          ids, "section");
+    });
+
+    if (!canon || !canon.books) return { table: table, order: order };
+
+    /* How the printed Bibles divide themselves. A division's works are the
+       works this volume prints for the books in it -- Isaiah's three among
+       them, which is the whole reason this is read off canon.json rather
+       than off a list of titles somebody typed. */
+    var byDivision = {}, divisionOrder = [], bookCount = {};
+    canon.books.forEach(function (b) {
+      if (!b.works || !b.works.length) return;      // not in this volume
+      if (!byDivision[b.division]) {
+        byDivision[b.division] = [];
+        divisionOrder.push(b.division);
+        bookCount[b.division] = 0;
+      }
+      bookCount[b.division]++;
+      b.works.forEach(function (w) {
+        if (byDivision[b.division].indexOf(w) === -1) {
+          byDivision[b.division].push(w);
+        }
+      });
+    });
+
+    /* A count that does not match the name is a count that has to explain
+       itself. "The Twelve" lists thirteen works here and the Latter Prophets
+       five, because this edition prints Isaiah in three parts and Zechariah
+       in two, each under the date its part was written. That is the whole
+       argument of the volume, and a reader meeting it for the first time on
+       a page headed "The Twelve" deserves the sentence rather than the
+       discrepancy. */
+    function splitNote(books, works) {
+      if (works <= books) return "As the canons divide themselves";
+      return books + " books, printed here as " + works + ": this edition " +
+             "sets the parts of a book that were written at different times " +
+             "under their own dates.";
+    }
+
+    divisionOrder.forEach(function (d) {
+      add(slugify(d), titleCase(d),
+          splitNote(bookCount[d], byDivision[d].length),
+          byDivision[d], "division");
+    });
+
+    function union(divisions) {
+      var seen = {}, out = [];
+      divisions.forEach(function (d) {
+        (byDivision[d] || []).forEach(function (w) {
+          if (!seen[w]) { seen[w] = 1; out.push(w); }
+        });
+      });
+      return out;
+    }
+    function books(divisions) {
+      var n = 0;
+      divisions.forEach(function (d) { n += bookCount[d] || 0; });
+      return n;
+    }
+
+    /* The Old Testament is the one collection here whose extent is a
+       question rather than a fact, so the note says so instead of the title
+       quietly picking a side: these are the books every Old Testament has,
+       and three of the five canons add the deuterocanon to them. */
+    var otWorks = union(OT_DIVISIONS), otBooks = books(OT_DIVISIONS);
+    add("old-testament", "The Old Testament",
+        "The Torah, the Prophets and the Writings — the " + otBooks +
+        " books every Old Testament holds, printed here as " +
+        otWorks.length + ". The Catholic, Orthodox and Ethiopian canons add " +
+        "the deuterocanon to these.",
+        otWorks, "testament");
+    add("new-testament", "The New Testament",
+        "The twenty-seven books every canon receives, in the order they " +
+        "were written rather than the order they are bound.",
+        union(NT_DIVISIONS), "testament");
+
+    return { table: table, order: order };
+  }
+
+  /* The words people type. Each maps to one or more collection slugs, and
+     more than one is not a failure to decide: "new testament" is genuinely
+     both the twenty-seven books and this edition's section of writings from
+     those years, which is a slightly different set, and only the reader
+     knows which they meant. The reference resolver has said "that could be
+     any of these" since Isaiah was split in three; this is the same
+     sentence about a different kind of thing.
+
+     Keys are normTerm()'d on the way in, so they are lowercase, unpunctuated
+     and single-spaced here for the same reason the lexicon's headwords are. */
+  var COLLECTION_ALIASES = {
+    "new testament": ["new-testament", "section-ix-new-testament-writings"],
+    "nt": ["new-testament"],
+    "the new testament": ["new-testament", "section-ix-new-testament-writings"],
+    "old testament": ["old-testament"],
+    "ot": ["old-testament"],
+    "the old testament": ["old-testament"],
+    "hebrew bible": ["old-testament"],
+    "hebrew scriptures": ["old-testament"],
+    "torah": ["torah"],
+    "pentateuch": ["torah"],
+    "the pentateuch": ["torah"],
+    "five books of moses": ["torah"],
+    "books of moses": ["torah"],
+    "law of moses": ["torah"],
+    "the law": ["torah"],
+    "gospels": ["gospels"],
+    "the gospels": ["gospels"],
+    "four gospels": ["gospels"],
+    "the four gospels": ["gospels"],
+    "prophets": ["latter-prophets", "the-twelve", "former-prophets"],
+    "the prophets": ["latter-prophets", "the-twelve", "former-prophets"],
+    "neviim": ["former-prophets", "latter-prophets", "the-twelve"],
+    "major prophets": ["latter-prophets"],
+    "minor prophets": ["the-twelve"],
+    "twelve prophets": ["the-twelve"],
+    "the twelve": ["the-twelve"],
+    "writings": ["writings"],
+    "ketuvim": ["writings"],
+    "epistles": ["pauline-epistles", "general-epistles"],
+    "the epistles": ["pauline-epistles", "general-epistles"],
+    "letters": ["pauline-epistles", "general-epistles"],
+    "pauline epistles": ["pauline-epistles"],
+    "epistles of paul": ["pauline-epistles"],
+    "letters of paul": ["pauline-epistles"],
+    "pauls letters": ["pauline-epistles"],
+    "pauls epistles": ["pauline-epistles"],
+    "general epistles": ["general-epistles"],
+    "catholic epistles": ["general-epistles"],
+    "deuterocanon": ["deuterocanon"],
+    "deuterocanonical": ["deuterocanon"],
+    "deuterocanonical books": ["deuterocanon"],
+    "apocrypha": ["deuterocanon", "new-testament-apocrypha"],
+    "the apocrypha": ["deuterocanon", "new-testament-apocrypha"],
+    "nt apocrypha": ["new-testament-apocrypha"],
+    "new testament apocrypha": ["new-testament-apocrypha"],
+    "apostolic fathers": ["the-apostolic-fathers"],
+    "church fathers": ["the-apostolic-fathers"],
+    "hermas": ["the-shepherd-of-hermas"],
+    "shepherd of hermas": ["the-shepherd-of-hermas"],
+    "the shepherd": ["the-shepherd-of-hermas"],
+    "ignatius": ["the-epistles-of-ignatius-of-antioch"],
+    "epistles of ignatius": ["the-epistles-of-ignatius-of-antioch"],
+    "twelve patriarchs": ["the-testaments-of-the-twelve-patriarchs"],
+    "testaments of the twelve patriarchs": ["the-testaments-of-the-twelve-patriarchs"],
+    "apocalypse": ["apocalypse"],
+    "acts": ["acts"]
+  };
+
+  /* Answer a query with collections, by three routes: the alias table, the
+     slug itself -- so a URL that names one can be typed back in -- and a
+     prefix match on the title, which is what reaches "eighth-century
+     prophetic books" without an alias per era. */
+  function resolveCollections(collections, query) {
+    var key = normTerm(query);
+    if (!key || !collections || tooCommonToAnswer(key)) return [];
+
+    var out = [], seen = {};
+    function take(id) {
+      var c = own(collections.table, id);
+      if (!c || own(seen, id)) return;
+      seen[id] = 1;
+      out.push(c);
+    }
+
+    (own(COLLECTION_ALIASES, key) || []).forEach(take);
+    take(key);
+    take(slugify(key));
+
+    if (!out.length) {
+      collections.order.forEach(function (id) {
+        var c = collections.table[id];
+        var title = normTerm(c.title);
+        /* From the front, and ending where a word ends: "gospel" reaches
+           "Gospels" -- the plural is one word grown, not a different one --
+           and "gos" reaches nothing, because a prefix of a word is not a
+           name anybody typed on purpose. */
+        if (key.length < 4 || title.lastIndexOf(key, 0) !== 0) return;
+        var after = title.charAt(key.length);
+        if (after === "" || after === " " || after === "s") take(id);
+      });
+    }
+    return out.slice(0, 4);
+  }
+
+  /* ---------------- everything else a reader might type ----------------
+
+     The volume is not only its verses. It carries a dictionary of 3,900
+     entries, a gazetteer with coordinates, eleven threads that run an
+     argument across books, seven manuscript witnesses, and eight pages of
+     its own about how any of it was decided. Every one of those was
+     reachable only by already being on the page that holds it: the
+     dictionary by tapping a word while reading, the witnesses by opening a
+     work they attest, the threads from the front page or not at all.
+
+     A reader who types "abaddon" wants the entry. One who types "codex
+     sinaiticus" wants the witness. One who types "where do the dead go" has
+     typed the exact title of a thread and got fourteen verses with "dead" in
+     them. None of those queries is a word search, and all of them arrive
+     through the search box, because a search box is where a reader puts a
+     thing they are looking for. */
+
+  /* The pages this site has, and the words that should reach them. Titles
+     are the ones the pages carry; the extra words are the ones a reader
+     types instead. */
+  var SITE_PAGES = [
+    { href: "#/contents", title: "Contents",
+      note: "Every work in the volume, chronological or canonical",
+      words: "contents index table of contents all books every book list of books browse" },
+    { href: "#/canons", title: "Which books belong to whom",
+      note: "The five canons side by side",
+      words: "canon canons which books bible comparison catholic protestant orthodox ethiopian jewish tanakh deuterocanonical" },
+    { href: "#/timeline", title: "The timeline",
+      note: "Every work drawn on one axis",
+      words: "timeline chronology dates when written order date" },
+    { href: "#/threads", title: "Threads",
+      note: "Questions the library argues with itself about",
+      words: "threads topics themes questions subjects" },
+    { href: "#/method", title: "How the dating was decided",
+      note: "What the chronological order rests on",
+      words: "method dating how dated scholarship why this order sources" },
+    { href: "#/accuracy", title: "The accuracy report",
+      note: "What the parse got wrong, and what was removed",
+      words: "accuracy errors report findings removals splices corrections mistakes" },
+    { href: "#/saved", title: "Saved",
+      note: "Verses you have kept",
+      words: "saved bookmarks kept favourites favorites my verses highlights" }
+  ];
+
+  function resolveSitePages(query) {
+    var key = normTerm(query);
+    if (!key || key.length < 3 || tooCommonToAnswer(key)) return [];
+    return SITE_PAGES.filter(function (p) {
+      if (key.length > 3 && normTerm(p.title).lastIndexOf(key, 0) === 0) return true;
+      // Any whole word of the page's own vocabulary, from the front, so
+      // "canon" reaches the canons page and "can" does not.
+      return (" " + p.words + " ").indexOf(" " + key + " ") !== -1;
+    }).slice(0, 3);
+  }
+
+  /* Threads, matched on the question they ask as well as on their title,
+     because the title is a question and a reader types questions. */
+  function resolveThreads(threads, query) {
+    var key = normTerm(query);
+    if (!key || key.length < 3 || !threads || tooCommonToAnswer(key)) return [];
+    return threads.filter(function (t) {
+      var hay = " " + normTerm((t.title || "") + " " + (t.question || "")) + " ";
+      // Whole words, so "dead" reaches "Where do the dead go?" and does not
+      // also reach every thread with "deadly" in its question.
+      return hay.indexOf(" " + key + " ") !== -1;
+    }).slice(0, 3);
+  }
+
+  /* Manuscript witnesses. The name a reader types is rarely the name the
+     file carries -- "dead sea scrolls" is not the name of any of them, and
+     is what two of them are -- so each is matched on its name, on where it
+     was found, and on the words below. */
+  var WITNESS_WORDS = {
+    "1qisa": "dead sea scrolls qumran isaiah scroll great isaiah scroll",
+    "1qphab": "dead sea scrolls qumran habakkuk commentary pesher",
+    "sinaiticus": "codex sinaiticus uncial greek",
+    "alexandrinus": "codex alexandrinus uncial greek",
+    "vaticanus": "codex vaticanus uncial greek",
+    "aleppo": "aleppo codex masoretic keter",
+    "nash": "nash papyrus decalogue shema"
+  };
+
+  function resolveWitnesses(ms, query) {
+    var key = normTerm(query);
+    if (!key || key.length < 3 || !ms || !ms.witnesses ||
+        tooCommonToAnswer(key)) return [];
+    var out = [];
+    Object.keys(ms.witnesses).forEach(function (id) {
+      var w = ms.witnesses[id];
+      /* The name and the find-spot answer a single word -- "sinaiticus",
+         "aleppo", "qumran" are each one. The alias phrases only answer a
+         phrase: "dead" is a word in "dead sea scrolls" and is not a
+         question about a manuscript, while "dead sea scrolls" is nothing
+         else. */
+      var named = " " + normTerm(w.name + " " + (w.found || "")) + " ";
+      var also = " " + normTerm(WITNESS_WORDS[id] || "") + " ";
+      var hit = named.indexOf(" " + key + " ") !== -1 ||
+                (key.indexOf(" ") !== -1 && also.indexOf(key) !== -1);
+      if (!hit) return;
+      // Somewhere to go: the first work this witness attests, whose page
+      // carries the witness box that describes it.
+      var where = null;
+      Object.keys(ms.works || {}).some(function (wid) {
+        if ((ms.works[wid] || []).indexOf(id) === -1) return false;
+        where = wid;
+        return true;
+      });
+      if (where) out.push({ id: id, witness: w, workId: where });
+    });
+    return out.slice(0, 3);
+  }
+
+  /* Passages known by a name the text itself never uses.
+
+     "The sermon on the mount" appears nowhere in Matthew, "the beatitudes"
+     nowhere at all, and "the lord's prayer" is a title the prayer does not
+     carry. Every one of them is a thing a reader types, and every one of
+     them found nothing, because the only names the search knew were the
+     ones printed on the page.
+
+     A convenience list, like REF_ALIASES, and a short one on purpose: each
+     entry is a passage whose common English name is not seriously disputed
+     and whose location here was checked against this volume's own parse.
+     Anything argued over does not belong in a list that answers with the
+     confidence of a coordinate. */
+  var NAMED_PASSAGES = [
+    { name: "The Sermon on the Mount", work: "matthew", ch: 5, to: 7 },
+    { name: "The Beatitudes", work: "matthew", ch: 5, v: 3 },
+    { name: "The Lord's Prayer", work: "matthew", ch: 6, v: 9 },
+    { name: "The Ten Commandments", work: "exodus", ch: 20 },
+    { name: "The Shema", work: "deuteronomy", ch: 6, v: 4 },
+    { name: "The Golden Rule", work: "matthew", ch: 7, v: 12 },
+    { name: "The Prodigal Son", work: "luke", ch: 15, v: 11 },
+    { name: "The Good Samaritan", work: "luke", ch: 10, v: 25 },
+    { name: "The Creation", work: "genesis", ch: 1 },
+    { name: "The Garden of Eden", work: "genesis", ch: 2 },
+    { name: "The Flood", work: "genesis", ch: 6 },
+    { name: "The Tower of Babel", work: "genesis", ch: 11 },
+    { name: "The Binding of Isaac", work: "genesis", ch: 22 },
+    { name: "The Burning Bush", work: "exodus", ch: 3 },
+    { name: "The Parting of the Sea", work: "exodus", ch: 14 },
+    { name: "The Valley of Dry Bones", work: "ezekiel", ch: 37 },
+    { name: "The Suffering Servant", work: "isaiah-40-55-second-isaiah", ch: 53 },
+    { name: "The Love Chapter", work: "1-corinthians", ch: 13 },
+    { name: "The Armour of God", work: "ephesians", ch: 6, v: 10 },
+    { name: "The Faith Chapter", work: "hebrews", ch: 11 },
+    { name: "The Magnificat", work: "luke", ch: 1, v: 46 },
+    { name: "The Nativity", work: "luke", ch: 2 },
+    { name: "The Last Supper", work: "luke", ch: 22, v: 14 },
+    { name: "The Road to Emmaus", work: "luke", ch: 24, v: 13 },
+    { name: "Pentecost", work: "acts", ch: 2 },
+    { name: "The Fruit of the Spirit", work: "galatians", ch: 5, v: 22 },
+    { name: "The Four Horsemen", work: "revelation", ch: 6 },
+    { name: "The New Jerusalem", work: "revelation", ch: 21 }
+  ];
+
+  /* The passage names are answered by the same machinery a reference is:
+     the chapter number is printed on the chapter's own label, so which work
+     file carries "Chapter 53" is a question asked of the file rather than
+     computed from an offset the Isaiah split would break. */
+  function resolveNamedPassages(manifest, query) {
+    var key = normTerm(query);
+    if (!key || key.length < 3 || tooCommonToAnswer(key)) return [];
+    var works = {};
+    manifest.sections.forEach(function (s) {
+      s.works.forEach(function (w) { works[w.id] = { work: w, section: s }; });
+    });
+    return NAMED_PASSAGES.filter(function (p) {
+      var name = normTerm(p.name);
+      // The name, with or without its "the" -- and a part of the name only
+      // when the reader typed more than one word. "God" is a word in "the
+      // armour of God" and is not a request for Ephesians 6.
+      if (name === key || name.replace(/^the /, "") === key) return true;
+      return key.indexOf(" ") !== -1 &&
+             (" " + name + " ").indexOf(" " + key + " ") !== -1;
+    }).map(function (p) {
+      var m = works[p.work];
+      if (!m) return null;
+      return { name: p.name, work: m.work, section: m.section,
+               chapter: p.ch, verse: p.v || null, to: p.to || null };
+    }).filter(Boolean).slice(0, 4);
   }
 
   function viewSearch(manifest, initialQuery, initialScope) {
@@ -3022,11 +3500,26 @@
        string. No work id contains a colon: slugify() in tools/parse_book.py
        makes them out of [a-z0-9] and hyphens and can make nothing else. */
     var CANON_SCOPE = "canon:";
+    /* And a collection is a scope by the same trick, under its own prefix.
+       "Where do the Gospels say this" is the commonest narrowing there is
+       and no canon can express it: a canon is every book a tradition
+       receives, and the four Gospels are a division inside one. */
+    var GROUP_SCOPE = "in:";
     var canonWorks = null;               // canon key -> { workId: 1 }
     var excerptWorks = {};               // chapters printed twice; see below
+    var collections = null;              // slug -> { title, works: [ids] }
 
     function isCanonScope(s) {
       return String(s).lastIndexOf(CANON_SCOPE, 0) === 0;
+    }
+    function isGroupScope(s) {
+      return String(s).lastIndexOf(GROUP_SCOPE, 0) === 0;
+    }
+    /* The two behave alike everywhere below -- neither is a work id, both
+       arrive before canon.json does, both name a set rather than a book --
+       so where the difference does not matter they are asked about together. */
+    function isSetScope(s) {
+      return isCanonScope(s) || isGroupScope(s);
     }
 
     /* Whose Bible the results are measured against.
@@ -3052,9 +3545,10 @@
     scopeSel.value = scope;
     /* An id in the URL that names nothing this select offers -- a stale
        link, a mistyped slug -- is dropped rather than kept as a scope no
-       verse can ever be in. A canon is the one thing not offered yet, so it
-       is kept until canon.json has had its chance below. */
-    if (!scopeSel.value && !isCanonScope(scope)) scope = "";
+       verse can ever be in. A canon and a collection are the two things not
+       offered yet, so they are kept until canon.json has had its chance
+       below. */
+    if (!scopeSel.value && !isSetScope(scope)) scope = "";
 
     /* Which works each tradition receives, from the file the Canons page
        draws -- so the two can never disagree about what is Catholic -- and
@@ -3114,6 +3608,24 @@
       // the widest scope to the narrowest.
       scopeSel.insertBefore(group, scopeSel.children[1] || null);
 
+      /* And the collections, between the canons and the single books,
+         because that is where they sit by size. Only the divisions and the
+         two testaments are offered here: this edition's own sections are
+         already the optgroup headings further down the list, so listing
+         them again as scopes would print every era's name twice. */
+      collections = buildCollections(manifest, canon);
+      var groups = el("optgroup", { label: "By collection" });
+      collections.order.forEach(function (id) {
+        var c = collections.table[id];
+        if (c.kind === "section") return;
+        groups.appendChild(el("option", {
+          value: GROUP_SCOPE + id, text: c.title
+        }));
+      });
+      if (groups.children.length) {
+        scopeSel.insertBefore(groups, group.nextSibling);
+      }
+
       /* And the sentence that says what the marking means, which is a
          sentence rather than a labelled control because the rule is short
          enough to read: "Mark verses not in the Protestant canon". */
@@ -3130,15 +3642,18 @@
       if (!markSel.value) markCanon = "";
       markRow.hidden = false;
 
-      if (isCanonScope(scope)) {
+      if (isSetScope(scope)) {
         scopeSel.value = scope;              // now that the option exists
-        if (!scopeSel.value) scope = "";     // a canon key nothing here knows
+        if (!scopeSel.value) scope = "";     // a key nothing here knows
       }
     }).catch(function () {
       /* No list, no canon entries. An option that would quietly search the
          whole library under a tradition's name is worse than not offering
-         the tradition at all. */
+         the tradition at all. The collections built off the same file go
+         with it, for the same reason: "the Gospels" over results from
+         outside them is the same lie in a smaller hat. */
       canonWorks = {};
+      collections = null;
     });
 
     /* What the scope means, and what the results have to say for themselves
@@ -3163,11 +3678,19 @@
     function scopeReady(want) {
       return canonReady.then(function () {
         var keep = null;
-        if (want && !isCanonScope(want)) {
+        if (want && !isSetScope(want)) {
           keep = function (w) { return w === want; };
-        } else if (want) {
+        } else if (isCanonScope(want)) {
           var set = canonWorks && canonWorks[want.slice(CANON_SCOPE.length)];
           if (set) keep = function (w) { return !!set[w]; };
+        } else if (isGroupScope(want)) {
+          var c = collections &&
+                  own(collections.table, want.slice(GROUP_SCOPE.length));
+          if (c) {
+            var member = {};
+            c.works.forEach(function (w) { member[w] = 1; });
+            keep = function (w) { return !!member[w]; };
+          }
         }
         var mine = canonWorks && canonWorks[markCanon || CANON_NONE];
         return {
@@ -3197,6 +3720,11 @@
         if (key === CANON_NONE) return CANON_NONE_TITLE;
         return "the " + (CANON_IN_FULL[key] || key) + " canon";
       }
+      if (isGroupScope(want)) {
+        var c = collections &&
+                own(collections.table, want.slice(GROUP_SCOPE.length));
+        return c ? c.title : want.slice(GROUP_SCOPE.length);
+      }
       var title = want;
       manifest.sections.forEach(function (s) {
         s.works.forEach(function (w) {
@@ -3212,7 +3740,7 @@
     function nothingMatched(want) {
       if (!want) return "No verse matched.";
       return "No verse in " +
-             (isCanonScope(want) ? scopeTitle(want) : "that book") + " matched.";
+             (isSetScope(want) ? scopeTitle(want) : "that book") + " matched.";
     }
 
     wrap.appendChild(el("div", { class: "toolbar search-bar" }, [input, scopeSel]));
@@ -3259,12 +3787,41 @@
       jump.innerHTML = "";
       bar.firstChild.style.width = "0%";
 
-      /* Offered above the word matches, never instead of them. "Job" is a
-         book and also a man named in several others, and only the reader
-         knows which was meant. */
+      /* Everything above the word matches, and never instead of them. "Job"
+         is a book and also a man named in several others; "Enoch" is three
+         works, a person with a dictionary entry, and a word in ninety
+         verses. Only the reader knows which was meant, so all of it is
+         offered and none of it is chosen for them.
+
+         The answers arrive from files that land in whatever order the
+         network gives them, so the boxes are made now, in the order they
+         should read, and filled as each resolves. Appending on arrival
+         would shuffle the page under a reader already looking at it. */
+      var slots = {};
+      ["reference", "passage", "collection", "thread", "entry",
+       "witness", "page"].forEach(function (k) {
+        slots[k] = el("div");
+        jump.appendChild(slots[k]);
+      });
+
+      /* Each box says which question it is answering, in a class as well as
+         in its heading: a page can carry five of them at once, and "the
+         first jump link" stops meaning anything the moment it can be a
+         dictionary entry as easily as a reference. */
+      function answerBox(slot, head, rows) {
+        if (mine !== runId || !rows.length) return;
+        var box = el("div", { class: "jump-box is-" + slot });
+        box.appendChild(el("p", { class: "jump-head", text: head }));
+        rows.forEach(function (r) { box.appendChild(r); });
+        slots[slot].appendChild(box);
+      }
+
+      /* A reference is a coordinate: the oldest of these answers and still
+         the first, because somebody who typed one has told you exactly what
+         they want. */
       locateReference(resolveReference(manifest, query)).then(function (places) {
         if (mine !== runId || !places.length) return;
-        var box = el("div", { class: "jump-box" });
+        var box = el("div", { class: "jump-box is-reference" });
         box.appendChild(el("p", { class: "jump-head", text: places.length === 1
           ? "That is a place in the volume:" : "That could be any of these:" }));
         places.slice(0, 6).forEach(function (r) {
@@ -3286,8 +3843,105 @@
             box.appendChild(el("p", { class: "jump-caution", text: r.caution }));
           }
         });
-        jump.appendChild(box);
+        slots.reference.appendChild(box);
       });
+
+      /* A passage by the name it is known under rather than by its
+         coordinate, which is how almost everybody holds one. */
+      locateReference(resolveNamedPassages(manifest, query)).then(function (found) {
+        answerBox("passage", found.length === 1
+          ? "That passage is here:" : "Those passages are here:",
+          found.slice(0, 4).map(function (r) {
+            return el("a", {
+              class: "jump-link",
+              href: "#/read/" + r.workId + "/" + r.idx +
+                    (r.verse ? "/v" + r.verse : "")
+            }, [
+              el("span", { class: "jump-where", text: r.name }),
+              el("span", { class: "jump-era", text: titleCase(r.title) +
+                (r.label ? " · " + r.label : "") })
+            ]);
+          }));
+      });
+
+      /* A collection: the answer to "new testament", which is the query
+         this whole layer was built for. Waits on canon.json, because half
+         of these are read off it. */
+      canonReady.then(function () {
+        var found = resolveCollections(collections, query);
+        answerBox("collection", found.length === 1
+          ? "That is a collection in the volume:"
+          : "Those are collections in the volume:",
+          found.map(function (c) {
+            return el("a", { class: "jump-link", href: "#/collection/" + c.id }, [
+              el("span", { class: "jump-where", text: c.title }),
+              el("span", { class: "jump-era", text: c.works.length +
+                (c.works.length === 1 ? " work" : " works") })
+            ]);
+          }));
+      }).catch(function () {});
+
+      /* A thread. "Where do the dead go" is the exact title of one and
+         answered with fourteen verses containing the word "dead". */
+      getJSON("threads.json").then(function (threads) {
+        answerBox("thread", "The library argues about that:",
+          resolveThreads(threads, query).map(function (t) {
+            return el("a", { class: "jump-link", href: "#/thread/" + t.id }, [
+              el("span", { class: "jump-where", text: t.title }),
+              el("span", { class: "jump-era", text: (t.stops || []).length +
+                " passages" })
+            ]);
+          }));
+      }).catch(function () {});
+
+      /* The dictionary and the gazetteer, which between them know who
+         Abaddon was and where Bethlehem is, and could be asked only by
+         tapping the word on a page you had already found. */
+      lookup(query).then(function (found) {
+        if (!found) return;
+        var name = found.entry ? found.entry.name
+                 : (found.place ? found.place.name : query);
+        var what = found.entry && found.place ? "A person, and a place"
+                 : (found.place ? "A place" : "In the dictionary");
+        var row = el("a", {
+          class: "jump-link", href: "#/search/" + encodeURIComponent(query),
+          onclick: function (e) {
+            // Not a navigation: the definition is a sheet over this page,
+            // and the href is there so the row is a real link for a
+            // keyboard and a screen reader.
+            e.preventDefault();
+            showEntry(name, found);
+          }
+        }, [
+          el("span", { class: "jump-where", text: name }),
+          el("span", { class: "jump-era", text: what })
+        ]);
+        answerBox("entry", "There is an entry for that:", [row]);
+      }).catch(function () {});
+
+      /* The manuscripts. "Dead sea scrolls" is not the name of any of them
+         and is what two of them are. */
+      getJSON("manuscripts.json").then(function (ms) {
+        answerBox("witness", "A manuscript witness:",
+          resolveWitnesses(ms, query).map(function (w) {
+            return el("a", {
+              class: "jump-link", href: "#/read/" + w.workId + "/0"
+            }, [
+              el("span", { class: "jump-where", text: w.witness.name }),
+              el("span", { class: "jump-era", text: w.witness.date || "" })
+            ]);
+          }));
+      }).catch(function () {});
+
+      /* And the site's own pages, which a reader looks for in the search
+         box because that is where you look for things. */
+      answerBox("page", "A page here:",
+        resolveSitePages(query).map(function (p) {
+          return el("a", { class: "jump-link", href: p.href }, [
+            el("span", { class: "jump-where", text: p.title }),
+            el("span", { class: "jump-era", text: p.note })
+          ]);
+        }));
 
       var phrase = null;
       var m = query.match(/^\s*"(.+)"\s*$/);
@@ -3322,7 +3976,7 @@
         /* The canon list never arrived, so the scope cannot be honoured.
            Searching everything and saying so is better than printing a
            tradition's name over results from outside it. */
-        if (isCanonScope(scope) && !keep) scope = "";
+        if (isSetScope(scope) && !keep) scope = "";
         var tbl = ctx.tbl, lookup = ctx.lookup;
 
         // Narrow to candidate chapters using the selective terms only.
@@ -3553,8 +4207,12 @@
        back to, which is most of what it is for. */
     function go() {
       var q = input.value;
-      var target = "#/search" + (q.trim() ? "/" + encodeURIComponent(q) : "");
-      if (q.trim() && scope) target += "/" + scope;
+      /* A scope with no query keeps its place with an empty segment, so
+         that narrowing to the Gospels and then typing a word does not
+         silently lose the narrowing on the way through the URL. */
+      var target = "#/search";
+      if (q.trim() || scope) target += "/" + encodeURIComponent(q.trim() ? q : "");
+      if (scope) target += "/" + scope;
       if (location.hash !== target) history.replaceState(null, "", target);
       run(q, scope);
     }
@@ -3737,6 +4395,151 @@
   /* ================================================================
      ACCURACY
      ================================================================ */
+
+  /* ================================================================
+     A COLLECTION
+     ------------------------------------------------------------------
+     Somewhere for a collection answer to go. The Contents page lists all
+     163 works and marks each with the era it belongs to, which answers
+     "where does Amos sit" and cannot answer "what is in the New Testament"
+     -- for that you read the whole table and keep score.
+
+     This is that table with one question already asked. It is also the only
+     page in the volume where the deuterocanon, or the Twelve, or the
+     Pauline epistles exist as a thing rather than as a property of
+     scattered rows.
+     ================================================================ */
+
+  function viewCollection(manifest, canon, id) {
+    var wrap = el("div", { class: "wrap" });
+    var built = buildCollections(manifest, canon);
+    var c = own(built.table, id);
+
+    if (!c) {
+      wrap.appendChild(el("h1", { text: "No such collection" }));
+      wrap.appendChild(el("p", { class: "lede", text:
+        "Nothing here is filed under “" + id + "”. The contents list every " +
+        "work in the volume, and the canons page lists the collections." }));
+      wrap.appendChild(el("div", { class: "chips" }, [
+        el("a", { class: "chip", href: "#/contents", text: "Contents" }),
+        el("a", { class: "chip", href: "#/canons", text: "Which books belong to whom" }),
+        el("a", { class: "chip", href: "#/search", text: "Search" })
+      ]));
+      return wrap;
+    }
+
+    wrap.appendChild(el("h1", { text: c.title }));
+    if (c.note) wrap.appendChild(el("p", { class: "lede", text: c.note }));
+
+    var byId = {};
+    manifest.sections.forEach(function (s) {
+      s.works.forEach(function (w) { byId[w.id] = { w: w, s: s }; });
+    });
+
+    /* What the collection costs to read, which is the question anybody
+       standing in front of one is actually asking. */
+    var chapters = 0, words = 0;
+    c.works.forEach(function (id) {
+      var m = byId[id];
+      if (!m) return;
+      chapters += m.w.chapters || 0;
+      words += m.w.words || 0;
+    });
+    wrap.appendChild(el("p", { class: "muted", text:
+      fmt(c.works.length) + (c.works.length === 1 ? " work · " : " works · ") +
+      fmt(chapters) + " chapters · " + fmt(words) + " words" }));
+
+    wrap.appendChild(el("div", { class: "chips" }, [
+      el("a", { class: "chip primary",
+                href: "#/search//in:" + c.id,
+                text: "Search only these" }),
+      el("a", { class: "chip", href: "#/contents", text: "Everything in the volume" }),
+      el("a", { class: "chip", href: "#/canons", text: "Which books belong to whom" })
+    ]));
+
+    /* In the volume's order, not the collection's. A reader who has come
+       here from "the gospels" is being shown, without being told, that Mark
+       was written first: that is this edition's whole argument and the one
+       thing a page like this must not quietly undo by printing Matthew at
+       the top because a printed Bible does. */
+    var order = {};
+    manifest.sections.forEach(function (s, si) {
+      s.works.forEach(function (w, wi) { order[w.id] = si * 1000 + wi; });
+    });
+    var works = c.works.filter(function (id) { return !!byId[id]; })
+                       .sort(function (a, b) { return order[a] - order[b]; });
+
+    var table = el("table", { class: "grid" });
+    table.appendChild(el("thead", {}, [el("tr", {}, [
+      el("th", { text: "Work" }),
+      el("th", { text: "Written" }),
+      el("th", { class: "num", text: "Chapters" }),
+      el("th", { class: "num", text: "Words" })
+    ])]));
+    var tb = el("tbody");
+    var byOwn = 0;
+    works.forEach(function (id) {
+      var m = byId[id];
+      /* The work's own critical position where it has one, and the era's
+         range only where it does not. Four Gospels all reading
+         "c. 50-110 CE" is the section talking; Mark at c. 65-75 and Matthew
+         at c. 80-90 is why Mark is the row above, and is the argument this
+         page exists to show. Same field, same formatter and same fallback
+         as the timeline -- and marked the same way, fainter and named in a
+         title, because placing a book by the era it is filed under is a
+         looser claim than placing it by its own record and the page should
+         not print the two in the same voice. */
+      var own = m.w.positions && m.w.positions.span && m.w.positions.span.crit;
+      var when;
+      if (own) {
+        when = el("td", { class: "muted", text: spanText(own) });
+        byOwn++;
+      } else {
+        when = el("td", { class: "muted is-era", title: PLACED.section,
+                          text: m.s.dates || "—" });
+      }
+      tb.appendChild(el("tr", {}, [
+        el("td", {}, [el("a", { href: "#/read/" + id + "/0",
+                                text: titleCase(m.w.title) })]),
+        when,
+        el("td", { class: "num", text: m.w.chapters || "—" }),
+        el("td", { class: "num", text: m.w.words ? fmt(m.w.words) : "—" })
+      ]));
+    });
+    table.appendChild(tb);
+    wrap.appendChild(scroller(table, c.title + ", scrollable sideways"));
+
+    /* Counted rather than left to be noticed, which is what the timeline
+       does with the same two kinds of date and for the same reason. */
+    if (works.length) {
+      /* Three sentences rather than one with holes in it. "4 of these 4 ...
+         the rest carry the era" describes a remainder that is not there, and
+         "0 of these 27" opens on a number that says nothing. Hermas is the
+         second case for all twenty-seven of its parts, and the Gospels the
+         first for all four. */
+      var cited = "each with its citation on the work itself";
+      var looser = ", which is a looser claim";
+      var said;
+      if (!byOwn) {
+        said = "None of these " + fmt(works.length) + " has a dated position " +
+               "of its own. Each carries the era it is filed under" +
+               looser + ". ";
+      } else if (byOwn === works.length) {
+        said = (works.length === 1 ? "This one is" : "All " +
+                fmt(works.length) + " are") +
+               " dated by the work's own position record, " + cited + ". ";
+      } else {
+        said = "<strong>" + fmt(byOwn) + "</strong> of these " +
+               fmt(works.length) + " are dated by the work's own position " +
+               "record, " + cited + ". The rest carry the era they are " +
+               "filed under" + looser + ". ";
+      }
+      wrap.appendChild(el("p", { class: "muted dating-note", html: said +
+        "<a href=\"#/method\">How the dating was decided</a>." }));
+    }
+
+    return wrap;
+  }
 
   function viewAccuracy(findings, removals, splices) {
     var wrap = el("div", { class: "wrap" });
@@ -6271,13 +7074,34 @@
       }
       if (view === "search") {
         setNav("search");
-        var q = parts[1] ? decodeURIComponent(parts[1]) : "";
-        var scope = parts[2] ? decodeURIComponent(parts[2]) : "";
+        /* Split again without dropping the empty segments, because a scope
+           with no query is a real address -- "every verse in the Gospels,
+           tell me which word" is what the collection page's own search link
+           means -- and it is written "#/search//in:gospels". The filter
+           above would hand that back as the query "in:gospels", which is a
+           word search for a string that is in no text. */
+        var raw = hash.split("/");
+        var q = raw[1] ? decodeURIComponent(raw[1]) : "";
+        var scope = raw[2] ? decodeURIComponent(raw[2]) : "";
         setTitle(q ? "Search: " + q : "Search");
         node = viewSearch(manifest, q, scope);
         main.innerHTML = "";
         main.appendChild(node);
         return;
+      }
+      /* Needs canon.json for the same reason the contents do: half the
+         collections it can show are divisions read off that file. */
+      if (view === "collection") {
+        setNav("contents");
+        return getJSON("canon.json").catch(function () { return null; })
+          .then(function (canon) {
+            var node = viewCollection(manifest, canon, parts[1] || "");
+            var h1 = node.querySelector("h1");
+            setTitle(h1 ? h1.textContent : "Collection");
+            main.innerHTML = "";
+            main.appendChild(node);
+            window.scrollTo(0, 0);
+          });
       }
       if (view === "canons" || view === "contents") {
         setNav(view);

@@ -29,6 +29,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import string
 import sys
 import unicodedata
 from collections import defaultdict
@@ -164,6 +165,18 @@ def main() -> int:
 
     out_dir = os.path.join(OUT, "lexicon")
     os.makedirs(out_dir, exist_ok=True)
+    # Every shard a lookup key can name, including the empty ones. A key is
+    # filed under its first letter or under "0", so there are twenty-seven
+    # possible files and the corpus fills only some -- no entry starts "x",
+    # no place starts "q". The reader has to ask for the shard before it can
+    # know that, so a missing file turned an ordinary lookup into a 404:
+    # caught, but logged in the console of every reader who tapped such a
+    # word, and in the single-file offline build a failed fetch rather than
+    # an answer. An empty table is the answer. "Nothing is filed here" is a
+    # fact about the corpus and belongs in the data, not in a network error.
+    for shard in ["0"] + list(string.ascii_lowercase):
+        shards.setdefault(shard, {})
+
     for shard, table in shards.items():
         with open(os.path.join(out_dir, f"{shard}.json"), "w",
                   encoding="utf-8") as fh:

@@ -1160,6 +1160,12 @@ table.grid tbody tr:last-child td { border-bottom: 0; }
   margin: -.6rem 0 0; font-size: .82rem; color: var(--ink-soft);
 }
 .marking select { font-size: .82rem; padding: .15rem .45rem; width: auto; }
+/* A date carried down from the era a work is filed under, rather than read
+   off a dated position of its own. The timeline draws these fainter for the
+   same reason: it is a looser claim, and printing it in the same ink as a
+   cited one says the volume knows something it does not. */
+.grid td.is-era { opacity: .72; font-style: italic; }
+
 .result-outside {
   font-family: var(--sans); font-size: .72rem; color: var(--ink-faint);
   border: 1px solid var(--rule-soft); border-radius: 999px;

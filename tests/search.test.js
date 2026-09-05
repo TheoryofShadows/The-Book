@@ -225,12 +225,16 @@ module.exports = async function search(t, ctx) {
      test is a prefix. A reader who does not already know where a passage
      sits could not reach it by searching, which in an edition ordered by
      composition is the reader least able to find it any other way. */
+  /* References only. A search now answers several different questions at
+     once -- a reference, a collection, a dictionary entry -- and each is in
+     its own box, so "the jump links on the page" stopped being a question
+     about the reference resolver the moment "Job" also matched a headword. */
   const jumpsFor = async (q) => {
     await page.goto(ctx.base + '#/search/' + encodeURIComponent(q));
     await settled(page);
     await page.waitForTimeout(400);
     return page.evaluate(() => Array.from(
-      document.querySelectorAll('.jump-link'),
+      document.querySelectorAll('.jump-box.is-reference .jump-link'),
       a => a.getAttribute('href')));
   };
 
@@ -275,7 +279,7 @@ module.exports = async function search(t, ctx) {
   await settled(page);
   await page.waitForTimeout(400);
   const caution = await page.evaluate(() => ({
-    jumps: document.querySelectorAll('.jump-link').length,
+    jumps: document.querySelectorAll('.jump-box.is-reference .jump-link').length,
     said: (document.querySelector('.jump-caution') || {}).textContent || ''
   }));
   t.check('a title that names a more famous book says so at the search',
@@ -306,7 +310,7 @@ module.exports = async function search(t, ctx) {
   await settled(page);
   await page.waitForTimeout(400);
   t.check('a bare book name offers the book and still searches the word',
-          await page.locator('.jump-link').count() === 1 &&
+          await page.locator('.jump-box.is-reference .jump-link').count() === 1 &&
           await page.locator('.result').count() > 1,
           await page.locator('.result').count() + ' verses as well');
 
@@ -664,6 +668,247 @@ module.exports = async function search(t, ctx) {
           /outside every canon/.test((backToAny.find(r => r.marked) || {}).said || ''),
           backToAny.filter(r => r.marked).length + ' marked, ' +
           ((backToAny.find(r => r.marked) || {}).said || '(nothing said)'));
+
+  /* ---------------- what a search is asked, besides words ----------------
+
+     "New testament" used to answer with two verses -- a line in the
+     Apostolic Canons listing which books are received, and one in the
+     Testament of Our Lord -- and nothing else at all. Both contain the
+     words; neither is what anybody typing them wants, and there was no way
+     from that search into the twenty-seven books. Every check below is a
+     query a reader plainly means as a question about the volume's own
+     arrangement rather than about its wording. */
+
+  async function answers(query) {
+    await page.goto(ctx.base + '#/search/' + encodeURIComponent(query));
+    // The answer boxes come from files that land independently of the word
+    // search, so waiting on the status line is not enough for these.
+    await settled(page);
+    await page.waitForTimeout(600);
+    return page.$$eval('.jump-box', boxes => boxes.map(b => ({
+      head: b.querySelector('.jump-head').textContent,
+      rows: [...b.querySelectorAll('.jump-where')].map(e => e.textContent),
+      hrefs: [...b.querySelectorAll('a.jump-link')].map(a => a.getAttribute('href'))
+    })));
+  }
+  const rowsOf = a => a.reduce((all, b) => all.concat(b.rows), []);
+  const hrefsOf = a => a.reduce((all, b) => all.concat(b.hrefs), []);
+
+  let a = await answers('new testament');
+  t.check('"new testament" offers the New Testament',
+          rowsOf(a).indexOf('The New Testament') >= 0,
+          rowsOf(a).join(' | ') || '(nothing offered)');
+
+  t.check('and this edition\'s section of the same name beside it, ' +
+          'because they are not the same set',
+          rowsOf(a).indexOf('New Testament Writings') >= 0,
+          rowsOf(a).join(' | '));
+
+  t.check('and links somewhere that exists',
+          hrefsOf(a).indexOf('#/collection/new-testament') >= 0,
+          hrefsOf(a).join(' '));
+
+  /* The word matches are still there. An answer that replaced them would
+     have taken something away to add something. */
+  t.check('without taking the word matches away',
+          await page.locator('.result').count() > 0,
+          await page.locator('.result').count() + ' verses');
+
+  for (const [query, want] of [
+    ['old testament', 'The Old Testament'],
+    ['torah', 'Torah'],
+    ['pentateuch', 'Torah'],
+    ['the gospels', 'Gospels'],
+    ['minor prophets', 'The Twelve'],
+    ['deuterocanon', 'Deuterocanon'],
+    ['letters of paul', 'Pauline Epistles'],
+    ['apostolic fathers', 'The Apostolic Fathers'],
+    ['shepherd of hermas', 'The Shepherd of Hermas']
+  ]) {
+    const got = rowsOf(await answers(query));
+    t.check('"' + query + '" reaches ' + want,
+            got.indexOf(want) >= 0, got.join(' | ') || '(nothing offered)');
+  }
+
+  /* Things the text cannot be asked for, because the text never says them. */
+  a = await answers('sermon on the mount');
+  t.check('a passage known by a name the text never uses is still findable',
+          rowsOf(a).indexOf('The Sermon on the Mount') >= 0,
+          rowsOf(a).join(' | '));
+  t.check('and it lands in Matthew rather than on a guess',
+          hrefsOf(a).some(h => /#\/read\/matthew\//.test(h)),
+          hrefsOf(a).join(' '));
+
+  a = await answers('dead sea scrolls');
+  t.check('a manuscript nobody calls by its catalogue number is findable',
+          rowsOf(a).some(r => /Isaiah Scroll/.test(r)),
+          rowsOf(a).join(' | '));
+
+  a = await answers('where do the dead go');
+  t.check('a thread\'s own title reaches the thread',
+          hrefsOf(a).some(h => /#\/thread\//.test(h)),
+          rowsOf(a).join(' | '));
+
+  a = await answers('abaddon');
+  t.check('a dictionary headword offers its entry',
+          rowsOf(a).indexOf('Abaddon') >= 0, rowsOf(a).join(' | '));
+
+  a = await answers('timeline');
+  t.check('a page of this site is reachable from the search box',
+          hrefsOf(a).indexOf('#/timeline') >= 0, hrefsOf(a).join(' '));
+
+  /* A word search must not sprout answers it has no business offering. */
+  a = await answers('zzzznotaword');
+  t.check('a query that means nothing offers nothing',
+          a.length === 0, a.length + ' boxes');
+
+  /* ---------------- a collection as a place, and as a scope ---------------- */
+
+  await page.goto(ctx.base + '#/collection/gospels');
+  await page.waitForSelector('tbody tr');
+  const gospels = await page.$$eval('tbody tr td:first-child a',
+                                    as => as.map(a => a.textContent));
+  t.check('a collection page lists exactly its works',
+          gospels.length === 4 && gospels.indexOf('Matthew') >= 0,
+          gospels.join(', '));
+
+  t.check('in the order this edition argues for, not the bound order',
+          gospels[0] === 'Mark', gospels.join(', '));
+
+  /* And says why that order, rather than leaving it to be taken on trust.
+     All four Gospels sit in one era, so the era's range is the same sentence
+     four times; each one's own dated position is what puts Mark above
+     Matthew, and it is the only thing on the page that can. */
+  const when = await page.$$eval('tbody tr td:nth-child(2)',
+                                 tds => tds.map(td => td.textContent.trim()));
+  t.check('and dates each work by its own position, not by its era',
+          when[0] !== when[1] && /65/.test(when[0]) && /80/.test(when[1]),
+          when.join(' | '));
+
+  t.check('with none of them falling back to the era',
+          await page.locator('td.is-era').count() === 0 &&
+          /All 4 are dated by the work/.test(await page.textContent('.dating-note')),
+          await page.textContent('.dating-note'));
+
+  /* Hermas is the other end of it: twenty-seven parts, not one of which has
+     a dated position of its own. A page that printed the era in the same
+     ink as a cited date would be claiming twenty-seven dates it does not
+     have -- so they are marked, and counted, and the sentence is not the
+     one with a remainder in it. */
+  await page.goto(ctx.base + '#/collection/the-shepherd-of-hermas');
+  await page.waitForSelector('.dating-note');
+  t.check('a collection with no dated positions marks every row as its era',
+          await page.locator('td.is-era').count() ===
+          await page.locator('tbody tr').count(),
+          await page.locator('td.is-era').count() + ' of ' +
+          await page.locator('tbody tr').count());
+
+  t.check('and says so without opening on a nought or a missing remainder',
+          /^None of these 27/.test(await page.textContent('.dating-note')) &&
+          !/The rest/.test(await page.textContent('.dating-note')),
+          await page.textContent('.dating-note'));
+
+  /* The Twelve are twelve books and thirteen works here, because Zechariah
+     is split. A count that contradicts the name has to explain itself. */
+  await page.goto(ctx.base + '#/collection/the-twelve');
+  await page.waitForSelector('tbody tr');
+  t.check('and says so where its count contradicts its name',
+          /12 books, printed here as 13/
+            .test(await page.textContent('.lede') || ''),
+          (await page.textContent('.lede') || '').slice(0, 60));
+
+  await page.goto(ctx.base + '#/collection/not-a-collection');
+  await page.waitForSelector('h1');
+  t.check('a collection that does not exist says so rather than emptying',
+          /No such collection/.test(await page.textContent('h1')),
+          await page.textContent('h1'));
+
+  await page.goto(ctx.base + '#/search/shepherd/in:gospels');
+  await settled(page);
+  const inGospels = await rows();
+  t.check('a collection narrows a search the way a canon does',
+          inGospels.length > 0 &&
+          inGospels.every(r => ['matthew', 'mark', 'luke', 'john']
+                                 .indexOf(r.work) >= 0),
+          inGospels.length + ' hits in ' +
+          [...new Set(inGospels.map(r => r.work))].join(' '));
+
+  t.check('and the search says which collection it searched',
+          /in Gospels/.test(await page.textContent('.wrap .muted') || ''),
+          await page.textContent('.wrap .muted'));
+
+  /* A scope with no query is a real address: it is what the collection
+     page's own search link means, and the empty segment carrying it must
+     survive the round trip through the URL. */
+  await page.goto(ctx.base + '#/search//in:gospels');
+  await page.waitForTimeout(900);
+  t.check('a collection can be narrowed to before a word is typed',
+          await page.inputValue('.search-bar select') === 'in:gospels',
+          await page.inputValue('.search-bar select'));
+
+  await page.fill('.search-bar input', 'shepherd');
+  await settled(page);
+  t.check('and typing one then keeps the narrowing',
+          /in Gospels/.test(await page.textContent('.wrap .muted') || '') &&
+          page.url().indexOf('in:gospels') > 0,
+          await page.textContent('.wrap .muted'));
+
+  /* A stale or mistyped collection is dropped rather than kept as a scope
+     no verse can be in -- the same rule a stale work id already followed. */
+  await page.goto(ctx.base + '#/search/shepherd/in:notacollection');
+  await settled(page);
+  t.check('a collection nothing knows is dropped, not searched under',
+          await page.inputValue('.search-bar select') === '' &&
+          await page.locator('.result').count() === EXPECT.shepherd,
+          await page.locator('.result').count() + ' of ' + EXPECT.shepherd);
+
+  /* ---------------- and what a search must not answer ----------------
+
+     Every one of these boxes is a guess at what somebody meant, and a guess
+     made from one very common word is noise sitting above the results they
+     actually asked for. "The" is the first word of four collection titles,
+     of half the threads, and -- by the title prefix the reference resolver
+     matches on -- of six works. */
+
+  a = await answers('the');
+  t.check('one word that is mostly grammar answers nothing at all',
+          a.length === 0,
+          a.map(b => b.rows.join('/')).join(' | ') || '(nothing, as it should)');
+
+  /* A word of a phrase is not the phrase. "Dead sea scrolls" is the only
+     name two of the manuscripts answer to; "dead" is a question about what
+     the texts say. */
+  a = await answers('dead');
+  t.check('a word inside a manuscript\'s nickname does not summon it',
+          !a.some(b => /is-witness/.test(b.head) ) &&
+          rowsOf(a).every(r => !/Isaiah Scroll/.test(r)),
+          rowsOf(a).join(' | '));
+
+  t.check('though the thread it is the title of still answers',
+          rowsOf(a).indexOf('Where do the dead go?') >= 0,
+          rowsOf(a).join(' | '));
+
+  t.check('and the phrase itself still reaches the manuscripts',
+          rowsOf(await answers('dead sea scrolls'))
+            .some(r => /Isaiah Scroll/.test(r)));
+
+  t.check('a word inside a passage\'s name does not summon it either',
+          rowsOf(await answers('god')).indexOf('The Armour of God') < 0,
+          rowsOf(await answers('god')).join(' | '));
+
+  t.check('though the full name still reaches it',
+          rowsOf(await answers('armour of god')).indexOf('The Armour of God') >= 0,
+          rowsOf(await answers('armour of god')).join(' | '));
+
+  /* The dictionary and the gazetteer are sharded by first letter and now
+     ship every shard, empty ones included: no entry starts "x", no place
+     starts "q", and asking for a file that is not there answered an
+     ordinary lookup with a 404 in the console of every reader who tried. */
+  const noise = [];
+  page.on('console', m => { if (m.type() === 'error') noise.push(m.text()); });
+  for (const q of ['xerxes', 'quartus', 'xystus']) await answers(q);
+  t.check('a letter with no entries is answered, not 404ed',
+          noise.length === 0, noise.join(' | ') || 'no console errors');
 
   await page.close();
 };

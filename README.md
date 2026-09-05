@@ -753,7 +753,7 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 | `routes` | Every page renders, search returns verses, a saved verse survives a reload, nothing throws |
 | `layout` | At 320–430px every nav link is on screen, nothing scrolls sideways, the bar tucks away as you read, desktop is unchanged |
 | `dating` | The date card against the spans the parser read, the method page, and that a citation names the edition and the era rather than just a URL |
-| `search` | Result counts against known answers rather than "more than zero": phrases against their words, several terms meaning all of them, the three different ways a search can end with nothing, that an accented or ligatured spelling on the page is reachable by an ordinary one, and that a reference is answered as a reference — including the split works, where Isaiah 40 has to land in the second Isaiah, and the ambiguous ones, where two answers stay two |
+| `search` | Result counts against known answers rather than "more than zero": phrases against their words, several terms meaning all of them, the three different ways a search can end with nothing, that an accented or ligatured spelling on the page is reachable by an ordinary one, and that a reference is answered as a reference — including the split works, where Isaiah 40 has to land in the second Isaiah, and the ambiguous ones, where two answers stay two — and that a search answers the questions that are not word searches at all: a collection by the names readers give it, so that `new testament` reaches the twenty-seven books and this edition's section of the same name both; a collection as a scope and as a page, in composition order rather than bound order; a passage by a name the text never prints; a manuscript, a thread, a dictionary headword and a page of this site; and that a query meaning none of those offers nothing rather than guessing |
 | `words` | Turning a word on the page into an entry — by selection, by keyboard, by alias — what a missing entry says, and the places panel |
 | `keeping` | Saving, unsaving, notes, the migration from the old bookmarks key, and what happens when the browser refuses to store anything at all |
 | `resilience` | The data failing to load, malformed data, routes that name nothing, the keyboard shortcuts, the skip link, and what a screen reader is actually told |
@@ -958,6 +958,69 @@ build until somebody says which it is. Searching `horeb` returns the Decalogue
 among twenty verses under every book, and nothing at all under the books left
 out.
 
+**A search is also asked things that are not words.** Searching `new
+testament` used to answer with two verses — a line in the Apostolic Canons
+listing which books a church receives, and one in the Testament of Our Lord.
+Both contain the words. Neither is what anybody typing them wants, and from
+that search there was no way at all into the twenty-seven books, which are
+all here. The same hole swallowed `torah`, `the gospels`, `minor prophets`,
+`deuterocanon`, `letters of paul`, `apostolic fathers` and `shepherd of
+hermas`: a search that indexes every word of the text and nothing about the
+text's own arrangement cannot answer a question about the arrangement, and
+this edition — which reorders the whole library by date of composition — is
+the one where those questions are hardest to answer any other way.
+
+So a collection is resolved the way a reference already was, and offered
+above the word matches rather than instead of them. Like a reference it is
+read off data the volume already keeps: every section of this edition, and
+every division named in `canon.json` — Torah, The Twelve, Gospels, Pauline
+epistles, Deuterocanon — plus the Old and New Testaments, which are those
+divisions added up and are nothing else. What is asserted is the alias table
+in `docs/assets/app.js`: the words people type for these things, a
+convenience list in exactly the sense `REF_ALIASES` is one. More than one
+answer is not a failure to decide — `new testament` offers both the
+twenty-seven books and this edition's Section IX, which holds twenty-nine
+because 2 Esdras and 4 Baruch were written in those years too, and only the
+reader knows which they meant.
+
+Each lands on `#/collection/<id>`, a page that is the contents table with one
+question already asked, in this edition's order rather than the bound one —
+so the Gospels open on Mark, and the Torah on Deuteronomy. That order is not
+left to be taken on trust: each work carries its own critical position where
+it has one, which is what puts Mark at c. 65–75 above Matthew at c. 80–90,
+rather than the era's range printed four times. Where a work has no dated
+position of its own, the era it is filed under is shown instead, italic and
+faint and named in a title, and counted under the table — 16 of the New
+Testament's 27, none of Hermas's 27 — because placing a book by its era is a
+looser claim than placing it by its own record, and the timeline already
+draws that distinction rather than hiding it. Where the count contradicts the
+name it says so: The Twelve lists thirteen works, because Zechariah is split
+where its parts were written apart, and the Old Testament's thirty-nine books
+are forty-two works here for the same reason. And a collection is a scope as
+well — `#/search/love/in:pauline-epistles` is the hundred and eleven verses
+in Paul's letters — because "where do the Gospels say this" is the commonest
+narrowing there is and no canon can express it: a canon is every book a
+tradition receives, and the four Gospels are a division inside one. A scope
+with no query is a real address, written `#/search//in:gospels`, which is
+what the collection page's own search link means.
+
+**And five other things a reader types into a search box.** The volume is not
+only its verses. It carries a dictionary of 3,851 entries, a gazetteer of
+1,232 places, eleven threads, seven manuscript witnesses and seven pages of
+its own — and every one of them was reachable only by already being on the
+page that holds it. `abaddon` returned four verses and not the entry that
+says who he was; `dead sea scrolls` returned nothing, because that is not the
+name of any of them and is what two of them are; `where do the dead go` is
+the exact title of a thread and answered with fourteen verses containing the
+word `dead`; `timeline` and `canons` reached neither page. `sermon on the
+mount` appears nowhere in Matthew, `the beatitudes` nowhere at all, and
+`the lord's prayer` is a title the prayer does not carry — so a short list of
+passages known by names the text never uses is answered by the same machinery
+a reference is, each checked against this volume's own parse. All of it is
+offered above the word matches and none of it replaces them: `enoch` is three
+works, a person with an entry, and a word in ninety verses, and the reader is
+the only one who knows which was meant.
+
 **And under every book, each result says which it is.** Narrowing is one
 answer to "is this in my Bible"; it is not the answer for somebody who wants
 to read the whole library and know what they are reading. On that page the
@@ -1106,7 +1169,15 @@ which also moved it from 89% of its build ceiling to 84%.
 
 Search is a two-stage design: a chapter-granularity inverted index (1.64 MB
 across 27 shards) narrows candidates, then only the matching works are fetched
-and scanned for exact verses. Quote a phrase to match it exactly.
+and scanned for exact verses. Quote a phrase to match it exactly. The
+dictionary and the gazetteer are sharded the same way, by first letter, and
+now ship all twenty-seven shards each rather than only the ones with something
+in them: no entry starts `x` and no place starts `q`, and the reader has to
+ask for the shard before it can learn that. A missing file made that an
+ordinary lookup answered with a 404 — caught, but logged in the console of
+every reader who tapped such a word, and in the single-file offline copy a
+failed fetch rather than an answer. An empty table is the answer. "Nothing is
+filed here" is a fact about the corpus and belongs in the data.
 
 ## Deploying
 
