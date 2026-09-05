@@ -659,6 +659,12 @@
                           (section.dates ? " · " + section.dates : "") })
     ]));
     head.appendChild(el("h1", { text: titleCase(meta.title) }));
+    /* The chapter picker and the work's notes go in boxes of their own so
+       that arranging them below is moving two nodes rather than four, and so
+       that putting them back is an insertBefore against an anchor that has
+       not itself moved. */
+    var chapterNav = el("div", { class: "chapter-nav" });
+    head.appendChild(chapterNav);
     wrap.appendChild(head);
 
     var body = el("div");
@@ -668,14 +674,17 @@
     getJSON("works/" + workId + ".json").then(function (work) {
       body.innerHTML = "";
 
+      var workNotes = el("div", { class: "work-notes" });
+      body.appendChild(workNotes);
+
       if (meta.note && meta.note.length) {
         var nb = el("div", { class: "note-block" });
         meta.note.forEach(function (p) { nb.appendChild(el("p", { text: p })); });
-        body.appendChild(nb);
+        workNotes.appendChild(nb);
       }
 
       if (meta.positions) {
-        body.appendChild(positionsPanel(meta.positions));
+        workNotes.appendChild(positionsPanel(meta.positions));
       }
 
       if (!work.chapters.length) {
@@ -740,7 +749,7 @@
         });
         jump.appendChild(field);
         jump.appendChild(el("button", { class: "chip", type: "submit", text: "Go" }));
-        head.appendChild(jump);
+        chapterNav.appendChild(jump);
       }
 
       if (work.chapters.length > 1) {
@@ -758,7 +767,7 @@
           if (i === idx) hereLink = a;
           strip.appendChild(a);
         });
-        head.appendChild(strip);
+        chapterNav.appendChild(strip);
 
         /* The strip scrolls once it is past two rows, and it used to open at
            the top of itself whatever chapter you were in: Psalm 119 showed
@@ -945,6 +954,35 @@
       }
       body.appendChild(pager);
 
+      /* ---------------- the apparatus, on a phone ----------------
+
+         Measured before it was changed: the first verse of Genesis sat 743px
+         down a 568px iPhone SE, and the reason was not any one block but the
+         sum of a header, a breadcrumb, a title, a chapter box, fifty chapter
+         numbers, a work note, a dating panel and five buttons. Tightening the
+         spacing of all of it bought 43px. This is the rest, and it is a
+         reordering rather than a removal: on a narrow screen the chapter
+         picker and the work's notes go after the chapter instead of before
+         it, so what is on screen when the page opens is scripture.
+
+         It reads as the better order on a phone anyway. The picker is what
+         you want when you have finished a chapter, not before you have begun
+         one, and it lands beside the pager that does the same job for the
+         next chapter along. Nothing is hidden, collapsed or dropped: the
+         wall of numbers is still a wall of numbers, which is how you see how
+         long a book is, and every link that was on screen is still on screen.
+
+         Moved in the DOM rather than with CSS order. Visual order and focus
+         order have to agree -- a keyboard tabbing through a page that reads
+         one way and tabs another is the accessibility fault that reordering
+         in CSS quietly introduces.
+
+         Re-run on the media query rather than once, because a phone turned on
+         its side crosses this boundary: a 14 Pro is 393px upright and 852
+         across. Rebuilding the route would have been simpler and would throw
+         away the scroll position and stop the voice mid-verse. */
+      arrangeApparatus(body, chapterNav, workNotes);
+
       if (anchor) {
         var target = document.getElementById(anchor);
         if (target) {
@@ -1071,6 +1109,44 @@
       "<a href=\"#/accuracy\">Accuracy report</a>." }));
 
     return card;
+  }
+
+  /* The one place the phone layout is decided, so there is one answer to
+     "where does the apparatus go" rather than one per block. 620px is the
+     breakpoint the stylesheet already uses for the reading page. */
+  var NARROW = window.matchMedia("(max-width: 620px)");
+
+  function arrangeApparatus(body, chapterNav, workNotes) {
+    /* Where each box sits on a wide screen, recorded before anything moves.
+       Both anchors are nodes that stay put -- the picker's parent is the
+       head and the notes' next sibling is the controls -- so putting them
+       back cannot depend on the position of something that also moved. */
+    var homes = [chapterNav, workNotes].map(function (node) {
+      return { node: node, parent: node.parentNode, next: node.nextSibling };
+    });
+
+    function place() {
+      if (NARROW.matches) {
+        homes.forEach(function (h) { body.appendChild(h.node); });
+      } else {
+        homes.forEach(function (h) { h.parent.insertBefore(h.node, h.next); });
+      }
+    }
+
+    place();
+
+    /* Removed when the page is replaced, or every route change leaves another
+       listener behind holding on to a body that is no longer on screen. */
+    NARROW.addEventListener("change", place);
+    apparatusOff.push(function () { NARROW.removeEventListener("change", place); });
+  }
+
+  /* Torn down by the router before it draws the next page. */
+  var apparatusOff = [];
+
+  function forgetApparatus() {
+    apparatusOff.forEach(function (off) { off(); });
+    apparatusOff = [];
   }
 
   function positionsPanel(p) {
@@ -5735,6 +5811,12 @@
     closeSheet();
     closeMenu();
     listeningPageChange();
+    /* Same reason as the two above: the reading page registers a media-query
+       listener to keep the apparatus on the right side of the chapter, and a
+       route change replaces the nodes it was holding. Left attached, every
+       chapter read in a session would add one more listener rearranging a
+       page that is no longer there. */
+    forgetApparatus();
 
     tuck(false);
     lastY = 0;
