@@ -203,4 +203,55 @@ module.exports = async function layout(t, ctx) {
             route + ' -> ' + where.label + (where.inView ? ', in view' : ', OFF SCREEN'));
   }
   await desk.close();
+
+  /* ---- how far down the scripture starts on a phone ----
+
+     A number rather than an opinion, because this is the kind of thing that
+     drifts back a row at a time and nobody notices until a reader opens
+     Genesis on a phone and sees a header, a breadcrumb, a title, a chapter
+     box, fifty chapter numbers, a note, a dating panel and five buttons.
+     Measured at 743px on a 568px iPhone SE, which is a Bible you arrive at
+     and see no Bible on.
+
+     The budget is per device and deliberately not "above the fold on all of
+     them": clearing it on the smallest phone needs either the nav in one
+     scrolling row or the apparatus moved below the text, and both reverse a
+     decision this site has made on purpose and written down. What is gated
+     is what was won without reversing anything -- so that it stays won. */
+  {
+    const { devices } = require('playwright');
+    const BUDGET = [['iPhone SE', 710], ['iPhone 14 Pro', 670], ['Pixel 7', 670]];
+    for (const [name, budget] of BUDGET) {
+      const phone = await ctx.browser.newContext({ ...devices[name] });
+      const page = await phone.newPage();
+      await page.goto(ctx.base + '#/read/genesis/0');
+      await page.waitForSelector('.reader .v');
+      const top = await page.evaluate(() => Math.round(
+        document.querySelector('.reader .v').getBoundingClientRect().top + window.scrollY));
+      t.check('on ' + name + ', the scripture starts within its budget',
+              top <= budget, top + 'px, budget ' + budget);
+      await phone.close();
+    }
+  }
+
+  /* The chapter numbers are the control a thumb uses most and were the
+     smallest targets on the site at 25px. They sit in a box of a fixed
+     height that scrolls, so making them meet the 44px Apple asks for costs
+     no room on the page at all -- which is why it is done here and not
+     argued about. */
+  {
+    const { devices } = require('playwright');
+    const phone = await ctx.browser.newContext({ ...devices['iPhone SE'] });
+    const page = await phone.newPage();
+    await page.goto(ctx.base + '#/read/genesis/0');
+    await page.waitForSelector('.chapter-strip a');
+    const box = await page.evaluate(() => {
+      const a = document.querySelector('.chapter-strip a').getBoundingClientRect();
+      return { w: Math.round(a.width), h: Math.round(a.height) };
+    });
+    t.check('a chapter number is a 44px target on a phone',
+            box.w >= 44 && box.h >= 44, box.w + 'x' + box.h);
+    await phone.close();
+  }
+
 };
