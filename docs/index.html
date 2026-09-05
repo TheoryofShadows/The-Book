@@ -9,6 +9,11 @@
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
 <link rel="manifest" href="site.webmanifest">
+<!-- In the head deliberately. tools/build_standalone.py keeps only the body
+     of this page and writes its own head, so this tag is dropped from the
+     single-file copy -- which is right: that one opens from file://, where
+     there is no worker to register and no network to lose. -->
+<script src="assets/sw-register.js" defer></script>
 <!-- Installing is two mechanisms rather than one, and the standard half does
      not cover Apple. Android reads the manifest above and offers to install
      from it. iOS reads almost none of it: Add to Home Screen is driven by

@@ -1764,3 +1764,25 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
 }
 .map-arrival a { color: var(--accent); }
 .map-arrival-note { color: var(--ink-faint); }
+
+/* The offline notice, added by assets/sw-register.js when the network goes.
+   Fixed to the foot rather than the head: the header already steps out of
+   the way on a scroll down, and a bar arriving at the top would push the
+   line somebody is reading. Colours are tokens, so it follows the theme. */
+.offline-note {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 1rem;
+  z-index: 60;
+  margin: 0;
+  max-width: min(34rem, calc(100vw - 2rem));
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: var(--raised);
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 12%);
+}

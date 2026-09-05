@@ -16,7 +16,7 @@ const { serve, launch, Tally } = require('./harness');
    first of the two. run.js clears what it left behind at the end. */
 const SUITES = ['routes', 'layout', 'search', 'words', 'keeping',
                 'dating', 'resilience', 'listening', 'access', 'crawlable',
-                'installable', 'offline', 'map'];
+                'installable', 'caching', 'offline', 'map'];
 
 async function main() {
   const wanted = process.argv.slice(2);
