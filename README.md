@@ -918,12 +918,26 @@ which work carries a "Chapter 40" instead of counting from an offset. Where a
 reference is genuinely ambiguous — the volume has a book of Psalms and a Psalm
 151, so `Psalm 1` is two places — both are offered rather than one guessed at.
 
-**A search can be asked of one book.** The library is 1.22 million words and
-the results are capped at three hundred, so a common word answered with three
-hundred verses from everywhere and the one you wanted was somewhere inside
-them. The book sits beside the query and in the URL, so a narrowed search can
-be kept and shared: `#/search/shepherd/psalms` is the six verses in the
-Psalter, the first of which is the one everybody means.
+**A search can be asked of one book, or of one canon.** The library is 1.22
+million words and the results are capped at three hundred, so a common word
+answered with three hundred verses from everywhere and the one you wanted was
+somewhere inside them. The scope sits beside the query and in the URL, so a
+narrowed search can be kept and shared: `#/search/shepherd/psalms` is the six
+verses in the Psalter, the first of which is the one everybody means.
+
+One book, though, is the wrong size for the commonest way of reading here. A
+reader who keeps one canon is not asking about Job; they are asking about
+their Bible, and this edition prints five of them interleaved with books that
+belong to none — which is the whole point of the arrangement, and also the
+reason a search across it answers with more than was asked for. So a canon is
+a scope as well: `#/search/shepherd/canon:tanakh` is the seventy-six verses in
+the books the Tanakh receives, against a hundred and seventy-five in the
+volume — and thirty of the ninety-nine between those two figures are in works
+no canon holds at all, twenty-five of them in the Shepherd of Hermas, which
+says the word on nearly every page. The five canons are the ones the Canons
+page compares, each covering exactly the books that page marks as theirs and
+read from the same `canon.json`, so the two cannot drift apart. Every book
+remains the default, and sits one entry above them in the list.
 
 **It can be installed to a home screen, on both kinds of phone.**
 `docs/site.webmanifest` names the site, its two colours and its icons, and

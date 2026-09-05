@@ -24,7 +24,13 @@ const EXPECT = {
      verse that changed it before touching the number. */
   caesar: 60,
   mastema: 11,
-  behemothLeviathan: 2
+  behemothLeviathan: 2,
+  /* "shepherd" across everything, and across the books the Tanakh receives.
+     Thirty of the ninety-nine verses between those two figures are in works
+     no canon holds at all, twenty-five of them in the Shepherd of Hermas --
+     which is the reason a canon is worth being able to search on its own. */
+  shepherd: 175,
+  shepherdJewish: 76
 };
 
 /* Search does work rather than just drawing, so every assertion waits for it
@@ -295,7 +301,7 @@ module.exports = async function search(t, ctx) {
   await page.goto(ctx.base + '#/search/shepherd/psalms');
   await settled(page);
   const scoped = await page.evaluate(() => ({
-    picked: document.querySelector('select[aria-label="Which book to search"]').value,
+    picked: document.querySelector('select[aria-label="Which books to search"]').value,
     refs: Array.from(document.querySelectorAll('.result-ref'), e => e.textContent)
   }));
   t.check('searching one book returns that book and nothing else',
@@ -313,7 +319,7 @@ module.exports = async function search(t, ctx) {
   // Choosing a book keeps the search shareable rather than losing it.
   await page.goto(ctx.base + '#/search/shepherd');
   await settled(page);
-  await page.selectOption('select[aria-label="Which book to search"]', 'job');
+  await page.selectOption('select[aria-label="Which books to search"]', 'job');
   await settled(page);
   await page.waitForTimeout(300);
   t.check('the chosen book is in the URL, so a narrowed search can be kept',
@@ -324,6 +330,109 @@ module.exports = async function search(t, ctx) {
           /No verse in that book matched/.test(
             await page.evaluate(() => document.querySelector('.muted').textContent)),
           await page.evaluate(() => document.querySelector('.muted').textContent));
+
+  /* ---- one canon at a time ----
+
+     A book was the only narrowing there was, and it is the wrong size for
+     the way most people read: somebody who keeps one canon is not asking
+     about Job, they are asking about their Bible, and this edition prints
+     five of them interleaved with books that belong to none of them. Asked
+     one entry at a time that is forty-two searches for the Tanakh.
+
+     Which works belong to which canon is read here out of canon.json rather
+     than listed, because that is where the site reads it too: a check with
+     its own copy of the answer would pass while the two disagreed. */
+  const canonWorks = await page.evaluate(async () => {
+    const canon = await (await fetch('data/canon.json')).json();
+    const out = {};
+    canon.canons.forEach(c => { out[c] = []; });
+    canon.books.forEach(b => Object.keys(b.canons).forEach(
+      c => out[c] && b.works.forEach(w => out[c].push(w))));
+    return out;
+  });
+
+  // The work id is the third segment of "#/read/<work>/<chapter>".
+  const worksIn = () => page.evaluate(() => Array.from(
+    document.querySelectorAll('.result-ref a'),
+    a => a.getAttribute('href').split('/')[2]));
+
+  await page.goto(ctx.base + '#/search/shepherd');
+  await settled(page);
+  const everywhere = await worksIn();
+  const uncanonical = everywhere.filter(w => !Object.keys(canonWorks).some(
+    c => canonWorks[c].indexOf(w) >= 0));
+
+  t.check('the whole library answers with books no canon holds',
+          everywhere.length === EXPECT.shepherd && uncanonical.length > 0,
+          everywhere.length + ' hits, ' + uncanonical.length + ' outside every canon');
+
+  await page.goto(ctx.base + '#/search/shepherd/canon:tanakh');
+  await settled(page);
+  const jewish = await worksIn();
+
+  t.check('searching a canon returns that canon and nothing else',
+          jewish.length === EXPECT.shepherdJewish &&
+          jewish.every(w => canonWorks.tanakh.indexOf(w) >= 0),
+          jewish.length + ' of ' + EXPECT.shepherdJewish + ', ' +
+          jewish.filter(w => canonWorks.tanakh.indexOf(w) < 0).length + ' from outside it');
+
+  t.check('and the canon it names, not one of the wider ones',
+          await page.evaluate(() =>
+            document.querySelector('select[aria-label="Which books to search"]').value) ===
+          'canon:tanakh' &&
+          /in the Jewish canon/.test(
+            await page.evaluate(() => document.querySelector('.muted').textContent)),
+          await page.evaluate(() => document.querySelector('.muted').textContent));
+
+  /* The canons nest, in canon.json and in history: every book of the Tanakh
+     is in the Protestant canon, that inside the Catholic, that inside the
+     Orthodox, that inside the Ethiopian. So a wider canon can never answer
+     with less than a narrower one, and for a word this common it answers
+     with more at every step. */
+  const scopedCount = async (scope) => {
+    await page.goto(ctx.base + '#/search/shepherd/canon:' + scope);
+    await settled(page);
+    return page.locator('.result').count();
+  };
+  const protestant = await scopedCount('protestant');
+  const ethiopian = await scopedCount('ethiopian');
+  t.check('a wider canon answers with at least as much as a narrower one',
+          jewish.length < protestant && protestant < ethiopian &&
+          ethiopian < EXPECT.shepherd,
+          [EXPECT.shepherdJewish, protestant, ethiopian, EXPECT.shepherd].join(' < '));
+
+  /* Absent from your canon and absent from the volume are different facts,
+     and a reader told the second when the first is true goes away believing
+     the library does not have the book. Mastema is all through Jubilees,
+     which the Ethiopian canon receives and the Tanakh does not. */
+  await page.goto(ctx.base + '#/search/mastema/canon:tanakh');
+  await settled(page);
+  t.check('a canon with no match says so about the canon, not the library',
+          await page.locator('.result').count() === 0 &&
+          /No verse in the Jewish canon matched/.test(
+            await page.evaluate(() => document.querySelector('.muted').textContent)),
+          await page.evaluate(() => document.querySelector('.muted').textContent));
+
+  // Kept in the URL, like the book, so it can be shared and come back to.
+  await page.goto(ctx.base + '#/search/shepherd');
+  await settled(page);
+  await page.selectOption('select[aria-label="Which books to search"]', 'canon:ethiopian');
+  await settled(page);
+  await page.waitForTimeout(300);
+  t.check('the chosen canon is in the URL, so a narrowed search can be kept',
+          await page.evaluate(() => location.hash) === '#/search/shepherd/canon:ethiopian',
+          await page.evaluate(() => location.hash));
+
+  /* And every book is still every book -- the thing the narrowing is there
+     to be an alternative to, not a replacement for. */
+  await page.selectOption('select[aria-label="Which books to search"]', '');
+  await settled(page);
+  await page.waitForTimeout(300);
+  t.check('and every book is still one of the choices',
+          await page.locator('.result').count() === EXPECT.shepherd &&
+          await page.evaluate(() => location.hash) === '#/search/shepherd',
+          await page.locator('.result').count() + ' hits at ' +
+          await page.evaluate(() => location.hash));
 
   await page.close();
 };
