@@ -34,6 +34,11 @@ const EXPECT = {
   /* And in the works no canon holds at all, which is the same question asked
      from the other side. */
   shepherdLeftOut: 30,
+  /* And the verses outside one reader's own canon rather than outside all
+     five: 175 less the 99 the Protestant canon holds. Sirach, Judith,
+     Jubilees and Enoch are in it and not in the thirty above, which is the
+     difference the setting exists to make. */
+  shepherdOutsideProtestant: 76,
   /* Horeb is named in Deuteronomy 5, which this volume prints twice: once in
      Deuteronomy and once on its own beside the Nash Papyrus. The second
      printing belongs to no canon's book list, and must still never be
@@ -567,6 +572,98 @@ module.exports = async function search(t, ctx) {
             scopedRows.length + ' rows, ' +
             scopedRows.filter(r => r.marked).length + ' marked');
   }
+
+  /* ---- measured against the reader's own canon ----
+
+     "Outside every canon" is the only thing the page can say to a reader it
+     knows nothing about, and it is not the question most people are asking.
+     Somebody who keeps the Protestant canon is not helped by 1 Enoch going
+     unmarked because the Ethiopian church receives it: for them that is
+     precisely a book their Bible does not have. So they can say which canon
+     is theirs, and the mark is measured against that instead. */
+  const mine = 'select[aria-label="Mark verses not in this canon"]';
+
+  await page.goto(ctx.base + '#/search/shepherd');
+  await settled(page);
+  t.check('the page asks whose canon to measure by, and assumes none',
+          await page.locator(mine).count() === 1 &&
+          await page.inputValue(mine) === '' &&
+          /Mark verses not in/.test(await page.textContent('.marking')),
+          (await page.textContent('.marking') || '').slice(0, 30));
+
+  await page.selectOption(mine, 'protestant');
+  await settled(page);
+  await page.waitForTimeout(300);
+  const byProtestant = await rows();
+  const inProtestant = (w) => canonWorks.protestant.indexOf(w) >= 0;
+
+  t.check('choosing a canon marks what that canon does not hold',
+          byProtestant.filter(r => r.marked).length === EXPECT.shepherdOutsideProtestant &&
+          byProtestant.every(r => r.marked ===
+            (!inProtestant(r.work) && excerpts.indexOf(r.work) < 0)),
+          byProtestant.filter(r => r.marked).length + ' of ' +
+          EXPECT.shepherdOutsideProtestant);
+
+  t.check('and the mark names the canon it was measured against',
+          /outside the Protestant canon/.test(
+            (byProtestant.find(r => r.marked) || {}).said || ''),
+          (byProtestant.find(r => r.marked) || {}).said || '(nothing said)');
+
+  /* The books the five canons disagree about are the point of the setting:
+     under "every canon" Sirach and Enoch go unmarked, because somebody
+     receives them. Under a Protestant reader's canon they do not. */
+  t.check('a book another tradition receives is outside this reader\'s canon',
+          ['sirach-ecclesiasticus', 'jubilees', 'judith'].every(w =>
+            byProtestant.some(r => r.work === w && r.marked)),
+          ['sirach-ecclesiasticus', 'jubilees', 'judith']
+            .filter(w => byProtestant.some(r => r.work === w && r.marked)).join(' '));
+
+  /* A question about your own Bible has the same answer tomorrow. */
+  await page.goto(ctx.base + '#/search/horeb');
+  await settled(page);
+  const horebMine = await rows();
+  t.check('the answer is remembered, and applies to the next search',
+          await page.inputValue(mine) === 'protestant' &&
+          horebMine.some(r => r.marked),
+          await page.inputValue(mine) + ', ' +
+          horebMine.filter(r => r.marked).length + ' marked');
+
+  t.check('and the chapter printed twice is still never marked',
+          horebMine.every(r => r.work !== 'deuteronomy-5-the-decalogue' || !r.marked),
+          horebMine.filter(r => r.marked).map(r => r.work).join(' '));
+
+  /* Inside the reader's own canon there is nothing to mark; inside a wider
+     one there is, and that is the case the scope cannot answer on its own. */
+  await page.goto(ctx.base + '#/search/shepherd/canon:protestant');
+  await settled(page);
+  const insideMine = await rows();
+  await page.goto(ctx.base + '#/search/shepherd/canon:ethiopian');
+  await settled(page);
+  const widerThanMine = await rows();
+
+  t.check('a scope inside the reader\'s canon marks nothing',
+          insideMine.length > 0 && insideMine.every(r => !r.marked),
+          insideMine.filter(r => r.marked).length + ' marked of ' + insideMine.length);
+
+  t.check('and a canon wider than theirs marks what it adds',
+          widerThanMine.some(r => r.marked) &&
+          widerThanMine.every(r => r.marked ===
+            (!inProtestant(r.work) && excerpts.indexOf(r.work) < 0)),
+          widerThanMine.filter(r => r.marked).length + ' marked of ' +
+          widerThanMine.length);
+
+  // And back to no canon of one's own, which is where every reader starts.
+  await page.goto(ctx.base + '#/search/shepherd');
+  await settled(page);
+  await page.selectOption(mine, '');
+  await settled(page);
+  await page.waitForTimeout(300);
+  const backToAny = await rows();
+  t.check('and it can be given back, leaving the honest default',
+          backToAny.filter(r => r.marked).length === EXPECT.shepherdLeftOut &&
+          /outside every canon/.test((backToAny.find(r => r.marked) || {}).said || ''),
+          backToAny.filter(r => r.marked).length + ' marked, ' +
+          ((backToAny.find(r => r.marked) || {}).said || '(nothing said)'));
 
   await page.close();
 };

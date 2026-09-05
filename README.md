@@ -964,11 +964,24 @@ to read the whole library and know what they are reading. On that page the
 question was answered by recognising the title, which works for Psalms and
 not for Barnabas — so it worked least well for the reader who most needed it.
 A verse from a work no canon receives now carries `outside every canon` beside
-its reference. Only under every book: inside a canon nothing is outside it,
-inside one book the answer is the same on every row, and under the books left
-out every row would carry the same badge. And only on the works that earn it —
-the Decalogue reprinted beside the Nash Papyrus is scripture in both places
-and is marked in neither.
+its reference. Only on the works that earn it — the Decalogue reprinted beside
+the Nash Papyrus is scripture in both places and is marked in neither — and
+only where the mark divides the results: inside one book, or inside the canon
+being measured by, it would land on every row or on none, which is the scope's
+own sentence printed again on every line.
+
+**Measured against the reader's own canon, if they say which it is.** Outside
+every canon is the only thing this page can say to a reader it knows nothing
+about, and it is not the question most people are asking. Somebody who keeps
+the Protestant canon is not helped by 1 Enoch going unmarked because the
+Ethiopian church receives it: for them that is exactly a book their Bible does
+not have. So a line under the search controls reads *Mark verses not in [any
+canon]*, the five are the other choices, and the answer is remembered in
+`localStorage` — a question about your own Bible has the same answer tomorrow.
+Under the Protestant canon, `shepherd` marks 76 of its 175 verses rather than
+30, Sirach and Judith and Jubilees among them. The five reprinted chapters are
+never marked under any of the six settings, which is the same guard as before
+doing the same job.
 
 **It can be installed to a home screen, on both kinds of phone.**
 `docs/site.webmanifest` names the site, its two colours and its icons, and
