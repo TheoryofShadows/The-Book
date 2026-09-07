@@ -71,7 +71,7 @@ const spanText = make();
 process.stdout.write(JSON.stringify(JSON.parse(process.argv[2]).map(spanText)));
 """
     out = subprocess.run(["node", "-e", script, APP_JS, json.dumps(spans)],
-                         capture_output=True, text=True)
+                         capture_output=True, text=True, encoding="utf-8")
     if out.returncode != 0:
         raise AssertionError("could not run the reader's spanText:\n"
                              + out.stderr.strip())
