@@ -857,16 +857,63 @@ def not_found_page(out_dir):
     write(os.path.join(out_dir, "404.html"), page)
 
 
-def sitemap(out_dir, urls):
+NL = chr(10)
+
+
+def sitemap(out_dir, urls, changed=None):
+    """Every page, and when it last changed.
+
+    The date is as much the point of this file as the list is. Without a
+    lastmod a crawler cannot tell a page it read last week from one rewritten
+    since, so it either re-reads everything or -- on 2,724 pages with no
+    particular standing -- re-reads very little. Google uses the date while
+    the dates are consistent and verifiable, and discounts the whole file
+    once it catches a site stamping every page with today.
+
+    So this is the date the text last moved, not the build time. A rebuild
+    that changes nothing must not move it: that is the lie that gets the file
+    discounted.
+    """
     if len(set(urls)) != len(urls):
         raise SystemExit("sitemap: %d URLs, %d of them distinct"
                          % (len(urls), len(set(urls))))
-    lines = ['<?xml version="1.0" encoding="UTF-8"?>',
-             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    if changed is None:
+        changed = source_date()
+    out = ['<?xml version="1.0" encoding="UTF-8"?>',
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
-        lines.append("  <url><loc>%s</loc></url>" % e(u))
-    lines.append("</urlset>")
-    write(os.path.join(out_dir, "sitemap.xml"), "\n".join(lines) + "\n")
+        out.append("  <url><loc>%s</loc><lastmod>%s</lastmod></url>"
+                   % (e(u), changed))
+    out.append("</urlset>")
+    write(os.path.join(out_dir, "sitemap.xml"), NL.join(out) + NL)
+
+
+def source_date():
+    """When the text last changed, as YYYY-MM-DD.
+
+    Asked of git, which is the only record of when the library moved rather
+    than when somebody happened to run the build. Falls back to the mtime of
+    the source text where there is no history to ask -- a tarball, a shallow
+    checkout -- which answers the same question less precisely rather than a
+    different one.
+    """
+    import subprocess, datetime
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
+    try:
+        got = subprocess.run(
+            ["git", "-C", root, "log", "-1", "--format=%cs",
+             "--", "source", "docs/data"],
+            capture_output=True, text=True, encoding="utf-8", timeout=20)
+        stamp = (got.stdout or "").strip()
+        if len(stamp) == 10 and stamp[4] == "-":
+            return stamp
+    except Exception:
+        pass
+    src = os.path.join(root, "source", "THE_BOOK_COMPLETE.txt")
+    try:
+        return datetime.date.fromtimestamp(os.path.getmtime(src)).isoformat()
+    except OSError:
+        return datetime.date.today().isoformat()
 
 
 def robots(out_dir):
