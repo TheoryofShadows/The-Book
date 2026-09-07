@@ -79,7 +79,15 @@ because three of them (configure-pages, upload-pages-artifact, deploy-pages)
 sit on the deploy path, and the deploy job only ever runs on `main` — so
 merging is the first time they run for real. Watch that run.
 
-Push and open PRs when you want them in.
+Both are pushed and open:
+
+- **PR #40** — the two Windows fixes. https://github.com/TheoryofShadows/The-Book/pull/40
+- **PR #41** — the actions bump. https://github.com/TheoryofShadows/The-Book/pull/41
+
+A first red mark on either is probably not real: the workflow cancels its own
+older run when a branch push and a pull request land on the same commit
+("Canceling since a higher priority waiting request exists"), which is
+checks.yml working as its comments describe. Read the newest run.
 
 ## Packages — checked, nothing to do
 
