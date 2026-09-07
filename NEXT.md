@@ -50,6 +50,12 @@ full-library render is running in it. Auditions of seven
 voices on Psalm 23 are in `dist/voice-audition/`. It was picked: the deep British male reading, which is the register most
 people have heard scripture read in.
 
+**Resuming:** the render skips chapters that already have both files, so it is
+safe to stop and safe to re-run. Same command as above. Full instructions,
+including the upload, are in `dist/RESUME-RENDER.txt`. Do not change the voice
+partway: the skip keys on the file existing, not on which voice made it, so a
+change mid-run leaves the library in two voices.
+
 ### Uploading (needs your account — not automatable from here)
 
 1.79 GB will not fit the Pages artifact (1 GB cap), which is why it goes to
