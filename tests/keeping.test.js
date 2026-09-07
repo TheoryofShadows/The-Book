@@ -345,4 +345,61 @@ module.exports = async function keeping(t, ctx) {
     await page.close();
   }
 
+  /* The cap, which used to be silent.
+   *
+   * Saving the 501st verse dropped the one saved first, announced "Saved",
+   * and told nobody. It is still the oldest that goes -- there is no better
+   * answer once the room is gone -- but the reader is told, and warned before
+   * it happens while a copy would still save everything.
+   */
+  {
+    const page = await ctx.browser.newPage();
+    const full = [];
+    for (let i = 0; i < 500; i++) {
+      full.push({ id: 'filler/' + i, kind: 'verse', work: 'genesis',
+                  workTitle: 'Genesis', chapter: 0, v: i,
+                  t: 'verse ' + i, label: 'Chapter 1', at: i + 1 });
+    }
+    // Oldest last: the list is newest-first, so this is the one at risk.
+    full[499] = { ...full[499], id: 'oldest/one', t: 'the first one kept', at: 1 };
+    await seed(page, 'saved', full);
+
+    await page.goto(ctx.base + '#/saved');
+    await page.waitForSelector('.warn, .saved-row');
+    t.check('at the cap the page says so before anything is lost',
+            (await page.locator('.warn').count()) > 0,
+            (await page.locator('.warn').first().textContent() || '').slice(0, 70));
+
+    const label = await saveFirstVerse(page, ctx.base, '#/read/amos/2');
+    void label;
+    const after = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('thebook:saved') || '[]'));
+    t.check('and the 501st save still keeps only the cap',
+            after.length === 500, String(after.length));
+    t.check('and it is the oldest that went, not the newest',
+            !after.some(s => s.id === 'oldest/one') &&
+            after.length === 500);
+    await page.close();
+  }
+
+  /* And the announcement says it, rather than reporting a plain save. */
+  {
+    const page = await ctx.browser.newPage();
+    const full = [];
+    for (let i = 0; i < 500; i++) {
+      full.push({ id: 'filler/' + i, kind: 'verse', work: 'genesis',
+                  workTitle: 'Genesis', chapter: 0, v: i,
+                  t: 'verse ' + i, label: 'Chapter 1', at: i + 1 });
+    }
+    await seed(page, 'saved', full);
+    await saveFirstVerse(page, ctx.base, '#/read/amos/2');
+    /* announce() clears the region and refills it 60ms later, so that a
+       screen reader treats a repeated message as new. Read it after. */
+    await page.waitForTimeout(300);
+    const said = (await page.locator('.sr-only[role=status]').textContent()) || '';
+    t.check('the reader is told the oldest was removed',
+            /oldest was removed/i.test(said), said.slice(0, 110));
+    await page.close();
+  }
+
 };

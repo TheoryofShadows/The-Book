@@ -445,4 +445,27 @@ module.exports = async function diary(t, ctx) {
     await page.close();
   }
 
+  /* The cap, which matters more here than on the saved list. A verse dropped
+     at the cap can be saved again in a second; an entry dropped at the cap is
+     writing nobody can reproduce. */
+  {
+    const page = await ctx.browser.newPage();
+    const many = [];
+    for (let i = 0; i < 950; i++) {
+      many.push({ id: '2026-01-01T00:00:' + String(i % 60).padStart(2, '0') + '.' +
+                      String(i).padStart(3, '0') + 'Z',
+                  day: '2026-01-01', ref: null, why: '', took: 'entry ' + i,
+                  mark: null });
+    }
+    await seed(page, 'diary', many);
+    await page.goto(ctx.base + '#/diary');
+    await page.waitForSelector('.warn');
+    const warn = (await page.locator('.warn').first().textContent()) || '';
+    t.check('nearing the cap the diary says so while a copy still saves everything',
+            /most this browser is asked to hold/i.test(warn), warn.slice(0, 80));
+    t.check('and names the number, so it is a fact rather than a scold',
+            /950/.test(warn) && /1000/.test(warn), warn.slice(0, 80));
+    await page.close();
+  }
+
 };
