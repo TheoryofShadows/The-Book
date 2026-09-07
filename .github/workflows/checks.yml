@@ -43,14 +43,14 @@ jobs:
     name: The build scripts do what they say
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       # Node too: one of these runs the reader's own copy of the text-folding
       # rule against the Python one, and skips itself if node is missing --
       # which would quietly stop checking the thing it exists to check.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
       - name: Unit tests
@@ -62,8 +62,8 @@ jobs:
     name: Data matches the source text
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Rebuild every data file from source
@@ -112,8 +112,8 @@ jobs:
     name: The recorded reading has something on the end of it
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       # Exits zero with a "skip" line if archive.org cannot be reached: an
@@ -126,11 +126,11 @@ jobs:
     name: The reader works in a browser
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       # Playwright's own Chromium, pinned by tests/package-lock.json.
