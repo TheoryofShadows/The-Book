@@ -10,6 +10,21 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Which command runs Python. "python3" is the name on the CI runners and on
+# macOS; Windows has "py" instead, and the python3.exe on its PATH is a
+# Microsoft Store stub that opens the Store rather than running anything -- so
+# the name is asked for its version and only believed if it answers with one.
+PY=""
+for c in "$PY" python py; do
+  if command -v "$c" >/dev/null 2>&1 && "$c" --version 2>&1 | grep -q "^Python 3\."; then
+    PY="$c"; break
+  fi
+done
+if [ -z "$PY" ]; then
+  echo "no Python 3 interpreter found (tried python3, python, py)" >&2
+  exit 1
+fi
+
 if ! command -v node >/dev/null 2>&1; then
   echo "Node is needed for the browser checks: https://nodejs.org" >&2
   exit 2
@@ -29,7 +44,7 @@ fi
 # require waiting a minute for Chromium to finish.
 if [ "$#" -eq 0 ]; then
   echo "==> the build scripts"
-  python3 -m unittest discover -s tests/python -t tests/python
+  "$PY" -m unittest discover -s tests/python -t tests/python
   echo
   echo "==> the reader"
 fi

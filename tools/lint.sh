@@ -13,11 +13,26 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Which command runs Python. "python3" is the name on the CI runners and on
+# macOS; Windows has "py" instead, and the python3.exe on its PATH is a
+# Microsoft Store stub that opens the Store rather than running anything -- so
+# the name is asked for its version and only believed if it answers with one.
+PY=""
+for c in "$PY" python py; do
+  if command -v "$c" >/dev/null 2>&1 && "$c" --version 2>&1 | grep -q "^Python 3\."; then
+    PY="$c"; break
+  fi
+done
+if [ -z "$PY" ]; then
+  echo "no Python 3 interpreter found (tried python3, python, py)" >&2
+  exit 1
+fi
+
 fail=0
 
 echo "==> python"
 for f in tools/*.py tests/python/*.py; do
-  if ! python3 -m py_compile "$f" 2>&1; then
+  if ! "$PY" -m py_compile "$f" 2>&1; then
     echo "  FAIL  $f" >&2
     fail=1
   fi
@@ -51,12 +66,12 @@ fi
 # palette: --gilt sat in all three themes for a year unused, and --rubric-bg
 # went the same way. A colour nothing uses is a colour nobody maintains.
 echo "==> stylesheet"
-python3 tools/lint_css.py
+"$PY" tools/lint_css.py
 style=$?
 [ "$style" -eq 0 ] || fail=1
 
 echo "==> data"
-python3 - <<'PY'
+"$PY" - <<'PY'
 import json
 import os
 import sys
