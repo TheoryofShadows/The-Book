@@ -1934,3 +1934,139 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
      to. They keep the size a settings row can have. */
   .player-opts .player-btn { width: 2.2rem; height: 2.2rem; }
 }
+
+/* ---------------- the diary ----------------
+
+   A page that holds a reader's own paragraphs rather than the text, so it is
+   set like something written rather than something published: the same
+   measure as the reader, and no ornament competing with what they wrote. */
+
+.diary-where {
+  color: var(--ink-soft);
+  border-left: 3px solid var(--rule);
+  padding-left: 0.9rem;
+  margin: 1rem 0 1.4rem;
+  max-width: 46rem;
+}
+
+.diary-shape {
+  color: var(--ink-soft);
+  margin: 0 0 1.6rem;
+}
+
+.diary-keep {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.2rem 0 0;
+}
+
+.diary-day {
+  font-size: 1.05rem;
+  color: var(--ink-faint);
+  border-bottom: 1px solid var(--rule-soft);
+  padding-bottom: 0.3rem;
+  margin: 2rem 0 1rem;
+}
+
+.diary-entry {
+  border-left: 3px solid var(--rule-soft);
+  padding: 0 0 0 1rem;
+  margin: 0 0 1.6rem;
+  max-width: 46rem;
+}
+
+.diary-ref a { font-weight: 600; }
+
+.diary-why {
+  color: var(--ink-soft);
+  font-style: italic;
+  margin: 0.2rem 0 0.6rem;
+}
+
+/* The reader's own words. Kept at reading measure and left to breathe --
+   white-space: pre-wrap so the paragraphs they typed stay the paragraphs
+   they typed. */
+.diary-took {
+  white-space: pre-wrap;
+  margin: 0 0 0.6rem;
+}
+
+.diary-mark {
+  display: inline-block;
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.1rem 0.7rem;
+  margin: 0 0 0.4rem;
+}
+
+.diary-form { max-width: 46rem; }
+
+.diary-form label {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  margin: 0.9rem 0 0.25rem;
+}
+
+.diary-form textarea {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0.55rem 0.7rem;
+  resize: vertical;
+}
+
+.diary-reading {
+  color: var(--ink-faint);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.diary-marks {
+  border: 0;
+  padding: 0;
+  margin: 1rem 0 0;
+}
+
+.diary-marks legend {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  padding: 0;
+}
+
+.diary-marks label {
+  display: inline-block;
+  margin: 0 0.9rem 0 0.25rem;
+  color: var(--ink-soft);
+}
+
+.diary-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 1.1rem 0 0;
+}
+
+.diary-status { color: var(--ink-soft); margin: 0; }
+
+.diary-inline {
+  border-left: 3px solid var(--accent);
+  padding-left: 1rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.diary-kept { color: var(--ink-soft); margin: 0; }
+
+.diary-new { margin: 0 0 1.5rem; }
+
+.diary-new summary {
+  cursor: pointer;
+  color: var(--accent);
+  padding: 0.3rem 0;
+}

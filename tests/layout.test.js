@@ -38,9 +38,13 @@ module.exports = async function layout(t, ctx) {
         const b = a.getBoundingClientRect();
         return { text: a.textContent.trim(), on: b.left >= -1 && b.right <= vw + 1 && b.width > 0 };
       }), width);
+    /* The count is asserted as well as the fitting, because a link that
+       vanished would otherwise pass this: seven of seven on screen reads the
+       same as eight of eight. It moved to eight when the diary was added. */
     t.check(`${width}px: every nav link is fully on screen`,
-            links.length === 7 && links.every(l => l.on),
-            links.filter(l => !l.on).map(l => l.text).join(', ') || 'all seven');
+            links.length === 8 && links.every(l => l.on),
+            links.filter(l => !l.on).map(l => l.text).join(', ') ||
+            'all ' + links.length);
 
     const nav = await page.evaluate(() => {
       const b = document.querySelector('.nav').getBoundingClientRect();

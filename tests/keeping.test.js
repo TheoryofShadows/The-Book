@@ -275,9 +275,11 @@ module.exports = async function keeping(t, ctx) {
     const text = require('fs').readFileSync(file, 'utf8');
     let parsed = null;
     try { parsed = JSON.parse(text); } catch (e) { /* reported next */ }
+    /* Version 2 since the diary: the file carries both halves. A version 1
+       file still restores, which diary.test.js holds. */
     t.check('and it is JSON that says what it is',
-            !!parsed && parsed.format === 'thebook.saved' && parsed.version === 1,
-            parsed ? parsed.format : 'did not parse');
+            !!parsed && parsed.format === 'thebook.saved' && parsed.version === 2,
+            parsed ? parsed.format + ' v' + parsed.version : 'did not parse');
     t.check('and holds everything that was saved',
             !!parsed && parsed.items.length === before,
             parsed ? parsed.items.length + ' of ' + before : 'none');

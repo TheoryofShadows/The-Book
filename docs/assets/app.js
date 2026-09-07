@@ -832,6 +832,46 @@
             e.currentTarget.setAttribute("aria-pressed", marked ? "true" : "false");
           }
         }),
+        /* Opened in place rather than on the diary page. This is the moment
+           somebody wants to write about what they have just read, and
+           sending them to another route to do it loses the thought on the
+           way. The reference is filled in because they are standing in it. */
+        el("button", {
+          class: "chip", "aria-expanded": "false",
+          text: "✎ Write about this",
+          title: "Keep a diary entry about this chapter",
+          onclick: function (e) {
+            var btn = e.currentTarget;
+            var open = btn.getAttribute("aria-expanded") === "true";
+            var existing = document.getElementById("chapter-diary");
+            if (open) {
+              if (existing) existing.remove();
+              btn.setAttribute("aria-expanded", "false");
+              return;
+            }
+            var box = el("div", { class: "diary-inline", id: "chapter-diary" }, [
+              diaryForm({
+                work: workId, chapter: idx,
+                workTitle: meta.title,
+                title: chapter.label || (meta.title + " " + idx)
+              }, function () {
+                var done = document.getElementById("chapter-diary");
+                if (done) {
+                  done.innerHTML = "";
+                  done.appendChild(el("p", { class: "diary-kept" }, [
+                    "Kept. ",
+                    el("a", { href: "#/diary", text: "Read your diary" })
+                  ]));
+                }
+                btn.setAttribute("aria-expanded", "false");
+              })
+            ]);
+            controls.parentNode.insertBefore(box, controls.nextSibling);
+            btn.setAttribute("aria-expanded", "true");
+            var first = box.querySelector("textarea");
+            if (first) first.focus();
+          }
+        }),
         el("button", {
           class: "chip", "aria-pressed": perLine ? "true" : "false",
           text: "One verse per line",
@@ -1446,11 +1486,11 @@
      is the copy that survives that -- and the only way to carry saved verses
      to another browser, or between this site and the same site installed to
      a home screen, which do not share storage. */
-  function saveFile(text, button, name) {
+  function saveFile(text, button, name, type) {
     var stamp = new Date().toISOString().slice(0, 10);
     var url;
     try {
-      url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+      url = URL.createObjectURL(new Blob([text], { type: type || "application/json" }));
     } catch (e) {
       announce("This browser would not let the page write a file.");
       flash(button, "Could not write");
@@ -5234,6 +5274,391 @@
      SAVED
      ================================================================ */
 
+  /* The backup file, shared by the saved page and the diary. One format and
+     one builder, so the two pages cannot drift into writing different files.
+   */
+  var BACKUP_FORMAT = "thebook.saved";
+
+  function backupAll() {
+    var diary = diaryEntries();
+    if (diary.length) store.set("diary-exported", localDay(new Date()));
+    return JSON.stringify({
+      format: BACKUP_FORMAT,
+      version: 2,
+      exported: new Date().toISOString(),
+      items: savedItems(),
+      diary: diary
+    }, null, 2);
+  }
+
+  /* ---------------- the diary ----------------
+
+     The first thing on this site that holds a reader's own words rather than
+     the text, which changes what the storage rules have to be.
+
+     A verse can be saved again in a second. A paragraph somebody wrote about
+     their own life cannot be written again, and they will not find out it is
+     gone until the day they come back for it. The browser gives no warning:
+     Safari's seven-day cap, a cleared site, a new phone, a reinstall. The
+     comment above the backup pair says this already and it is the reason
+     that pair exists.
+
+     So this page does three things the saved list does not, and they are the
+     whole design:
+
+     It asks for persistent storage the moment an entry is written rather
+     than waiting -- persist() is the strongest promise a browser makes, and
+     it is worth asking for before there is something to lose rather than
+     after.
+
+     It keeps a second copy under its own key, written first. A diary is
+     small enough that two copies cost nothing, and the failure this guards
+     is the one that actually happens: a half-written array from a tab closed
+     mid-write, or a quota that struck between reading and writing. The copy
+     is only released when the main write is known to have landed.
+
+     And it says, on the page, where the entries live and when they were last
+     exported, because the honest sentence is the whole point of this site.
+     A diary that implied permanence it does not have would be exactly the
+     plausible sentence this project would rather print a hole than write. */
+
+  var DIARY_KEY = "diary";
+  var DIARY_SHADOW = "diary-copy";
+  var DIARY_CAP = 1000;
+
+  /* The marks. Not a scale and deliberately not orderable: they are a way
+     back to a passage months later, not a score out of four. Nothing
+     averages them and nothing ranks a book by them. */
+  var MARKS = [
+    { id: "settled", label: "Settled something" },
+    { id: "unsettled", label: "Unsettled me" },
+    { id: "unclear", label: "Still unclear" },
+    { id: "stayed", label: "Stayed with me" }
+  ];
+
+  function diaryEntries() {
+    var main = store.get(DIARY_KEY, null);
+    if (Array.isArray(main)) return main;
+    /* The main key is gone or unreadable and the shadow is not. This is the
+       case the second copy exists for, so it is used rather than reported:
+       an empty diary shown to somebody who wrote in it is the worst outcome
+       available. */
+    var shadow = store.get(DIARY_SHADOW, null);
+    return Array.isArray(shadow) ? shadow : [];
+  }
+
+  /* Written shadow-first, so that the moment where neither copy is whole is
+     as small as it can be made in an API with no transaction. Returns
+     whether the entry is really on disk -- the caller promises the reader
+     nothing until this is true. */
+  function writeDiary(list) {
+    var trimmed = list.slice(0, DIARY_CAP);
+    store.set(DIARY_SHADOW, trimmed);
+    if (!store.set(DIARY_KEY, trimmed)) return false;
+    keepStorage();
+    return true;
+  }
+
+  /* The local day, not the UTC one. An entry written at eleven at night
+     belongs to that evening, and a reader in Auckland should not find it
+     filed under yesterday. */
+  function localDay(d) {
+    var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+
+  function dayLabel(day) {
+    var parts = day.split("-");
+    var d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+    return d.toLocaleDateString(undefined,
+      { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  }
+
+  function addDiaryEntry(entry) {
+    var list = diaryEntries();
+    list.unshift(entry);
+    return writeDiary(list);
+  }
+
+  function removeDiaryEntry(id) {
+    return writeDiary(diaryEntries().filter(function (e) { return e.id !== id; }));
+  }
+
+  /* What the reader has actually been reading. Facts -- how many sittings,
+     over what span, which books recur -- and no more than that. Not a
+     streak: a chain of unbroken days makes a missed day a failure and turns
+     reading into scorekeeping, which is this site telling somebody how they
+     are doing at scripture. It has no business doing that. */
+  function diaryShape(list) {
+    if (!list.length) return null;
+    var days = {}, works = {};
+    list.forEach(function (e) {
+      days[e.day] = true;
+      if (e.ref && e.ref.workTitle) {
+        works[e.ref.workTitle] = (works[e.ref.workTitle] || 0) + 1;
+      }
+    });
+    var top = Object.keys(works).sort(function (a, b) {
+      return works[b] - works[a] || a.localeCompare(b);
+    }).slice(0, 3);
+    var dayList = Object.keys(days).sort();
+    return {
+      entries: list.length,
+      days: dayList.length,
+      first: dayList[0],
+      last: dayList[dayList.length - 1],
+      works: top
+    };
+  }
+
+  /* The plain-text copy. The JSON backup below carries the diary too, but a
+     reader who has stopped using this site should be able to keep what they
+     wrote without this site being involved in reading it back. Dated
+     headings and their paragraphs: printable, pasteable, and legible in
+     fifty years by anything that can open a text file. */
+  function diaryAsText(list) {
+    var out = ["My reading diary", "Kept at thebookandme.com",
+               "Exported " + new Date().toLocaleString(), "", ""];
+    var day = null;
+    list.slice().sort(function (a, b) { return a.id < b.id ? -1 : 1; })
+      .forEach(function (e) {
+        if (e.day !== day) {
+          day = e.day;
+          out.push(dayLabel(day), "".padEnd ? "".padEnd(dayLabel(day).length, "-")
+                                            : "----------", "");
+        }
+        if (e.ref) out.push("Read: " + e.ref.title);
+        if (e.why) out.push("Why today: " + e.why);
+        if (e.took) out.push("", e.took);
+        if (e.mark) {
+          var m = MARKS.filter(function (x) { return x.id === e.mark; })[0];
+          if (m) out.push("", "[" + m.label + "]");
+        }
+        out.push("", "");
+      });
+    return out.join("\n");
+  }
+
+  /* The form. Used on the diary page and, with a reference already in it,
+     from the chapter a reader is sitting in -- which is the moment somebody
+     wants to write, and sending them elsewhere to do it loses the thought. */
+  function diaryForm(ref, onSaved) {
+    var form = el("form", { class: "diary-form" });
+
+    form.appendChild(el("p", {
+      class: "diary-reading",
+      text: ref ? "About " + ref.title : "Not about one chapter"
+    }));
+
+    var why = el("textarea", {
+      id: "diary-why", rows: "2",
+      placeholder: "A line about why, if there was one"
+    });
+    var took = el("textarea", {
+      id: "diary-took", rows: "6",
+      placeholder: "What you took from it"
+    });
+
+    form.appendChild(el("label", { for: "diary-why", text: "Why this today" }));
+    form.appendChild(why);
+    form.appendChild(el("label", { for: "diary-took", text: "What you took from it" }));
+    form.appendChild(took);
+
+    /* Radios rather than a select, and with a way back out of the group: a
+       mark is optional and a reader who taps one by accident must be able to
+       leave it unmarked. */
+    var marks = el("fieldset", { class: "diary-marks" }, [
+      el("legend", { text: "How it landed (optional)" })
+    ]);
+    MARKS.forEach(function (m) {
+      var id = "mark-" + m.id;
+      marks.appendChild(el("input",
+        { type: "radio", name: "diary-mark", id: id, value: m.id }));
+      marks.appendChild(el("label", { for: id, text: m.label }));
+    });
+    marks.appendChild(el("button", {
+      type: "button", class: "linkish", text: "No mark",
+      onclick: function () {
+        Array.prototype.forEach.call(
+          marks.querySelectorAll("input"), function (i) { i.checked = false; });
+      }
+    }));
+    form.appendChild(marks);
+
+    var status = el("p", { class: "diary-status", role: "status" });
+    var save = el("button", { type: "submit", class: "primary", text: "Keep this entry" });
+    form.appendChild(el("div", { class: "diary-actions" }, [save, status]));
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var body = took.value.trim();
+      if (!body) {
+        status.textContent = "Nothing written yet.";
+        took.focus();
+        return;
+      }
+      var checked = form.querySelector("input[name=diary-mark]:checked");
+      var now = new Date();
+      var entry = {
+        id: now.toISOString(),
+        day: localDay(now),
+        ref: ref || null,
+        why: why.value.trim(),
+        took: body,
+        mark: checked ? checked.value : null
+      };
+      /* The order here is the promise. Nothing on screen says the entry was
+         kept until the write has returned true, and when it has not the text
+         stays exactly where it is -- in the box, selectable, still theirs to
+         copy somewhere else. Announcing a save that did not happen is how a
+         person loses something they cannot write again. */
+      if (!addDiaryEntry(entry)) {
+        status.textContent = "";
+        form.appendChild(el("p", { class: "warn", text: STORAGE_FAILED }));
+        announce(STORAGE_FAILED);
+        return;
+      }
+      why.value = "";
+      took.value = "";
+      if (checked) checked.checked = false;
+      announce("Entry kept.");
+      if (onSaved) onSaved();
+    });
+
+    return form;
+  }
+
+  function viewDiary() {
+    var wrap = el("div", { class: "wrap" });
+    wrap.appendChild(el("h1", { text: "Diary" }));
+
+    if (!store.works()) {
+      wrap.appendChild(el("p", { class: "warn", text: STORAGE_FAILED }));
+    }
+
+    var list = diaryEntries();
+
+    /* The honest sentence, and the reason this page can be trusted with
+       anything. The entries are in this browser. That is not a detail to
+       find in a settings screen after losing them -- a reader deciding
+       whether to write something real here is owed it before they do.
+
+       It also says when a copy was last taken, because "keep a copy" with no
+       date beside it is advice nobody acts on. */
+    var since = store.get("diary-exported", null);
+    var where = el("p", { class: "diary-where" }, [
+      "These entries are kept in this browser, on this device. Nothing is " +
+      "sent anywhere and nobody else can read them — which also means a " +
+      "cleared browser, a new phone or a reinstall takes them with it. ",
+      el("strong", {
+        text: since
+          ? "You last kept a copy on " + dayLabel(since) + "."
+          : "You have not kept a copy yet."
+      })
+    ]);
+    /* Beside the sentence rather than at the bottom of the page. A reader
+       who has just been told their entries live in one browser should not
+       have to go looking for the thing that fixes it.
+
+       Two files because they are for two different futures. The JSON goes
+       back into this site on another device; the text is for keeping,
+       printing, or pasting into whatever they use instead of this -- and it
+       stays readable long after this site and its format are gone, which is
+       the only honest form of "cannot be erased" a page like this can
+       offer. */
+    if (list.length) {
+      wrap.appendChild(el("div", { class: "diary-keep" }, [
+        el("button", {
+          class: "primary",
+          text: "Keep a copy",
+          title: "Writes a file with your diary and your saved verses in it",
+          onclick: function (e) {
+            saveFile(backupAll(), e.currentTarget,
+                     "the-book-" + localDay(new Date()) + ".json");
+            route();
+          }
+        }),
+        el("button", {
+          text: "As plain text",
+          title: "The diary alone, as readable text",
+          onclick: function (e) {
+            saveFile(diaryAsText(diaryEntries()), e.currentTarget,
+                     "my-reading-diary-" + localDay(new Date()) + ".txt",
+                     "text/plain");
+            store.set("diary-exported", localDay(new Date()));
+          }
+        })
+      ]));
+    }
+
+    wrap.appendChild(where);
+
+    if (!list.length) {
+      wrap.appendChild(el("p", {
+        text: "Nothing written yet. A sitting is a chapter, a reason for " +
+              "reading it today, and whatever you took from it."
+      }));
+      wrap.appendChild(diaryForm(null, function () { route(); }));
+      return wrap;
+    }
+
+    /* What they have been reading, stated. No streak, no target, no verdict
+       on the reading itself. */
+    var shape = diaryShape(list);
+    if (shape) {
+      var sentence = fmt(shape.entries) + " sitting" +
+        (shape.entries === 1 ? "" : "s") + " over " + fmt(shape.days) + " day" +
+        (shape.days === 1 ? "" : "s") +
+        (shape.first !== shape.last
+          ? ", from " + dayLabel(shape.first) + " to " + dayLabel(shape.last)
+          : "") + ".";
+      if (shape.works.length) {
+        sentence += " Most often: " + shape.works.join(", ") + ".";
+      }
+      wrap.appendChild(el("p", { class: "diary-shape", text: sentence }));
+    }
+
+    wrap.appendChild(el("details", { class: "diary-new" }, [
+      el("summary", { text: "Write an entry" }),
+      diaryForm(null, function () { route(); })
+    ]));
+
+    var day = null;
+    list.forEach(function (e) {
+      if (e.day !== day) {
+        day = e.day;
+        wrap.appendChild(el("h2", { class: "diary-day", text: dayLabel(day) }));
+      }
+      var card = el("article", { class: "diary-entry" });
+      if (e.ref) {
+        card.appendChild(el("p", { class: "diary-ref" }, [
+          el("a", { href: "#/read/" + e.ref.work + "/" + e.ref.chapter,
+                    text: e.ref.title })
+        ]));
+      }
+      if (e.why) {
+        card.appendChild(el("p", { class: "diary-why", text: e.why }));
+      }
+      /* text, never html: an entry is the reader's words and is shown as
+         written. Anything that looks like markup in it is theirs too. */
+      card.appendChild(el("p", { class: "diary-took", text: e.took }));
+      if (e.mark) {
+        var m = MARKS.filter(function (x) { return x.id === e.mark; })[0];
+        if (m) card.appendChild(el("p", { class: "diary-mark", text: m.label }));
+      }
+      card.appendChild(el("button", {
+        class: "linkish", text: "Remove",
+        onclick: function () {
+          if (removeDiaryEntry(e.id)) { announce("Entry removed."); route(); }
+          else announce(STORAGE_FAILED);
+        }
+      }));
+      wrap.appendChild(card);
+    });
+
+    return wrap;
+  }
+
   function viewSaved() {
     var wrap = el("div", { class: "wrap" });
     wrap.appendChild(el("h1", { text: "Saved" }));
@@ -5282,16 +5707,14 @@
        shape the reader wrote them. It is also the only way to carry saved
        verses between Safari and the same site installed to the home screen,
        which do not share storage with each other. */
-    var BACKUP_FORMAT = "thebook.saved";
 
-    var backup = function () {
-      return JSON.stringify({
-        format: BACKUP_FORMAT,
-        version: 1,
-        exported: new Date().toISOString(),
-        items: savedItems()
-      }, null, 2);
-    };
+    /* Version 2 carries the diary beside the saved verses. A version 1 file
+       restores as it always did, with no diary in it; a version 2 file
+       restores on a build that predates the diary because the restore reads
+       the keys it knows and ignores the rest. One file rather than two, so
+       that a reader who keeps a copy keeps all of it -- the diary is the
+       half that cannot be written again, and it would be the half left
+       behind by a second button nobody pressed. */
 
     /* Merged rather than replaced, and by id, so restoring onto a browser
        that already has notes adds what is missing instead of choosing one of
@@ -5320,7 +5743,40 @@
       var merged = have.concat(added);
       merged.sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
 
+
+      /* The diary half, merged by id like the verses and never replacing:
+         restoring onto a browser that already has entries adds what is
+         missing rather than choosing one of the two sets to lose. A file
+         from before the diary existed has no diary key and this does
+         nothing, which is what a version 1 restore should do. */
+      var addedDiary = 0;
+      if (Array.isArray(parsed.diary)) {
+        var haveDiary = diaryEntries();
+        var seen = {};
+        haveDiary.forEach(function (e) { seen[e.id] = true; });
+        var newOnes = parsed.diary.filter(function (e) {
+          return e && typeof e.id === "string" && typeof e.took === "string"
+                 && !seen[e.id];
+        });
+        if (newOnes.length) {
+          var mergedDiary = haveDiary.concat(newOnes);
+          mergedDiary.sort(function (a, b) { return a.id < b.id ? 1 : -1; });
+          if (writeDiary(mergedDiary)) addedDiary = newOnes.length;
+        }
+      }
+
+      /* Checked after the diary rather than before it. A file whose only new
+         content is diary entries used to stop here and say nothing was
+         added, having silently dropped them -- which is the one failure this
+         whole page is built to avoid. */
       if (!added.length) {
+        if (addedDiary) {
+          announce("Restored " + addedDiary + " diary entr" +
+                   (addedDiary === 1 ? "y" : "ies") + ".");
+          flash(button, "Restored");
+          route();
+          return;
+        }
         announce(usable.length
           ? "Everything in that file was already here."
           : "That backup has nothing in it.");
@@ -5333,8 +5789,12 @@
         return;
       }
       keepStorage();
+
+
       announce("Restored " + added.length + " saved item" +
-               (added.length === 1 ? "" : "s") + ".");
+               (added.length === 1 ? "" : "s") +
+               (addedDiary ? " and " + addedDiary + " diary entr" +
+                             (addedDiary === 1 ? "y" : "ies") : "") + ".");
       route();
     };
 
@@ -5417,7 +5877,7 @@
       el("button", {
         class: "chip", text: "Back up to a file",
         title: "Write everything saved here to a file you keep",
-        onclick: function (e) { saveFile(backup(), e.currentTarget); }
+        onclick: function (e) { saveFile(backupAll(), e.currentTarget); }
       }),
       el("button", {
         class: "chip", text: "Restore from a file",
@@ -7267,6 +7727,14 @@
         setTitle("How the dating was decided");
         main.innerHTML = "";
         main.appendChild(viewMethod(manifest));
+        window.scrollTo(0, 0);
+        return;
+      }
+      if (view === "diary") {
+        setNav("diary");
+        setTitle("Diary");
+        main.innerHTML = "";
+        main.appendChild(viewDiary());
         window.scrollTo(0, 0);
         return;
       }
