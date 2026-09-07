@@ -670,6 +670,12 @@ speech-dispatcher — is still told exactly that.
 python3 -m http.server 8000 -d docs # then open http://localhost:8000
 ```
 
+On Windows that interpreter is called `py`, not `python3` — the `python3.exe`
+on the PATH there is a Microsoft Store stub that opens the Store rather than
+running anything. Note also that `py` may default to the free-threaded build
+(3.13t), which no package with a compiled wheel publishes for; name the
+ordinary one if an install fails on an ABI it cannot find.
+
 | Tool | Does |
 | --- | --- |
 | `tools/parse_book.py` | Turns the source text into structured JSON, logging every removal |
