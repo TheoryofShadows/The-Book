@@ -161,7 +161,7 @@ module.exports = async function diary(t, ctx) {
     // that the reference is carried does.
     await page.goto(ctx.base + '#/read/psalms/23');
     await page.waitForSelector('.reader-controls');
-    await page.click('.reader-controls button:has-text("Write about this")');
+    await page.click('.reader-controls button:has-text("Diary")');
     await write(page, { took: 'Read at the graveside.' });
 
     const stored = await read(page, 'diary');

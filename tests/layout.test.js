@@ -231,6 +231,17 @@ module.exports = async function layout(t, ctx) {
       }));
       t.check('on ' + name + ', the scripture starts within its budget',
               seen.top <= 420, seen.top + 'px, budget 420');
+
+      /* The row of chips above the text, counted rather than measured. The
+         budget above is the thing that matters and this says why it moved
+         when it moves: a chip whose label is a few characters too long wraps
+         the row, and a wrapped row is about thirty pixels of scripture gone.
+         "Write about this" did exactly that and became "Diary". */
+      const chipRows = await page.evaluate(() => new Set(
+        Array.from(document.querySelectorAll('.reader-controls button'))
+          .map(b => Math.round(b.getBoundingClientRect().top))).size);
+      t.check('and the controls above it are no more than two rows',
+              chipRows <= 2, chipRows + ' row(s)');
       t.check('and is on screen when the page opens',
               seen.top < seen.vh, seen.top + 'px into a ' + seen.vh + 'px screen');
       await phone.close();

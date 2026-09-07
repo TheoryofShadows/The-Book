@@ -838,7 +838,7 @@
            way. The reference is filled in because they are standing in it. */
         el("button", {
           class: "chip", "aria-expanded": "false",
-          text: "✎ Write about this",
+          text: "✎ Diary",
           title: "Keep a diary entry about this chapter",
           onclick: function (e) {
             var btn = e.currentTarget;
