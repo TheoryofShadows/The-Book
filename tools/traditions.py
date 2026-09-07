@@ -48,8 +48,6 @@ from __future__ import annotations
 FAMILIES = ["Judaism", "Protestant Christianity", "Catholic Christianity",
             "Orthodox Christianity", "Other"]
 
-SIXTY_SIX = ""          # the common case: nothing to add beyond the canon
-
 TRADITIONS = [
     # ---- Judaism -------------------------------------------------------
     # The movements divide over authority, law and practice, and not over

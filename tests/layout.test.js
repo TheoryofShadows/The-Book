@@ -38,9 +38,13 @@ module.exports = async function layout(t, ctx) {
         const b = a.getBoundingClientRect();
         return { text: a.textContent.trim(), on: b.left >= -1 && b.right <= vw + 1 && b.width > 0 };
       }), width);
+    /* Eight since the study page got one. The count is pinned as well as the
+       fitting, because a link that quietly stopped rendering would otherwise
+       make this check easier to pass rather than harder. */
     t.check(`${width}px: every nav link is fully on screen`,
-            links.length === 7 && links.every(l => l.on),
-            links.filter(l => !l.on).map(l => l.text).join(', ') || 'all seven');
+            links.length === 8 && links.every(l => l.on),
+            links.filter(l => !l.on).map(l => l.text).join(', ') ||
+            'all eight');
 
     const nav = await page.evaluate(() => {
       const b = document.querySelector('.nav').getBoundingClientRect();

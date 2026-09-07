@@ -431,6 +431,77 @@ construction, and a browser check follows the card's link and compares the
 quoted text against the verse on the page word for word — so the card cannot
 drift into saying something *about* the text rather than quoting it.
 
+## Studying it
+
+Everything above this line is for reading. This is for the reader who is not
+passing through — who has come back, is working at it, and wants to know
+where they are in something that takes 1.22 million words to get to the end
+of. `#/study` is their page rather than the volume's: the front page is an
+argument about a library, and every number on this one is about them.
+
+Three things, and no more than three, because a study app that asks for more
+bookkeeping than it saves is one nobody opens twice.
+
+**What you have read.** A chapter carries *Mark as read* under it, beside the
+link to the next one. Deliberately a thing the reader does rather than
+something inferred from a scroll position: reaching the bottom of Psalm 119
+is not reading it, and a progress count built out of guesses is one nobody
+trusts enough to look at. The strip of chapter numbers marks what is done, in
+the link's `title` as well as in its colour, so it reaches a screen reader;
+the study page turns the marks into how far through each work you are, which
+is the number a reader actually holds — nobody is tracking 2,537 chapters,
+they are tracking Mark. A work finished drops out of *Part-way through* and is
+counted in a sentence instead, because forty rows of trophies is forty rows
+between the reader and the next thing.
+
+**What you meant to keep, coming back round.** A saved verse is a verse
+somebody wanted again, and "again" used to mean scrolling the saved page,
+which works at twenty and not at two hundred. `#/review` shows the reference
+first — the trying is the part that works, not the reading — and the reader
+turns it over and says whether they had it. It is a plain Leitner schedule of six
+boxes — ten minutes, then 1, 3, 7, 21 and 60 days — so a failed verse comes
+back the same sitting but not as the very next card: the difference between this and a tuned SM-2
+is smaller than the difference between doing it and not. The schedule lives
+in its own key rather than on the saved item, so removing a verse and saving
+it again does not silently reset a month of it. Saved *chapters* never appear
+— there is nothing to recall about a chapter except that you saved it.
+
+**Whether you kept at it.** The streak is the one number here that can lie by
+being generous, so it counts days on which something was actually finished —
+a chapter marked, or a verse recalled — and never a visit. Days are stored as
+plain `YYYY-MM-DD` in the reader's own timezone, because that is the day they
+think they studied on; a timestamp would be exact and would tell somebody in
+Auckland they had missed Tuesday. It counts back from yesterday when nothing
+has been done yet today, since otherwise forty days reads as nothing at the
+moment it is most worth showing. A lapsed streak is reported as a fact and
+immediately as a way back in, which is the only useful thing to say about
+one.
+
+The page is warmer than the rest of the site, and only here. The volume keeps
+its distance everywhere else because it is making a scholarly claim and a
+chatty one would undercut it; this page is not making a claim, it is saying
+hello to somebody who came back. It also says nothing at all when there is
+nothing to say — a progress bar at zero, a streak of none and an empty review
+queue is a page telling a new reader they are already behind, so a first
+visit gets a way in instead.
+
+All three live in `localStorage` beside the saved verses, which means all
+three can be dropped by the browser without warning. The backup on the saved
+page is version 2 for that reason and carries the study record as well as the
+verses; restoring merges rather than replaces — a chapter read on either
+machine is read, a day studied on either is studied, and a review schedule
+kept in both takes the later of the two. Version 1 files still restore, with
+no study record in them.
+
+One bug is worth recording, because it is the kind that passes every casual
+look. The progress key was built by `chapterKey(workId, idx)`, and the audio
+player already had a `chapterKey(ctx)` further down the same file. Function
+declarations hoist, the later one won, every call got a string where it
+wanted a context object, and every chapter anybody marked was filed under
+`undefined/undefined` — the count read 1 no matter how much you read. It is
+`readKey()` now, and `tests/study.test.js` opens by marking two chapters and
+comparing the keys.
+
 ## Listening to it
 
 Every chapter can be read aloud by the speech engine already in the browser:
@@ -757,6 +828,7 @@ install Playwright and a Chromium into `tests/node_modules` on first run; set
 | `search` | Result counts against known answers rather than "more than zero": phrases against their words, several terms meaning all of them, the three different ways a search can end with nothing, that an accented or ligatured spelling on the page is reachable by an ordinary one, and that a reference is answered as a reference — including the split works, where Isaiah 40 has to land in the second Isaiah, and the ambiguous ones, where two answers stay two — and that a search answers the questions that are not word searches at all: a collection by the names readers give it, so that `new testament` reaches the twenty-seven books and this edition's section of the same name both; a collection as a scope and as a page, in composition order rather than bound order; a passage by a name the text never prints; a manuscript, a thread, a dictionary headword and a page of this site; and that a query meaning none of those offers nothing rather than guessing; and that the name a reader has for their own Bible reaches the canon it reads, says when that canon is shared rather than implying it is theirs, leads with being an approximation where it is one, and offers no link at all for the three traditions none of the five columns can stand in for |
 | `words` | Turning a word on the page into an entry — by selection, by keyboard, by alias — what a missing entry says, and the places panel |
 | `keeping` | Saving, unsaving, notes, the migration from the old bookmarks key, and what happens when the browser refuses to store anything at all |
+| `study` | Marking a chapter read and unmarking it; that two chapters make two records under their own names, which is the regression that caught `chapterKey` being shadowed and every mark filed under `undefined/undefined`; the strip marking read chapters in words as well as colour; per-work progress and a finished work leaving the part-way list; a streak counting back from yesterday, ending at a gap, and never scolding; recall showing the reference before the words, a saved chapter never becoming a card, and the Leitner intervals a failed and a recalled verse actually get; the backup merging chapters, days and schedules rather than replacing them; and a browser that refuses to store leaving the button honest and saying so out loud |
 | `resilience` | The data failing to load, malformed data, routes that name nothing, the keyboard shortcuts, the skip link, and what a screen reader is actually told |
 | `access` | Every route run through axe-core against WCAG A and AA, in both themes, with the map open — plus the first tab stop and whether a sideways-scrolling table can be scrolled without a pointer. It found one thing on its first run and it was real |
 | `listening` | What is spoken and in what order, which voice out of a bad drawer is picked, that the apparatus is never read out, where long passages are broken and how long the pauses are at each pace, the transport, the remembered place, chapter-to-chapter and work-to-work continuation, and the three ways a device can fail to speak |

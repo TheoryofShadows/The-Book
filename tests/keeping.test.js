@@ -275,9 +275,18 @@ module.exports = async function keeping(t, ctx) {
     const text = require('fs').readFileSync(file, 'utf8');
     let parsed = null;
     try { parsed = JSON.parse(text); } catch (e) { /* reported next */ }
+    /* Version 2 since the file started carrying the study record as well as
+       the verses. A reader who has marked off two hundred chapters and kept
+       a streak for a month has more to lose than their bookmarks, and all of
+       it sits in the same storage the same browser can drop. */
     t.check('and it is JSON that says what it is',
-            !!parsed && parsed.format === 'thebook.saved' && parsed.version === 1,
-            parsed ? parsed.format : 'did not parse');
+            !!parsed && parsed.format === 'thebook.saved' && parsed.version === 2,
+            parsed ? parsed.format + ' v' + parsed.version : 'did not parse');
+
+    t.check('and carries the study record, not only the verses',
+            !!parsed && !!parsed.read && Array.isArray(parsed.days) &&
+            !!parsed.review,
+            parsed ? Object.keys(parsed).join(' ') : 'did not parse');
     t.check('and holds everything that was saved',
             !!parsed && parsed.items.length === before,
             parsed ? parsed.items.length + ' of ' + before : 'none');

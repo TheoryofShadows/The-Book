@@ -779,11 +779,20 @@
       if (work.chapters.length > 1) {
         var strip = el("div", { class: "chapter-strip" });
         var hereLink = null;
+        /* Read once for the whole strip rather than once per chapter: Psalms
+           is 150 of these and localStorage is not free. */
+        var readHere = readChapters();
         work.chapters.forEach(function (c, i) {
+          var was = !!readHere[readKey(workId, i)];
           var a = el("a", {
             href: "#/read/" + workId + "/" + i,
             "aria-current": i === idx ? "true" : null,
-            title: c.label,
+            /* The mark has to reach a screen reader too, and the strip is
+               already a wall of bare numbers -- so the fact goes in the
+               title, which is what is announced, rather than only into a
+               colour. */
+            title: c.label + (was ? " — read" : ""),
+            class: was ? "is-done" : null,
             text: c.n === null || c.n === undefined
               ? c.label.replace(/^.*?(\d+).*$/, "$1") || "·"
               : String(c.n)
@@ -977,6 +986,37 @@
         }));
       }
       body.appendChild(pager);
+
+      /* ---------------- finishing it ----------------
+
+         Above the pager is where you go next; this is whether you are done
+         with where you are. Deliberately a thing the reader does rather
+         than something inferred from a scroll position: scrolling to the
+         bottom of Psalm 119 is not reading it, and a progress count built
+         out of guesses is one nobody trusts enough to look at.
+
+         It is also the only control on this page that writes to the streak,
+         which is why it is the one that says "finished" rather than
+         "visited". */
+      var readBtn = el("button", { class: "chip done-btn" });
+      function paintRead(on) {
+        readBtn.textContent = on ? "✓  Read — tap to unmark" : "○  Mark as read";
+        readBtn.setAttribute("aria-pressed", on ? "true" : "false");
+        readBtn.classList.toggle("is-done", on);
+      }
+      paintRead(isRead(workId, idx));
+      readBtn.addEventListener("click", function () {
+        paintRead(markRead(workId, idx, !isRead(workId, idx)));
+      });
+      var doneRow = el("div", { class: "chips done-row" }, [readBtn]);
+      /* Only once there is something to be part-way through. A link to a
+         progress page on the first chapter somebody opens is an invitation
+         to look at a row of noughts. */
+      if (readCount()) {
+        doneRow.appendChild(el("a", { class: "chip", href: "#/study",
+                                      text: "Your study" }));
+      }
+      body.appendChild(doneRow);
 
       /* ---------------- the apparatus, on a phone ----------------
 
@@ -1295,6 +1335,191 @@
     if (!wasSaved) keepStorage();
     announce(wasSaved ? "Removed from saved" : "Saved");
     return !wasSaved;
+  }
+
+  /* ================================================================
+     STUDYING IT
+     ------------------------------------------------------------------
+     Everything above this line is for reading. This is for the reader who
+     is not passing through -- who has come back, is working at it, and
+     wants to know where they are in something that takes 1.22 million words
+     to get through.
+
+     Three things, and no more than three, because a study app that asks for
+     more bookkeeping than it saves is one nobody opens twice:
+
+       what you have read     a chapter marked off, and the count that makes
+       what you meant to keep  a saved verse, come back around to be recalled
+       whether you kept at it  the days you did some, in a row
+
+     All three live in localStorage beside the saved verses, which means all
+     three can be dropped by the browser without warning -- Safari's seven-day
+     cap, a cleared site, a new phone. The saved page already has an export
+     for that reason, and it now carries these as well, so a restore brings
+     back the progress and not only the verses.
+     ================================================================ */
+
+  /* One chapter, named the way the URL names it, so a progress mark and a
+     link are the same fact written twice.
+
+     Not chapterKey(): the audio player already has one of those, it takes a
+     context object rather than a pair, and function declarations hoist --
+     so naming this one the same silently replaced it with the other and
+     filed every chapter anybody marked under "undefined/undefined". */
+  function readKey(workId, idx) { return workId + "/" + idx; }
+
+  function readChapters() { return store.get("read", {}); }
+
+  function isRead(workId, idx) {
+    return !!readChapters()[readKey(workId, idx)];
+  }
+
+  /* Marking a chapter read is the one write here that a reader makes on
+     purpose, so it is also what counts towards a day's work. Opening a page
+     is not studying; finishing something is. */
+  function markRead(workId, idx, on) {
+    var all = readChapters();
+    var key = readKey(workId, idx);
+    if (on) all[key] = Date.now(); else delete all[key];
+    if (!store.set("read", all)) { announce(STORAGE_FAILED); return !on; }
+    if (on) { keepStorage(); touchToday(); }
+    announce(on ? "Marked as read" : "Unmarked");
+    return on;
+  }
+
+  function readCount() { return Object.keys(readChapters()).length; }
+
+  /* How far through one work, which is the number a reader actually holds:
+     nobody is tracking 2,537 chapters, they are tracking Mark.
+
+     Takes the record rather than reading it, because the study page asks
+     this of all 163 works to find the finished ones, and reading it inside
+     would be 163 JSON.parse calls over a key that can hold every chapter
+     the reader has ever marked. Left optional so a lone caller need not
+     care. */
+  function workProgress(workId, chapters, record) {
+    var all = record || readChapters(), done = 0;
+    for (var i = 0; i < chapters; i++) {
+      if (all[readKey(workId, i)]) done++;
+    }
+    return { done: done, of: chapters };
+  }
+
+  /* ---------------- the days you did some ----------------
+
+     A streak is the one number here that can lie by being generous, so it
+     is counted from days on which something was actually finished -- a
+     chapter marked, or a verse recalled -- and never from a visit.
+
+     Stored as plain YYYY-MM-DD in the reader's own timezone, because that
+     is the day they think they studied on. A timestamp would be exact and
+     would tell somebody in Auckland they had missed Tuesday. */
+  function today() {
+    var d = new Date();
+    return d.getFullYear() + "-" +
+           ("0" + (d.getMonth() + 1)).slice(-2) + "-" +
+           ("0" + d.getDate()).slice(-2);
+  }
+
+  function dayBefore(iso, back) {
+    var p = iso.split("-");
+    var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    d.setDate(d.getDate() - back);
+    return d.getFullYear() + "-" +
+           ("0" + (d.getMonth() + 1)).slice(-2) + "-" +
+           ("0" + d.getDate()).slice(-2);
+  }
+
+  function studyDays() { return store.get("days", []); }
+
+  function touchToday() {
+    var days = studyDays();
+    var t = today();
+    // Membership rather than just the last entry: a restore merges another
+    // machine's days in and can leave today sitting anywhere in the list,
+    // and appending a second copy of it would grow the key for nothing.
+    if (days.indexOf(t) !== -1) return;
+    days.push(t);
+    // Two years is more than any streak needs and keeps the key small.
+    store.set("days", days.slice(-730));
+  }
+
+  /* Counted back from today, and from yesterday if nothing has been done
+     yet today -- otherwise a streak of forty days reads as nothing until
+     the reader has done that day's work, which is the moment it is most
+     worth showing them. */
+  function streak() {
+    var days = {}, list = studyDays();
+    list.forEach(function (d) { days[d] = 1; });
+    var t = today();
+    var from = days[t] ? t : (days[dayBefore(t, 1)] ? dayBefore(t, 1) : null);
+    if (!from) return 0;
+    var n = 0;
+    while (days[dayBefore(from, n)]) n++;
+    return n;
+  }
+
+  /* ---------------- coming back to a verse ----------------
+
+     A saved verse is a verse somebody wanted again. Until now "again" meant
+     scrolling the saved page, which works at twenty and not at two hundred.
+
+     This is a plain Leitner schedule: recall it and it goes to the back of
+     a longer queue, fail it and it comes straight back. Five boxes, and the
+     intervals below rather than any cleverer curve -- the difference
+     between this and a tuned SM-2 is smaller than the difference between
+     doing it and not.
+
+     Kept in its own key rather than on the saved item, so that removing a
+     verse from saved and putting it back does not silently reset a schedule
+     the reader has been keeping for a month. */
+  var BOXES = [0, 1, 3, 7, 21, 60];       // days until it comes round again
+
+  function reviewState() { return store.get("review", {}); }
+
+  function reviewDue(id, state) {
+    var r = (state || reviewState())[id];
+    if (!r) return true;                  // never seen: due the first time
+    return r.due <= Date.now();
+  }
+
+  /* The saved verses ready to come round, oldest schedule first. Chapters
+     are saved too and are not in here: there is nothing to recall about a
+     chapter except that you saved it. */
+  function dueVerses() {
+    var state = reviewState();
+    return savedItems()
+      .filter(function (s) { return s.kind === "verse" && s.t; })
+      .filter(function (s) { return reviewDue(s.id, state); })
+      .sort(function (a, b) {
+        var ra = state[a.id], rb = state[b.id];
+        return ((ra && ra.due) || 0) - ((rb && rb.due) || 0);
+      });
+  }
+
+  /* got === true moves it one box out; false sends it back to the first.
+     Either way the day counts as worked, because either way the reader sat
+     down and did it. */
+  function gradeVerse(id, got) {
+    var state = reviewState();
+    var r = state[id] || { box: 0, seen: 0 };
+    r.box = got ? Math.min(r.box + 1, BOXES.length - 1) : 0;
+    r.seen = (r.seen || 0) + 1;
+    r.last = Date.now();
+    // Box 0 is ten minutes rather than zero: a verse you have just failed
+    // should not be the very next card in the same sitting.
+    r.due = Date.now() + (BOXES[r.box]
+      ? BOXES[r.box] * 86400000 : 600000);
+    state[id] = r;
+    if (!store.set("review", state)) { announce(STORAGE_FAILED); return r; }
+    touchToday();
+    return r;
+  }
+
+  /* How settled a verse is, said in words rather than as a box number. */
+  function boxLabel(box) {
+    return ["just started", "seen once", "coming along", "getting solid",
+            "nearly there", "known"][box] || "just started";
   }
 
   function verseId(ref) { return ref.work + "/" + ref.chapter + "/v" + ref.v; }
@@ -5234,6 +5459,331 @@
      SAVED
      ================================================================ */
 
+  /* ================================================================
+     THE STUDY PAGE
+     ------------------------------------------------------------------
+     The front page is an argument: here is a library, here is why it is in
+     this order. It is written for somebody who has never been here.
+
+     This page is written for somebody who has. It opens on their own work
+     rather than on the volume's, and it says the four things a person
+     coming back actually wants: where I stopped, how far I have got, what
+     is waiting, and whether I have kept at it. Nothing on it is a number
+     about the library; every number is about them.
+
+     It says nothing at all when there is nothing to say. A progress bar at
+     zero, a streak of none and an empty review queue is a page telling a
+     new reader they are already behind, so the first visit gets a way in
+     instead.
+     ================================================================ */
+
+  /* Warmer than the rest of the site on purpose, and only here. The volume
+     keeps its distance everywhere else because it is making a scholarly
+     claim and a chatty one would undercut it. This page is not making a
+     claim; it is saying hello to somebody who came back. */
+  function greeting() {
+    var h = new Date().getHours();
+    if (h < 5) return "Still up";
+    if (h < 12) return "Good morning";
+    if (h < 18) return "Good afternoon";
+    return "Good evening";
+  }
+
+  /* The bar carries no number of its own. It used to print the percentage
+     across the middle, which lands on the fill at 60% and on the ground at
+     1% -- one of those is dark text on a dark bar, and no blend mode fixes
+     both. Every place this is used already prints the count in words beside
+     it, so the bar is the picture and the words are the number.
+
+     role="img" with a label, because that is exactly what it is: a picture
+     of a figure stated next to it, and a screen reader should hear the
+     figure once rather than twice. */
+  function progressBar(done, of, label) {
+    return el("div", { class: "meter", role: "img",
+                       "aria-label": label || (done + " of " + of) }, [
+      el("i", { style: "width:" + (of ? (done / of * 100) : 0) + "%" })
+    ]);
+  }
+
+  function viewStudy(manifest) {
+    var wrap = el("div", { class: "wrap" });
+    var total = manifest.totals.chapters;
+    var done = readCount();
+    var due = dueVerses();
+    var saved = savedItems();
+    var run = streak();
+    var last = store.get("last", null);
+
+    /* A first visit is not a report card. Nothing has been read, nothing
+       saved, nothing to review -- so say what this page will become rather
+       than showing three empty measures of it. */
+    if (!done && !saved.length && !last) {
+      wrap.appendChild(el("h1", { text: "Your study" }));
+      wrap.appendChild(el("p", { class: "lede", text:
+        "Nothing here yet — this page fills up as you read. Mark a chapter " +
+        "off when you finish it and it starts keeping count; save a verse " +
+        "and it will bring it back to you later to see if it stuck." }));
+      wrap.appendChild(el("div", { class: "chips" }, [
+        el("a", { class: "chip primary", href: "#/read/mark/0",
+                  text: "Start with Mark, the earliest Gospel" }),
+        el("a", { class: "chip", href: "#/read/amos/0",
+                  text: "Or Amos, the oldest book here" }),
+        el("a", { class: "chip", href: "#/contents", text: "Browse everything" })
+      ]));
+      return wrap;
+    }
+
+    wrap.appendChild(el("h1", { text: greeting() + "." }));
+
+    /* The first line is the one thing they came for: the place they
+       stopped, named, and one tap away. */
+    if (last && last.work) {
+      wrap.appendChild(el("p", { class: "lede" }, [
+        document.createTextNode("You were last in "),
+        el("a", { href: "#/read/" + last.work + "/" + last.chapter,
+                  text: titleCase(last.title || last.work) }),
+        document.createTextNode(". ")
+      ]));
+    }
+
+    var stats = el("div", { class: "stats" });
+    stats.appendChild(el("div", { class: "stat" }, [
+      el("b", { text: fmt(done) }),
+      el("span", { text: done === 1 ? "chapter read" : "chapters read" })
+    ]));
+    stats.appendChild(el("div", { class: "stat" }, [
+      el("b", { text: fmt(saved.length) }),
+      el("span", { text: saved.length === 1 ? "verse kept" : "verses kept" })
+    ]));
+    stats.appendChild(el("div", { class: "stat" }, [
+      el("b", { text: fmt(run) }),
+      el("span", { text: run === 1 ? "day in a row" : "days in a row" })
+    ]));
+    wrap.appendChild(stats);
+
+    /* The streak, said in a sentence, because a bare number is a score and
+       a sentence is a person telling you how it is going. Never scolding:
+       a broken streak is reported as a fact and immediately as a way back
+       in, which is the only useful thing to say about one. */
+    var said;
+    if (run > 1) {
+      said = "That is " + fmt(run) + " days running. Mark anything off " +
+             "today and it keeps going.";
+    } else if (run === 1) {
+      said = "You have done some today. Come back tomorrow and that is a " +
+             "streak.";
+    } else if (studyDays().length) {
+      said = "The streak has lapsed, which is what streaks do. One chapter " +
+             "starts a new one.";
+    } else {
+      said = "Nothing marked off yet. A chapter takes about five minutes.";
+    }
+    wrap.appendChild(el("p", { class: "muted", text: said }));
+
+    /* How far through the whole thing, which is a number worth showing
+       honestly: it is going to be small for a long time, and saying so is
+       better than a bar that pretends otherwise. */
+    wrap.appendChild(el("h2", { text: "Through the library" }));
+    wrap.appendChild(progressBar(done, total,
+      fmt(done) + " of " + fmt(total) + " chapters read"));
+    wrap.appendChild(el("p", { class: "muted", text:
+      fmt(done) + " of " + fmt(total) + " chapters. " +
+      (done < total * 0.02
+        ? "It is a big library — the count is here to show movement, not to " +
+          "be finished in a hurry."
+        : "Keep going.") }));
+
+    /* What is waiting, which is the page's one call to action and is only
+       shown when there is something behind it. */
+    wrap.appendChild(el("h2", { text: "Ready to come back round" }));
+    if (due.length) {
+      wrap.appendChild(el("p", { text: fmt(due.length) +
+        (due.length === 1 ? " verse is" : " verses are") +
+        " ready to be recalled." }));
+      wrap.appendChild(el("div", { class: "chips" }, [
+        el("a", { class: "chip primary", href: "#/review",
+                  text: "Review " + fmt(due.length) +
+                        (due.length === 1 ? " verse" : " verses") })
+      ]));
+    } else if (saved.some(function (s) { return s.kind === "verse"; })) {
+      wrap.appendChild(el("p", { class: "muted", text:
+        "Nothing due — everything you have saved has come round recently. " +
+        "They will be back." }));
+    } else {
+      wrap.appendChild(el("p", { class: "muted", text:
+        "Nothing saved yet. Tap a verse number while reading and choose " +
+        "Save, and it will start coming back to you here." }));
+    }
+
+    /* The works actually under way, which is the shape of somebody's study
+       far more than a total is. Finished ones are not listed: this is what
+       is open, not a trophy shelf. */
+    var byId = {};
+    manifest.sections.forEach(function (s) {
+      s.works.forEach(function (w) { if (w.chapters) byId[w.id] = w; });
+    });
+    var record = readChapters();           // read once for the whole page
+    var open = [];
+    var seen = {};
+    Object.keys(record).forEach(function (k) {
+      var id = k.slice(0, k.lastIndexOf("/"));
+      if (seen[id] || !byId[id]) return;
+      seen[id] = 1;
+      var p = workProgress(id, byId[id].chapters, record);
+      if (p.done < p.of) open.push({ id: id, w: byId[id], p: p });
+    });
+    open.sort(function (a, b) { return (b.p.done / b.p.of) - (a.p.done / a.p.of); });
+
+    if (open.length) {
+      wrap.appendChild(el("h2", { text: "Part-way through" }));
+      var list = el("div", { class: "progress-list" });
+      open.slice(0, 8).forEach(function (o) {
+        list.appendChild(el("div", { class: "progress-row" }, [
+          el("a", { href: "#/read/" + o.id + "/0",
+                    text: titleCase(o.w.title) }),
+          progressBar(o.p.done, o.p.of, titleCase(o.w.title) + ", " +
+                      o.p.done + " of " + o.p.of + " chapters read"),
+          el("span", { class: "muted", text: o.p.done + " of " + o.p.of })
+        ]));
+      });
+      wrap.appendChild(list);
+    }
+
+    /* Everything finished, counted rather than listed, so that a reader who
+       has read forty works does not scroll past forty rows to reach the
+       next thing. */
+    /* Only the works the reader has actually touched can be finished, so
+       this asks about those rather than about all 163. */
+    var whole = Object.keys(seen).filter(function (id) {
+      var p = workProgress(id, byId[id].chapters, record);
+      return p.of && p.done === p.of;
+    });
+    if (whole.length) {
+      wrap.appendChild(el("p", { class: "muted", text:
+        "And " + fmt(whole.length) + (whole.length === 1
+          ? " work read all the way through: " : " works read all the way through: ") +
+        whole.slice(0, 6).map(function (id) {
+          return titleCase(byId[id].title);
+        }).join(", ") + (whole.length > 6 ? ", and more." : ".") }));
+    }
+
+    wrap.appendChild(el("div", { class: "chips" }, [
+      el("a", { class: "chip", href: "#/saved", text: "Your saved verses" }),
+      el("a", { class: "chip", href: "#/contents", text: "Everything in the volume" }),
+      el("a", { class: "chip", href: "#/search", text: "Search the text" })
+    ]));
+
+    if (!store.works()) {
+      wrap.appendChild(el("p", { class: "empty", text: STORAGE_FAILED }));
+    }
+
+    return wrap;
+  }
+
+  /* ================================================================
+     REVIEW
+     ------------------------------------------------------------------
+     One verse at a time, reference first. The reader tries to remember it,
+     reveals, and says whether they had it -- which is the whole of the
+     method and is the part that does the work. Grading yourself honestly is
+     the only input a schedule like this needs.
+     ================================================================ */
+
+  function viewReview() {
+    var wrap = el("div", { class: "wrap" });
+    var queue = dueVerses();
+    var pos = 0, got = 0, missed = 0;
+
+    wrap.appendChild(el("h1", { text: "Recall" }));
+
+    if (!queue.length) {
+      var anyVerse = savedItems().some(function (s) { return s.kind === "verse"; });
+      wrap.appendChild(el("p", { class: "lede", text: anyVerse
+        ? "Nothing is due just now. Everything you have saved has come round " +
+          "recently, and it will come round again — the better you know one, " +
+          "the longer it waits."
+        : "Nothing saved yet. While you are reading, tap a verse number and " +
+          "choose Save; whatever you keep will start showing up here to see " +
+          "whether it stuck." }));
+      wrap.appendChild(el("div", { class: "chips" }, [
+        el("a", { class: "chip primary", href: "#/study", text: "Your study" }),
+        el("a", { class: "chip", href: "#/saved", text: "Saved verses" })
+      ]));
+      return wrap;
+    }
+
+    wrap.appendChild(el("p", { class: "lede", text:
+      "The reference first. See how much of it you can bring back before you " +
+      "turn it over — the trying is the part that works, not the reading." }));
+
+    var counter = el("p", { class: "muted" });
+    var card = el("div", { class: "card" });
+    wrap.appendChild(counter);
+    wrap.appendChild(card);
+
+    function done() {
+      card.innerHTML = "";
+      counter.textContent = "";
+      card.appendChild(el("h2", { text: "That is the lot." }));
+      card.appendChild(el("p", { text: got + " of " + (got + missed) +
+        " came back to you." + (missed
+          ? " The ones that did not will be round again shortly."
+          : " Every one of them.") }));
+      card.appendChild(el("div", { class: "chips" }, [
+        el("a", { class: "chip primary", href: "#/study", text: "Your study" }),
+        el("a", { class: "chip", href: "#/saved", text: "Saved verses" })
+      ]));
+    }
+
+    function show() {
+      if (pos >= queue.length) return done();
+      var item = queue[pos];
+      var state = reviewState()[item.id];
+      card.innerHTML = "";
+      counter.textContent = "Verse " + (pos + 1) + " of " + queue.length +
+        (state ? " · " + boxLabel(state.box) : " · new");
+
+      card.appendChild(el("p", { class: "recall-ref", text:
+        titleCase(item.workTitle || item.work) + " · " +
+        (item.label || "Chapter " + (item.chapter + 1)) + ":" + item.v }));
+
+      var text = el("blockquote", { class: "recall-text", hidden: true },
+                    [el("p", { text: item.t })]);
+      card.appendChild(text);
+
+      var reveal = el("button", { class: "chip primary", text: "Turn it over",
+        onclick: function () {
+          text.hidden = false;
+          reveal.hidden = true;
+          grade.hidden = false;
+          // Sent to the live region as well, or a screen reader is handed a
+          // pair of buttons with nothing having been said.
+          announce(item.t);
+          grade.querySelector("button").focus();
+        } });
+      card.appendChild(reveal);
+
+      var grade = el("div", { class: "chips", hidden: true }, [
+        el("button", { class: "chip", text: "Not quite", onclick: function () {
+          gradeVerse(item.id, false); missed++; pos++; show();
+        } }),
+        el("button", { class: "chip primary", text: "I had it",
+          onclick: function () {
+            gradeVerse(item.id, true); got++; pos++; show();
+          } })
+      ]);
+      card.appendChild(grade);
+
+      card.appendChild(el("p", { class: "muted" }, [
+        el("a", { href: "#/read/" + item.work + "/" + item.chapter +
+                        "/v" + item.v, text: "Read it in place" })
+      ]));
+    }
+
+    show();
+    return wrap;
+  }
+
   function viewSaved() {
     var wrap = el("div", { class: "wrap" });
     wrap.appendChild(el("h1", { text: "Saved" }));
@@ -5284,12 +5834,22 @@
        which do not share storage with each other. */
     var BACKUP_FORMAT = "thebook.saved";
 
+    /* Version 2 carries the study record as well as the verses. A reader
+       who has marked off two hundred chapters and kept a streak for a month
+       has more to lose than their bookmarks, and all of it sits in the same
+       localStorage the same browser can drop without warning.
+
+       Version 1 files still restore: they simply have no study record in
+       them, and the fields below are read defensively for that reason. */
     var backup = function () {
       return JSON.stringify({
         format: BACKUP_FORMAT,
-        version: 1,
+        version: 2,
         exported: new Date().toISOString(),
-        items: savedItems()
+        items: savedItems(),
+        read: readChapters(),
+        days: studyDays(),
+        review: reviewState()
       }, null, 2);
     };
 
@@ -5333,9 +5893,43 @@
         return;
       }
       keepStorage();
+      restoreStudy(parsed);
       announce("Restored " + added.length + " saved item" +
                (added.length === 1 ? "" : "s") + ".");
       route();
+    };
+
+    /* Merged the same way the verses are, and for the same reason: a reader
+       restoring an old phone's backup onto a browser they have been using
+       since should not lose whichever set is smaller.
+
+       A chapter read on either machine is read. A day studied on either is
+       studied. A review schedule kept in both takes the later of the two,
+       because that is the one that reflects the more recent sitting. */
+    var restoreStudy = function (parsed) {
+      if (parsed.read && typeof parsed.read === "object") {
+        var read = readChapters();
+        Object.keys(parsed.read).forEach(function (k) {
+          if (!read[k]) read[k] = parsed.read[k];
+        });
+        store.set("read", read);
+      }
+      if (Array.isArray(parsed.days)) {
+        var days = {};
+        studyDays().concat(parsed.days).forEach(function (d) {
+          if (typeof d === "string") days[d] = 1;
+        });
+        store.set("days", Object.keys(days).sort().slice(-730));
+      }
+      if (parsed.review && typeof parsed.review === "object") {
+        var review = reviewState();
+        Object.keys(parsed.review).forEach(function (id) {
+          var mine = review[id], theirs = parsed.review[id];
+          if (!theirs || typeof theirs !== "object") return;
+          if (!mine || (theirs.last || 0) > (mine.last || 0)) review[id] = theirs;
+        });
+        store.set("review", review);
+      }
     };
 
     /* Hidden from the accessibility tree rather than merely off-screen. It
@@ -7267,6 +7861,24 @@
         setTitle("How the dating was decided");
         main.innerHTML = "";
         main.appendChild(viewMethod(manifest));
+        window.scrollTo(0, 0);
+        return;
+      }
+      /* The reader's own page, and the one they arrive on when they come
+         back rather than when they first turn up. */
+      if (view === "study") {
+        setNav("study");
+        setTitle("Your study");
+        main.innerHTML = "";
+        main.appendChild(viewStudy(manifest));
+        window.scrollTo(0, 0);
+        return;
+      }
+      if (view === "review") {
+        setNav("study");
+        setTitle("Recall");
+        main.innerHTML = "";
+        main.appendChild(viewReview());
         window.scrollTo(0, 0);
         return;
       }

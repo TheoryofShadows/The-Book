@@ -1176,6 +1176,80 @@ table.grid tbody tr:last-child td { border-bottom: 0; }
   color: var(--ink); text-decoration: none;
 }
 
+/* ================================================================
+   STUDYING IT
+   ================================================================ */
+
+/* A chapter already read, in the strip of chapter numbers. Quiet on
+   purpose: it is a fact about where the reader has been, not a call to go
+   there, and a hundred and fifty bright marks down Psalms would drown the
+   one mark that matters, which is the chapter they are in. The fact is in
+   the link's title as well, so it reaches a screen reader and does not
+   depend on seeing a colour. */
+.chapter-strip a.is-done {
+  border-color: var(--accent-2); color: var(--accent-2);
+}
+.chapter-strip a.is-done[aria-current="true"] {
+  background: var(--accent); color: var(--paper); border-color: var(--accent);
+}
+
+/* Marking one off, under the chapter and beside the way on to the next. */
+.done-row { margin: var(--gap-wide) 0 0; }
+.done-btn { cursor: pointer; font: inherit; font-size: .82rem; }
+.done-btn.is-done {
+  background: var(--accent); border-color: var(--accent); color: var(--paper);
+}
+.done-btn.is-done:hover { background: var(--accent-2); border-color: var(--accent-2); }
+
+/* How far through, drawn once and used everywhere: the library, and each
+   work part-way done. The number is inside the bar rather than beside it so
+   a row of them lines up, and the whole thing carries an aria-label because
+   a bar is a picture of a number and a screen reader needs the number. */
+.meter {
+  height: .55rem; border-radius: 6px;
+  background: var(--raised); border: 1px solid var(--rule-soft);
+  overflow: hidden; min-width: 5rem;
+}
+.meter i {
+  display: block; height: 100%; background: var(--accent);
+  border-radius: 5px 0 0 5px; transition: width .3s ease;
+}
+.progress-list { margin: var(--gap) 0; }
+.progress-row {
+  display: grid; grid-template-columns: minmax(6rem, 1fr) minmax(4rem, 2fr) auto;
+  gap: var(--gap); align-items: center; padding: .4rem 0;
+  border-top: 1px solid var(--rule-soft);
+}
+.progress-row:first-child { border-top: 0; }
+.progress-row .muted {
+  font-family: var(--sans); font-size: .76rem; white-space: nowrap;
+}
+@media (max-width: 34rem) {
+  /* The bar is the row's whole point, so on a phone it keeps the width and
+     the count moves under the title rather than squeezing all three. */
+  .progress-row { grid-template-columns: 1fr auto; }
+  .progress-row .meter { grid-column: 1 / -1; }
+}
+
+/* One card in the recall queue. */
+.card {
+  margin: var(--gap-wide) 0; padding: var(--gap-wide);
+  background: var(--raised); border: 1px solid var(--rule-soft);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.recall-ref {
+  margin: 0 0 var(--gap); font-family: var(--sans); font-size: .78rem;
+  font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.recall-text {
+  margin: 0 0 var(--gap); padding-left: var(--gap);
+  border-left: 2px solid var(--accent); font-family: var(--serif);
+  font-size: 1.1rem; line-height: 1.6;
+}
+.recall-text p { margin: 0; }
+.card .chip { cursor: pointer; font: inherit; font-size: .82rem; }
+
 /* A date carried down from the era a work is filed under, rather than read
    off a dated position of its own. The timeline draws these fainter for the
    same reason: it is a looser claim, and printing it in the same ink as a
