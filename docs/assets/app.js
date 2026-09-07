@@ -1321,6 +1321,11 @@
     return savedItems().some(function (s) { return s.id === id; });
   }
 
+  /* The most a browser is asked to hold. It is a real limit -- localStorage
+     is a few megabytes and a saved verse carries its text -- but it is the
+     reader's limit, not a secret one, so passing it is said out loud. */
+  var SAVED_CAP = 500;
+
   function toggleSave(item) {
     var list = savedItems().filter(function (s) { return s.id !== item.id; });
     var wasSaved = list.length !== savedItems().length;
@@ -1328,12 +1333,31 @@
       item.at = Date.now();
       list.unshift(item);
     }
-    if (!store.set("saved", list.slice(0, 500))) {
+    /* The 501st save used to drop the oldest one silently: slice() took the
+       first 500, the announcement said "Saved", and the verse somebody kept
+       first was gone with nothing anywhere reporting it. On a site that would
+       rather print a hole than a plausible sentence, quietly discarding a
+       reader's own list is the sharpest thing it did.
+
+       So the trim is counted and named. Still the oldest that goes -- there
+       is no better answer once the room is gone, and refusing the new one
+       would be a worse one -- but the reader is told which, and can go and
+       remove something themselves instead. */
+    var dropped = Math.max(0, list.length - SAVED_CAP);
+    var oldest = dropped ? list[SAVED_CAP] : null;
+    if (!store.set("saved", list.slice(0, SAVED_CAP))) {
       announce(STORAGE_FAILED);
       return wasSaved;          // nothing changed, so neither does the button
     }
     if (!wasSaved) keepStorage();
-    announce(wasSaved ? "Removed from saved" : "Saved");
+    if (dropped) {
+      announce("Saved. That is " + SAVED_CAP + ", the most this browser is " +
+               "asked to hold, so the oldest was removed to make room" +
+               (oldest && oldest.label ? " (" + oldest.label + ")" : "") +
+               ". Keep a copy from the Saved page if you want them all.");
+    } else {
+      announce(wasSaved ? "Removed from saved" : "Saved");
+    }
     return !wasSaved;
   }
 
@@ -5351,7 +5375,14 @@
      as small as it can be made in an API with no transaction. Returns
      whether the entry is really on disk -- the caller promises the reader
      nothing until this is true. */
+  /* Set when a write had to drop something, and read by the page so it can
+     say so. A saved verse dropped at the cap can be saved again in a second;
+     a diary entry dropped at the cap is writing nobody can reproduce, so
+     this is the one trim on the site that must never happen quietly. */
+  var diaryDropped = 0;
+
   function writeDiary(list) {
+    diaryDropped = Math.max(0, list.length - DIARY_CAP);
     var trimmed = list.slice(0, DIARY_CAP);
     store.set(DIARY_SHADOW, trimmed);
     if (!store.set(DIARY_KEY, trimmed)) return false;
@@ -5550,7 +5581,11 @@
          other one might not. */
       try { localStorage.removeItem("thebook:" + draftKey); } catch (e) {}
       if (checked) checked.checked = false;
-      announce("Entry kept.");
+      announce(diaryDropped
+        ? "Entry kept. That is " + DIARY_CAP + " entries, the most this " +
+          "browser is asked to hold, so the oldest was removed to make room. " +
+          "Keep a copy first if you want it back."
+        : "Entry kept.");
       if (onSaved) onSaved();
     });
 
@@ -5604,6 +5639,18 @@
                   (unsaved === 1 ? " entry" : " entries") + " here.")
       })
     ]);
+    /* Said before the room runs out rather than after. A warning that
+       arrives with the entry it just cost is a warning that arrives too
+       late; at nine in ten the reader can still keep a copy and lose
+       nothing. */
+    if (list.length >= DIARY_CAP * 0.9) {
+      wrap.appendChild(el("p", { class: "warn" },
+        [String(list.length) + " entries of " + DIARY_CAP + ", which is the " +
+         "most this browser is asked to hold. Past that the oldest is " +
+         "removed to make room for a new one. Keeping a copy now means " +
+         "nothing is lost when that happens."]));
+    }
+
     /* Beside the sentence rather than at the bottom of the page. A reader
        who has just been told their entries live in one browser should not
        have to go looking for the thing that fixes it.
@@ -5736,6 +5783,17 @@
       wrap.appendChild(el("p", { class: "empty", text: STORAGE_FAILED }));
     }
 
+    /* The same warning the diary gives, and for the same reason: said while
+       the reader can still act on it rather than alongside the thing it just
+       cost them. */
+    var held = savedItems().length;
+    if (held >= SAVED_CAP * 0.9) {
+      wrap.appendChild(el("p", { class: "warn" },
+        [String(held) + " of " + SAVED_CAP + ", which is the most this " +
+         "browser is asked to hold. Past that, saving something new removes " +
+         "the oldest to make room. A copy kept now loses nothing."]));
+    }
+
     /* ---------------- a copy that can be read back ----------------
 
        The three below are for putting a passage somewhere else: a document,
@@ -5831,7 +5889,12 @@
         flash(button, usable.length ? "Already here" : "Nothing to add");
         return;
       }
-      if (!store.set("saved", merged.slice(0, 500))) {
+      /* Same limit as toggleSave, and the same rule about saying so. A
+         backup holding more than the cap used to restore silently short and
+         then report the full number added, which is a restore that says it
+         put back more than it did. */
+      var lost = Math.max(0, merged.length - SAVED_CAP);
+      if (!store.set("saved", merged.slice(0, SAVED_CAP))) {
         announce(STORAGE_FAILED);
         flash(button, "Could not save");
         return;
@@ -5842,7 +5905,10 @@
       announce("Restored " + added.length + " saved item" +
                (added.length === 1 ? "" : "s") +
                (addedDiary ? " and " + addedDiary + " diary entr" +
-                             (addedDiary === 1 ? "y" : "ies") : "") + ".");
+                             (addedDiary === 1 ? "y" : "ies") : "") + "." +
+               (lost ? " " + lost + " of the oldest did not fit and were not " +
+                       "kept: this browser is asked to hold " + SAVED_CAP +
+                       ". The file still has them." : ""));
       route();
     };
 
