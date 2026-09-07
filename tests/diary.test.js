@@ -362,4 +362,87 @@ module.exports = async function diary(t, ctx) {
     await page.close();
   }
 
+  /* Closing the browser is not one of the ways a diary is lost, and the page
+     used to say "a cleared browser" where a reader read "a closed browser".
+     The two are opposite facts and the wrong one is frightening. */
+  {
+    const page = await ctx.browser.newPage();
+    await page.goto(ctx.base + '#/diary');
+    await page.waitForSelector('.diary-where');
+    const said = (await page.locator('.diary-where').textContent()) || '';
+    t.check('the page says closing the browser does not lose anything',
+            /closing the browser/i.test(said) && /does not touch them/i.test(said),
+            said.slice(0, 100));
+    await page.close();
+  }
+
+  /* What is actually at stake, rather than a date in the past. */
+  {
+    const page = await ctx.browser.newPage();
+    await seed(page, 'diary', [
+      { id: '2026-08-01T10:00:00.000Z', day: '2026-08-01', ref: null, why: '', took: 'one', mark: null },
+      { id: '2026-08-02T10:00:00.000Z', day: '2026-08-02', ref: null, why: '', took: 'two', mark: null }
+    ]);
+    await page.goto(ctx.base + '#/diary');
+    await page.waitForSelector('.diary-where');
+    const said = (await page.locator('.diary-where').textContent()) || '';
+    t.check('it says how many entries are not in a file yet',
+            /2 entries/.test(said) && /no copy kept yet/i.test(said), said.slice(-90));
+    await page.close();
+  }
+
+  /* A copy taken counts everything before it, so the page stops asking. */
+  {
+    const page = await ctx.browser.newPage();
+    await seed(page, 'diary', [
+      { id: '2026-08-01T10:00:00.000Z', day: '2026-08-01', ref: null, why: '', took: 'one', mark: null }
+    ]);
+    await seed(page, 'diary-exported', '2026-08-02');
+    await page.goto(ctx.base + '#/diary');
+    await page.waitForSelector('.diary-where');
+    const said = (await page.locator('.diary-where').textContent()) || '';
+    t.check('and says so plainly once a copy covers everything',
+            /every entry is in a file/i.test(said), said.slice(-80));
+    await page.close();
+  }
+
+  /* The likelier loss: words typed, then a link followed, with nothing ever
+     submitted. The browser is not at fault and no write ever failed. */
+  {
+    const page = await ctx.browser.newPage();
+    await page.goto(ctx.base + '#/diary');
+    await page.waitForSelector('.diary-form textarea#diary-took');
+    await page.fill('.diary-form textarea#diary-took', 'Half a thought, never sent.');
+    await page.waitForTimeout(150);
+
+    await page.goto(ctx.base + '#/read/genesis/0');   // walked away
+    await page.waitForSelector('.reader .v');
+    await page.goto(ctx.base + '#/diary');            // came back
+    await page.waitForSelector('.diary-form textarea#diary-took');
+
+    t.check('a half-written entry is still there after navigating away',
+            (await page.inputValue('.diary-form textarea#diary-took'))
+              === 'Half a thought, never sent.');
+    t.check('and it is not counted as an entry',
+            (await page.locator('.diary-entry').count()) === 0);
+    await page.close();
+  }
+
+  /* And released once the entry is really kept, so it does not come back as
+     a ghost the next time the form is opened. */
+  {
+    const page = await ctx.browser.newPage();
+    await page.goto(ctx.base + '#/diary');
+    await write(page, { took: 'Finished and kept.' });
+    await page.reload();
+    /* With an entry on it the page puts the form behind "Write an entry",
+       so it is opened before the box can be read. */
+    await page.waitForSelector('.diary-new summary');
+    await page.click('.diary-new summary');
+    await page.waitForSelector('.diary-form textarea#diary-took');
+    t.check('the draft is cleared once the entry is saved',
+            (await page.inputValue('.diary-form textarea#diary-took')) === '');
+    await page.close();
+  }
+
 };

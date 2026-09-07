@@ -5489,6 +5489,31 @@
     var save = el("button", { type: "submit", class: "primary", text: "Keep this entry" });
     form.appendChild(el("div", { class: "diary-actions" }, [save, status]));
 
+    /* A half-written entry is the other way this page can lose somebody's
+       words, and it is the likelier one: the browser is not at fault, the
+       reader simply follows a link, or the phone decides the tab has been
+       open long enough. The draft is kept as it is typed and put back when
+       the form is next opened, then cleared once the entry is really saved.
+
+       Kept under its own key rather than in the diary, because a draft is
+       not an entry: it does not belong in the list, in the count, or in the
+       file a reader keeps. */
+    var draftKey = "diary-draft" + (ref ? ":" + ref.work + "/" + ref.chapter : "");
+    var draft = store.get(draftKey, null);
+    if (draft) {
+      why.value = draft.why || "";
+      took.value = draft.took || "";
+    }
+    var saveDraft = function () {
+      if (took.value.trim() || why.value.trim()) {
+        store.set(draftKey, { why: why.value, took: took.value });
+      } else {
+        try { localStorage.removeItem("thebook:" + draftKey); } catch (e) {}
+      }
+    };
+    why.addEventListener("input", saveDraft);
+    took.addEventListener("input", saveDraft);
+
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       var body = took.value.trim();
@@ -5520,6 +5545,10 @@
       }
       why.value = "";
       took.value = "";
+      /* Released only here, after the write returned true. Clearing it any
+         earlier would throw away the copy that exists precisely because the
+         other one might not. */
+      try { localStorage.removeItem("thebook:" + draftKey); } catch (e) {}
       if (checked) checked.checked = false;
       announce("Entry kept.");
       if (onSaved) onSaved();
@@ -5546,14 +5575,33 @@
        It also says when a copy was last taken, because "keep a copy" with no
        date beside it is advice nobody acts on. */
     var since = store.get("diary-exported", null);
+    /* How much writing is not in a file anywhere. The date alone was advice
+       nobody acts on: "you last kept a copy in March" is a fact about the
+       past, and what a reader needs to know is what is at stake right now.
+       So it is counted, and the page says the number of entries written
+       since -- which is the thing that would actually be lost. Stated
+       plainly, once, without a badge or a nag on every page. */
+    var unsaved = since
+      ? list.filter(function (e) { return e.day > since; }).length
+      : list.length;
+
     var where = el("p", { class: "diary-where" }, [
-      "These entries are kept in this browser, on this device. Nothing is " +
-      "sent anywhere and nobody else can read them — which also means a " +
-      "cleared browser, a new phone or a reinstall takes them with it. ",
+      "These entries are kept in this browser, on this device. Closing the " +
+      "browser or turning the computer off does not touch them — they are " +
+      "here when you come back. Nothing is sent anywhere and nobody else " +
+      "can read them, which is also the catch: erasing this site's data, " +
+      "getting a new phone or reinstalling the browser takes them with it. ",
       el("strong", {
-        text: since
-          ? "You last kept a copy on " + dayLabel(since) + "."
-          : "You have not kept a copy yet."
+        class: unsaved ? "diary-unsaved" : null,
+        text: !list.length
+          ? ""
+          : unsaved === 0
+            ? "Every entry is in a file you keep, from " + dayLabel(since) + "."
+            : (since
+                ? unsaved + (unsaved === 1 ? " entry" : " entries") +
+                  " written since your last copy on " + dayLabel(since) + "."
+                : "No copy kept yet, and " + unsaved +
+                  (unsaved === 1 ? " entry" : " entries") + " here.")
       })
     ]);
     /* Beside the sentence rather than at the bottom of the page. A reader
