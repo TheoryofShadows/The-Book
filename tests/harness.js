@@ -302,5 +302,46 @@ function recordedEngine(verses, opts) {
   ` };
 }
 
-module.exports = { serve, launch, Tally, workingEngine, failingEngine,
+
+/* Which command runs Python.
+ *
+ * The checks shell out to the build scripts, and every call site said
+ * "python3" -- which is the name on the CI runners and on macOS, and is not
+ * a name Windows has. A Windows install provides "py", and ships a
+ * python3.exe stub that opens the Microsoft Store rather than running
+ * anything, so looking the name up and trusting what answers is not enough:
+ * the stub answers, then does the wrong thing.
+ *
+ * So the interpreter is chosen by asking each candidate for its version and
+ * keeping the first that really replies with one. Resolved once and reused;
+ * the checks make several of these calls and the probe is a process each.
+ */
+let PYTHON = null;
+function python() {
+  if (PYTHON) return PYTHON;
+  const candidates = process.platform === 'win32'
+    ? [['py', ['-3']], ['python', []], ['python3', []]]
+    : [['python3', []], ['python', []]];
+  for (const [cmd, prefix] of candidates) {
+    try {
+      const out = require('child_process').execFileSync(
+        cmd, prefix.concat(['--version']),
+        { stdio: 'pipe', encoding: 'utf-8' });
+      if (/^Python 3\./.test(out.trim())) {
+        PYTHON = { cmd, prefix };
+        return PYTHON;
+      }
+    } catch (e) { /* not this one; try the next */ }
+  }
+  throw new Error('no Python 3 interpreter found (tried ' +
+                  candidates.map(c => c[0]).join(', ') + ')');
+}
+
+/* execFileSync against whichever interpreter python() found. */
+function runPython(args, opts) {
+  const { cmd, prefix } = python();
+  return require('child_process').execFileSync(
+    cmd, prefix.concat(args), opts || { stdio: 'pipe' });
+}
+module.exports = { serve, launch, Tally, runPython, workingEngine, failingEngine,
                    silentEngine, noEngine, recordedEngine };

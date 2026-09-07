@@ -15,7 +15,7 @@
    address per chapter with none of them overwritten, and a chain of real
    anchors from the contents page to all 2,537 of them. */
 
-const { execFileSync } = require('child_process');
+const { runPython } = require('./harness');
 const fs = require('fs');
 const path = require('path');
 
@@ -36,7 +36,7 @@ module.exports = async function crawlable(t, ctx) {
   const docs = path.join(ctx.root, 'docs');
 
   try {
-    execFileSync('python3', [path.join(ctx.root, 'tools', 'build_pages.py'), docs],
+    runPython([path.join(ctx.root, 'tools', 'build_pages.py'), docs],
                  { stdio: 'pipe' });
   } catch (e) {
     t.check('the page build runs', false, String(e.message).split('\n')[0]);

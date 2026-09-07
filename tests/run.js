@@ -10,7 +10,7 @@
  */
 
 const path = require('path');
-const { serve, launch, Tally } = require('./harness');
+const { serve, launch, Tally, runPython } = require('./harness');
 
 /* 'offline' builds the single-file copy and hands it to 'map', so it runs
    first of the two. run.js clears what it left behind at the end. */
@@ -47,9 +47,8 @@ async function main() {
      anything. The suite needs the file, so the suite makes it, the same way
      offline.test.js makes the single-file copy it opens. */
   try {
-    require('child_process').execFileSync(
-      'python3', [path.join(root, 'tools', 'build_sw.py'), path.join(root, 'docs')],
-      { stdio: 'pipe' });
+    runPython([path.join(root, 'tools', 'build_sw.py'), path.join(root, 'docs')],
+              { stdio: 'pipe' });
   } catch (e) {
     console.error('Could not build the service worker: ' +
                   String(e.message).split('\n')[0]);

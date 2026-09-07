@@ -22,8 +22,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { execFileSync } = require('child_process');
-const { serve } = require('./harness');
+const { serve, runPython } = require('./harness');
 
 const PROBE = 'data/probe.json';
 
@@ -37,7 +36,7 @@ function build(root) {
     filter: src => !/[\\/](read|contents)$|the-book\.html$/.test(src)
   });
   fs.writeFileSync(path.join(site, PROBE), JSON.stringify({ says: 'first' }));
-  execFileSync('python3', [path.join(root, 'tools', 'build_sw.py'), site],
+  runPython([path.join(root, 'tools', 'build_sw.py'), site],
                { stdio: 'pipe' });
   return { dir, site };
 }
@@ -152,7 +151,7 @@ module.exports = async function (t, ctx) {
        deleted upstream is served from it for good. */
     const before = await page.evaluate(() => caches.keys());
     fs.appendFileSync(path.join(site, 'assets', 'app.css'), '\n/* deploy */\n');
-    execFileSync('python3', [path.join(ctx.root, 'tools', 'build_sw.py'), site],
+    runPython([path.join(ctx.root, 'tools', 'build_sw.py'), site],
                  { stdio: 'pipe' });
 
     await page.goto(server.url);

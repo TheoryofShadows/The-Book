@@ -103,7 +103,7 @@ process.stdout.write(JSON.stringify(input.map(speakable)));
 """
     out = subprocess.run(
         ["node", "-e", script, APP_JS, json.dumps(strings)],
-        capture_output=True, text=True)
+        capture_output=True, text=True, encoding="utf-8")
     if out.returncode != 0:
         raise AssertionError(
             "could not run the reader's speakable():\n" + out.stderr.strip())

@@ -23,3 +23,10 @@ docs/404.html
 # of everything it serves, so it changes whenever they do. Derived, like the
 # two above, and built here and by the deploy rather than committed.
 docs/sw.js
+
+# The rendered audio and the model that makes it. Both are derived and both
+# are far too large for the repository: the render is 1.79 GB of Opus and
+# lives on the Internet Archive, and the Kokoro weights are a 338 MB download
+# that tools/render_audio.py names the URLs for. Neither is committed.
+dist/
+source/voice/
