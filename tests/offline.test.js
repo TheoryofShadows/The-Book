@@ -3,16 +3,15 @@
 /* The single-file build is the same code with the data inlined. If it stops
    working the claim that the library runs offline stops being true. */
 
-const { execFileSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { workingEngine } = require('./harness');
+const { workingEngine, runPython } = require('./harness');
 
 module.exports = async function offline(t, ctx) {
   const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'thebook-')), 'the-book.html');
   try {
-    execFileSync('python3', [path.join(ctx.root, 'tools', 'build_standalone.py'),
+    runPython([path.join(ctx.root, 'tools', 'build_standalone.py'),
                              path.join(ctx.root, 'docs'), out], { stdio: 'pipe' });
   } catch (e) {
     t.check('the single-file build runs', false, String(e.message).split('\n')[0]);
