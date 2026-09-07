@@ -38,9 +38,13 @@ module.exports = async function layout(t, ctx) {
         const b = a.getBoundingClientRect();
         return { text: a.textContent.trim(), on: b.left >= -1 && b.right <= vw + 1 && b.width > 0 };
       }), width);
+    /* The count is asserted as well as the fitting, because a link that
+       vanished would otherwise pass this: seven of seven on screen reads the
+       same as eight of eight. It moved to eight when the diary was added. */
     t.check(`${width}px: every nav link is fully on screen`,
-            links.length === 7 && links.every(l => l.on),
-            links.filter(l => !l.on).map(l => l.text).join(', ') || 'all seven');
+            links.length === 8 && links.every(l => l.on),
+            links.filter(l => !l.on).map(l => l.text).join(', ') ||
+            'all ' + links.length);
 
     const nav = await page.evaluate(() => {
       const b = document.querySelector('.nav').getBoundingClientRect();
@@ -227,6 +231,17 @@ module.exports = async function layout(t, ctx) {
       }));
       t.check('on ' + name + ', the scripture starts within its budget',
               seen.top <= 420, seen.top + 'px, budget 420');
+
+      /* The row of chips above the text, counted rather than measured. The
+         budget above is the thing that matters and this says why it moved
+         when it moves: a chip whose label is a few characters too long wraps
+         the row, and a wrapped row is about thirty pixels of scripture gone.
+         "Write about this" did exactly that and became "Diary". */
+      const chipRows = await page.evaluate(() => new Set(
+        Array.from(document.querySelectorAll('.reader-controls button'))
+          .map(b => Math.round(b.getBoundingClientRect().top))).size);
+      t.check('and the controls above it are no more than two rows',
+              chipRows <= 2, chipRows + ' row(s)');
       t.check('and is on screen when the page opens',
               seen.top < seen.vh, seen.top + 'px into a ' + seen.vh + 'px screen');
       await phone.close();
