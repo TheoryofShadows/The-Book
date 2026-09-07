@@ -2070,3 +2070,8 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
   color: var(--accent);
   padding: 0.3rem 0;
 }
+
+/* Entries not yet in a file. Marked rather than alarmed: this is a fact
+   about what is at stake, not an error, and a page that shouts at somebody
+   for writing in it is a page they stop writing in. */
+.diary-unsaved { color: var(--accent); }
