@@ -189,15 +189,21 @@ module.exports = async function listening(t, ctx) {
      drawer changes shape. */
   const group = label => (drawer.find(g => g[0] === label) || [label, []])[1];
 
-  /* The recorded reading is NOT offered, because it does not exist.
-     Nothing has been rendered and nothing uploaded, so the drawer must not
-     advertise a voice that falls back the moment anyone picks it. The
-     player's recorded path is finished and keeps its own tests below, where
-     the stand-in engine stamps data-audio="published" to say a recording is
-     there -- which is what this check confirms is absent by default. */
-  t.check('a voice that does not exist is not offered',
-          drawer.every(g => g[0] !== 'Read aloud') &&
-          group('Read aloud').length === 0,
+  /* The recorded reading IS offered, and is first.
+  
+     This asserted the opposite for as long as the recording did not exist:
+     with nothing rendered and nothing uploaded, advertising a voice that
+     falls back the moment anyone picks it would have been the drawer lying.
+     Now 1,559 chapters are on the archive item, data-audio says published,
+     and tools/check_audio.py fails the build if either of those stops being
+     true -- so the honest assertion is the other one.
+  
+     First in the list on purpose: it is the same reading on every device,
+     and on the phones the drawer has least to offer it is the only good
+     answer there is. */
+  t.check('the recorded reading is offered, and first',
+          drawer.length > 0 && drawer[0][0] === 'Read aloud' &&
+          group('Read aloud').indexOf('recorded') !== -1,
           JSON.stringify(drawer.map(g => g[0])));
   t.check('the drawer is grouped by what the voices are',
           group('Best on this device').join() === 'google',
