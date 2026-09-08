@@ -72,8 +72,18 @@ def local_files():
     return out
 
 
+# Tasks archive.org runs on its own account, which do not change the files
+# the reader fetches. derive.php makes alternative formats, bup.php and
+# book_op.php are backup and bookkeeping. They can sit queued for hours after
+# an upload has finished and every file is serving, so waiting on them would
+# be waiting on the wrong thing -- and telling somebody not to publish a
+# library that is complete and served is its own kind of wrong answer.
+HOUSEKEEPING = {"derive.php", "bup.php", "book_op.php", "backup_op.php"}
+
+
 def item_files(item):
-    """{address: size} for everything on the archive item."""
+    """{address: size} for everything on the item, and whether anything that
+    could still change those files is running."""
     r = fetch("https://archive.org/metadata/%s" % item)
     meta = json.loads(r.read())
     if not meta:
@@ -86,7 +96,18 @@ def item_files(item):
                 out[name] = int(f.get("size", 0))
             except (TypeError, ValueError):
                 out[name] = 0
-    return out, bool(meta.get("pending_tasks"))
+
+    # pending_tasks is true for housekeeping as well as for uploads, so the
+    # list is read rather than the flag. An unrecognised task is treated as
+    # one that matters, which is the safe way round.
+    busy = []
+    for task in meta.get("tasks") or []:
+        cmd = (task.get("cmd") or "").strip()
+        if cmd and cmd not in HOUSEKEEPING:
+            busy.append(cmd)
+    if meta.get("pending_tasks") and not meta.get("tasks"):
+        busy.append("unnamed pending task")
+    return out, busy
 
 
 def expected_verses():
@@ -114,12 +135,13 @@ def main():
     print("the render made %d files" % len(local))
 
     try:
-        served, pending = item_files(args.item)
+        served, busy = item_files(args.item)
     except Unreachable as exc:
         print("skip: archive.org could not be reached (%s)" % exc)
         return 0
     print("the item holds   %d files%s"
-          % (len(served), "  (tasks still pending)" if pending else ""))
+          % (len(served), ("  (%s still running)" % ", ".join(sorted(set(busy))))
+             if busy else ""))
 
     findings = []
 
@@ -203,9 +225,10 @@ def main():
         print("\nDo not publish. The reader would meet at least one chapter")
         print("that is missing, wrong, or not the one it asked for.")
         return 1
-    if pending:
-        print("Everything matches, but archive.org still has tasks pending.")
-        print("Run again once they clear before publishing.")
+    if busy:
+        print("Everything matches, but archive.org is still running %s, which"
+              % ", ".join(sorted(set(busy))))
+        print("could still change what is served. Run again once it clears.")
         return 1
     print("Every rendered file is on the item, at the right size, and the")
     print("chapters read back are the ones the text says they are.")
