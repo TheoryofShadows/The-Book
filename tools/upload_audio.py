@@ -28,7 +28,9 @@ be interrupted.
 """
 
 import argparse
+import json
 import os
+import time
 import sys
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
@@ -48,6 +50,35 @@ METADATA = {
                "pseudepigrapha; Apostolic Fathers",
 }
 
+
+def wait_for_room(item, ceiling=60, patience=40):
+    """Hold until the item's task queue is short enough to accept more.
+
+    archive.org turns each uploaded file into a queued task and rations a
+    bucket whose queue grows too deep, at which point every request is
+    refused rather than slowed. The queue is readable, so this asks instead
+    of guessing, and waits rather than failing.
+
+    Unreachable, unparseable or unauthenticated all mean carry on: this is a
+    courtesy to the server, not a gate on the upload, and it must never be
+    the reason a run stops.
+    """
+    import urllib.request
+    import urllib.error
+
+    for _ in range(patience):
+        try:
+            req = urllib.request.Request(
+                "https://s3.us.archive.org/?check_limit=1&bucket=" + item)
+            with urllib.request.urlopen(req, timeout=30) as fh:
+                detail = json.loads(fh.read()).get("detail", {})
+        except Exception:
+            return
+        queued = detail.get("bucket_tasks_queued")
+        if not isinstance(queued, int) or queued < ceiling:
+            return
+        print("  queue at %d, waiting" % queued)
+        time.sleep(30)
 
 def pairs(audio_dir, only=None):
     """Every chapter as {remote path: local file}.
@@ -134,10 +165,22 @@ def main():
 
     # Sent in batches so an interruption leaves a known amount done, and so
     # the progress means something on a run measured in hours.
+    #
+    # Paced, because archive.org queues a task per file and rations a bucket
+    # whose queue gets too deep. Sending three thousand files as fast as the
+    # connection allows earns "Please reduce your request rate -
+    # bucket_tasks_queued exceeds rationed amount", and then every subsequent
+    # batch fails until the queue drains. Six hundred and sixty-five files
+    # failed that way before this waited for anything.
+    #
+    # So the queue is asked about between batches and the run holds until it
+    # has drained. That is slower than hammering it and finishes sooner, since
+    # a rationed bucket refuses everything.
     keys = sorted(todo)
     sent = failed = 0
-    BATCH = 100
+    BATCH = 50
     for i in range(0, len(keys), BATCH):
+        wait_for_room(args.item)
         chunk = {k: todo[k] for k in keys[i:i + BATCH]}
         try:
             rs = upload(args.item, files=chunk,
