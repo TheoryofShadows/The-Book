@@ -41,7 +41,13 @@ def works():
 
 
 def verses(chapter):
-    return chapter.get("verses") or chapter.get("v") or []
+    """What the renderer counts as verses, spelt the way it spells it.
+
+    render_chapter reads chapter["verses"] and nothing else, so a test that
+    also accepted a "v" key would demand audio for chapters the renderer
+    deliberately skips, and fail against correct output.
+    """
+    return chapter.get("verses", [])
 
 
 class WhereTheFilesAre(unittest.TestCase):
@@ -52,9 +58,8 @@ class WhereTheFilesAre(unittest.TestCase):
     def setUpClass(cls):
         if not os.path.isdir(AUDIO):
             raise unittest.SkipTest("no rendered audio here")
-        cls.any = any(f.endswith(".opus")
-                      for _, _, fs in os.walk(AUDIO) for f in fs)
-        if not cls.any:
+        if not any(f.endswith(".opus")
+                   for _, _, fs in os.walk(AUDIO) for f in fs):
             raise unittest.SkipTest("no rendered audio here")
 
     def test_a_chapter_with_audio_has_it_at_its_index(self):
@@ -71,9 +76,16 @@ class WhereTheFilesAre(unittest.TestCase):
                 continue
             count = len(work.get("chapters", []))
             for name in os.listdir(folder):
-                if not name.endswith(".opus"):
+                # Both halves, not just the audio: a misnamed pair is
+                # internally consistent, so the pairing test cannot see it and
+                # only this can -- and it could only see half of it while it
+                # filtered on .opus.
+                if name.endswith(".opus"):
+                    stem = name[:-5]
+                elif name.endswith(".json"):
+                    stem = name[:-5]
+                else:
                     continue
-                stem = name[:-5]
                 if not stem.isdigit() or int(stem) >= count:
                     stray.append("%s/%s" % (wid, name))
         self.assertEqual(stray, [],
@@ -89,11 +101,13 @@ class WhereTheFilesAre(unittest.TestCase):
         here, because chapter 23 does not have chapter 22's number of verses.
         """
         wrong = []
+        checked = 0
         for wid, work in works():
             for idx, chapter in enumerate(work.get("chapters", [])):
                 meta = os.path.join(AUDIO, wid, "%d.json" % idx)
                 if not os.path.exists(meta):
                     continue
+                checked += 1
                 with open(meta, encoding="utf-8") as fh:
                     index = json.load(fh)
                 want = len(verses(chapter))
@@ -102,6 +116,14 @@ class WhereTheFilesAre(unittest.TestCase):
                     wrong.append("%s/%d: text has %d verses, audio has %d"
                                  % (wid, idx, want, got))
         self.assertEqual(wrong, [], wrong[:8])
+        # Without this the test passes by checking nothing: a render named
+        # wholly by chapter number leaves no <idx>.json at any expected
+        # address, every chapter is skipped, and the cross-check the test
+        # exists for never runs.
+        self.assertGreater(checked, 1000,
+                           "only %d indexes were at an address to check; a "
+                           "render named some other way would pass this test "
+                           "by being absent from it" % checked)
 
     def test_every_chapter_with_verses_has_audio(self):
         """A chapter the reader can open and cannot hear.
@@ -139,7 +161,15 @@ class WhereTheFilesAre(unittest.TestCase):
 
     def test_no_verse_ends_after_the_file_does(self):
         """An offset past the end of the audio is a verse mark that can never
-        be reached, and the sign of an index built against different audio."""
+        be reached, and the sign of an index built against different audio.
+
+        The tolerance was a full second, which is slack this has no use for:
+        the renderer appends GAP after the last verse, so the real margin is
+        -0.35 on every one of the 1,559 indexes and the largest measured
+        overrun is negative. A second of grace meant a verse could end 1.35s
+        past the end of its file and still pass, which is most of the failure
+        this is here to catch.
+        """
         bad = []
         for dirpath, _, names in os.walk(AUDIO):
             for name in sorted(names):
@@ -149,7 +179,7 @@ class WhereTheFilesAre(unittest.TestCase):
                     index = json.load(fh)
                 d = index.get("d", 0)
                 for v in index.get("v", []):
-                    if v[2] > d + 1:
+                    if v[2] > d + 0.05:   # float slop only
                         bad.append("%s/%s verse %s ends %.1fs into a %.1fs file"
                                    % (os.path.basename(dirpath), name, v[0],
                                       v[2], d))
