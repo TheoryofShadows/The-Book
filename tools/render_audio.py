@@ -204,8 +204,19 @@ def main():
         folder = os.path.join(args.out, work_id)
         os.makedirs(folder, exist_ok=True)
 
-        for chapter in work.get("chapters", []):
-            base = os.path.join(folder, str(chapter["n"]))
+        for idx, chapter in enumerate(work.get("chapters", [])):
+            # Named by position in the array, not by chapter["n"], because
+            # position is what the reader asks for: docs/assets/app.js builds
+            # the address from the index it is rendering, so #/read/psalms/22
+            # is the twenty-third chapter and fetches psalms/22.opus.
+            #
+            # Naming these by n shifted every file by one against the reader.
+            # Tapping Psalm 23 played Psalm 22 -- confidently, in a good
+            # voice, with the verse marks landing where they should -- and the
+            # last chapter of every book fetched a file that was not there.
+            # A wrong chapter that plays is worse than silence: nothing about
+            # it looks broken.
+            base = os.path.join(folder, str(idx))
             opus, meta = base + ".opus", base + ".json"
 
             # Twenty-eight core-hours will be interrupted. Anything already
