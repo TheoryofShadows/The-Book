@@ -157,6 +157,41 @@ class WhereTheFilesAre(unittest.TestCase):
         self.assertEqual(bad, [], bad[:6])
 
 
+class TheNumberingItReplaced(unittest.TestCase):
+    """Why the fix could not be "subtract one".
+
+    Nineteen works do not number their chapters 1..len. The split prophets
+    keep the numbering of the book they came from, so Second Isaiah starts at
+    40 and the Astronomical Book at 72; a work extracted as a single chapter
+    carries that chapter's number, so Bel and the Dragon is 14; and Jubilees
+    starts at 0, where n and the index already agreed.
+
+    An off-by-one fix that shifted every file by one would have been right for
+    most of the library and badly wrong for those -- Second Isaiah 40 becoming
+    chapter 39 of a work that has sixteen. The mapping has to be from n to the
+    position n actually sits at, which is what this asserts is still true of
+    the data the renderer reads.
+    """
+
+    def test_chapter_numbers_are_not_always_their_index_plus_one(self):
+        odd = []
+        for wid, work in works():
+            ns = [ch["n"] for ch in work.get("chapters", [])]
+            if ns and ns != list(range(1, len(ns) + 1)):
+                odd.append(wid)
+        self.assertGreater(len(odd), 0,
+                           "if every work were numbered 1..len this test is "
+                           "pointless, but the split works are not")
+
+    def test_no_work_numbers_two_chapters_the_same(self):
+        """A duplicate n would make any n-keyed mapping lossy, which is how a
+        rename silently overwrites a chapter."""
+        for wid, work in works():
+            ns = [ch["n"] for ch in work.get("chapters", [])]
+            self.assertEqual(len(ns), len(set(ns)),
+                             "%s numbers a chapter twice" % wid)
+
+
 class WhatTheRendererWillDo(unittest.TestCase):
     """The rule, checked in the script rather than only in its output, so a
     fresh render cannot reintroduce it."""
