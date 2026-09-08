@@ -834,4 +834,53 @@ module.exports = async function listening(t, ctx) {
   await page.waitForTimeout(settle);
   t.check('and the l key does nothing at all', true);
   await page.close();
+
+  /* A browser that cannot decode what is served.
+   *
+   * The recording is Opus in Ogg, which Apple was last to take: desktop
+   * Safari still reports only partial support and an iPhone older than 18.4
+   * cannot play it at all. There has always been an error handler that falls
+   * back to the device voice and says so, which is the honest behaviour --
+   * but it fires only after the reader has chosen the recording and waited
+   * for it to fail, and the drawer went on offering a voice that machine can
+   * never use. canPlayType is asked first now.
+   */
+  {
+    const page = await ctx.browser.newPage();
+    await page.addInitScript(() => {
+      const real = HTMLMediaElement.prototype.canPlayType;
+      HTMLMediaElement.prototype.canPlayType = function (type) {
+        return /opus/i.test(type) ? '' : real.call(this, type);
+      };
+      document.documentElement.setAttribute('data-audio', 'published');
+    });
+    await page.goto(ctx.base + '#/read/psalms/22');
+    await page.waitForSelector('.reader .v');
+    const listen = page.locator('.reader-controls button:has-text("Listen")');
+    if (await listen.count()) {
+      await listen.first().click();
+      await page.waitForTimeout(400);
+      const options = (await page.locator('select option').allTextContents()).join(' | ');
+      t.check('a browser that cannot decode Opus is not offered the recording',
+              !/recorded reading/i.test(options), options.slice(0, 90) || '(no drawer)');
+    }
+    await page.close();
+  }
+
+  /* And one that can is still offered it, so the check does not simply
+     switch the feature off for everybody. */
+  {
+    const page = await ctx.browser.newPage();
+    await page.addInitScript(() => {
+      document.documentElement.setAttribute('data-audio', 'published');
+    });
+    await page.goto(ctx.base + '#/read/psalms/22');
+    await page.waitForSelector('.reader .v');
+    const can = await page.evaluate(() =>
+      document.createElement('audio').canPlayType('audio/ogg; codecs="opus"'));
+    t.check('and this browser, which can, still reports support',
+            can !== '', JSON.stringify(can));
+    await page.close();
+  }
+
 };

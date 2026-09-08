@@ -6495,8 +6495,36 @@
   var AUDIO_PUBLISHED =
         document.documentElement.getAttribute("data-audio") === "published";
 
+  /* Can this browser decode what is being served?
+  
+     The recording is Opus in an Ogg container, which is the right choice for
+     the size -- 34 kbps for something listenable -- and is the one common
+     format Apple was last to take. Desktop Safari still reports only partial
+     support, and an iPhone older than 18.4 cannot play it at all.
+  
+     There is already an error handler that catches this and falls back to the
+     device voice with a sentence saying so, which is the honest behaviour and
+     is why this is not a bug. But it fires after the reader has chosen the
+     recording and waited for it to fail, and the drawer goes on offering a
+     voice that will never work on that machine. canPlayType answers the same
+     question before either happens.
+  
+     "" means no, "maybe" and "probably" both mean try -- and "maybe" is what
+     several browsers say about formats they play perfectly, so only the empty
+     string is treated as a refusal. */
+  function canPlayOpus() {
+    try {
+      var probe = document.createElement("audio");
+      if (!probe.canPlayType) return true;   // too old to ask; let it try
+      return probe.canPlayType('audio/ogg; codecs="opus"') !== "";
+    } catch (e) {
+      return true;
+    }
+  }
+
   var AUDIO_OK = AUDIO_PUBLISHED &&
-                 typeof window.Audio === "function" && !window.__BOOK__;
+                 typeof window.Audio === "function" && !window.__BOOK__ &&
+                 canPlayOpus();
 
   var aud = {
     el: null,       // one <audio>, reused across chapters
