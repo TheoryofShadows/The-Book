@@ -117,6 +117,28 @@ def declared_published(path=INDEX_HTML):
     return re.search(r'<html[^>]*\bdata-audio\s*=\s*"published"', html) is not None
 
 
+def local_pairs():
+    """Every file the render made, named as the item names them.
+
+    Empty where there is no render here, which is not a finding: a checkout
+    that has never rendered has nothing to compare against, and this check
+    then has no opinion rather than a wrong one.
+    """
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
+    audio = os.path.join(root, "dist", "audio")
+    if not os.path.isdir(audio):
+        return set()
+    out = set()
+    for dirpath, _, names in os.walk(audio):
+        work = os.path.relpath(dirpath, audio).replace(os.sep, "/")
+        if work == ".":
+            continue
+        for name in names:
+            if name.endswith((".opus", ".json")):
+                out.add("%s/%s" % (work, name))
+    return out
+
+
 def check(sample, app_js):
     base = audio_base(app_js)
     meta_url, item = metadata_url(base)
@@ -172,6 +194,31 @@ def check(sample, app_js):
         print("  docs/index.html, so the reader hides a reading that is")
         print("  sitting there ready. Add the attribute.")
         return 1
+
+    # An item that exists is not an item that is finished. A 1.34 GB upload
+    # takes hours, and for every one of them the item is there, servable, and
+    # missing most of the library. Telling somebody to publish then -- which
+    # is what this said, on the strength of the item existing -- puts a reader
+    # in front of a chapter whose audio has not arrived, which falls back to
+    # the device voice and looks like the recording being broken.
+    #
+    # So the count is compared with what the render made. Local, because that
+    # is the thing being published; a machine without dist/ skips the check
+    # rather than guessing.
+    served = {f["name"] for f in (meta.get("files") or [])
+              if f["name"].endswith((".opus", ".json")) and "/" in f["name"]}
+    local = local_pairs()
+    if local:
+        absent = local - served
+        if absent:
+            print("FAIL: the item is missing %d of the %d files the render "
+                  "made." % (len(absent), len(local)))
+            print()
+            print("  Still uploading, or an upload that stopped part way.")
+            print("  Publishing now offers a reading most chapters do not")
+            print("  have. Examples: %s" % ", ".join(sorted(absent)[:4]))
+            return 1
+        print("every rendered file is on the item: %d" % len(local))
 
     print("the item exists: %d files"
           % len(meta.get("files") or []))

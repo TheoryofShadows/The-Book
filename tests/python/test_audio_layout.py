@@ -440,6 +440,57 @@ class TheGuardAgainstAHalfWrittenIndex(unittest.TestCase):
             self.assertIs(self.ra._holds(path, chapter), want)
 
 
+class TheGateBeforePublishing(unittest.TestCase):
+    """check_audio.py decides whether the switch may be flipped.
+
+    It used to ask only whether the archive item existed, and an item exists
+    from the first file of a 1.34 GB upload that takes hours. For all of those
+    hours it would have said "sitting there ready. Add the attribute" about a
+    library that was a quarter there -- and a reader opening a chapter whose
+    audio had not arrived gets the device voice, which looks like the
+    recording being broken rather than like an upload in progress.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "check_audio", os.path.join(ROOT, "tools", "check_audio.py"))
+        cls.ca = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.ca)
+
+    def test_it_knows_what_the_render_made(self):
+        """The comparison is only as good as the list it compares against."""
+        if not os.path.isdir(AUDIO):
+            self.skipTest("no rendered audio here")
+        local = self.ca.local_pairs()
+        on_disk = sum(1 for _, _, fs in os.walk(AUDIO) for f in fs
+                      if f.endswith((".opus", ".json")))
+        self.assertEqual(len(local), on_disk)
+        for name in list(local)[:20]:
+            self.assertRegex(name, r"^[^/]+/\d+\.(opus|json)$",
+                             "names have to match the item's, which is how "
+                             "the reader addresses them")
+
+    def test_no_render_means_no_opinion(self):
+        """A checkout that never rendered has nothing to compare, and must
+        say nothing rather than guess. Otherwise the deploy fails on every
+        machine that is not the one the audio was made on."""
+        import tempfile
+        import importlib.util
+        tmp = tempfile.mkdtemp()
+        spec = importlib.util.spec_from_file_location(
+            "check_audio_isolated", os.path.join(ROOT, "tools", "check_audio.py"))
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        real = mod.os.path.dirname
+        try:
+            mod.os.path.dirname = lambda p: os.path.join(tmp, "tools")
+            self.assertEqual(mod.local_pairs(), set())
+        finally:
+            mod.os.path.dirname = real
+
+
 
 if __name__ == "__main__":
     unittest.main()
