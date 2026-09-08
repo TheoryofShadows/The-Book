@@ -1,0 +1,445 @@
+#!/usr/bin/env python3
+"""The rendered audio, at the addresses the reader actually asks for.
+
+This exists because of a bug that every other check passed.
+
+tools/render_audio.py named each file after chapter["n"], the printed chapter
+number. docs/assets/app.js builds its address from the chapter's position in
+the array: #/read/psalms/22 is the twenty-third chapter and fetches
+psalms/22.opus. Those two agree only when a work's first chapter is numbered
+zero, and none of them are.
+
+So every file sat one place off. Tapping Psalm 23 played Psalm 22 -- in a
+good voice, with the verse marks landing exactly where they should, because
+the file was internally perfect. The last chapter of every book fetched a
+file that was not there and fell back to the device voice. Nothing looked
+broken from any angle: the renderer's own log was right, the file count was
+plausible, and the live checker passed because it was pointed at a filename
+rather than at an address.
+
+A wrong chapter that plays confidently is worse than silence. These are the
+checks that would have caught it, and they are all the same question asked
+of the layout rather than of the audio: does the file at the address the
+reader will use hold the chapter the reader asked for.
+"""
+
+import json
+import os
+import unittest
+
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                    os.pardir, os.pardir)
+WORKS = os.path.join(ROOT, "docs", "data", "works")
+AUDIO = os.path.join(ROOT, "dist", "audio")
+
+
+def works():
+    for name in sorted(os.listdir(WORKS)):
+        if name.endswith(".json"):
+            with open(os.path.join(WORKS, name), encoding="utf-8") as fh:
+                yield name[:-5], json.load(fh)
+
+
+def verses(chapter):
+    """What the renderer counts as verses, spelt the way it spells it.
+
+    render_chapter reads chapter["verses"] and nothing else, so a test that
+    also accepted a "v" key would demand audio for chapters the renderer
+    deliberately skips, and fail against correct output.
+    """
+    return chapter.get("verses", [])
+
+
+class WhereTheFilesAre(unittest.TestCase):
+    """Skipped where there is no render: this describes dist/, which is not
+    committed and is not present in a fresh checkout or in CI."""
+
+    @classmethod
+    def setUpClass(cls):
+        if not os.path.isdir(AUDIO):
+            raise unittest.SkipTest("no rendered audio here")
+        if not any(f.endswith(".opus")
+                   for _, _, fs in os.walk(AUDIO) for f in fs):
+            raise unittest.SkipTest("no rendered audio here")
+
+    def test_a_chapter_with_audio_has_it_at_its_index(self):
+        """The bug, stated as a rule.
+
+        Every .opus in a work's folder must be named for a position in that
+        work's chapter array. A file named for a chapter number is the
+        failure this file is about, and on any real work the two differ.
+        """
+        stray = []
+        for wid, work in works():
+            folder = os.path.join(AUDIO, wid)
+            if not os.path.isdir(folder):
+                continue
+            count = len(work.get("chapters", []))
+            for name in os.listdir(folder):
+                # Both halves, not just the audio: a misnamed pair is
+                # internally consistent, so the pairing test cannot see it and
+                # only this can -- and it could only see half of it while it
+                # filtered on .opus.
+                if name.endswith(".opus"):
+                    stem = name[:-5]
+                elif name.endswith(".json"):
+                    stem = name[:-5]
+                else:
+                    continue
+                if not stem.isdigit() or int(stem) >= count:
+                    stray.append("%s/%s" % (wid, name))
+        self.assertEqual(stray, [],
+                         "audio at an address no chapter has: %s"
+                         % stray[:8])
+
+    def test_the_index_beside_it_matches_that_chapter(self):
+        """The check that would have caught it on its own.
+
+        The verse count in the rendered index has to equal the verse count of
+        the chapter at that address. Off-by-one survives every other test --
+        the audio is fine, the offsets are fine, the file is fine -- and dies
+        here, because chapter 23 does not have chapter 22's number of verses.
+        """
+        wrong = []
+        checked = 0
+        for wid, work in works():
+            for idx, chapter in enumerate(work.get("chapters", [])):
+                meta = os.path.join(AUDIO, wid, "%d.json" % idx)
+                if not os.path.exists(meta):
+                    continue
+                checked += 1
+                with open(meta, encoding="utf-8") as fh:
+                    index = json.load(fh)
+                want = len(verses(chapter))
+                got = len(index.get("v", []))
+                if want != got:
+                    wrong.append("%s/%d: text has %d verses, audio has %d"
+                                 % (wid, idx, want, got))
+        self.assertEqual(wrong, [], wrong[:8])
+        # Without this the test passes by checking nothing: a render named
+        # wholly by chapter number leaves no <idx>.json at any expected
+        # address, every chapter is skipped, and the cross-check the test
+        # exists for never runs.
+        self.assertGreater(checked, 1000,
+                           "only %d indexes were at an address to check; a "
+                           "render named some other way would pass this test "
+                           "by being absent from it" % checked)
+
+    def test_every_chapter_with_verses_has_audio(self):
+        """A chapter the reader can open and cannot hear.
+
+        Chapters with no verses are prose held as paragraphs and are skipped
+        by the renderer on purpose, so they are not counted here.
+        """
+        silent = []
+        for wid, work in works():
+            for idx, chapter in enumerate(work.get("chapters", [])):
+                if not verses(chapter):
+                    continue
+                if not os.path.exists(os.path.join(AUDIO, wid,
+                                                   "%d.opus" % idx)):
+                    silent.append("%s/%d" % (wid, idx))
+        self.assertEqual(silent, [],
+                         "%d chapter(s) have verses and no audio: %s"
+                         % (len(silent), silent[:8]))
+
+    def test_audio_and_index_come_in_pairs(self):
+        """Audio with no index has no verse marks; an index with no audio is
+        a promise of a file that is not there."""
+        odd = []
+        for dirpath, _, names in os.walk(AUDIO):
+            for name in names:
+                if name.endswith(".opus"):
+                    if not os.path.exists(os.path.join(dirpath,
+                                                       name[:-5] + ".json")):
+                        odd.append(os.path.join(dirpath, name))
+                elif name.endswith(".json"):
+                    if not os.path.exists(os.path.join(dirpath,
+                                                       name[:-5] + ".opus")):
+                        odd.append(os.path.join(dirpath, name))
+        self.assertEqual(odd, [], odd[:8])
+
+    def test_no_verse_ends_after_the_file_does(self):
+        """An offset past the end of the audio is a verse mark that can never
+        be reached, and the sign of an index built against different audio.
+
+        The tolerance was a full second, which is slack this has no use for:
+        the renderer appends GAP after the last verse, so the real margin is
+        -0.35 on every one of the 1,559 indexes and the largest measured
+        overrun is negative. A second of grace meant a verse could end 1.35s
+        past the end of its file and still pass, which is most of the failure
+        this is here to catch.
+        """
+        bad = []
+        for dirpath, _, names in os.walk(AUDIO):
+            for name in sorted(names):
+                if not name.endswith(".json"):
+                    continue
+                with open(os.path.join(dirpath, name), encoding="utf-8") as fh:
+                    index = json.load(fh)
+                d = index.get("d", 0)
+                for v in index.get("v", []):
+                    if v[2] > d + 0.05:   # float slop only
+                        bad.append("%s/%s verse %s ends %.1fs into a %.1fs file"
+                                   % (os.path.basename(dirpath), name, v[0],
+                                      v[2], d))
+                        break
+        self.assertEqual(bad, [], bad[:6])
+
+
+class TheNumberingItReplaced(unittest.TestCase):
+    """Why the fix could not be "subtract one".
+
+    Nineteen works do not number their chapters 1..len. The split prophets
+    keep the numbering of the book they came from, so Second Isaiah starts at
+    40 and the Astronomical Book at 72; a work extracted as a single chapter
+    carries that chapter's number, so Bel and the Dragon is 14; and Jubilees
+    starts at 0, where n and the index already agreed.
+
+    An off-by-one fix that shifted every file by one would have been right for
+    most of the library and badly wrong for those -- Second Isaiah 40 becoming
+    chapter 39 of a work that has sixteen. The mapping has to be from n to the
+    position n actually sits at, which is what this asserts is still true of
+    the data the renderer reads.
+    """
+
+    def test_chapter_numbers_are_not_always_their_index_plus_one(self):
+        odd = []
+        for wid, work in works():
+            ns = [ch["n"] for ch in work.get("chapters", [])]
+            if ns and ns != list(range(1, len(ns) + 1)):
+                odd.append(wid)
+        self.assertGreater(len(odd), 0,
+                           "if every work were numbered 1..len this test is "
+                           "pointless, but the split works are not")
+
+    def test_no_work_numbers_two_chapters_the_same(self):
+        """A duplicate n would make any n-keyed mapping lossy, which is how a
+        rename silently overwrites a chapter."""
+        for wid, work in works():
+            ns = [ch["n"] for ch in work.get("chapters", [])]
+            self.assertEqual(len(ns), len(set(ns)),
+                             "%s numbers a chapter twice" % wid)
+
+
+class WhatTheRendererWillDo(unittest.TestCase):
+    """The rule as the renderer will apply it, not as it is spelt.
+
+    This began as a search for the string str(chapter["n"]) in the source,
+    which is a tripwire rather than a proof: single quotes, an f-string or a
+    chapter['n'] spelling all pass it while putting every file back one place
+    off, and the positive half was satisfied by "str(idx)" appearing anywhere
+    in the file at all. It calls the function now, so the property held is
+    the one that matters -- what path comes out for a given chapter.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        import importlib.util
+        path = os.path.join(ROOT, "tools", "render_audio.py")
+        spec = importlib.util.spec_from_file_location("render_audio", path)
+        cls.ra = importlib.util.module_from_spec(spec)
+        # Safe to import: the Kokoro runtime is loaded inside load_engine
+        # rather than at module scope, for the same reason lint.sh can
+        # byte-compile this without half a gigabyte of wheels installed.
+        spec.loader.exec_module(cls.ra)
+
+    def test_the_path_is_the_index(self):
+        opus, meta = self.ra.chapter_paths("out", 22)
+        self.assertEqual(os.path.basename(opus), "22.opus")
+        self.assertEqual(os.path.basename(meta), "22.json")
+
+    def test_the_path_ignores_the_printed_chapter_number(self):
+        """The bug, asked of the function directly.
+
+        Second Isaiah's first chapter is numbered 40 and sits at index 0. The
+        file for it has to be 0.opus, because that is what the reader asks
+        for; a renderer keying on n would write 40.opus into a work with
+        sixteen chapters.
+        """
+        with open(os.path.join(WORKS, "isaiah-40-55-second-isaiah.json"),
+                  encoding="utf-8") as fh:
+            work = json.load(fh)
+        first = work["chapters"][0]
+        self.assertEqual(first["n"], 40, "the fixture moved; pick another work")
+        opus, _ = self.ra.chapter_paths("out", 0)
+        self.assertEqual(os.path.basename(opus), "0.opus")
+        self.assertNotEqual(os.path.basename(opus), "%d.opus" % first["n"])
+
+    def test_every_chapter_of_a_work_gets_its_own_path(self):
+        """Two chapters sharing a path is how a render silently loses one."""
+        seen = set()
+        for idx in range(200):
+            opus, meta = self.ra.chapter_paths("out", idx)
+            self.assertNotIn(opus, seen)
+            seen.add(opus)
+            self.assertEqual(opus[:-5], meta[:-5],
+                             "the pair has to share a stem or nothing can "
+                             "find the index beside the audio")
+
+    def test_the_resume_guard_rejects_a_file_from_another_chapter(self):
+        """The finding this class exists for after the review.
+
+        The skip used to test only that a file was there. A dist/ named the
+        old way overlaps the new names almost everywhere, so a resume would
+        have kept 149 of Psalms' 150 chapters, each holding the chapter
+        before it, and called it a clean resume.
+        """
+        import tempfile
+        with open(os.path.join(WORKS, "psalms.json"), encoding="utf-8") as fh:
+            psalms = json.load(fh)
+        here = psalms["chapters"][22]          # 6 verses
+        before = psalms["chapters"][21]        # 31 verses
+        self.assertNotEqual(len(verses(here)), len(verses(before)),
+                            "the fixture moved; pick another pair")
+
+        tmp = tempfile.mkdtemp()
+        right = os.path.join(tmp, "right.json")
+        wrong = os.path.join(tmp, "wrong.json")
+        for path, chapter in ((right, here), (wrong, before)):
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump({"d": 1.0,
+                           "v": [[i, 0, 0] for i in range(len(verses(chapter)))]},
+                          fh)
+
+        self.assertTrue(self.ra._holds(right, here))
+        self.assertFalse(self.ra._holds(wrong, here),
+                         "a file holding the previous chapter was accepted as "
+                         "this one, which is the resume that recreates the bug")
+        self.assertFalse(self.ra._holds(os.path.join(tmp, "gone.json"), here))
+
+class WhatTheAudioActuallyContains(unittest.TestCase):
+    """Checks that open the audio rather than the filenames.
+
+    Everything above this asks whether the library is laid out right. None of
+    it can tell a chapter of speech from a chapter of silence, or an index
+    that describes different audio from one that describes this audio. These
+    do, and they are the only checks here that would have caught a render that
+    was structurally perfect and acoustically wrong.
+
+    Skipped without soundfile, which is a render dependency rather than a test
+    one -- a checkout that has never rendered has no audio to open either.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        try:
+            import soundfile, numpy            # noqa: F401
+        except ImportError:
+            raise unittest.SkipTest("soundfile/numpy not installed here")
+        if not os.path.isdir(AUDIO):
+            raise unittest.SkipTest("no rendered audio here")
+        cls.files = [os.path.join(dp, f)
+                     for dp, _, fs in os.walk(AUDIO) for f in fs
+                     if f.endswith(".opus")]
+        if not cls.files:
+            raise unittest.SkipTest("no rendered audio here")
+        import random
+        cls.sample = random.Random(4).sample(cls.files, min(12, len(cls.files)))
+
+    def test_the_files_hold_speech_and_not_silence(self):
+        """A renderer that lost its voice writes files of the right length
+        full of nothing, and every structural check here passes them."""
+        import soundfile as sf
+        import numpy as np
+        quiet = []
+        for path in self.sample:
+            audio, _ = sf.read(path)
+            if audio.ndim > 1:
+                audio = audio.mean(axis=1)
+            if float(np.abs(audio).max()) < 0.05:
+                quiet.append(os.path.relpath(path, AUDIO))
+        self.assertEqual(quiet, [], "silent audio: %s" % quiet[:5])
+
+    def test_the_verse_offsets_land_on_sound(self):
+        """The index says a verse runs from a to b. If it describes this
+        audio, that span holds speech and the gap after it does not."""
+        import soundfile as sf
+        import numpy as np
+        wrong = []
+        for path in self.sample:
+            with open(path[:-5] + ".json", encoding="utf-8") as fh:
+                index = json.load(fh)
+            audio, rate = sf.read(path)
+            if audio.ndim > 1:
+                audio = audio.mean(axis=1)
+            hits = total = 0
+            for v in index.get("v", []):
+                start, end = int(v[1] * rate), int(v[2] * rate)
+                if end <= start or end > len(audio):
+                    continue
+                span = audio[start:end]
+                gap = audio[end:min(end + int(0.30 * rate), len(audio))]
+                if len(span) < rate * 0.1 or not len(gap):
+                    continue
+                total += 1
+                if np.abs(span).mean() > (np.abs(gap).mean() + 1e-6) * 3:
+                    hits += 1
+            if total and hits / total < 0.8:
+                wrong.append((os.path.relpath(path, AUDIO), hits, total))
+        self.assertEqual(wrong, [], "offsets not landing on speech: %s" % wrong[:4])
+
+    def test_the_file_is_as_long_as_the_index_says(self):
+        """Decoded end to end, not read from a header. A truncated file starts
+        with OggS like any other."""
+        import soundfile as sf
+        wrong = []
+        for path in self.sample:
+            with open(path[:-5] + ".json", encoding="utf-8") as fh:
+                claimed = json.load(fh).get("d", 0)
+            audio, rate = sf.read(path)
+            actual = len(audio) / rate
+            if abs(actual - claimed) > 0.5:
+                wrong.append("%s: %.1fs of audio, index says %.1fs"
+                             % (os.path.relpath(path, AUDIO), actual, claimed))
+        self.assertEqual(wrong, [], wrong[:4])
+
+
+class TheGuardAgainstAHalfWrittenIndex(unittest.TestCase):
+    """_holds() decides whether a resume keeps a file. It is handed whatever
+    is on disk, including the results of a write that was interrupted, so it
+    has to answer rather than raise: an exception here ends a render of
+    twenty-five hours on the file it exists to reject."""
+
+    @classmethod
+    def setUpClass(cls):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "render_audio", os.path.join(ROOT, "tools", "render_audio.py"))
+        cls.ra = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.ra)
+
+    def test_it_answers_rather_than_raises(self):
+        import tempfile
+        chapter = {"verses": [{"t": "a"}, {"t": "b"}, {"t": "c"}]}
+        tmp = tempfile.mkdtemp()
+        broken = {
+            "truncated": '{"d":1.0,"v":[[1,0,0]',
+            "empty": "",
+            "no v at all": '{"hello":"world"}',
+            "v is null": '{"d":1.0,"v":null}',
+            "v is a number": '{"v":3}',
+            "v is an object": '{"v":{"1":0}}',
+            "not json": "OggS binary rubbish",
+        }
+        for name, body in broken.items():
+            path = os.path.join(tmp, name.replace(" ", "_") + ".json")
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write(body)
+            self.assertIs(self.ra._holds(path, chapter), False,
+                          "%s should be rejected, not accepted" % name)
+
+    def test_it_accepts_only_the_right_count(self):
+        import tempfile
+        tmp = tempfile.mkdtemp()
+        chapter = {"verses": [{"t": "a"}, {"t": "b"}, {"t": "c"}]}
+        for count, want in ((3, True), (2, False), (4, False), (0, False)):
+            path = os.path.join(tmp, "n%d.json" % count)
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump({"d": 1.0, "v": [[i, 0, 0] for i in range(count)]}, fh)
+            self.assertIs(self.ra._holds(path, chapter), want)
+
+
+
+if __name__ == "__main__":
+    unittest.main()

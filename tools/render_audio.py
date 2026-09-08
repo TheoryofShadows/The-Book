@@ -107,6 +107,51 @@ def load_engine(models: str):
     return Kokoro(model, voices)
 
 
+def chapter_paths(folder, idx):
+    """Where a chapter's two files go, given its position in the work.
+
+    A function rather than two lines inline because it is the one rule in
+    this script that another program depends on: docs/assets/app.js builds
+    its address from the same index, so #/read/psalms/22 is the
+    twenty-third chapter and fetches psalms/22.opus.
+
+    Naming these by chapter["n"], the printed chapter number, agrees with
+    that only where a work's first chapter is numbered zero -- and of 172
+    works exactly one is. It put every file one place off: tapping Psalm 23
+    played Psalm 22, in a good voice, with the verse marks landing where
+    they should, and the last chapter of every book fetched a file that was
+    not there. Nothing about it looked broken.
+
+    tests/python/test_audio_layout.py calls this directly, so the rule is
+    held by what it does rather than by how it is spelt.
+    """
+    base = os.path.join(folder, str(idx))
+    return base + ".opus", base + ".json"
+
+
+def _holds(meta_path, chapter):
+    """Does the index at this address describe this chapter?
+
+    Compares the verse count, which is what distinguishes a chapter from its
+    neighbour and is the same check tests/python/test_audio_layout.py makes of
+    the finished render. An unreadable index counts as not holding it: better
+    to spend a minute re-rendering than to keep a file nothing can vouch for.
+    """
+    try:
+        with open(meta_path, encoding="utf-8") as fh:
+            index = json.load(fh)
+        verses = index.get("v")
+    except (OSError, ValueError, AttributeError):
+        return False
+    # A half-written index can hold anything, including a null where the list
+    # should be. Asking len() of that raised inside the resume check, which
+    # would have ended a twenty-five hour render on a file it was supposed to
+    # be defending against.
+    if not isinstance(verses, list):
+        return False
+    return len(verses) == len(chapter.get("verses", []))
+
+
 def split_long(text: str) -> list[str]:
     """Break a verse too long for the model, at a clause where one exists."""
     if len(text) <= MAX_TOKENS:
@@ -204,15 +249,31 @@ def main():
         folder = os.path.join(args.out, work_id)
         os.makedirs(folder, exist_ok=True)
 
-        for chapter in work.get("chapters", []):
-            base = os.path.join(folder, str(chapter["n"]))
-            opus, meta = base + ".opus", base + ".json"
+        for idx, chapter in enumerate(work.get("chapters", [])):
+            opus, meta = chapter_paths(folder, idx)
 
             # Twenty-eight core-hours will be interrupted. Anything already
             # rendered is left alone, so the run resumes rather than restarts.
+            #
+            # But "already rendered" has to mean the right chapter, not just a
+            # file with the right name. A dist/ from before the naming was
+            # fixed holds n-named files, and those overlap the index names
+            # almost everywhere: for Psalms, 1..150 against 0..149 collide at
+            # 1..149. Resuming such a render with existence as the only test
+            # would skip 149 chapters as done while each held the previous
+            # chapter's audio, render only index 0, and report a clean resume.
+            # That is this exact bug, recreated by the thing meant to be safe.
+            #
+            # So the index is opened and its verse count compared with the
+            # chapter's. It is cheap next to synthesis, it is the same
+            # property test_audio_layout.py asserts, and it is wrong exactly
+            # when the file belongs to a different chapter.
             if not args.force and os.path.exists(opus) and os.path.exists(meta):
-                skipped += 1
-                continue
+                if _holds(meta, chapter):
+                    skipped += 1
+                    continue
+                print("  re-rendering %s/%s: the file there is not this "
+                      "chapter" % (work_id, idx))
 
             t0 = time.time()
             rendered = render_chapter(engine, chapter, editorial, np)
