@@ -140,9 +140,16 @@ def _holds(meta_path, chapter):
     try:
         with open(meta_path, encoding="utf-8") as fh:
             index = json.load(fh)
-    except (OSError, ValueError):
+        verses = index.get("v")
+    except (OSError, ValueError, AttributeError):
         return False
-    return len(index.get("v", [])) == len(chapter.get("verses", []))
+    # A half-written index can hold anything, including a null where the list
+    # should be. Asking len() of that raised inside the resume check, which
+    # would have ended a twenty-five hour render on a file it was supposed to
+    # be defending against.
+    if not isinstance(verses, list):
+        return False
+    return len(verses) == len(chapter.get("verses", []))
 
 
 def split_long(text: str) -> list[str]:

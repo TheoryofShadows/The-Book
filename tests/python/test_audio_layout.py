@@ -308,6 +308,138 @@ class WhatTheRendererWillDo(unittest.TestCase):
                          "this one, which is the resume that recreates the bug")
         self.assertFalse(self.ra._holds(os.path.join(tmp, "gone.json"), here))
 
+class WhatTheAudioActuallyContains(unittest.TestCase):
+    """Checks that open the audio rather than the filenames.
+
+    Everything above this asks whether the library is laid out right. None of
+    it can tell a chapter of speech from a chapter of silence, or an index
+    that describes different audio from one that describes this audio. These
+    do, and they are the only checks here that would have caught a render that
+    was structurally perfect and acoustically wrong.
+
+    Skipped without soundfile, which is a render dependency rather than a test
+    one -- a checkout that has never rendered has no audio to open either.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        try:
+            import soundfile, numpy            # noqa: F401
+        except ImportError:
+            raise unittest.SkipTest("soundfile/numpy not installed here")
+        if not os.path.isdir(AUDIO):
+            raise unittest.SkipTest("no rendered audio here")
+        cls.files = [os.path.join(dp, f)
+                     for dp, _, fs in os.walk(AUDIO) for f in fs
+                     if f.endswith(".opus")]
+        if not cls.files:
+            raise unittest.SkipTest("no rendered audio here")
+        import random
+        cls.sample = random.Random(4).sample(cls.files, min(12, len(cls.files)))
+
+    def test_the_files_hold_speech_and_not_silence(self):
+        """A renderer that lost its voice writes files of the right length
+        full of nothing, and every structural check here passes them."""
+        import soundfile as sf
+        import numpy as np
+        quiet = []
+        for path in self.sample:
+            audio, _ = sf.read(path)
+            if audio.ndim > 1:
+                audio = audio.mean(axis=1)
+            if float(np.abs(audio).max()) < 0.05:
+                quiet.append(os.path.relpath(path, AUDIO))
+        self.assertEqual(quiet, [], "silent audio: %s" % quiet[:5])
+
+    def test_the_verse_offsets_land_on_sound(self):
+        """The index says a verse runs from a to b. If it describes this
+        audio, that span holds speech and the gap after it does not."""
+        import soundfile as sf
+        import numpy as np
+        wrong = []
+        for path in self.sample:
+            with open(path[:-5] + ".json", encoding="utf-8") as fh:
+                index = json.load(fh)
+            audio, rate = sf.read(path)
+            if audio.ndim > 1:
+                audio = audio.mean(axis=1)
+            hits = total = 0
+            for v in index.get("v", []):
+                start, end = int(v[1] * rate), int(v[2] * rate)
+                if end <= start or end > len(audio):
+                    continue
+                span = audio[start:end]
+                gap = audio[end:min(end + int(0.30 * rate), len(audio))]
+                if len(span) < rate * 0.1 or not len(gap):
+                    continue
+                total += 1
+                if np.abs(span).mean() > (np.abs(gap).mean() + 1e-6) * 3:
+                    hits += 1
+            if total and hits / total < 0.8:
+                wrong.append((os.path.relpath(path, AUDIO), hits, total))
+        self.assertEqual(wrong, [], "offsets not landing on speech: %s" % wrong[:4])
+
+    def test_the_file_is_as_long_as_the_index_says(self):
+        """Decoded end to end, not read from a header. A truncated file starts
+        with OggS like any other."""
+        import soundfile as sf
+        wrong = []
+        for path in self.sample:
+            with open(path[:-5] + ".json", encoding="utf-8") as fh:
+                claimed = json.load(fh).get("d", 0)
+            audio, rate = sf.read(path)
+            actual = len(audio) / rate
+            if abs(actual - claimed) > 0.5:
+                wrong.append("%s: %.1fs of audio, index says %.1fs"
+                             % (os.path.relpath(path, AUDIO), actual, claimed))
+        self.assertEqual(wrong, [], wrong[:4])
+
+
+class TheGuardAgainstAHalfWrittenIndex(unittest.TestCase):
+    """_holds() decides whether a resume keeps a file. It is handed whatever
+    is on disk, including the results of a write that was interrupted, so it
+    has to answer rather than raise: an exception here ends a render of
+    twenty-five hours on the file it exists to reject."""
+
+    @classmethod
+    def setUpClass(cls):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "render_audio", os.path.join(ROOT, "tools", "render_audio.py"))
+        cls.ra = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.ra)
+
+    def test_it_answers_rather_than_raises(self):
+        import tempfile
+        chapter = {"verses": [{"t": "a"}, {"t": "b"}, {"t": "c"}]}
+        tmp = tempfile.mkdtemp()
+        broken = {
+            "truncated": '{"d":1.0,"v":[[1,0,0]',
+            "empty": "",
+            "no v at all": '{"hello":"world"}',
+            "v is null": '{"d":1.0,"v":null}',
+            "v is a number": '{"v":3}',
+            "v is an object": '{"v":{"1":0}}',
+            "not json": "OggS binary rubbish",
+        }
+        for name, body in broken.items():
+            path = os.path.join(tmp, name.replace(" ", "_") + ".json")
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write(body)
+            self.assertIs(self.ra._holds(path, chapter), False,
+                          "%s should be rejected, not accepted" % name)
+
+    def test_it_accepts_only_the_right_count(self):
+        import tempfile
+        tmp = tempfile.mkdtemp()
+        chapter = {"verses": [{"t": "a"}, {"t": "b"}, {"t": "c"}]}
+        for count, want in ((3, True), (2, False), (4, False), (0, False)):
+            path = os.path.join(tmp, "n%d.json" % count)
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump({"d": 1.0, "v": [[i, 0, 0] for i in range(count)]}, fh)
+            self.assertIs(self.ra._holds(path, chapter), want)
+
+
 
 if __name__ == "__main__":
     unittest.main()
