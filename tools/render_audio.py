@@ -107,6 +107,28 @@ def load_engine(models: str):
     return Kokoro(model, voices)
 
 
+def chapter_paths(folder, idx):
+    """Where a chapter's two files go, given its position in the work.
+
+    A function rather than two lines inline because it is the one rule in
+    this script that another program depends on: docs/assets/app.js builds
+    its address from the same index, so #/read/psalms/22 is the
+    twenty-third chapter and fetches psalms/22.opus.
+
+    Naming these by chapter["n"], the printed chapter number, agrees with
+    that only where a work's first chapter is numbered zero -- and of 172
+    works exactly one is. It put every file one place off: tapping Psalm 23
+    played Psalm 22, in a good voice, with the verse marks landing where
+    they should, and the last chapter of every book fetched a file that was
+    not there. Nothing about it looked broken.
+
+    tests/python/test_audio_layout.py calls this directly, so the rule is
+    held by what it does rather than by how it is spelt.
+    """
+    base = os.path.join(folder, str(idx))
+    return base + ".opus", base + ".json"
+
+
 def _holds(meta_path, chapter):
     """Does the index at this address describe this chapter?
 
@@ -221,19 +243,7 @@ def main():
         os.makedirs(folder, exist_ok=True)
 
         for idx, chapter in enumerate(work.get("chapters", [])):
-            # Named by position in the array, not by chapter["n"], because
-            # position is what the reader asks for: docs/assets/app.js builds
-            # the address from the index it is rendering, so #/read/psalms/22
-            # is the twenty-third chapter and fetches psalms/22.opus.
-            #
-            # Naming these by n shifted every file by one against the reader.
-            # Tapping Psalm 23 played Psalm 22 -- confidently, in a good
-            # voice, with the verse marks landing where they should -- and the
-            # last chapter of every book fetched a file that was not there.
-            # A wrong chapter that plays is worse than silence: nothing about
-            # it looks broken.
-            base = os.path.join(folder, str(idx))
-            opus, meta = base + ".opus", base + ".json"
+            opus, meta = chapter_paths(folder, idx)
 
             # Twenty-eight core-hours will be interrupted. Anything already
             # rendered is left alone, so the run resumes rather than restarts.

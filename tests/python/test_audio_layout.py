@@ -223,18 +223,90 @@ class TheNumberingItReplaced(unittest.TestCase):
 
 
 class WhatTheRendererWillDo(unittest.TestCase):
-    """The rule, checked in the script rather than only in its output, so a
-    fresh render cannot reintroduce it."""
+    """The rule as the renderer will apply it, not as it is spelt.
 
-    def test_the_renderer_names_files_by_index(self):
+    This began as a search for the string str(chapter["n"]) in the source,
+    which is a tripwire rather than a proof: single quotes, an f-string or a
+    chapter['n'] spelling all pass it while putting every file back one place
+    off, and the positive half was satisfied by "str(idx)" appearing anywhere
+    in the file at all. It calls the function now, so the property held is
+    the one that matters -- what path comes out for a given chapter.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        import importlib.util
         path = os.path.join(ROOT, "tools", "render_audio.py")
-        with open(path, encoding="utf-8") as fh:
-            src = fh.read()
-        self.assertNotIn('str(chapter["n"])', src,
-                         "render_audio.py is naming files by chapter number "
-                         "again, which puts every file one place off from the "
-                         "address the reader uses")
-        self.assertIn("str(idx)", src)
+        spec = importlib.util.spec_from_file_location("render_audio", path)
+        cls.ra = importlib.util.module_from_spec(spec)
+        # Safe to import: the Kokoro runtime is loaded inside load_engine
+        # rather than at module scope, for the same reason lint.sh can
+        # byte-compile this without half a gigabyte of wheels installed.
+        spec.loader.exec_module(cls.ra)
+
+    def test_the_path_is_the_index(self):
+        opus, meta = self.ra.chapter_paths("out", 22)
+        self.assertEqual(os.path.basename(opus), "22.opus")
+        self.assertEqual(os.path.basename(meta), "22.json")
+
+    def test_the_path_ignores_the_printed_chapter_number(self):
+        """The bug, asked of the function directly.
+
+        Second Isaiah's first chapter is numbered 40 and sits at index 0. The
+        file for it has to be 0.opus, because that is what the reader asks
+        for; a renderer keying on n would write 40.opus into a work with
+        sixteen chapters.
+        """
+        with open(os.path.join(WORKS, "isaiah-40-55-second-isaiah.json"),
+                  encoding="utf-8") as fh:
+            work = json.load(fh)
+        first = work["chapters"][0]
+        self.assertEqual(first["n"], 40, "the fixture moved; pick another work")
+        opus, _ = self.ra.chapter_paths("out", 0)
+        self.assertEqual(os.path.basename(opus), "0.opus")
+        self.assertNotEqual(os.path.basename(opus), "%d.opus" % first["n"])
+
+    def test_every_chapter_of_a_work_gets_its_own_path(self):
+        """Two chapters sharing a path is how a render silently loses one."""
+        seen = set()
+        for idx in range(200):
+            opus, meta = self.ra.chapter_paths("out", idx)
+            self.assertNotIn(opus, seen)
+            seen.add(opus)
+            self.assertEqual(opus[:-5], meta[:-5],
+                             "the pair has to share a stem or nothing can "
+                             "find the index beside the audio")
+
+    def test_the_resume_guard_rejects_a_file_from_another_chapter(self):
+        """The finding this class exists for after the review.
+
+        The skip used to test only that a file was there. A dist/ named the
+        old way overlaps the new names almost everywhere, so a resume would
+        have kept 149 of Psalms' 150 chapters, each holding the chapter
+        before it, and called it a clean resume.
+        """
+        import tempfile
+        with open(os.path.join(WORKS, "psalms.json"), encoding="utf-8") as fh:
+            psalms = json.load(fh)
+        here = psalms["chapters"][22]          # 6 verses
+        before = psalms["chapters"][21]        # 31 verses
+        self.assertNotEqual(len(verses(here)), len(verses(before)),
+                            "the fixture moved; pick another pair")
+
+        tmp = tempfile.mkdtemp()
+        right = os.path.join(tmp, "right.json")
+        wrong = os.path.join(tmp, "wrong.json")
+        for path, chapter in ((right, here), (wrong, before)):
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump({"d": 1.0,
+                           "v": [[i, 0, 0] for i in range(len(verses(chapter)))]},
+                          fh)
+
+        self.assertTrue(self.ra._holds(right, here))
+        self.assertFalse(self.ra._holds(wrong, here),
+                         "a file holding the previous chapter was accepted as "
+                         "this one, which is the resume that recreates the bug")
+        self.assertFalse(self.ra._holds(os.path.join(tmp, "gone.json"), here))
 
 
 if __name__ == "__main__":
