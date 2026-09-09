@@ -173,7 +173,13 @@ module.exports = async function listening(t, ctx) {
     { name: 'Google US English', lang: 'en-US', voiceURI: 'google', localService: false },
     { name: 'Google Deutsch', lang: 'de-DE', voiceURI: 'google-de', localService: false }
   ];
-  page = await open(ctx, '#/read/amos/2', workingEngine(30, DRAWER));
+  /* recordedEngine() as well as the voice list: this asserts that the
+     recording is offered and first, which is only true where there is one.
+     Without a stub the page asks the real archive.org, which answers no
+     CORS header to a 127.0.0.1 origin -- so the drawer correctly dropped
+     the row and this read as a failure of the ordering. */
+  page = await open(ctx, '#/read/amos/2', workingEngine(30, DRAWER),
+                    recordedEngine([[1, 0, 4], [2, 4.35, 9]]));
   await page.locator('[data-listen]').click();
   await page.waitForFunction(() => window.__spoken.length >= 1);
   t.check('the best voice is used, not the one the device calls default',
@@ -687,11 +693,25 @@ module.exports = async function listening(t, ctx) {
 
   await page.locator('[aria-label="Forward one verse"]').click();
   await page.waitForTimeout(settle);
-  t.check('a jump seeks the recording to that verse, exactly',
+  /* Onto the verse, landing just before it rather than on it.
+
+     app.js seeks to start - SEEK_LEAD, into the silence render_audio.py
+     bakes in front of every verse. Asking for the exact first sample is what
+     clipped the opening syllable: an Ogg Opus stream resumes at a page
+     boundary and browsers round forward, so "exactly" was the bug rather
+     than the contract. What matters is that it lands in the rest before the
+     verse and never inside the verse before it, so the check is a window,
+     not a value -- and the first verse, which has no rest in front of it,
+     still clamps to 0. */
+  t.check('a jump seeks the recording to just before that verse',
           await page.evaluate(() => {
             const seeks = window.__audio.filter(e => 'seek' in e);
-            return seeks.length && [0, 4.35, 9.35, 14.35]
-              .indexOf(seeks[seeks.length - 1].seek) !== -1;
+            if (!seeks.length) return false;
+            const at = seeks[seeks.length - 1].seek;
+            return [0, 4.35, 9.35, 14.35].some(start => {
+              const lead = start - at;
+              return start === 0 ? at === 0 : (lead > 0 && lead <= 0.2);
+            });
           }),
           JSON.stringify(await page.evaluate(
             () => window.__audio.filter(e => 'seek' in e).slice(-2))));
@@ -762,12 +782,16 @@ module.exports = async function listening(t, ctx) {
   t.check('and no chapter is fetched from an item that is not there',
           asked.downloads === 0, asked.downloads + ' fetches');
 
-  /* store.set(k, null) writes the JSON string "null", so the raw item is
-     never the absent value getItem() returns for a key that was removed. */
+  /* Taken off it by being written to "device", not to null.
+
+     null used to mean the device engine and now means the recording, so
+     clearing the key here would put the reader straight back on the voice
+     that cannot play -- and, worse, would do it silently on every reload.
+     "device" is the choice this probe is actually making on their behalf. */
   const cleared = await page.evaluate(
     () => localStorage.getItem('thebook:listen-voice'));
   t.check('the reader is taken off a voice that cannot play',
-          cleared !== null && JSON.parse(cleared) === null, String(cleared));
+          cleared !== null && JSON.parse(cleared) === 'device', String(cleared));
 
   await page.locator('[data-listen]').click();
   await page.waitForSelector('.player:not([hidden])');

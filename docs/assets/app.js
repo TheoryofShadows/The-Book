@@ -6454,7 +6454,23 @@
      rendered: the drawer goes on offering a reading nobody can hear, and
      every chapter opened fires another doomed cross-origin request at it.
      Reading through Psalms did that a hundred and fifty times. */
-  var AUDIO_META = "https://archive.org/metadata/the-book-read-aloud";
+  /* The /metadata/ sub-path, not the whole record.
+
+     Plain /metadata/<item> answers with the item's full file listing, and
+     this item has 3,118 files in it: 671 KB, every time it is asked. That
+     was tolerable while only a reader who had chosen the recording ever
+     asked. It is not now the recording is what a reader gets without
+     choosing, because the ask happens on every chapter opened -- it put a
+     206 KB compressed download in front of the first paint of every reading
+     page and pushed it through its weight budget.
+
+     Adding /metadata returns the descriptive block alone: 743 bytes, the
+     same Access-Control-Allow-Origin, and the same two answers to the only
+     question being asked. A present item has a result, and a missing one
+     answers {"error": "Couldn't locate item ..."} rather than the {} the
+     bare path gives -- which is why present is read below as the shape of
+     an answer rather than as any particular key. */
+  var AUDIO_META = "https://archive.org/metadata/the-book-read-aloud/metadata";
 
   /* Not in the single-file copy. That build's whole claim is that it opens
      from a file:// URL with the network off and everything in it works, and
@@ -6560,7 +6576,14 @@
       if (meta === null) {
         audioItem.state = "unknown";
       } else {
-        audioItem.state = (meta.files || meta.metadata) ? "present" : "absent";
+        /* Present is "the archive answered with something about an item".
+           The sub-path wraps it in result; the bare path, which the suites
+           and any older cached copy still speak, answers files/metadata at
+           the top level; a missing item answers an error, or {}. Anything
+           with an error in it is absent whatever else it carries. */
+        audioItem.state = (!meta.error &&
+                           (meta.result || meta.files || meta.metadata))
+                          ? "present" : "absent";
       }
       var present = audioItem.state === "present";
       var waiting = audioItem.waiting;
@@ -6570,7 +6593,7 @@
         // it -- otherwise every chapter starts by asking for a voice that
         // does not exist and falling back from it.
         if (store.get("listen-voice", null) === "recorded") {
-          store.set("listen-voice", null);
+          store.set("listen-voice", "device");
         }
         if (player) fillVoices();
       }
@@ -6582,11 +6605,39 @@
     if (!AUDIO_OK) return false;
     var want = store.get("listen-voice", null);
     if (want === "recorded") return true;
-    /* A device with no speech engine of its own has only this one, and the
-       drawer that would let it be chosen lives inside a player that does not
-       open until something is being read. Without this, such a device gets a
-       Listen button that does nothing and no way to find out why. */
-    return !SPEECH_OK && want === null;
+    /* Any other saved value is a device voice chosen by hand -- a voiceURI
+       or a voice name -- and is as much a choice as "device" is. Only the
+       absence of one falls through to the default below. */
+    if (want !== null) return false;
+    /* No saved choice means the recording, now that there is one.
+
+       This is the reading the site is for: one voice, the same on every
+       machine, against a device engine whose ceiling is whatever the
+       operating system shipped -- on a phone out of the box, the compact
+       set. Defaulting to the worse of the two meant almost every reader
+       heard the worse of the two, because the drawer that offers the
+       recording lives inside a player that does not open until something
+       is already being read.
+
+       It also repairs the readers who tried the recording before it
+       existed. While the item was missing, the probe below cleared their
+       saved "recorded" back to null -- correct then, and permanent: nothing
+       ever set it back, so a reader who asked for the reading earliest was
+       the one left on the device voice after it went up. null now means the
+       recording, so they get it without knowing any of this happened.
+
+       Choosing a device voice writes "device" rather than null, so a reader
+       who wants their own engine keeps it, and AUDIO_OK is already false
+       when the browser cannot decode Opus or the page is being built.
+
+       The default is only taken while the item might be there. A saved
+       "recorded" is a choice and stands until the probe clears it, but null
+       is this code guessing, and guessing the recording after the probe has
+       said "absent" is how the drawer comes to say "Recorded reading" while
+       the device engine is the thing actually speaking -- which also puts
+       resumeListening() down the recorded branch for a queue the device
+       engine built, so play after pause does nothing at all. */
+    return audioItem.state !== "absent";
   }
 
   function chapterKey(ctx) {
@@ -6692,6 +6743,29 @@
      Nothing is added at natural pace, so the common case never pauses. */
   var BAKED_REST = 350;
 
+  /* Seeking to a verse lands a little before it, not on it.
+
+     render_audio.py writes each verse's start as the exact sample the speech
+     begins at (render_audio.py:197), with the 350 ms rest sitting in front of
+     it. Asking an Ogg Opus stream for exactly that time does not reliably put
+     the playhead there: the decoder resumes at a page boundary and browsers
+     round forward, so the first syllable of the verse is what gets eaten --
+     which is the whole of what a reader notices, because it is the start of
+     every verse.
+
+     The rest in front of the verse is the room to fix it in. Backing the seek
+     up into that silence costs nothing audible -- it is silence -- and gives
+     the decoder somewhere to land that is still before the first word. Held
+     well under BAKED_REST so it cannot reach back into the previous verse's
+     last syllable, and clamped at zero for the first verse of a file, which
+     has no rest in front of it. */
+  var SEEK_LEAD = 0.12;
+
+  function seekTarget(item) {
+    return Math.max(0, item.a - SEEK_LEAD);
+  }
+
+
   function audioTick() {
     if (!usingAudio() || !nar.playing || aud.waiting) return;
     var a = aud.el, items = nar.items;
@@ -6752,7 +6826,7 @@
 
     // A seek before the file has any duration is discarded, so it waits for
     // as much metadata as a seek needs rather than for the whole file.
-    var target = items[nar.at].a;
+    var target = seekTarget(items[nar.at]);
     function go() {
       try { a.currentTime = target; } catch (e) { /* seek when it can */ }
       var playing = a.play();
@@ -6779,7 +6853,10 @@
     if (aud.el) aud.el.pause();
     aud.waiting = 0;
     nar.engine = "device";
-    store.set("listen-voice", null);
+    /* "device" rather than null: null is the recording now (audioWanted),
+       so clearing it here would answer a failed recording by asking for the
+       recording again. */
+    store.set("listen-voice", "device");
 
     if (!SPEECH_OK) { stopListening(message); return; }
 
@@ -6830,14 +6907,14 @@
       if (!index) {
         // Asked for by a reader who cannot have it here: say so once, and
         // leave them on the engine that works.
-        store.set("listen-voice", null);
+        store.set("listen-voice", "device");
         if (player) fillVoices();
         announce("There is no recording of this chapter — it is read by " +
                  "this device's own voice.");
         return;
       }
       var items = buildAudioItems(nar.passages, index);
-      if (!items.length) { store.set("listen-voice", null); return; }
+      if (!items.length) { store.set("listen-voice", "device"); return; }
       if (playing && SPEECH_OK) speech.cancel();
       settle(items, "recorded");
     });
@@ -7299,7 +7376,12 @@
   function fillVoices() {
     if (!voiceSel) return;
     var want = chosenVoice();
-    var recorded = store.get("listen-voice", null) === "recorded";
+    /* null is the recording now (audioWanted), so the row is shown as the
+       chosen one when nothing has been chosen -- otherwise the drawer says
+       a device voice is selected while the recording is what plays. */
+    var saved = store.get("listen-voice", null);
+    var recorded = saved === "recorded" ||
+                   (saved === null && AUDIO_OK && audioItem.state !== "absent");
     voiceSel.innerHTML = "";
 
     /* First, and offered to everyone rather than only to the devices with
@@ -7447,7 +7529,10 @@
     voiceSel = el("select", {
       "aria-label": "Voice",
       onchange: function (e) {
-        store.set("listen-voice", e.target.value || null);
+        /* "device" rather than null for the default-voice row: null means
+           the recording, so writing it here would ignore the choice just
+           made and hand back the voice being switched away from. */
+        store.set("listen-voice", e.target.value || "device");
         switchEngine(e.target.value === "recorded");
       }
     });

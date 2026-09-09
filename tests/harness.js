@@ -86,6 +86,31 @@ class Tally {
     page.on('console', m => {
       if (m.type() === 'error') this.check(`${label}: no console error`, false, m.text());
     });
+
+    /* No suite talks to the real archive.org.
+
+       docs/index.html carries data-audio="published", and the recording is
+       what a reader gets without choosing (audioWanted in app.js), so every
+       page now asks about the item on load -- not only the ones testing the
+       recorded voice. Left alone that means the whole suite depends on a
+       third party being reachable, and it is not reachable from here on any
+       terms that work: archive.org sends no Access-Control-Allow-Origin to
+       a 127.0.0.1 origin, so the fetch fails, the console error is counted
+       as a failure of whichever suite happened to be running, and the wait
+       for it times out.
+
+       recordedEngine() installs a fetch stub of its own and is added after
+       this, so the suites that mean to exercise the recording still
+       override this. What this answers is the incidental ask: {} -- the
+       item is not there -- which is what the reader is built to shrug off
+       by staying on the device engine. */
+    page.route(/archive\.org/, r => r.fulfill({
+      status: 200,
+      headers: { 'access-control-allow-origin': '*' },
+      contentType: 'application/json',
+      body: '{}'
+    })).catch(() => {});
+
     return page;
   }
 }
