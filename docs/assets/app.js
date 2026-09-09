@@ -6783,8 +6783,17 @@
 
     // Which verse the playhead is in. Normally the next one along, so this
     // walks rather than searches.
+    //
+    // Forwards only from where a seek put us. audioPlayFrom() aims SEEK_LEAD
+    // before the verse, into the rest in front of it, so for that moment the
+    // playhead really is inside the previous verse's trailing silence -- and
+    // walking back into it would say the reader is a verse behind where they
+    // asked to be, mark that verse on the page, and then find itself past its
+    // end with a pace rest owing, which pauses the transport a breath after
+    // every jump. The lead-in is silence being crossed on the way in, not a
+    // position to report.
     while (at + 1 < items.length && t >= items[at + 1].a) at++;
-    while (at > 0 && t < items[at].a) at--;
+    while (at > 0 && t < items[at].a - SEEK_LEAD) at--;
 
     if (at !== nar.at) {
       nar.at = at;
@@ -6794,8 +6803,13 @@
 
     // Past the end of this verse, with more to come: take the extra rest the
     // pace asks for beyond what the file already carries.
+    //
+    // Not while the playhead is still short of the verse being read. A seek
+    // lands SEEK_LEAD before it, and a verse whose own start is still ahead
+    // of the playhead has not been read yet, so it has no rest owing after
+    // it -- t >= item.b is only past the end when it is also past the start.
     var item = items[nar.at];
-    if (item && nar.at + 1 < items.length && t >= item.b) {
+    if (item && nar.at + 1 < items.length && t >= item.a && t >= item.b) {
       var extra = restAfter(item, items[nar.at + 1]) - BAKED_REST;
       if (extra > 200) {
         var gen = nar.gen;

@@ -721,6 +721,52 @@ module.exports = async function listening(t, ctx) {
             await page.locator('.player').textContent()));
   await page.close();
 
+  /* ---- the lead-in is crossed, not reported ----
+
+     The seek above lands SEEK_LEAD before the verse, which for that moment
+     puts the playhead inside the previous verse's trailing rest. Nothing may
+     read that as being a verse behind: audioTick() would mark the wrong verse
+     on the page, and -- because the playhead is past that verse's end -- find
+     a pace rest owing after it and pause the transport to take it.
+
+     At natural pace the rest a jump owes is smaller than the 350 ms already
+     in the file, so the subtraction goes negative and nothing pauses however
+     wrong the arithmetic is. Measured is where it bites: 260 x 2.2 = 572 ms
+     against 350 baked is 222 ms owing, over the 200 ms threshold, so every
+     jump stopped the audio for a fifth of a second. That is the pace this
+     has to be checked at. */
+  page = await openRecorded();
+  await page.evaluate(() => localStorage.setItem(
+    'thebook:listen-pace', JSON.stringify('measured')));
+  await page.reload();
+  await page.waitForSelector('.reader .v');
+  await page.locator('[data-listen]').click();
+  await page.waitForFunction(
+    () => window.__player && window.__player.paused === false, null,
+    { timeout: 5000 });
+  await page.waitForFunction(() => window.__player.currentTime > 5, null,
+                             { timeout: 5000 });
+
+  await page.evaluate(() => { window.__audio.length = 0; });
+  await page.locator('[aria-label="Forward one verse"]').click();
+  await page.waitForTimeout(settle);
+
+  t.check('a jump at a slower pace does not pause the recording',
+          await page.evaluate(() => !window.__audio.some(e => 'pause' in e)),
+          JSON.stringify(await page.evaluate(() => window.__audio)));
+  t.check('and it is still playing a breath later',
+          await page.evaluate(() => window.__player.paused === false));
+  t.check('and the verse marked is the one jumped to, not the one before it',
+          await page.evaluate(() => {
+            const m = document.querySelector('.is-speaking');
+            return !!m && /^3/.test(m.textContent.trim());
+          }),
+          await page.evaluate(() => {
+            const m = document.querySelector('.is-speaking');
+            return m ? m.textContent.trim().slice(0, 12) : '(nothing marked)';
+          }));
+  await page.close();
+
   /* Every failure lands on the engine that needs nothing. */
   page = await openRecorded({ failAudio: true });
   await page.locator('[data-listen]').click();
