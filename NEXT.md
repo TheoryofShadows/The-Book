@@ -30,6 +30,44 @@ still carries `data-audio="published"`, and `check_audio_live.py` passes
 all seven checks. Nothing was lost. What was missing was uncommitted
 player work that had never been deployed — now shipped, see below.
 
+## The iPhone could not play the reading, and that is fixed — 2026-09-10
+
+Reported as "it still has the robot voice, where did my rendered audio go".
+The audio had gone nowhere. It was never reaching an iPhone, and a bug of ours
+made that permanent. Three faults on one path:
+
+1. **The encoding.** The reading is Opus in Ogg — the one common format Apple
+   was last to take. Safari either cannot decode it or says "maybe" and then
+   fails. On top of that archive.org does not know the `.opus` extension and
+   serves it as `application/octet-stream`; Chrome sniffs the bytes and plays
+   it regardless, Safari refuses. There is now a **second copy in AAC/mp4**,
+   which every iPhone plays and the archive serves as `audio/mp4`.
+2. **The gate.** `AUDIO_OK` asked only whether Opus would play, so a browser
+   that refused Ogg was refused the reading. It picks a format now.
+3. **The one that made it stick.** A recording that failed to play wrote
+   `"device"` into the saved voice *permanently*, and the code could not tell
+   that from a voice the reader chose by hand. On an iPhone that happened on
+   the first chapter opened, and the phone never asked for the recording
+   again — however long it had been fixed. A failure now lasts one page, and a
+   stamped one-time migration lets go of the value the old build wrote.
+
+**No re-render was needed.** `tools/transcode_aac.py` makes the m4a from the
+files already rendered, in 13 minutes, and the verse offsets are reused as
+they are: worst duration drift over 1,559 chapters is **0.7 milliseconds**.
+Safe to stop and re-run; it skips what is already converted.
+
+    "C:\Program Files\Python313\python.exe" tools/transcode_aac.py
+    "C:\Program Files\Python313\python.exe" tools/upload_audio.py
+
+`tools/audit_audio.py` now reads both encodings and holds them against the
+same sidecar, so an m4a of the wrong length cannot pass while the Opus looks
+fine. 16 tests in `tests/python/test_audit_audio.py`, 635 browser checks.
+
+**The upload of the 1,559 m4a files is the one thing still in flight.** It is
+paced deliberately: archive.org queues a task per file and refuses everything
+once the bucket queue is deep, so the script waits for it to drain. Re-running
+it sends only what is missing.
+
 ## The reading was audited chapter by chapter, 2026-09-10
 
 `tools/audit_audio.py` sweeps all 1,559 chapters, reading each file's real
