@@ -13,6 +13,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const zlib = require('zlib');
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -48,7 +49,40 @@ function serve(root) {
     if (rel.endsWith('/') || dir) file = path.join(file, 'index.html');
     fs.readFile(file, (err, body) => {
       if (err) { res.writeHead(404).end('not found'); return; }
-      res.writeHead(200, { 'content-type': TYPES[path.extname(file)] || 'application/octet-stream' });
+      const type = TYPES[path.extname(file)] || 'application/octet-stream';
+      /* Compressed, because GitHub Pages compresses.
+
+         Serving these raw made the page weight checks measure bytes no
+         reader ever downloads: app.js is 368 KB on disk and 110 KB on the
+         wire. A budget read off the disk size is a budget against the wrong
+         number -- it fails work that costs the reader four kilobytes, and it
+         would pass work that added a hundred kilobytes of something already
+         compressed. Same reasoning as the content types above: serving it
+         differently here than the live host does makes a check that reports
+         on a site nobody visits.
+
+         Only the text types, and only when the browser asks -- which is what
+         a real host does, and leaves the images and audio alone. */
+      const canZip = /^(text\/|application\/(javascript|json|manifest|xml))/.test(type) ||
+                     type.includes('+json') || type.includes('svg');
+      const asks = /\bgzip\b/.test(req.headers['accept-encoding'] || '');
+      if (canZip && asks && body.length) {
+        zlib.gzip(body, (zerr, zipped) => {
+          if (zerr) {
+            res.writeHead(200, { 'content-type': type });
+            res.end(body);
+            return;
+          }
+          res.writeHead(200, {
+            'content-type': type,
+            'content-encoding': 'gzip',
+            'vary': 'Accept-Encoding'
+          });
+          res.end(zipped);
+        });
+        return;
+      }
+      res.writeHead(200, { 'content-type': type });
       res.end(body);
     });
   });
