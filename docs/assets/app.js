@@ -1160,7 +1160,19 @@
           // The verse number is the one control per verse: it opens the
           // actions rather than adding a second tab stop to every verse.
           // Psalm 119 would otherwise contribute 176 extra of them.
-          span.appendChild(el("button", {
+          /* While it is reading, the number is a place to start.
+
+             Asked for as "being able to start at the beginning of a verse by
+             clicking on the number", and it was already possible -- two taps
+             down, inside a menu. Reading along and wanting to hear a line
+             again is the commonest thing there is to want here, and it should
+             not cost a menu.
+
+             Only while the reading is on. With the player down the number is
+             the verse's one control and the menu is what it is for; making it
+             start the audio then would take saving and citing a verse away
+             from every reader who was not listening. */
+          var vbtn = el("button", {
             class: "vnum",
             text: String(v.v),
             "aria-label": "Verse " + v.v + " of " + chapter.label +
@@ -1168,12 +1180,23 @@
             "aria-expanded": "false",
             onclick: function (e) {
               e.stopPropagation();
+              if (nar.on && nar.ctx && nar.ctx.work === workId &&
+                  nar.ctx.chapter === idx) {
+                listenFromVerse(v.v);
+                return;
+              }
               verseMenu(e.currentTarget, {
                 work: workId, workTitle: meta.title, chapter: idx,
                 label: chapter.label, v: v.v, t: v.t
               });
             }
-          }));
+          });
+          /* The button does two things, so it says which one it is about to
+             do. Kept in step by the same call that shows and hides the
+             player, rather than by touching every verse on every tick. */
+          vbtn.setAttribute("data-verse-label",
+                            "Verse " + v.v + " of " + chapter.label);
+          span.appendChild(vbtn);
           var textNode = document.createTextNode(v.t + " ");
           span.appendChild(textNode);
           passages.push({ el: span, node: textNode, text: v.t, verse: v.v });
@@ -1432,9 +1455,58 @@
       return { node: node, parent: node.parentNode, next: node.nextSibling };
     });
 
+    /* The notes go below on a phone; the chapter picker does not.
+
+       Both used to, on the reasoning that a narrow screen should open on the
+       text rather than on apparatus. That is true of the notes, which are
+       read once if at all. It is not true of the picker: it is how you get to
+       another chapter, and a reader already in Isaiah 29 had to scroll past
+       the whole chapter to reach it.
+
+       The reason it was sent down there is real, though -- the strip of
+       chapter numbers is tall, and at the top of a phone it pushes the
+       scripture off the first screen, which is the fault layout.test.js
+       measures. So it stays at the top and folds: a line saying how many
+       chapters there are, opening onto the strip. One tap to reach any
+       chapter, against a scroll to the end of Isaiah 29. */
+    var strip = chapterNav.querySelector(".chapter-strip");
+    var jumpForm = chapterNav.querySelector(".chapter-jump");
+    var fold = null;
+    if (strip) {
+      var count = strip.querySelectorAll("a").length;
+      fold = el("details", { class: "chapter-fold" }, [
+        el("summary", { text: "Chapters (" + count + ")" })
+      ]);
+    }
+
+    /* Both halves of the picker go inside the fold, so shut it is one line.
+       Leaving the jump field outside kept a whole input row above the
+       scripture and gave the fold nothing much to save. */
+    function foldStrip(on) {
+      if (!strip || !fold) return;
+      if (on) {
+        if (strip.parentNode !== fold) {
+          if (jumpForm) fold.appendChild(jumpForm);
+          fold.appendChild(strip);
+          chapterNav.appendChild(fold);
+        }
+      } else if (fold.parentNode) {
+        if (jumpForm) chapterNav.appendChild(jumpForm);
+        chapterNav.appendChild(strip);
+        fold.parentNode.removeChild(fold);
+      }
+    }
+
     function place() {
+      foldStrip(NARROW.matches);
       if (NARROW.matches) {
-        homes.forEach(function (h) { body.appendChild(h.node); });
+        homes.forEach(function (h) {
+          if (h.node === chapterNav) {
+            h.parent.insertBefore(h.node, h.next);
+          } else {
+            body.appendChild(h.node);
+          }
+        });
       } else {
         homes.forEach(function (h) { h.parent.insertBefore(h.node, h.next); });
       }
@@ -1800,7 +1872,11 @@
     var span = button.parentNode;
     node.appendChild(saveBtn);
 
-    if (SPEECH_OK && !nar.blocked) {
+    /* Offered when there is any voice to read it with. It used to ask only
+       about the device engine, so a phone with no speech engine but a working
+       recording -- which is most of them, and the case the recording exists
+       for -- was not offered the one thing that would have read it. */
+    if ((SPEECH_OK || AUDIO_OK) && !nar.blocked) {
       node.appendChild(el("button", {
         role: "menuitem", text: "▶  Read aloud from here",
         onclick: function () { closeMenu(); listenFromVerse(ref.v); }
@@ -7698,7 +7774,30 @@
 
   var player = null, playBtn = null, whereEl = null, unitEl = null,
       barEl = null, voiceSel = null, hintEl = null,
-      optsEl = null, moreBtn = null, seekEl = null;
+      optsEl = null, moreBtn = null, seekEl = null, foldBtn = null;
+
+  /* Folding is a property of the bar, not of the reading, so it is applied
+     wherever the bar is next drawn as well as when the button is pressed. */
+  function setFolded(on) {
+    if (!player) return;
+    player.classList.toggle("is-folded", on);
+    if (on && optsEl && !optsEl.hidden) {
+      // A drawer left open under a folded bar is a hidden control.
+      optsEl.hidden = true;
+      player.classList.remove("is-open");
+      if (moreBtn) moreBtn.setAttribute("aria-expanded", "false");
+    }
+    if (foldBtn) {
+      foldBtn.innerHTML = on ? UNFOLD : FOLD;
+      foldBtn.setAttribute("aria-expanded", on ? "false" : "true");
+      foldBtn.setAttribute("aria-label",
+        on ? "Show the player controls" : "Hide the player controls");
+      foldBtn.title = on ? "Show the controls"
+                         : "Hide the controls, keep reading aloud";
+    }
+    store.set("player-folded", on);
+    sizePlayer();
+  }
 
   /* Drawn rather than typed.
 
@@ -7732,6 +7831,15 @@
                     '<path d="M20 6.5H8a4 4 0 0 0-4 4v1m0 6h12a4 4 0 0 0 4-4v-1" ' +
                     'fill="none" stroke="currentColor" stroke-width="2" ' +
                     'stroke-linecap="round"/>');
+  /* Chevrons for folding the bar away and bringing it back. Down is "get out
+     of the way", up is "come back", which is the way every media bar that
+     does this reads. */
+  var FOLD  = icon('<path d="M6 9.5l6 6 6-6" fill="none" stroke="currentColor" ' +
+                   'stroke-width="2" stroke-linecap="round" ' +
+                   'stroke-linejoin="round"/>');
+  var UNFOLD = icon('<path d="M6 14.5l6-6 6 6" fill="none" stroke="currentColor" ' +
+                    'stroke-width="2" stroke-linecap="round" ' +
+                    'stroke-linejoin="round"/>');
   var GEAR  = icon('<circle cx="12" cy="12" r="3.2" fill="none" ' +
                    'stroke="currentColor" stroke-width="2"/>' +
                    '<path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8' +
@@ -8042,6 +8150,27 @@
       }
     });
 
+    /* Folded away, without stopping.
+
+       The bar is fixed to the bottom and the page reserves its height, which
+       is right while you are listening and wrong the moment you want to read
+       along: on a phone it covers the lines you are reading and the only way
+       out was to stop the reading. So it folds to a strip -- play, where you
+       are, and the way back up -- and the page gives back the rest of the
+       inch. Nothing about the playback changes; this is the bar getting out
+       of the way, not a transport control.
+
+       Remembered, because a reader who wants the text uncovered wants it
+       uncovered on the next chapter too. */
+    foldBtn = el("button", {
+      class: "player-btn player-fold",
+      "aria-label": "Hide the player controls",
+      title: "Hide the controls, keep reading aloud",
+      "aria-expanded": "true",
+      html: FOLD,
+      onclick: function () { setFolded(!player.classList.contains("is-folded")); }
+    });
+
     seekEl = el("input", {
       type: "range", class: "player-seek", min: "0", max: "100", value: "0",
       step: "1", "aria-label": "Position in the chapter",
@@ -8072,6 +8201,7 @@
           }),
           cont,
           moreBtn,
+          foldBtn,
           el("button", {
             class: "player-btn player-close", "aria-label": "Stop reading aloud",
             title: "Stop reading aloud", html: CLOSE,
@@ -8156,6 +8286,21 @@
       var live = nar.on && nar.playing;
       b.setAttribute("aria-pressed", live ? "true" : "false");
       b.textContent = live ? "⏸ Listening" : "▶ Listen";
+    });
+
+    /* The verse numbers change what they do while the reading is on, so they
+       change what they say. Done here, once per start and stop, rather than
+       on every verse: Psalm 119 has 176 of these. */
+    var reading = nar.on && nar.ctx &&
+                  document.querySelector(".reader [data-verse-label]");
+    if (!reading) return;
+    var here = location.hash.indexOf("#/read/" + nar.ctx.work + "/" +
+                                     nar.ctx.chapter) === 0;
+    document.querySelectorAll(".reader .vnum").forEach(function (b) {
+      var base = b.getAttribute("data-verse-label") || "";
+      b.setAttribute("aria-label", nar.on && here
+        ? base + ", read aloud from here"
+        : base + ", open verse actions");
     });
   }
 
@@ -8254,7 +8399,11 @@
       nar.pendingResumeAt = 0;
     }
     nar.on = true;
-    if (player) { player.hidden = false; sizePlayer(); }
+    if (player) {
+      player.hidden = false;
+      // Whatever the reader last chose about the bar covering the text.
+      setFolded(store.get("player-folded", false));
+    }
     document.body.classList.add("listening");
     speakFrom(index);
     syncListenButtons();

@@ -262,6 +262,7 @@ module.exports = async function layout(t, ctx) {
         (document.querySelector('.work-notes').compareDocumentPosition(
           document.querySelector('.reader')) & Node.DOCUMENT_POSITION_FOLLOWING)),
       links: document.querySelectorAll('.chapter-strip a').length,
+      foldedNav: !!document.querySelector('.chapter-nav .chapter-fold'),
       note: !!document.querySelector('.note-block')
     });
 
@@ -280,8 +281,15 @@ module.exports = async function layout(t, ctx) {
     await page.waitForSelector('.reader .v');
 
     const up = await page.evaluate(look);
-    t.check('on a phone it is after the chapter instead',
-            !up.navInHead && !up.notesFirst, JSON.stringify(up));
+    /* The picker stays in the head on a phone and folds instead; only the
+       notes go below. Sending the picker down meant a reader in Isaiah 29
+       scrolled the whole chapter to reach chapter 30, which is the thing it
+       is for. Folded, it is one line at the top and costs the scripture
+       nothing -- held by the budget check above. */
+    t.check('on a phone the chapter picker is still at the top, folded',
+            up.navInHead && up.foldedNav, JSON.stringify(up));
+    t.check('and the notes are what moved below the chapter',
+            !up.notesFirst, JSON.stringify(up));
     t.check('and nothing was dropped to get it there',
             up.links === 50 && up.note, up.links + ' chapter links, note ' + up.note);
 
@@ -294,9 +302,32 @@ module.exports = async function layout(t, ctx) {
     await page.setViewportSize({ width: 393, height: 852 });
     await page.waitForTimeout(250);
     const back = await page.evaluate(look);
-    t.check('and turning it upright moves it down again',
-            !back.navInHead && !back.notesFirst && back.links === 50,
-            JSON.stringify(back));
+    t.check('and turning it upright folds the picker again',
+            back.navInHead && back.foldedNav && !back.notesFirst &&
+            back.links === 50, JSON.stringify(back));
+
+    /* Folded is only useful if it opens, and opening it has to reach every
+       chapter -- the fold is the whole picker on a phone, jump field and
+       all, so a reader in Isaiah 29 gets to 30 without leaving the top of
+       the page. */
+    await page.setViewportSize({ width: 393, height: 852 });
+    await page.waitForSelector('.chapter-fold > summary', { timeout: 10000 });
+    await page.locator('.chapter-fold > summary').click();
+    await page.waitForTimeout(200);
+    const opened = await page.evaluate(() => ({
+      open: !!document.querySelector('.chapter-fold[open]'),
+      links: document.querySelectorAll('.chapter-fold .chapter-strip a').length,
+      jump: !!document.querySelector('.chapter-fold .chapter-jump'),
+      reachable: (() => {
+        const a = document.querySelector('.chapter-fold .chapter-strip a:last-child');
+        return a ? a.getAttribute('href') : null;
+      })()
+    }));
+    t.check('the folded picker opens onto every chapter',
+            opened.open && opened.links === 50 && opened.jump,
+            JSON.stringify(opened));
+    t.check('and the last chapter is a link away from the top of the page',
+            opened.reachable === '#/read/genesis/49', String(opened.reachable));
     await phone.close();
   }
 
@@ -310,6 +341,12 @@ module.exports = async function layout(t, ctx) {
     const phone = await ctx.browser.newContext({ ...devices['iPhone SE'] });
     const page = await phone.newPage();
     await page.goto(ctx.base + '#/read/genesis/0');
+    /* The strip lives inside the folded picker on a phone now, so it is
+       opened before its targets are measured -- a link inside a shut
+       <details> has no box at all, and measuring one would be measuring
+       nothing. */
+    await page.waitForSelector('.chapter-fold > summary');
+    await page.locator('.chapter-fold > summary').click();
     await page.waitForSelector('.chapter-strip a');
     const box = await page.evaluate(() => {
       const a = document.querySelector('.chapter-strip a').getBoundingClientRect();

@@ -1163,6 +1163,131 @@ module.exports = async function listening(t, ctx) {
     await page.close();
   }
 
+  /* ---- the bar folds away without stopping the reading ----
+
+     Asked for as "there is no minimize for the audio box so it's in the way
+     of the actual text if I wanted to read along with it". The bar is fixed
+     to the bottom and the page reserves its height; on a phone that is the
+     lines you are trying to read. */
+  {
+    const page = ctx.tally.watch(await ctx.browser.newPage(), 'player-fold');
+    await page.addInitScript(workingEngine(30));
+    await page.goto(ctx.base + '#/read/amos/0');
+    await page.waitForSelector('.reader .v');
+    await page.locator('[data-listen]').click();
+    await page.waitForSelector('.player:not([hidden])');
+    await page.waitForTimeout(300);
+
+    const before = await page.evaluate(() => ({
+      h: document.querySelector('.player').offsetHeight,
+      reserved: getComputedStyle(document.documentElement)
+                  .getPropertyValue('--player-h').trim()
+    }));
+
+    await page.locator('.player-fold').click();
+    await page.waitForTimeout(300);
+    const after = await page.evaluate(() => ({
+      h: document.querySelector('.player').offsetHeight,
+      reserved: getComputedStyle(document.documentElement)
+                  .getPropertyValue('--player-h').trim(),
+      speaking: !!document.querySelector('.is-speaking'),
+      playVisible: !!document.querySelector('.player-play') &&
+                   document.querySelector('.player-play').offsetHeight > 0,
+      whereVisible: !!document.querySelector('.player-pos') &&
+                    document.querySelector('.player-pos').offsetHeight > 0
+    }));
+
+    t.check('folding the player gives the page back its inch',
+            after.h < before.h && after.reserved !== before.reserved,
+            before.h + 'px -> ' + after.h + 'px');
+    t.check('and it is still reading',
+            after.speaking, 'a verse is still marked');
+    t.check('and still says where it is, and can be paused',
+            after.playVisible && after.whereVisible,
+            'play ' + after.playVisible + ', position ' + after.whereVisible);
+
+    await page.locator('.player-fold').click();
+    await page.waitForTimeout(300);
+    const back = await page.evaluate(() => document.querySelector('.player').offsetHeight);
+    t.check('and it comes back the same size',
+            back === before.h, before.h + 'px -> ' + back + 'px');
+    await page.close();
+  }
+
+  /* ---- the verse number starts the reading there ----
+
+     Asked for as "being able to start at the beginning of a verse by
+     clicking on the number". It was already possible two taps down, inside
+     the verse menu; while the reading is on, the number does it directly. */
+  {
+    const page = ctx.tally.watch(await ctx.browser.newPage(), 'vnum-jump');
+    /* Slow, deliberately. At 30 ms a verse the reading is several verses past
+       the one being tapped before the click lands, and what gets measured is
+       the race rather than the jump. */
+    await page.addInitScript(workingEngine(1200));
+    await page.goto(ctx.base + '#/read/amos/0');
+    await page.waitForSelector('.reader .v');
+
+    // With the player down it is still the menu, or saving a verse is gone.
+    await page.locator('.reader .v:nth-of-type(3) .vnum').click();
+    await page.waitForTimeout(250);
+    t.check('with nothing reading, the number still opens the verse actions',
+            await page.locator('[role="menuitem"]').count() > 0);
+    await page.keyboard.press('Escape');
+
+    await page.locator('[data-listen]').click();
+    await page.waitForSelector('.player:not([hidden])');
+    await page.waitForFunction(() => (window.__spoken || []).length >= 1);
+    const spokenBefore = await page.evaluate(() => window.__spoken.length);
+
+    /* Read the moment it lands. The stand-in engine speaks a verse every 30
+       ms, so waiting first and then looking reports wherever the reading had
+       run on to -- which is a true fact about a player that keeps going, and
+       says nothing about where the tap put it. What is under test is the
+       verse it started at. */
+    /* Recorded as it happens rather than read afterwards: the stand-in
+       engine speaks a verse every 30 ms, so a look taken after the click has
+       already run past the verse that was tapped, and one taken before the
+       jump renders still shows the old mark. The first verse spoken after the
+       tap is the answer, and the engine records what it was asked to say. */
+    /* Watched rather than sampled. The stand-in engine speaks a verse every
+       30 ms, so a look taken after the click has already run past the verse
+       that was tapped, and one taken before the jump renders still shows the
+       old mark. So the marks are recorded as they change and the first one
+       after the tap is the answer. */
+    await page.evaluate(() => {
+      window.__marks = [];
+      // Where it already is, so the first *change* is what the tap caused
+      // rather than the mark that was standing when this was attached.
+      const now = document.querySelector('.is-speaking .vnum');
+      let last = now ? now.textContent : null;
+      new MutationObserver(() => {
+        const n = document.querySelector('.is-speaking .vnum');
+        if (n && n.textContent !== last) {
+          last = n.textContent;
+          window.__marks.push(n.textContent);
+        }
+      }).observe(document.querySelector('.reader'),
+                 { subtree: true, attributes: true, attributeFilter: ['class'] });
+    });
+    await page.locator('.reader .v:nth-of-type(5) .vnum').click();
+    await page.waitForFunction(() => (window.__marks || []).length >= 1,
+                               null, { timeout: 10000 });
+    const landed = await page.evaluate(() => window.__marks[0]);
+    await page.waitForTimeout(400);
+    const jumped = await page.evaluate(() => ({
+      menu: document.querySelectorAll('[role="menuitem"]').length,
+      spoken: window.__spoken.length
+    }));
+    t.check('while reading, the number jumps there instead of opening a menu',
+            jumped.menu === 0 && jumped.spoken > spokenBefore,
+            'menu items ' + jumped.menu + ', spoken ' + spokenBefore +
+            ' -> ' + jumped.spoken);
+    t.check('and it starts at the verse whose number was tapped',
+            landed === '5', 'started at verse ' + landed);
+    await page.close();
+  }
+
   /* One chapter missing its file does not cost the reader the next one.
 
      This is the state the item is in while a transcode is being uploaded, and
