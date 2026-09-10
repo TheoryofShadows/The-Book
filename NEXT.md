@@ -73,11 +73,19 @@ Check how far it got:
 
     curl -s https://archive.org/metadata/the-book-read-aloud | grep -o '\.m4a"' | wc -l
 
-**Do not remove `queue_derive=False`.** The item is mediatype audio, so
-archive.org otherwise queues a derive per file, transcoding each into formats
-nothing here reads. Those derives fill the same bucket queue the uploader then
-waits on: measured at ~17 files per 25 minutes, i.e. 37 hours for the corpus.
-With derives off the queue stays shallow.
+**Do not remove `queue_derive=False`, and do not raise the ceiling in
+`wait_for_room`.** The item is mediatype audio, so archive.org otherwise
+queues a derive per file, transcoding each into formats nothing here reads.
+Those derives share the bucket queue the uploader waits on. Measured both
+ways on this corpus: **~17 files per 25 minutes with derives on, 7 a minute
+with them off** — 37 hours against under three.
+
+The ceiling is the other half. Sending faster than the queue drains only
+deepens it, and a deep queue looks exactly like the archive rationing when it
+is not. A run timed mid-backlog reported one file every ten minutes and made
+the corpus look like eleven days of work; that was this script's own
+congestion being measured, not the server. The fix was to stop, let the queue
+empty, and start again — after which it ran at seven a minute.
 
 One chapter was checked the whole way through on 2026-09-10 --
 `1-chronicles/0.m4a` fetched back from the item is byte-identical to the local
