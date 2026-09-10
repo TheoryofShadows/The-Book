@@ -30,6 +30,40 @@ still carries `data-audio="published"`, and `check_audio_live.py` passes
 all seven checks. Nothing was lost. What was missing was uncommitted
 player work that had never been deployed — now shipped, see below.
 
+## The reading was audited chapter by chapter, 2026-09-10
+
+`tools/audit_audio.py` sweeps all 1,559 chapters, reading each file's real
+duration out of its Ogg granule positions and checking it against the sidecar,
+the verse offsets and the source text. **Nothing is wrong with any of them.**
+
+    "C:\Program Files\Python313\python.exe" tools/audit_audio.py --csv dist/audio-audit.csv
+
+    Swept 1559 chapters, 92.8 hours. Median pace 0.332 s/word.
+    No chapter failed any check.
+
+The figures behind that, which are the useful part:
+
+- **Sidecar drift: 0.0000s, maximum.** Every offsets file agrees with its
+  audio exactly. Nothing is truncated and nothing overruns.
+- **Lead-in silence: 0.00s, maximum.** The bug fixed in `Cross the lead-in
+  silence without stopping in it` is gone corpus-wide, not just where it was
+  noticed.
+- **Tail padding: 0.35s, maximum**, and it is the uniform inter-verse gap
+  rather than dead air.
+- **Verse-count mismatches: 0** across all 1,559 chapters.
+- **Pace: every chapter within 0.88x-1.57x of the median.** The slow end is
+  1 Chronicles' genealogies, Ezra and Nehemiah -- long proper nouns, checked
+  by hand and reading correctly. The fast end is Leviticus and Deuteronomy's
+  legal formulae. Both are the content, not the render.
+
+The sweep was checked against injected faults before its clean result was
+believed, and those cases are kept in `tests/python/test_audit_audio.py` (13
+tests). A check that has only ever said "fine" reads the same as one that
+cannot say anything else.
+
+**What it cannot tell you is whether the voice sounds right.** That is the one
+part still needing your ears, and it is a listening job, not a fixing job.
+
 So **LAUNCH.md's precondition is met.** Its posts were written to go out only
 once the audio was real, and it is. That is the open task: post them.
 Nothing in the repo is waiting on you.
