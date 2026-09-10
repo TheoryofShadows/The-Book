@@ -1110,6 +1110,49 @@ module.exports = async function listening(t, ctx) {
     await page.close();
   }
 
+  /* One chapter missing its file does not cost the reader the next one.
+
+     This is the state the item is in while a transcode is being uploaded, and
+     it lasted hours: some chapters had the m4a and some did not. The old
+     build answered the first 404 by writing "device" and never asking again,
+     so a reader who opened an unlucky chapter lost the reading for every
+     other chapter too -- including the ones already sitting on the item.
+     Falling back for the chapter in hand is right; giving up on the rest is
+     not. */
+  {
+    const page = await ctx.browser.newPage();
+    await page.addInitScript(() => {
+      document.documentElement.setAttribute('data-audio', 'published');
+    });
+    // amos/0 is missing from the item; everything else is there.
+    await page.route('**/archive.org/download/**/amos/0.*', r => r.fulfill({
+      status: 404,
+      headers: { 'access-control-allow-origin': '*' },
+      contentType: 'text/html',
+      body: 'not found'
+    }));
+    await page.goto(ctx.base + '#/read/amos/0');
+    await page.waitForSelector('.reader .v');
+    const listen = page.locator('.reader-controls button:has-text("Listen")');
+    if (await listen.count()) {
+      await listen.first().click();
+      await page.waitForTimeout(1200);
+    }
+    const saved = await page.evaluate(
+      () => localStorage.getItem('thebook:listen-voice'));
+    t.check('a chapter missing from the item does not turn the reading off',
+            saved === null || JSON.parse(saved) !== 'device', String(saved));
+
+    // And the drawer still offers it, so the next chapter can use it.
+    const offered = await page.evaluate(() => Array.from(
+      document.querySelectorAll('select[aria-label="Voice"] option'),
+      o => o.value));
+    t.check('and the recording is still on offer for the ones that are there',
+            offered.indexOf('recorded') !== -1,
+            offered.slice(0, 3).join(', ') || '(no drawer)');
+    await page.close();
+  }
+
   /* The other half: a phone already carrying the old build's "device" gets
      it cleared once, so the fix actually reaches the readers it was for. */
   {
