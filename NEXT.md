@@ -23,6 +23,13 @@ The whole "render, upload, flip the switch" job is finished and verified:
       "C:\Program Files\Python313\python.exe" tools/check_audio_live.py --item the-book-read-aloud
       # CORS, verse offsets, HEAD, byte range, real Ogg bytes, duration vs size — all ok
 
+Re-checked on 2026-09-10 after the reading seemed to have gone missing:
+it had not. The archive.org item still holds all 3,118 files, Genesis 1
+streams 1,067,139 bytes of real Ogg with its verse offsets, the live page
+still carries `data-audio="published"`, and `check_audio_live.py` passes
+all seven checks. Nothing was lost. What was missing was uncommitted
+player work that had never been deployed — now shipped, see below.
+
 So **LAUNCH.md's precondition is met.** Its posts were written to go out only
 once the audio was real, and it is. That is the open task: post them.
 Nothing in the repo is waiting on you.
@@ -43,22 +50,23 @@ makes `pip install kokoro-onnx` fail with a wall of dependency conflicts.
     "C:\Program Files\Python313\python.exe" -m unittest discover -s tests/python -t tests/python   # 509, passing
     node tests/run.js                                                                              # 614, passing
 
-## Git — clean
+## Git — clean, and the shelved work is now live
 
-`main` is level with `origin/main`, working tree clean, no open PRs, no open
-issues. The last deploy (PR #49, "Publish the recorded reading") succeeded.
-`launch-posts` is a local branch with **no commits ahead of `main`**
-(`git log main..launch-posts` is empty) — its work is already merged, so it
-can be deleted.
+Two commits on 2026-09-10 shipped work that had been sitting uncommitted in
+the working tree — built, then left, and so never deployed. That is why the
+player and the filters "hadn't stuck": they only ever existed on this machine.
 
-## If the audio ever needs redoing
+- **fabd602** — the page weight budgets were measured against a server that
+  did not compress, while GitHub Pages does. They now weigh what the reader
+  actually downloads (209 KB front page, 269 KB chapter) and the request
+  counts have no slack, which is the only thing that catches a data file
+  landing on the critical path.
+- **278fac8** — the audio player redrawn (SVG icons instead of glyphs that
+  iOS rendered as blue emoji tiles, a real seek slider, settings behind one
+  toggle) and the front page's jump box + canon filter, styled and shipped.
+  canon.json is fetched on first reach for the select, not on load.
 
-`dist/RESUME-RENDER.txt` still describes it: the render skips chapters that
-already have both files, so it is safe to stop and safe to re-run. Do not
-change the voice partway — the skip keys on the file existing, not on which
-voice made it. The archive.org upload needs your account (`ia configure`);
-the config at `~/.config/internetarchive/ia.ini` is the one that did this
-upload.
+Tests, 2026-09-10: **629 node, 509 python, all passing.**
 
 ## Packages — nothing to do
 
