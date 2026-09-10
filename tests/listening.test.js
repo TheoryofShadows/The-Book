@@ -990,13 +990,13 @@ module.exports = async function listening(t, ctx) {
    * for it to fail, and the drawer went on offering a voice that machine can
    * never use. canPlayType is asked first now.
    */
+  /* A browser that can take neither encoding is offered nothing. That is now
+     the only case where the recording is hidden: there are two files on the
+     item, and refusing Ogg is no longer the same as refusing the reading. */
   {
     const page = await ctx.browser.newPage();
     await page.addInitScript(() => {
-      const real = HTMLMediaElement.prototype.canPlayType;
-      HTMLMediaElement.prototype.canPlayType = function (type) {
-        return /opus/i.test(type) ? '' : real.call(this, type);
-      };
+      HTMLMediaElement.prototype.canPlayType = function () { return ''; };
       document.documentElement.setAttribute('data-audio', 'published');
     });
     await page.goto(ctx.base + '#/read/psalms/22');
@@ -1006,9 +1006,55 @@ module.exports = async function listening(t, ctx) {
       await listen.first().click();
       await page.waitForTimeout(400);
       const options = (await page.locator('select option').allTextContents()).join(' | ');
-      t.check('a browser that cannot decode Opus is not offered the recording',
+      t.check('a browser that can decode neither encoding is not offered the recording',
               !/recorded reading/i.test(options), options.slice(0, 90) || '(no drawer)');
     }
+    await page.close();
+  }
+
+  /* ---- the iPhone case, which is the one this was all for ----
+
+     Safari refuses Ogg and takes mp4. It used to be refused the reading
+     outright by a check that asked only about Opus; now it is offered the
+     reading and sent the m4a. The file asked for is the whole assertion --
+     an iPhone fetching a .opus is the bug, however the drawer looks. */
+  {
+    const page = await ctx.browser.newPage();
+    await page.addInitScript(() => {
+      const real = HTMLMediaElement.prototype.canPlayType;
+      HTMLMediaElement.prototype.canPlayType = function (type) {
+        if (/ogg|opus/i.test(type) && !/mp4/i.test(type)) return '';
+        if (/mp4/i.test(type)) return 'maybe';
+        return real.call(this, type);
+      };
+      document.documentElement.setAttribute('data-audio', 'published');
+    });
+    const asked = [];
+    await page.route('**/archive.org/download/**', route => {
+      asked.push(route.request().url());
+      return route.fallback();
+    });
+    await page.goto(ctx.base + '#/read/psalms/22');
+    await page.waitForSelector('.reader .v');
+    const listen = page.locator('.reader-controls button:has-text("Listen")');
+    if (await listen.count()) {
+      await listen.first().click();
+      await page.waitForTimeout(400);
+      const options = (await page.locator('select option').allTextContents()).join(' | ');
+      t.check('a browser that refuses Ogg but takes mp4 is still offered the reading',
+              /recorded reading/i.test(options), options.slice(0, 90) || '(no drawer)');
+    }
+    const fmt = await page.evaluate(() => {
+      const a = document.createElement('audio');
+      const ogg = a.canPlayType('audio/ogg; codecs="opus"');
+      const m4a = a.canPlayType('audio/mp4; codecs="mp4a.40.2"') || a.canPlayType('audio/mp4');
+      return { ogg, m4a };
+    });
+    t.check('and the stub really is refusing Ogg and allowing mp4',
+            fmt.ogg === '' && fmt.m4a !== '', JSON.stringify(fmt));
+    t.check('so nothing on that browser goes looking for a .opus',
+            !asked.some(u => /\.opus$/.test(u)),
+            asked.filter(u => /\.(opus|m4a)$/.test(u)).slice(0, 2).join(', ') || '(none yet)');
     await page.close();
   }
 
@@ -1025,6 +1071,73 @@ module.exports = async function listening(t, ctx) {
       document.createElement('audio').canPlayType('audio/ogg; codecs="opus"'));
     t.check('and this browser, which can, still reports support',
             can !== '', JSON.stringify(can));
+    await page.close();
+  }
+
+  /* ---- a recording that fails to play is not a decision about the reader ----
+
+     This is the bug that took the reading off an iPhone and would not give it
+     back. A failure to play wrote "device" into the saved voice, permanently,
+     and audioWanted() could not tell that from a voice the reader had chosen
+     by hand -- so the recording was never tried again, on any chapter, however
+     long it had been fixed. The fix would have shipped to a phone that had
+     already stopped asking.
+
+     Two halves, and both matter: the failure must not be written down, and
+     the value written down by the old build must be let go of once. */
+  {
+    const page = await ctx.browser.newPage();
+    await page.addInitScript(() => {
+      document.documentElement.setAttribute('data-audio', 'published');
+    });
+    // Every audio file refuses to load, which is what an undecodable
+    // encoding looked like from here.
+    await page.route('**/archive.org/download/**/*.opus', r => r.abort());
+    await page.route('**/archive.org/download/**/*.m4a', r => r.abort());
+    await page.goto(ctx.base + '#/read/amos/0');
+    await page.waitForSelector('.reader .v');
+    await page.evaluate(() => localStorage.setItem(
+      'thebook:listen-voice', JSON.stringify('recorded')));
+    const listen = page.locator('.reader-controls button:has-text("Listen")');
+    if (await listen.count()) {
+      await listen.first().click();
+      await page.waitForTimeout(1500);
+    }
+    const kept = await page.evaluate(
+      () => localStorage.getItem('thebook:listen-voice'));
+    t.check('a recording that will not play does not rewrite the saved voice',
+            kept === null || JSON.parse(kept) !== 'device', String(kept));
+    await page.close();
+  }
+
+  /* The other half: a phone already carrying the old build's "device" gets
+     it cleared once, so the fix actually reaches the readers it was for. */
+  {
+    const page = await ctx.browser.newPage();
+    await page.addInitScript(() => {
+      document.documentElement.setAttribute('data-audio', 'published');
+      localStorage.setItem('thebook:listen-voice', JSON.stringify('device'));
+    });
+    await page.goto(ctx.base + '#/read/amos/0');
+    await page.waitForSelector('.reader .v');
+    await page.waitForTimeout(400);
+    const after = await page.evaluate(
+      () => localStorage.getItem('thebook:listen-voice'));
+    t.check('a "device" nobody chose is let go of once, so the reading comes back',
+            after === null || JSON.parse(after) === null, String(after));
+
+    /* Once, though. A reader who chooses the device voice after the reset
+       keeps it -- otherwise this is not a migration, it is a page that
+       overrules the drawer every time it loads. */
+    await page.evaluate(() => localStorage.setItem(
+      'thebook:listen-voice', JSON.stringify('device')));
+    await page.reload();
+    await page.waitForSelector('.reader .v');
+    await page.waitForTimeout(400);
+    const second = await page.evaluate(
+      () => localStorage.getItem('thebook:listen-voice'));
+    t.check('and a device voice chosen after that is left alone',
+            second !== null && JSON.parse(second) === 'device', String(second));
     await page.close();
   }
 

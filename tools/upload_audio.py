@@ -83,10 +83,20 @@ def wait_for_room(item, ceiling=60, patience=40):
 def pairs(audio_dir, only=None):
     """Every chapter as {remote path: local file}.
 
-    A chapter is its .opus and the .json beside it, and neither is any use
+    A chapter is its audio and the .json beside it, and neither is any use
     without the other: audio with no index has no verse marks, an index with
     no audio is a promise of a file that is not there. So they are collected
     as a pair and a chapter missing either is reported rather than half sent.
+
+    The audio is there twice. Opus in Ogg is the small one and what most
+    browsers get; AAC in mp4 is what Safari and every iPhone can actually
+    decode, and what archive.org will serve with an audio content type rather
+    than as application/octet-stream. The .json is the same file for both --
+    a transcode is sample-accurate about length, so the verse offsets measured
+    against the Opus are true of the m4a to within a millisecond.
+
+    The m4a is optional: a corpus rendered but not yet transcoded uploads as
+    it always did, rather than being called half a chapter.
     """
     want = set(only or [])
     out, half = {}, []
@@ -106,6 +116,9 @@ def pairs(audio_dir, only=None):
                 continue
             out[key + ".opus"] = opus
             out[key + ".json"] = meta
+            m4a = os.path.join(dirpath, chapter + ".m4a")
+            if os.path.exists(m4a) and os.path.getsize(m4a):
+                out[key + ".m4a"] = m4a
     return out, half
 
 

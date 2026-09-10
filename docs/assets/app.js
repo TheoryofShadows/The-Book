@@ -6762,19 +6762,81 @@
      "" means no, "maybe" and "probably" both mean try -- and "maybe" is what
      several browsers say about formats they play perfectly, so only the empty
      string is treated as a refusal. */
-  function canPlayOpus() {
+  /* Which of the two encodings this browser should be sent.
+
+     The reading exists twice on the item: Opus in an Ogg container, which is
+     the right choice for the size, and AAC in an mp4, which is the one every
+     iPhone has played since there were iPhones. Same audio, same length to
+     within five milliseconds, so the verse offsets are true of both.
+
+     Two separate things were wrong on Safari, and one format answers both.
+     Safari either cannot decode Ogg/Opus or says "maybe" and then fails; and
+     archive.org does not know the ".opus" extension, so it serves the file as
+     application/octet-stream. Chrome sniffs the bytes and plays it regardless.
+     Safari is stricter about the declared type and refuses. ".m4a" it knows,
+     and serves as audio/mp4.
+
+     Asked in preference order rather than by sniffing the browser: a "maybe"
+     from Safari about Ogg has been wrong before, so m4a is offered to anyone
+     who says they can take it, and Opus is kept ahead of it only where it is
+     answered with the confidence Chrome and Firefox give it. */
+  function audioFormat() {
     try {
       var probe = document.createElement("audio");
-      if (!probe.canPlayType) return true;   // too old to ask; let it try
-      return probe.canPlayType('audio/ogg; codecs="opus"') !== "";
+      if (!probe.canPlayType) return "opus";   // too old to ask; let it try
+      var ogg = probe.canPlayType('audio/ogg; codecs="opus"');
+      var m4a = probe.canPlayType('audio/mp4; codecs="mp4a.40.2"') ||
+                probe.canPlayType("audio/mp4");
+      if (ogg === "probably") return "opus";
+      if (m4a) return "m4a";
+      if (ogg) return "opus";
+      return null;
     } catch (e) {
-      return true;
+      return "opus";
     }
   }
 
+  var AUDIO_FORMAT = audioFormat();
+
+  /* Let go of a "device" that nobody chose.
+
+     Until this release a recording that failed to play wrote "device" into
+     the reader's saved voice, permanently and silently. On an iPhone -- where
+     it failed every time, because the file was Ogg/Opus served as
+     application/octet-stream -- that happened on the first chapter anyone
+     opened, and from then on the phone read everything in its own voice and
+     never asked for the recording again. Shipping the m4a would not have
+     reached a single one of those readers: the code would be fixed and the
+     stored answer would still be no.
+
+     So the flag that was written by the failure is spent once, here. It is
+     not a general reset -- a voice the reader picked out of the drawer by
+     hand is left exactly where it is -- and it runs once ever, because the
+     stamp is written whether or not anything was cleared.
+
+     Keyed to the release rather than a plain boolean, so that if this ever
+     has to be done again the key changes and it happens again. */
+  (function releaseTheStuckVoice() {
+    var KEY = "listen-voice-reset";
+    var THIS_TIME = "m4a-2026-09";
+    try {
+      if (store.get(KEY, null) === THIS_TIME) return;
+      /* "device" was the value the failure wrote, and also the value a
+         reader can choose. It cannot be told which this was, so the tie is
+         broken in favour of the reading: it is what the site is for, it is
+         what an unset value now means anyway, and a reader who wanted the
+         device voice says so again in one tap. Anything more specific -- a
+         voice name or a voiceURI -- was unambiguously chosen, and is kept. */
+      if (store.get("listen-voice", null) === "device") {
+        store.set("listen-voice", null);
+      }
+      store.set(KEY, THIS_TIME);
+    } catch (e) { /* storage is not required for the reader to work */ }
+  }());
+
   var AUDIO_OK = AUDIO_PUBLISHED &&
                  typeof window.Audio === "function" && !window.__BOOK__ &&
-                 canPlayOpus();
+                 !!AUDIO_FORMAT;
 
   var aud = {
     el: null,       // one <audio>, reused across chapters
@@ -6782,7 +6844,12 @@
     key: null,      // which chapter that is
     want: false,    // the reader has asked for the recorded voice
     tried: {},      // chapters already looked for, so a miss is asked once
-    waiting: 0      // a pace pause is running; ignore the transport meanwhile
+    waiting: 0,     // a pace pause is running; ignore the transport meanwhile
+    /* The recording failed to play in this page. Enough to stop asking for
+       it again and again in one session, and deliberately not written down:
+       the next visit tries afresh, because whatever went wrong is usually
+       over by then. */
+    failedHere: false
   };
 
   /* Asked once a session rather than once a chapter, and asked once even if
@@ -6837,6 +6904,9 @@
 
   function audioWanted() {
     if (!AUDIO_OK) return false;
+    // Already tried and failed in this page; do not spend every chapter
+    // finding that out again. A reload asks once more.
+    if (aud.failedHere) return false;
     var want = store.get("listen-voice", null);
     if (want === "recorded") return true;
     /* Any other saved value is a device voice chosen by hand -- a voiceURI
@@ -7065,7 +7135,8 @@
     nar.playing = true;
     aud.waiting = 0;
 
-    var src = AUDIO_BASE + nar.ctx.work + "/" + nar.ctx.chapter + ".opus";
+    var src = AUDIO_BASE + nar.ctx.work + "/" + nar.ctx.chapter +
+              "." + AUDIO_FORMAT;
     if (a.getAttribute("src") !== src) {
       a.setAttribute("src", src);
       a.load();
@@ -7101,10 +7172,21 @@
     if (aud.el) aud.el.pause();
     aud.waiting = 0;
     nar.engine = "device";
-    /* "device" rather than null: null is the recording now (audioWanted),
-       so clearing it here would answer a failed recording by asking for the
-       recording again. */
-    store.set("listen-voice", "device");
+    /* This session falls back; the next one asks again.
+
+       Writing "device" here was a permanent answer to what is usually a
+       passing problem -- a dropped connection, a chapter still uploading, a
+       format this browser could not take. Once written it looked exactly
+       like a device voice the reader had chosen by hand, so audioWanted()
+       honoured it and the recording was never tried again on that phone, on
+       any chapter, however long it had been fixed. That is what left an
+       iPhone on the robot voice with no way back short of clearing the site's
+       data.
+
+       So the fallback stays in nar.engine, where it lasts as long as the
+       page, and the saved choice is left alone. A reader who really does
+       want the device voice still says so in the drawer, which writes it. */
+    aud.failedHere = true;
 
     if (!SPEECH_OK) { stopListening(message); return; }
 
@@ -7153,16 +7235,18 @@
     if (!nar.ctx) return;
     loadAudioIndex(nar.ctx, function (index) {
       if (!index) {
-        // Asked for by a reader who cannot have it here: say so once, and
-        // leave them on the engine that works.
-        store.set("listen-voice", "device");
+        /* This chapter has no offsets. That is a fact about the chapter, not
+           about the reader's voice, so it is not written down as a choice:
+           doing so turned one unrecorded chapter into a permanent switch to
+           the device engine for every other chapter too. */
+        nar.engine = "device";
         if (player) fillVoices();
         announce("There is no recording of this chapter — it is read by " +
                  "this device's own voice.");
         return;
       }
       var items = buildAudioItems(nar.passages, index);
-      if (!items.length) { store.set("listen-voice", "device"); return; }
+      if (!items.length) { nar.engine = "device"; return; }
       if (playing && SPEECH_OK) speech.cancel();
       settle(items, "recorded");
     });
