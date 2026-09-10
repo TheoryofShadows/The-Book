@@ -63,7 +63,17 @@ Safe to stop and re-run; it skips what is already converted.
 same sidecar, so an m4a of the wrong length cannot pass while the Opus looks
 fine. 16 tests in `tests/python/test_audit_audio.py`, 635 browser checks.
 
-**The upload of the 1,559 m4a files is the one thing still in flight.**
+**The fix is live.** Deployed 2026-09-10 and verified against the deployed
+site with a browser answering canPlayType the way Safari does — it cleared the
+stuck `"device"` on load, fetched `genesis/0.m4a` rather than the `.opus`,
+played it (249.66s, matching the sidecar), and marked verse 2 as sounding. So
+the whole chain is known to work on the live site, not only in the checks.
+
+**The upload of the 1,559 m4a files is the one thing still in flight**, and it
+is safe to leave: all 1,559 sidecars went up with the original Opus pass, so
+every m4a lands beside its offsets file and works the moment it arrives. A
+chapter not yet uploaded falls back to the device voice for that chapter only
+and still offers the reading on the next one — held in the browser checks.
 
 If it did not finish, just run it again -- it sends only what is missing:
 
