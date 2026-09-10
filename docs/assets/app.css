@@ -371,6 +371,74 @@ h3 { font-size: 1.12rem; margin: var(--gap-wide) 0 var(--gap-hair); }
 }
 .hero h1 { max-width: 18ch; }
 .hero .lede { margin-top: 1rem; }
+/* The apparatus under the argument: what is checked and what is admitted.
+   Set smaller and softer than the lede, because a reader who wants it is
+   already reading down, and one who does not should meet the eras sooner. */
+.hero-for {
+  margin-top: .9rem; max-width: 42rem;
+  font-size: .95rem; line-height: 1.6; color: var(--ink-faint);
+  text-wrap: pretty;
+}
+
+/* ---------- the way in, for a reader who knows where they are going ----------
+
+   Two controls over the eras: a reference box and a canon filter. They sit
+   between the hero and the timeline, so they read as the way into the list
+   rather than as a toolbar bolted to the top of the page. Nothing is boxed
+   or raised as a unit -- the controls carry their own borders from the base
+   input rules, and the group is separated by space alone, the way the
+   colophon and the eras already are. */
+.home-find { margin: var(--gap-wide) 0 0; }
+
+.home-jump { display: flex; gap: var(--gap-tight); align-items: center; }
+/* The box is the control here and the button is its confirmation, so the box
+   takes the room and the button takes only what its word needs. */
+.home-jump-input { flex: 1 1 auto; min-width: 0; }
+.home-jump-go { flex: 0 0 auto; padding-block: .42rem; }
+
+/* "That could be: Isaiah · Second Isaiah · Third Isaiah" -- an answer, so it
+   is given the space of one, not tucked under as a caption. Empty it takes
+   no room at all, rather than reserving a line that usually says nothing. */
+.home-jump-says {
+  margin-top: var(--gap-tight); font-size: .88rem; color: var(--ink-soft);
+}
+.home-jump-says:empty { display: none; }
+.home-jump-says a { margin: 0 .1rem; }
+
+.home-filter {
+  display: flex; align-items: center; gap: var(--gap-tight);
+  margin-top: var(--gap);
+}
+.home-filter-label {
+  flex: 0 0 auto; font-family: var(--mono);
+  font-size: .72rem; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.home-filter-select { flex: 1 1 auto; min-width: 0; max-width: 26rem; }
+/* Before its canons are fetched the select still opens -- on "the whole
+   library", which is true and is the state the page is in. No spinner and no
+   disabled control: the fill lands on the first reach for it, and a reader
+   who beats it sees the one option that was always correct. */
+.home-filter.is-waiting .home-filter-select { color: var(--ink-soft); }
+
+.home-filter-says {
+  margin: var(--gap-tight) 0 0; font-size: .88rem; color: var(--ink-faint);
+  font-family: var(--serif);
+}
+.home-filter-says:empty { display: none; }
+
+/* Filtered, the timeline is a narrowed list rather than a shortened one, so
+   the works that remain are what carries the eye and the empty eras are gone
+   rather than sitting there empty. */
+.timeline.is-filtered .era { margin-bottom: .35rem; }
+
+@media (max-width: 620px) {
+  /* The label above the select rather than beside it: at this width "Show"
+     and a 26rem select in one row leaves the select too narrow to read a
+     canon's name in. */
+  .home-filter { flex-wrap: wrap; gap: var(--gap-hair) var(--gap-tight); }
+  .home-filter-select { flex-basis: 100%; max-width: none; }
+}
 
 /* The numbers are a colophon rather than a dashboard: a row of figures
    under a rule, in the book's own type, with nothing boxed. */
@@ -1443,70 +1511,183 @@ main > * { animation: rise .18s ease-out; }
 .chip[disabled] { opacity: .55; cursor: default; }
 .chip[disabled]:hover { border-color: var(--rule); color: var(--ink-soft); }
 
+/* ---------- the player ----------
+
+   A single bar: what a listener touches while listening, at the size they
+   have to touch it, and nothing else. The four settings that are chosen once
+   live in a drawer behind the gear. What this replaced put five selects and
+   six buttons on the face of it, which on a phone is two crowded rows with
+   the labels clipped mid-word.
+
+   The ground is a blur over the reading rather than a flat panel, so the
+   page stays visible under it and the bar reads as floating above the text
+   rather than as a second page stuck to the bottom. Backdrop-filter is
+   progressive: where it is not supported the same colour is opaque, which is
+   the old appearance and is fine. */
 .player {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
   isolation: isolate;
-  background: var(--raised); border-top: 1px solid var(--rule);
+  background: var(--raised);
+  border-top: 1px solid var(--rule);
   box-shadow: var(--shadow);
   font-family: var(--sans);
-  padding: .5rem max(.8rem, env(safe-area-inset-left))
-           calc(.5rem + env(safe-area-inset-bottom))
-           max(.8rem, env(safe-area-inset-right));
-  display: flex; flex-direction: column; gap: .4rem;
+  padding: .45rem max(.7rem, env(safe-area-inset-left))
+           calc(.45rem + env(safe-area-inset-bottom))
+           max(.7rem, env(safe-area-inset-right));
+  display: flex; flex-direction: column; gap: .1rem;
+}
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .player {
+    background: color-mix(in srgb, var(--raised) 82%, transparent);
+    -webkit-backdrop-filter: saturate(1.6) blur(18px);
+    backdrop-filter: saturate(1.6) blur(18px);
+  }
 }
 .player[hidden] { display: none; }
 
-.player-line { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.player-line { display: flex; align-items: center; gap: .5rem; }
 
 .player-btn {
-  font: inherit; font-size: .95rem; line-height: 1;
-  background: transparent; color: var(--ink);
-  border: 1px solid var(--rule); border-radius: 999px;
-  width: 2.2rem; height: 2.2rem; cursor: pointer;
+  font: inherit; line-height: 1;
+  background: transparent; color: var(--ink-soft);
+  border: 1px solid transparent; border-radius: 999px;
+  width: 2.5rem; height: 2.5rem; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
   flex: none;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
 }
-.player-btn:hover { border-color: var(--accent); color: var(--accent); }
-/* The accent is a deep purple in light and a pale one in dark, so the glyph
-   takes the ground colour rather than a fixed white and stays legible in both. */
+.player-btn .i { width: 1.25rem; height: 1.25rem; display: block; }
+.player-btn:hover { background: var(--accent-bg); color: var(--accent); }
+.player-btn:active { transform: scale(.94); }
+@media (prefers-reduced-motion: reduce) {
+  .player-btn { transition: none; }
+  .player-btn:active { transform: none; }
+}
+
+/* The one control that is pressed constantly, so it is the one that is
+   filled and the largest thing on the bar. The accent is a deep purple in
+   light and a pale one in dark, so the glyph takes the ground colour rather
+   than a fixed white and stays legible in both. */
 .player-play {
   background: var(--accent); border-color: var(--accent); color: var(--paper);
-  width: 2.6rem; height: 2.6rem; font-size: 1.05rem;
+  width: 2.9rem; height: 2.9rem;
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 35%, transparent);
 }
+.player-play .i { width: 1.4rem; height: 1.4rem; }
 .player-play:hover {
   background: var(--accent-2); border-color: var(--accent-2); color: var(--paper);
 }
-.player-cont[aria-pressed="true"] { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+
+.player-transport { display: flex; align-items: center; gap: .1rem; margin-left: auto; }
+
+.player-cont[aria-pressed="true"],
+.player-more[aria-expanded="true"] {
+  background: var(--accent-bg); color: var(--accent);
+}
 
 .player-pos {
-  display: flex; flex-direction: column; min-width: 0; line-height: 1.25;
+  display: flex; flex-direction: column; min-width: 0; line-height: 1.3;
   flex: 1;
 }
 .player-where {
-  font-size: .84rem; font-weight: 600;
+  font-size: .85rem; font-weight: 600; letter-spacing: -.01em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.player-unit { font-size: .74rem; color: var(--ink-faint); }
-
-/* How far through the chapter, as a hairline along the top edge — the same
-   place a player puts it, and out of the way of the controls. */
-.player-bar {
-  position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: var(--rule-soft); overflow: hidden;
+.player-unit {
+  font-size: .74rem; color: var(--ink-faint);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
 }
-.player-bar i {
-  display: block; height: 100%; width: 0;
-  background: var(--accent); transition: width .3s linear;
-}
-@media (prefers-reduced-motion: reduce) { .player-bar i { transition: none; } }
 
+/* ---------- scrubbing ----------
+
+   The position used to be a 2px hairline with nothing to grab. It is a real
+   range now: drag, arrow keys and a screen reader all land on the same
+   jump() the skip buttons use. Styled rather than native because the native
+   control is a different shape and weight in every browser, and this one has
+   to sit under a 2.9rem button without looking like a form field. */
+.player-scrub { padding: 0 .15rem .1rem; }
+
+.player-seek {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 1.1rem; margin: 0; padding: 0;
+  background: transparent; cursor: pointer; display: block;
+}
+.player-seek::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 999px;
+  background: linear-gradient(to right,
+    var(--accent) calc(var(--seek, 0) * 1%),
+    var(--rule-soft) calc(var(--seek, 0) * 1%));
+}
+.player-seek::-moz-range-track {
+  height: 4px; border-radius: 999px; background: var(--rule-soft);
+}
+.player-seek::-moz-range-progress {
+  height: 4px; border-radius: 999px; background: var(--accent);
+}
+.player-seek::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 13px; height: 13px; border-radius: 50%; margin-top: -4.5px;
+  background: var(--accent); border: 2px solid var(--raised);
+  box-shadow: 0 1px 4px rgb(0 0 0 / .3);
+  transition: transform .15s ease;
+}
+.player-seek::-moz-range-thumb {
+  width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--raised);
+  background: var(--accent); box-shadow: 0 1px 4px rgb(0 0 0 / .3);
+}
+.player-seek:hover::-webkit-slider-thumb,
+.player-seek:focus-visible::-webkit-slider-thumb { transform: scale(1.25); }
+.player-seek:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  .player-seek::-webkit-slider-thumb { transition: none; }
+}
+
+/* ---------- the settings drawer ----------
+
+   Opens upward into the page rather than over the reading: the body padding
+   is measured from the whole player, so the verse being read stays visible
+   with the drawer up. */
+.player-drawer {
+  border-top: 1px solid var(--rule-soft);
+  margin-top: .35rem; padding-top: .5rem;
+  display: flex; flex-direction: column; gap: .5rem;
+}
+.player-drawer[hidden] { display: none; }
+
+.player-opts {
+  display: grid; gap: .45rem .9rem;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+.player-set { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+.player-set-label {
+  font-size: .7rem; font-weight: 600; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--ink-faint);
+  flex: none; width: 3.4rem;
+}
+.player-set-control { display: flex; align-items: center; gap: .3rem; flex: 1; min-width: 0; }
+.player-set-control select { flex: 1; min-width: 0; }
+
+/* The hairline along the top edge is now the drawn half of the scrubber
+   below it, so it is kept but not painted: the seek control carries the
+   position visibly, and two progress lines saying the same thing is one
+   more than the bar needs. updatePlayer() still writes to it, and it stays
+   the fallback where a range input cannot be styled. */
+.player-bar { position: absolute; top: 0; left: 0; right: 0; height: 0; }
+.player-bar i { display: block; height: 100%; width: 0; background: var(--accent); }
+
+/* Full width of its cell rather than capped: the cap is what clipped
+   "Recorded reading" to "Recorded readir" on a phone. */
 .player-opts select {
-  font: inherit; font-size: .78rem; color: var(--ink);
+  font: inherit; font-size: .8rem; color: var(--ink);
   background: var(--paper-2); border: 1px solid var(--rule-soft);
-  border-radius: 8px; padding: .28rem .4rem; max-width: 11rem;
+  border-radius: 9px; padding: .34rem .5rem;
+  max-width: 100%; text-overflow: ellipsis;
 }
-.player-opts { justify-content: flex-start; }
-.player-close { margin-left: auto; }
+.player-opts select:hover { border-color: var(--rule); }
+.player-opts select:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent);
+}
 
 /* The voice drawer is grouped by how the voices sound; the headings carry
    that, so they have to read as headings and not as choices. */
@@ -1515,7 +1696,8 @@ main > * { animation: rise .18s ease-out; }
 
 /* Try-this-voice sits with the drawer it belongs to, and smaller than the
    transport: it is a convenience, not a control. */
-.player-try { width: 2rem; height: 2rem; font-size: .85rem; }
+.player-try { width: 2.1rem; height: 2.1rem; }
+.player-try .i { width: 1.05rem; height: 1.05rem; }
 
 /* Only shown when the device has nothing good installed, which is a fact
    about the device and not a failure of the page. It opens rather than
@@ -1539,8 +1721,12 @@ main > * { animation: rise .18s ease-out; }
 body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
 
 @media (max-width: 620px) {
-  .player-opts select { max-width: 7.5rem; }
-  .player-where { font-size: .8rem; }
+  .player-where { font-size: .82rem; }
+  /* One setting per row on a phone: two columns of a label plus a select is
+     how the voice name came to be clipped mid-word. */
+  .player-opts { grid-template-columns: 1fr; }
+  /* The transport keeps its touch targets; the gap goes instead. */
+  .player-transport { gap: 0; }
 }
 
 @media print { .player { display: none; } }

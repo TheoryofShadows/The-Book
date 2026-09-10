@@ -389,6 +389,20 @@
               "the New Testament apocrypha and the Apostolic Fathers, arranged " +
               "not by where tradition filed them, but by when scholars believe " +
               "they were composed. It opens with a war poem, not with Genesis."
+      }),
+      /* Who it is for, and what it does that another edition does not.
+         The paragraph above is the argument; this is the apparatus, which
+         is what a reader who already knows the field is deciding on. It
+         says what is checked and what is admitted rather than promising
+         accuracy, because the whole method here is that the holes are
+         printed. */
+      el("p", {
+        class: "hero-for",
+        text: "Second Isaiah sits in the exile and Third after it, the " +
+              "Enochic booklets are dated separately, and every placement is " +
+              "a range you can see and argue with. The dating is sourced, " +
+              "the coverage gaps are named with their reasons, and every " +
+              "chapter has a recorded reading. Free, no account, no tracking."
       })
     ]));
     /* --8<-- hero: end --8<-- */
@@ -476,7 +490,139 @@
         "you can watch the order change." })
     ]));
 
+    /* ---- the way in for somebody who already knows where they are going ----
+
+       The front page opened onto ten collapsed eras and a paragraph about
+       dating. That is the right first page for a visitor who has never seen
+       the argument, and the wrong one for the reader this library is actually
+       for -- somebody who knows what the Deuterocanon is, has an opinion
+       about Second Isaiah, and wants 1 Enoch 6 rather than an introduction.
+       For them the front page was a table of contents to be scrolled past.
+
+       Two controls, above the eras, because they answer the two questions
+       that reader arrives with:
+
+       - I know the reference. The box takes it -- "1 En 6", "Isa 40",
+         "Sir 24:1", "Barnabas" -- through the same resolveReference() the
+         search page uses, so the abbreviations, the split books and the
+         "that could be any of these" answer all come for free. Enter goes to
+         the text; it is not a search box that happens to accept references.
+
+       - I know the corpus. The canons and the divisions are what a printed
+         Bible is organised by and what a specialist narrows to out of habit:
+         the five canons this edition compares, and under them Torah, The
+         Twelve, Deuterocanon, the Pauline epistles, and the rest. Choosing
+         one filters the eras below to the works in it, in place, so the
+         chronological order -- the thing that is actually unusual here --
+         stays visible while it is narrowed. That is the point: a scholar who
+         filters to the Deuterocanon should see it spread across four
+         centuries rather than gathered into a heading.
+
+       Both are progressive. The filter needs canon.json and appears when it
+       arrives; the jump box needs nothing and is there immediately. */
+    var jumpBox = el("input", {
+      type: "search", class: "home-jump-input",
+      "aria-label": "Go to a book, chapter or verse",
+      placeholder: "Go to a reference — 1 En 6, Isa 40, Sir 24:1",
+      autocomplete: "off", spellcheck: "false"
+    });
+    var jumpSays = el("div", { class: "home-jump-says", role: "status" });
+    var jumpForm = el("form", {
+      class: "home-jump",
+      onsubmit: function (e) {
+        e.preventDefault();
+        var q = jumpBox.value.trim();
+        if (!q) return;
+        jumpSays.textContent = "";
+        var hits = resolveReference(manifest, q);
+        if (!hits.length) {
+          /* Not a reference. Rather than refuse it, hand it to the search
+             that can answer it -- somebody typing a phrase into a box on the
+             front page means the phrase, and saying "no" and stopping is the
+             one answer that helps nobody. */
+          location.hash = "#/search?q=" + encodeURIComponent(q);
+          return;
+        }
+        locateReference(hits).then(function (found) {
+          if (!found.length) {
+            location.hash = "#/search?q=" + encodeURIComponent(q);
+            return;
+          }
+          if (found.length === 1) {
+            var h = found[0];
+            location.hash = "#/read/" + h.workId + "/" + h.idx +
+                            (h.verse ? "?v=" + h.verse : "");
+            return;
+          }
+          /* More than one work answers to the name -- Isaiah is three here.
+             Saying which is the reader's call, so the choices are offered
+             rather than one of them guessed at. */
+          jumpSays.textContent = "";
+          jumpSays.appendChild(el("span", { text: "That could be: " }));
+          found.slice(0, 6).forEach(function (h, i) {
+            if (i) jumpSays.appendChild(document.createTextNode(" · "));
+            jumpSays.appendChild(el("a", {
+              href: "#/read/" + h.workId + "/" + h.idx +
+                    (h.verse ? "?v=" + h.verse : ""),
+              text: titleCase(h.title) + (h.label ? " " + h.label : "")
+            }));
+          });
+        });
+      }
+    }, [
+      jumpBox,
+      el("button", { class: "chip home-jump-go", type: "submit", text: "Go" })
+    ]);
+
+    var filterSlot = el("div", { class: "home-filter-slot" });
+    wrap.appendChild(el("section", { class: "home-find" }, [
+      jumpForm, jumpSays, filterSlot
+    ]));
+
     var line = el("div", { class: "timeline" });
+
+    var filterSays = el("p", { class: "home-filter-says", role: "status" });
+
+    /* Opening and shutting an era is a thing the reader did, and filtering
+       must not quietly spend it. Narrowed, the eras holding a match are
+       opened -- a shut era is a row saying nothing when only a handful of
+       works are left. Cleared, every era goes back to the state the reader
+       left it in, which is the one on the button and in storage, not the one
+       the filter forced. Without this, using the filter once flattened the
+       page permanently open.
+
+       setOpen rather than classList.add, because the class is only half of
+       it: era-head carries aria-expanded, and moving one without the other
+       tells a screen reader the opposite of what the page is showing. */
+    function setOpen(era, on) {
+      era.classList.toggle("open", on);
+      var head = era.querySelector(".era-head");
+      if (head) head.setAttribute("aria-expanded", on ? "true" : "false");
+    }
+
+    function applyFilter(ids, label) {
+      var kept = 0;
+      line.querySelectorAll(".era").forEach(function (era) {
+        var any = 0;
+        era.querySelectorAll(".work").forEach(function (a) {
+          var on = !ids || ids[a.getAttribute("data-work")];
+          a.hidden = !on;
+          if (on) any++;
+        });
+        era.hidden = !any;
+        setOpen(era, ids ? !!any
+                         : store.get("era:" + era.getAttribute("data-era"), false));
+        kept += any;
+      });
+      line.classList.toggle("is-filtered", !!ids);
+      if (!ids) {
+        filterSays.textContent = "";
+        return;
+      }
+      filterSays.textContent = kept + (kept === 1 ? " work" : " works") +
+        " in " + label + ", in the order they were written.";
+    }
+
     manifest.sections.forEach(function (s) {
       if (!s.works.length) return;
       var isCollection = !s.roman;
@@ -497,7 +643,10 @@
             " · " + fmt(w.words) + " words";
         grid.appendChild(el("a", {
           class: "work" + (noteOnly ? " note-only" : ""),
-          href: "#/read/" + w.id + "/0"
+          href: "#/read/" + w.id + "/0",
+          // What the canon filter matches on, so filtering is a lookup
+          // rather than a re-render of the whole timeline.
+          "data-work": w.id
         }, [
           el("span", { class: "work-title", text: titleCase(w.title) }),
           el("span", { class: "work-meta", text: meta })
@@ -507,7 +656,10 @@
 
       var era = el("div", {
         class: "era" + (openState ? " open" : ""),
-        "data-collection": isCollection ? "1" : "0"
+        "data-collection": isCollection ? "1" : "0",
+        // So clearing the filter can put this era back the way the reader
+        // had it, rather than leaving it forced open.
+        "data-era": s.id
       });
 
       var head = el("button", {
@@ -532,6 +684,88 @@
     });
 
     wrap.appendChild(line);
+
+    /* The filter is built here but its data is not fetched here.
+
+       canon.json is 33 KB, and fetching it to draw this select put it on the
+       first paint of the front page -- a seventh request, and 737 KB against
+       a 700 KB budget. That budget exists to stop exactly this: a data file
+       wandering onto the critical path because some control on the page
+       happened to want it. The eras, the dating and the jump box are what
+       the page is for, and none of them need canon.json.
+
+       So the select is drawn immediately, with its real label and its real
+       "whole library" option, and the canons are filled in the first time a
+       reader reaches for it -- focus, pointer, or keyboard. That keeps the
+       control honest in the way the old comment cared about: it is present,
+       it says what it does, and it is never a menu that opens empty. The
+       fill is idempotent and getJSON caches by path, so reaching for it
+       twice costs one fetch, and a reader who never touches it pays nothing.
+
+       If the fetch fails the select is removed rather than left as a control
+       that cannot answer. */
+    var sel = el("select", {
+      class: "home-filter-select", "aria-label": "Show only one canon or division",
+      onchange: function (e) {
+        var id = e.target.value;
+        if (!id || !built) { applyFilter(null, ""); return; }
+        var c = built.table[id];
+        if (!c) { applyFilter(null, ""); return; }
+        var ids = {};
+        c.works.forEach(function (w) { ids[w] = 1; });
+        applyFilter(ids, c.title);
+      }
+    });
+    sel.appendChild(option("", "The whole library — 172 works", true));
+
+    var filterBox = el("div", { class: "home-filter is-waiting" }, [
+      el("label", { class: "home-filter-label", text: "Show" }), sel
+    ]);
+
+    var built = null, filling = null;
+    function fillCanons() {
+      if (filling) return filling;
+      filling = getJSON("canon.json").then(function (canon) {
+        built = buildCollections(manifest, canon);
+        if (!built || !built.order.length) throw new Error("no collections");
+
+        /* Grouped the way the reader thinks about them rather than the way
+           buildCollections happens to key them: the five canons first,
+           because "which Bible" is the coarsest question and the one most
+           readers start from, then the divisions inside them. Sections are
+           left out -- the eras below already are the sections, and offering
+           them here would be a filter that hides nothing. */
+        var groups = [
+          ["Canons", ["canon", "testament"]],
+          ["Divisions", ["division"]]
+        ];
+        groups.forEach(function (g) {
+          var box = el("optgroup", { label: g[0] });
+          built.order.forEach(function (id) {
+            var c = built.table[id];
+            if (!c || g[1].indexOf(c.kind) === -1) return;
+            box.appendChild(option(id, c.title + " · " + c.works.length));
+          });
+          if (box.childNodes.length) sel.appendChild(box);
+        });
+        filterBox.classList.remove("is-waiting");
+      }).catch(function () {
+        // No canons to offer, so no control claiming to offer them.
+        if (filterBox.parentNode) filterBox.parentNode.removeChild(filterBox);
+      });
+      return filling;
+    }
+
+    // Whichever way the reader arrives at it. pointerenter catches the hand
+    // on its way to the control, so on a mouse the options are usually there
+    // before it is clicked; focus covers keyboard and touch.
+    sel.addEventListener("pointerenter", fillCanons);
+    sel.addEventListener("focus", fillCanons);
+    sel.addEventListener("mousedown", fillCanons);
+
+    filterSlot.appendChild(filterBox);
+    filterSlot.appendChild(filterSays);
+
     return wrap;
   }
 
@@ -7350,7 +7584,54 @@
   /* ---------------- the player ---------------- */
 
   var player = null, playBtn = null, whereEl = null, unitEl = null,
-      barEl = null, voiceSel = null, hintEl = null;
+      barEl = null, voiceSel = null, hintEl = null,
+      optsEl = null, moreBtn = null, seekEl = null;
+
+  /* Drawn rather than typed.
+
+     The transport was Unicode glyphs -- ⏮ ⏸ ⏭ ✕ ↻ -- and a glyph is
+     whichever font on the device happens to carry it: on iOS the media
+     characters come out of the emoji font as flat blue-and-white tiles that
+     ignore the button's colour, which is the boxed look in the screenshot.
+     These are the same shapes as paths, so they take currentColor, line up
+     on the pixel grid at any size, and are the same drawing on every device.
+
+     currentColor throughout, no fill of their own, and aria-hidden because
+     every button carries its own aria-label. */
+  function icon(body) {
+    return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true" ' +
+           'focusable="false">' + body + '</svg>';
+  }
+  var PLAY  = icon('<path d="M8 5.5v13l11-6.5z" fill="currentColor"/>');
+  var PAUSE = icon('<path d="M9 5.5h2.6v13H9zm5.4 0H17v13h-2.6z" fill="currentColor"/>');
+  var PREV  = icon('<path d="M8 6v12M18.5 6.5v11L10 12z" fill="none" ' +
+                   'stroke="currentColor" stroke-width="2" ' +
+                   'stroke-linecap="round" stroke-linejoin="round"/>');
+  var NEXT  = icon('<path d="M16 6v12M5.5 6.5v11L14 12z" fill="none" ' +
+                   'stroke="currentColor" stroke-width="2" ' +
+                   'stroke-linecap="round" stroke-linejoin="round"/>');
+  var CLOSE = icon('<path d="M6.5 6.5l11 11m0-11l-11 11" fill="none" ' +
+                   'stroke="currentColor" stroke-width="2" ' +
+                   'stroke-linecap="round"/>');
+  var REPEAT = icon('<path d="M17 3.5l3 3-3 3M7 20.5l-3-3 3-3" fill="none" ' +
+                    'stroke="currentColor" stroke-width="2" ' +
+                    'stroke-linecap="round" stroke-linejoin="round"/>' +
+                    '<path d="M20 6.5H8a4 4 0 0 0-4 4v1m0 6h12a4 4 0 0 0 4-4v-1" ' +
+                    'fill="none" stroke="currentColor" stroke-width="2" ' +
+                    'stroke-linecap="round"/>');
+  var GEAR  = icon('<circle cx="12" cy="12" r="3.2" fill="none" ' +
+                   'stroke="currentColor" stroke-width="2"/>' +
+                   '<path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8' +
+                   'M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7M18.5 18.5l-1.7-1.7' +
+                   'M7.2 7.2L5.5 5.5" fill="none" stroke="currentColor" ' +
+                   'stroke-width="2" stroke-linecap="round"/>');
+  var TRY   = icon('<path d="M9 18V6.5l9-1.8V16" fill="none" ' +
+                   'stroke="currentColor" stroke-width="2" ' +
+                   'stroke-linecap="round" stroke-linejoin="round"/>' +
+                   '<circle cx="6.8" cy="18" r="2.6" fill="none" ' +
+                   'stroke="currentColor" stroke-width="2"/>' +
+                   '<circle cx="15.8" cy="16" r="2.6" fill="none" ' +
+                   'stroke="currentColor" stroke-width="2"/>');
 
   function option(value, label, selected) {
     return el("option", { value: value, selected: selected ? true : null, text: label });
@@ -7506,7 +7787,7 @@
   function buildPlayer() {
     playBtn = el("button", {
       class: "player-btn player-play", "aria-label": "Pause reading",
-      text: "⏸", onclick: function () {
+      html: PAUSE, onclick: function () {
         if (nar.playing) pauseListening(); else resumeListening();
       }
     });
@@ -7554,7 +7835,7 @@
     fillVoices();
 
     var tryIt = el("button", {
-      class: "player-btn player-try", text: "♪",
+      class: "player-btn player-try", html: TRY,
       "aria-label": "Hear this voice", title: "Hear this voice",
       onclick: function () { previewVoice(); }
     });
@@ -7593,7 +7874,7 @@
       class: "player-btn player-cont",
       "aria-pressed": store.get("listen-continue", true) ? "true" : "false",
       title: "Keep going into the next chapter",
-      text: "↻",
+      html: REPEAT,
       "aria-label": "Continue into the next chapter",
       onclick: function (e) {
         var now = !store.get("listen-continue", true);
@@ -7604,32 +7885,114 @@
       }
     });
 
+    /* One row, and a drawer for the rest.
+
+       Everything used to be on the face of it: transport, position, repeat,
+       close, then five selects underneath. On a phone that is two crowded
+       rows of controls with the labels clipped mid-word -- "Recorded readir"
+       -- and the thing a listener actually reaches for, which is pause and
+       where am I, is the same size as the sleep timer.
+
+       So the bar carries what is touched while listening, and the four
+       settings that are set once and left alone go behind one toggle. The
+       drawer is a plain region rather than a dialog: it pushes the bar up
+       instead of covering the reading, and the page's padding is measured
+       from the whole player, so opening it never hides the verse being read.
+
+       Scrubbing lives on the progress line, which is the one control the old
+       bar did not have at all: the position was a 2px hairline with nothing
+       to grab. It is a real slider now -- keyboard, screen reader, and drag
+       all land on the same jump() the arrows use. */
+    optsEl = el("div", {
+      class: "player-drawer", id: "player-drawer", hidden: true
+    }, [
+      el("div", { class: "player-opts" }, [
+        settingRow("Speed", rate),
+        settingRow("Pace", paceSel),
+        settingRow("Voice", voiceSel, tryIt),
+        settingRow("Sleep", sleep)
+      ]),
+      hintEl
+    ]);
+
+    moreBtn = el("button", {
+      class: "player-btn player-more", "aria-label": "Playback settings",
+      title: "Speed, pace, voice and sleep timer",
+      "aria-expanded": "false", "aria-controls": "player-drawer",
+      html: GEAR,
+      onclick: function () {
+        var open = optsEl.hidden;
+        optsEl.hidden = !open;
+        moreBtn.setAttribute("aria-expanded", open ? "true" : "false");
+        player.classList.toggle("is-open", open);
+        sizePlayer();
+      }
+    });
+
+    seekEl = el("input", {
+      type: "range", class: "player-seek", min: "0", max: "100", value: "0",
+      step: "1", "aria-label": "Position in the chapter",
+      oninput: function (e) {
+        var v = parseInt(e.target.value, 10);
+        e.target.style.setProperty("--seek", String(v));
+        scrubTo(v);
+      }
+    });
+
     player = el("div", {
       class: "player", role: "region", "aria-label": "Read aloud", hidden: true
     }, [
       el("div", { class: "player-bar" }, [barEl]),
       el("div", { class: "player-line" }, [
-        el("button", {
-          class: "player-btn", "aria-label": "Back one verse", title: "Back one verse",
-          text: "⏮", onclick: function () { jump(-1); }
-        }),
         playBtn,
-        el("button", {
-          class: "player-btn", "aria-label": "Forward one verse", title: "Forward one verse",
-          text: "⏭", onclick: function () { jump(1); }
-        }),
         el("div", { class: "player-pos" }, [whereEl, unitEl]),
-        cont,
-        el("button", {
-          class: "player-btn player-close", "aria-label": "Stop reading aloud",
-          title: "Stop reading aloud", text: "✕",
-          onclick: function () { stopListening("Stopped reading aloud"); }
-        })
+        el("div", { class: "player-transport" }, [
+          el("button", {
+            class: "player-btn", "aria-label": "Back one verse",
+            title: "Back one verse", html: PREV,
+            onclick: function () { jump(-1); }
+          }),
+          el("button", {
+            class: "player-btn", "aria-label": "Forward one verse",
+            title: "Forward one verse", html: NEXT,
+            onclick: function () { jump(1); }
+          }),
+          cont,
+          moreBtn,
+          el("button", {
+            class: "player-btn player-close", "aria-label": "Stop reading aloud",
+            title: "Stop reading aloud", html: CLOSE,
+            onclick: function () { stopListening("Stopped reading aloud"); }
+          })
+        ])
       ]),
-      el("div", { class: "player-line player-opts" }, [rate, paceSel, voiceSel, tryIt, sleep]),
-      hintEl
+      el("div", { class: "player-line player-scrub" }, [seekEl]),
+      optsEl
     ]);
     document.body.appendChild(player);
+  }
+
+  /* A label beside its control, so the drawer reads as settings rather than
+     as a row of unlabelled selects guessing at their own purpose. The select
+     already carries the aria-label; this is the visible half of it. */
+  function settingRow(label, control, extra) {
+    var id = "pset-" + label.toLowerCase();
+    control.id = id;
+    return el("div", { class: "player-set" }, [
+      el("label", { class: "player-set-label", for: id, text: label }),
+      el("div", { class: "player-set-control" }, [control, extra || null])
+    ]);
+  }
+
+  /* Dragging the progress line moves by verse, because a verse is what this
+     player counts in: the recording seeks to one and the device engine has
+     nothing finer than the piece it is speaking. */
+  function scrubTo(pct) {
+    if (!nar.on || !nar.items.length) return;
+    var target = Math.round((pct / 100) * (nar.items.length - 1));
+    target = Math.max(0, Math.min(target, nar.items.length - 1));
+    if (target === nar.at) return;
+    jump(target - nar.at);
   }
 
   /* The page gives back the inch the player covers, and the player is not
@@ -7647,7 +8010,7 @@
     if (!nar.on) return;
     sizePlayer();
 
-    playBtn.textContent = nar.playing ? "⏸" : "▶";
+    playBtn.innerHTML = nar.playing ? PAUSE : PLAY;
     playBtn.setAttribute("aria-label", nar.playing ? "Pause reading" : "Continue reading");
 
     var item = nar.items[nar.at];
@@ -7655,8 +8018,23 @@
       ? titleCase(nar.ctx.workTitle) + " · " + nar.ctx.label : "";
     unitEl.textContent = item
       ? itemLabel(item) + " · " + timeLabel(minutesLeft()) : "";
-    barEl.style.width = nar.items.length
-      ? Math.round((nar.at / nar.items.length) * 100) + "%" : "0";
+
+    var pct = nar.items.length
+      ? Math.round((nar.at / nar.items.length) * 100) : 0;
+    barEl.style.width = pct + "%";
+
+    /* The slider is not touched while it is being dragged: writing value
+       under the thumb fights the drag and snaps it back. */
+    if (seekEl && document.activeElement !== seekEl) {
+      var span = nar.items.length > 1 ? nar.items.length - 1 : 1;
+      var val = Math.round((nar.at / span) * 100);
+      seekEl.value = String(val);
+      // WebKit paints no progress side of its own, so the filled part is a
+      // gradient stop the track reads off this.
+      seekEl.style.setProperty("--seek", String(val));
+      seekEl.setAttribute("aria-valuetext", item
+        ? itemLabel(item) + " of " + nar.items.length : "");
+    }
   }
 
   function syncListenButtons() {

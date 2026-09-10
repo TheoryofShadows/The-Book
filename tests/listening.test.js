@@ -19,6 +19,19 @@ async function open(ctx, route, ...engines) {
   return page;
 }
 
+/* Speed, pace, voice and sleep live behind the gear now: they are set once
+   and left alone, and on a phone having them on the face of the bar made two
+   crowded rows with the voice name clipped mid-word. Opening the drawer is
+   what a reader does to reach them, so it is what the suite does too.
+
+   Idempotent, because most of these tests change more than one setting and
+   a second click would close it again. */
+async function openSettings(page) {
+  const more = page.locator('.player-more');
+  if (await more.getAttribute('aria-expanded') !== 'true') await more.click();
+  await page.waitForSelector('.player-drawer:not([hidden])');
+}
+
 /* Step the transport to the end of the chapter without assuming how many
    pieces are in it, stopping the moment the condition it is waiting for
    changes so a later assertion is not racing a chapter that moved on. */
@@ -59,8 +72,14 @@ module.exports = async function listening(t, ctx) {
   /* ---- transport ---- */
   await page.locator('.player-play').click();
   await page.waitForTimeout(settle);
+  /* By the label rather than by the glyph. The transport is drawn now --
+     Unicode media characters came out of the emoji font on iOS as flat blue
+     tiles that ignored the button's colour -- so there is no character to
+     read. The label is what a screen reader announces and what actually has
+     to change, and it survives the next change of icon. */
   t.check('pause turns the button back into play',
-          await page.textContent('.player-play') === '▶');
+          await page.getAttribute('.player-play', 'aria-label') === 'Continue reading',
+          await page.getAttribute('.player-play', 'aria-label'));
   const beforePause = await page.evaluate(() => window.__spoken.length);
   await page.waitForTimeout(250);
   t.check('and nothing is spoken while it is paused',
@@ -69,6 +88,7 @@ module.exports = async function listening(t, ctx) {
   await page.waitForFunction(n => window.__spoken.length > n, beforePause);
   t.check('play picks it up again', true);
 
+  await openSettings(page);
   await page.selectOption('select[aria-label="Reading speed"]', '1.5');
   await page.waitForFunction(() => window.__spoken[window.__spoken.length - 1].rate === 1.5);
   t.check('a speed change reaches the next utterance', true);
@@ -82,6 +102,49 @@ module.exports = async function listening(t, ctx) {
   const at = await page.evaluate(() => JSON.parse(localStorage.getItem('thebook:listen-at')));
   t.check('the position is remembered as it goes', !!at && at.work === 'amos' && at.at > 0,
           JSON.stringify(at));
+
+  /* ---- the bar itself ----
+
+     The settings are behind the gear and the position is a control rather
+     than a hairline, so both have to actually work: a drawer that will not
+     open puts speed, pace, voice and the sleep timer out of reach entirely,
+     and a slider that does not move the reading is a decoration. */
+  /* Shut on a player that has just opened -- checked on a fresh one, because
+     the speed change above already opened this page's drawer and left it
+     open, which is the right behaviour and the wrong state to assert from. */
+  const fresh = await open(ctx, '#/read/amos/2', workingEngine(30));
+  await fresh.locator('[data-listen]').click();
+  await fresh.waitForSelector('.player:not([hidden])');
+  t.check('the settings drawer is shut until it is asked for, and says so',
+          await fresh.locator('.player-drawer').isVisible() === false &&
+          await fresh.getAttribute('.player-more', 'aria-expanded') === 'false');
+  await fresh.close();
+
+  await openSettings(page);
+  t.check('the gear opens it, and the four settings are in it',
+          await page.locator('.player-drawer:not([hidden]) select').count() === 4,
+          String(await page.locator('.player-drawer select').count()));
+  t.check('and each one is labelled in the drawer, not only to a screen reader',
+          (await page.locator('.player-set-label').allTextContents()).join('|'),
+          (await page.locator('.player-set-label').allTextContents()).join('|'));
+
+  /* Dragging the position moves the reading, and by verse: the recording
+     seeks to a verse and the device engine has nothing finer than the piece
+     it is speaking, so the slider counts in the same unit the arrows do. */
+  const seekBefore = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('thebook:listen-at')).at);
+  await page.locator('.player-seek').evaluate(el => {
+    el.value = '80';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await page.waitForTimeout(settle);
+  const seekAfter = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('thebook:listen-at')).at);
+  t.check('dragging the position moves the reading with it',
+          seekAfter > seekBefore, seekBefore + ' -> ' + seekAfter);
+  t.check('and the slider reports where it is, in verses',
+          /\d/.test(await page.getAttribute('.player-seek', 'aria-valuetext') || ''),
+          await page.getAttribute('.player-seek', 'aria-valuetext'));
 
   /* ---- one chapter runs into the next ---- */
   await toChapterEnd(page, "location.hash === '#/read/amos/2'");
@@ -137,7 +200,8 @@ module.exports = async function listening(t, ctx) {
   await page.keyboard.press('l');
   await page.waitForTimeout(settle);
   t.check('the l key pauses and resumes it',
-          await page.textContent('.player-play') === '▶');
+          await page.getAttribute('.player-play', 'aria-label') === 'Continue reading',
+          await page.getAttribute('.player-play', 'aria-label'));
   await page.close();
 
   /* ---- a work with no verse numbers ---- */
@@ -226,6 +290,7 @@ module.exports = async function listening(t, ctx) {
           await page.evaluate(() => document.querySelector('.player-hint').hidden));
 
   /* The ranking is a default, not a policy: a choice made by hand outranks it. */
+  await openSettings(page);
   await page.selectOption('select[aria-label="Voice"]', 'zarvox');
   await page.waitForFunction(
     () => window.__spoken[window.__spoken.length - 1].voice === 'zarvox');
@@ -469,6 +534,7 @@ module.exports = async function listening(t, ctx) {
   await page.locator('.player-play').click();
   await page.waitForTimeout(settle);
   const wasAt = await page.evaluate(() => window.__spoken[window.__spoken.length - 1].text);
+  await openSettings(page);
   await page.selectOption('select[aria-label="Reading speed"]', '0.7');
   await page.waitForTimeout(settle);
   await page.locator('.player-play').click();
@@ -531,6 +597,7 @@ module.exports = async function listening(t, ctx) {
     await p.waitForSelector('.reader .v');
     await p.locator('[data-listen]').click();
     await p.waitForSelector('.player:not([hidden])');
+    await openSettings(p);
     const sel = p.locator('select[aria-label="Pace"]');
     t.check('the pace is offered in the player', await sel.count() === 1);
     await sel.selectOption('liturgical');
@@ -584,6 +651,7 @@ module.exports = async function listening(t, ctx) {
   page = await open(ctx, '#/read/amos/1', workingEngine(25));
   await page.locator('[data-listen]').click();
   await page.waitForSelector('.player:not([hidden])');
+  await openSettings(page);
   await page.selectOption('select[aria-label="Sleep timer"]', 'chapter');
   await toChapterEnd(page, "!document.querySelector('.player').hidden");
   t.check('the end-of-chapter timer stops instead of carrying on',
@@ -686,6 +754,7 @@ module.exports = async function listening(t, ctx) {
      going rather than starting again -- which is what changing speed on the
      device engine has to do, and the one place the two differ visibly. */
   const beforeSpeed = await page.evaluate(() => window.__player.currentTime);
+  await openSettings(page);
   await page.selectOption('select[aria-label="Reading speed"]', '1.5');
   t.check('speed changes without restarting the sentence',
           await page.evaluate(() => window.__player.playbackRate) === 1.5 &&
