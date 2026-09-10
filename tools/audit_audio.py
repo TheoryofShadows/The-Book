@@ -92,6 +92,41 @@ def ogg_duration(path):
     return secs, None
 
 
+def m4a_duration(path):
+    """Seconds of audio in an mp4, from the movie header.
+
+    The reading exists twice on the item: Ogg/Opus for the browsers that take
+    it, AAC in mp4 for Safari and every iPhone, which do not. Both are indexed
+    by the same sidecar, so both have to agree with it -- an m4a that came out
+    a different length would put every verse mark on that phone slightly wrong
+    while looking perfect on a desktop.
+
+    mvhd carries a timescale and a duration in it. Version 1 widens the times
+    to 64 bits and shifts the two fields along; both layouts are read rather
+    than assuming the one ffmpeg happens to write.
+    """
+    try:
+        with io.open(path, "rb") as fh:
+            head = fh.read(65536)
+    except OSError as exc:
+        return None, str(exc)
+    at = head.find(b"mvhd")
+    if at < 0:
+        return None, "no mvhd box -- not an mp4, or truncated"
+    try:
+        if head[at + 4] == 1:
+            scale = struct.unpack_from(">I", head, at + 24)[0]
+            ticks = struct.unpack_from(">Q", head, at + 28)[0]
+        else:
+            scale = struct.unpack_from(">I", head, at + 16)[0]
+            ticks = struct.unpack_from(">I", head, at + 20)[0]
+    except struct.error:
+        return None, "mvhd is too short to read"
+    if not scale:
+        return None, "mvhd has no timescale"
+    return ticks / float(scale), None
+
+
 def source_verse_counts():
     """How many verses each chapter is supposed to have, from the text."""
     counts = {}
@@ -176,6 +211,19 @@ def audit():
                 faults.append("%d offsets for %d verses in the text"
                               % (len(offsets), want_verses))
 
+            # The Safari copy, where there is one. Same sidecar, so it has to
+            # be the same length: a drift here is verse marks landing wrong on
+            # every iPhone while a desktop plays it perfectly.
+            m4a_path = os.path.join(wdir, idx + ".m4a")
+            m4a_secs = None
+            if os.path.exists(m4a_path):
+                m4a_secs, m4a_err = m4a_duration(m4a_path)
+                if m4a_err:
+                    faults.append("the m4a is unreadable (%s)" % m4a_err)
+                elif abs(m4a_secs - real) > 0.25:
+                    faults.append("the m4a is %.2fs against the opus's %.2fs "
+                                  "(%+.2fs)" % (m4a_secs, real, m4a_secs - real))
+
             lead = float(offsets[0][1]) if offsets else 0.0
             tailpad = real - last_end if offsets else 0.0
             if lead > 2.5:
@@ -189,6 +237,7 @@ def audit():
                 "words": words, "spw": spw, "lead": lead, "tail": tailpad,
                 "verses": len(offsets), "want": want_verses,
                 "bytes": os.path.getsize(opus), "faults": faults,
+                "m4a": m4a_secs,
             })
 
     return rows, broken
@@ -214,6 +263,9 @@ def report(rows, broken, top, csv_path):
 
     print("Swept %d chapters, %.1f hours."
           % (len(rows), sum(r["real"] for r in rows) / 3600.0))
+    withm4a = sum(1 for r in rows if r.get("m4a") is not None)
+    print("%d of them also have the m4a Safari and the iPhone need."
+          % withm4a)
     print("Median pace %.3f s/word.\n" % med)
 
     if broken:
@@ -237,12 +289,13 @@ def report(rows, broken, top, csv_path):
 
     if csv_path:
         with io.open(csv_path, "w", encoding="utf-8", newline="") as fh:
-            fh.write("chapter,seconds,claimed,drift,words,s_per_word,"
-                     "pace_ratio,lead_in,tail_pad,offsets,verses_in_text,"
-                     "bytes,faults\n")
+            fh.write("chapter,seconds,m4a_seconds,claimed,drift,words,"
+                     "s_per_word,pace_ratio,lead_in,tail_pad,offsets,"
+                     "verses_in_text,bytes,faults\n")
             for r in sorted(rows, key=lambda x: x["key"]):
-                fh.write("%s,%.2f,%s,%s,%s,%s,%.3f,%.2f,%.2f,%d,%s,%d,%s\n" % (
+                fh.write("%s,%.2f,%s,%s,%s,%s,%s,%.3f,%.2f,%.2f,%d,%s,%d,%s\n" % (
                     r["key"], r["real"],
+                    "%.2f" % r["m4a"] if r.get("m4a") is not None else "",
                     "%.2f" % r["claimed"] if r["claimed"] else "",
                     "%.2f" % r["drift"] if r["drift"] is not None else "",
                     r["words"] if r["words"] is not None else "",

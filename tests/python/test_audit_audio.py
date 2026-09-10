@@ -197,6 +197,52 @@ class AuditFindsFaults(unittest.TestCase):
         self.chapter(0, meta)
         self.assertIn("in the text", self.faults_on(0) or "")
 
+    # ---- the second encoding, which is what the iPhone actually plays ----
+
+    def test_an_m4a_of_the_wrong_length_is_caught(self):
+        """Both encodings share one sidecar, so both must match it.
+
+        An m4a that came out a different length would put every verse mark
+        wrong on every iPhone while a desktop, playing the Opus, showed
+        nothing amiss at all.
+        """
+        self.chapter(0, self.meta)
+        # Stand in a longer piece of audio for this chapter's m4a. Any real
+        # mp4 will do; what is under test is the length disagreeing.
+        other = None
+        for work in sorted(os.listdir(CORPUS)):
+            wdir = os.path.join(CORPUS, work)
+            if not os.path.isdir(wdir):
+                continue
+            for f in sorted(os.listdir(wdir)):
+                if f.endswith(".m4a"):
+                    d, err = audit_audio.m4a_duration(os.path.join(wdir, f))
+                    if not err and abs(d - self.meta["d"]) > 5:
+                        other = os.path.join(wdir, f)
+                        break
+            if other:
+                break
+        if not other:
+            self.skipTest("no m4a of a clearly different length to stand in")
+        shutil.copyfile(other, os.path.join(self.audio, "0.m4a"))
+        self.assertIn("m4a is", self.faults_on(0) or "")
+
+    def test_a_matching_m4a_raises_nothing(self):
+        """And the pair as rendered is accepted."""
+        src_m4a = self.opus[:-5] + ".m4a"
+        if not os.path.exists(src_m4a):
+            self.skipTest("this chapter has not been transcoded")
+        self.chapter(0, self.meta)
+        shutil.copyfile(src_m4a, os.path.join(self.audio, "0.m4a"))
+        self.assertEqual(self.faults_on(0), "",
+                         "an m4a the same length as its opus is not a fault")
+
+    def test_an_m4a_that_is_not_an_mp4_is_caught(self):
+        self.chapter(0, self.meta)
+        with io.open(os.path.join(self.audio, "0.m4a"), "wb") as fh:
+            fh.write(b"not an mp4 at all")
+        self.assertIn("m4a is unreadable", self.faults_on(0) or "")
+
     # ---- a good chapter is left alone ----
 
     def test_an_undamaged_chapter_raises_nothing(self):
