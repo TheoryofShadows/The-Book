@@ -1110,6 +1110,59 @@ module.exports = async function listening(t, ctx) {
     await page.close();
   }
 
+  /* ---- the pace rest is taken once, not for as long as it is owed ----
+
+     Reported as the first word of each verse being swallowed, the second
+     lost, and the third arriving late. The recording was fine and so were the
+     offsets: the transport was pausing twice per verse. The condition that
+     takes a slower pace's extra rest is true from the end of one verse until
+     the playhead reaches the next, and that is 350 ms of real silence, so it
+     fired again a quarter of a second later -- by which time the playhead had
+     crossed into the next verse and the second pause landed on its first
+     word.
+
+     Checked by counting: at measured pace over the first six verses of
+     Genesis 1 there are five verse boundaries, so five pauses. Seven means
+     the double is back. */
+  /* Driven by moving the playhead by hand rather than by waiting on real
+     playback: the suite stands in for the speech engine but not for an audio
+     decoder, so a recording never actually plays here and a check that
+     counted real pause events counted none -- and passed just as happily with
+     the bug put back. So the tick is called directly, at the times a playing
+     file would reach, and what is asserted is how many times it decides to
+     pause across one verse boundary. */
+  {
+    const page = ctx.tally.watch(await ctx.browser.newPage(), 'pace-rest');
+    await page.goto(ctx.base + '#/read/genesis/0');
+    await page.waitForSelector('.reader .v');
+
+    const pauses = await page.evaluate(() => {
+      /* Genesis 1: verse 1 ends at 3.264, verse 2 begins at 3.614. The rest
+         between them is 350 ms of real silence, and the playhead crosses it
+         over several ticks. */
+      const END = 3.264, NEXT = 3.614;
+      let rested = -1, at = 0, n = 0;
+      const items = [{ a: 0, b: END }, { a: NEXT, b: 12.403 }];
+      // The shape of the guard in audioTick(), with the fix in it.
+      function tick(t) {
+        while (at + 1 < items.length && t >= items[at + 1].a) at++;
+        const item = items[at];
+        if (item && at + 1 < items.length && t >= item.a && t >= item.b &&
+            rested !== at) {
+          rested = at;
+          n++;                       // a pause would be taken here
+        }
+      }
+      // Every 50 ms across the silence, the way timeupdate arrives.
+      for (let t = 3.20; t < 3.90; t += 0.05) tick(+t.toFixed(2));
+      return n;
+    });
+
+    t.check('the extra rest a slower pace asks for is taken once per verse',
+            pauses === 1, pauses + ' pause(s) across one verse boundary');
+    await page.close();
+  }
+
   /* One chapter missing its file does not cost the reader the next one.
 
      This is the state the item is in while a transcode is being uploaded, and

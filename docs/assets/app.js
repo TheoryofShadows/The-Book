@@ -6849,7 +6849,11 @@
        it again and again in one session, and deliberately not written down:
        the next visit tries afresh, because whatever went wrong is usually
        over by then. */
-    failedHere: false
+    failedHere: false,
+    /* Which verse the pace rest has already been taken for, so it is taken
+       once rather than on every tick of the silence that follows it. -1 is
+       none, and anything that moves the playhead puts it back there. */
+    rested: -1
   };
 
   /* Asked once a session rather than once a chapter, and asked once even if
@@ -7112,17 +7116,39 @@
     // lands SEEK_LEAD before it, and a verse whose own start is still ahead
     // of the playhead has not been read yet, so it has no rest owing after
     // it -- t >= item.b is only past the end when it is also past the start.
+    /* The extra rest a slower pace asks for, taken once at the end of the
+       verse it follows.
+
+       "Once" is the whole of it. The condition below is true for every tick
+       from the end of a verse until the playhead reaches the next one, and
+       the rest is 350 ms of real silence, so the transport went on pausing
+       inside it: paused at the end of verse two, resumed, and paused again a
+       quarter of a second later -- by which time the playhead had crossed
+       into verse three and the second pause fell on its first word. Held down
+       through a verse or two that reads as the first word being swallowed,
+       the second lost and the third arriving late, which is exactly how it
+       was reported.
+
+       So the verse the rest was taken for is remembered, and it is taken for
+       that verse once. Cleared by anything that moves the playhead somewhere
+       it was not: a seek, a jump, a new chapter. */
     var item = items[nar.at];
-    if (item && nar.at + 1 < items.length && t >= item.a && t >= item.b) {
+    if (item && nar.at + 1 < items.length && t >= item.a && t >= item.b &&
+        aud.rested !== nar.at) {
       var extra = restAfter(item, items[nar.at + 1]) - BAKED_REST;
       if (extra > 200) {
         var gen = nar.gen;
+        aud.rested = nar.at;
         aud.waiting = 1;
         a.pause();
         setTimeout(function () {
           aud.waiting = 0;
           if (gen === nar.gen && nar.playing && usingAudio()) a.play();
         }, extra);
+      } else {
+        // Nothing owing at this pace, but the verse is still spent: without
+        // this the check runs again on every tick for the rest of the gap.
+        aud.rested = nar.at;
       }
     }
   }
@@ -7134,6 +7160,9 @@
     nar.at = Math.max(0, Math.min(i, items.length - 1));
     nar.playing = true;
     aud.waiting = 0;
+    // The playhead is being put somewhere else, so whatever rest was owed
+    // where it used to be is not owed here.
+    aud.rested = -1;
 
     var src = AUDIO_BASE + nar.ctx.work + "/" + nar.ctx.chapter +
               "." + AUDIO_FORMAT;
