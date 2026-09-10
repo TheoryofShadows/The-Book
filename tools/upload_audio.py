@@ -198,6 +198,17 @@ def main():
         try:
             rs = upload(args.item, files=chunk,
                         metadata=METADATA if i == 0 else None,
+                        # No derivatives. The item is mediatype audio, so the
+                        # archive's default is to queue a derive per uploaded
+                        # file and transcode it into mp3, spectrograms and the
+                        # rest. Nothing here reads those -- the player fetches
+                        # the exact file it asked for -- and they are what
+                        # actually fills the bucket queue this run then waits
+                        # on: 1,559 files sent were 1,559 derive tasks, and
+                        # the upload spent its time behind work whose output
+                        # nobody wants. Measured at roughly 17 files landing
+                        # per 25 minutes with derives on, which is 37 hours.
+                        queue_derive=False,
                         verbose=False, retries=5)
             for r in rs:
                 if getattr(r, "status_code", 0) == 200:
