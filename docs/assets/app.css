@@ -777,12 +777,17 @@ table.grid tbody tr:last-child td { border-bottom: 0; }
    rather than the inch that would push the scripture off the screen. Both
    things the reader wants are then true at once: the way to another chapter
    is at hand, and the page opens on the Bible. */
-.chapter-fold { margin: var(--gap-tight) 0 0; }
+/* Shut, this is one short line and it is measured: the budget check in
+   layout.test.js allows 420px before the scripture starts, and every rule
+   here is spending against it. The summary carries the fold's whole closed
+   height, so it is set tight and the box adds no margin of its own beyond
+   the hair it needs to not touch the title above. */
+.chapter-fold { margin: var(--gap-hair) 0 0; }
 .chapter-fold > summary {
   cursor: pointer; list-style: none;
-  font-family: var(--mono); font-size: .72rem; letter-spacing: .04em;
+  font-family: var(--mono); font-size: .7rem; letter-spacing: .04em;
   text-transform: uppercase; color: var(--ink-faint);
-  padding: .25rem 0;
+  padding: .1rem 0; line-height: 1.3;
 }
 .chapter-fold > summary::-webkit-details-marker { display: none; }
 .chapter-fold > summary::after {

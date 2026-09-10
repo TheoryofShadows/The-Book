@@ -216,7 +216,17 @@ module.exports = async function layout(t, ctx) {
 
      Two checks rather than one. The budget catches slow drift; the fold
      catches the thing the budget is a proxy for, and says it in the terms
-     that matter -- there is scripture on the screen when the page opens. */
+     that matter -- there is scripture on the screen when the page opens.
+
+     455 rather than 420, raised deliberately when the chapter picker came
+     back to the top of the page. Below the text it cost nothing here and
+     cost the reader the thing it is for: in Isaiah 29 the way to chapter 30
+     was past the whole of 29. Folded it is one line -- 19px measured, the
+     smallest item above the scripture -- and that is what the extra buys.
+     The number is a ceiling on drift, not a target: it is 401px locally and
+     449 on the CI runner, whose font metrics are taller, so the margin here
+     is for that difference and nothing else. The fold check below is the one
+     that says whether a reader actually sees scripture, and it is unchanged. */
   {
     const { devices } = require('playwright');
     for (const name of ['iPhone SE', 'iPhone 14 Pro', 'Pixel 7']) {
@@ -230,7 +240,7 @@ module.exports = async function layout(t, ctx) {
         vh: window.innerHeight
       }));
       t.check('on ' + name + ', the scripture starts within its budget',
-              seen.top <= 420, seen.top + 'px, budget 420');
+              seen.top <= 455, seen.top + 'px, budget 455');
 
       /* The row of chips above the text, counted rather than measured. The
          budget above is the thing that matters and this says why it moved
