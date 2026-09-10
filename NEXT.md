@@ -63,10 +63,28 @@ Safe to stop and re-run; it skips what is already converted.
 same sidecar, so an m4a of the wrong length cannot pass while the Opus looks
 fine. 16 tests in `tests/python/test_audit_audio.py`, 635 browser checks.
 
-**The upload of the 1,559 m4a files is the one thing still in flight.** It is
-paced deliberately: archive.org queues a task per file and refuses everything
-once the bucket queue is deep, so the script waits for it to drain. Re-running
-it sends only what is missing.
+**The upload of the 1,559 m4a files is the one thing still in flight.**
+
+If it did not finish, just run it again -- it sends only what is missing:
+
+    "C:\Program Files\Python313\python.exe" tools/upload_audio.py
+
+Check how far it got:
+
+    curl -s https://archive.org/metadata/the-book-read-aloud | grep -o '\.m4a"' | wc -l
+
+**Do not remove `queue_derive=False`.** The item is mediatype audio, so
+archive.org otherwise queues a derive per file, transcoding each into formats
+nothing here reads. Those derives fill the same bucket queue the uploader then
+waits on: measured at ~17 files per 25 minutes, i.e. 37 hours for the corpus.
+With derives off the queue stays shallow.
+
+One chapter was checked the whole way through on 2026-09-10 --
+`1-chronicles/0.m4a` fetched back from the item is byte-identical to the local
+file, decodes as mp4 at 260.628s, and its sidecar says 260.628s. It is served
+as `audio/mpeg` where the `.opus` beside it is served as
+`application/octet-stream`, which is the other half of why Safari refused the
+reading.
 
 ## The reading was audited chapter by chapter, 2026-09-10
 

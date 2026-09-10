@@ -201,13 +201,23 @@ def main():
                         # No derivatives. The item is mediatype audio, so the
                         # archive's default is to queue a derive per uploaded
                         # file and transcode it into mp3, spectrograms and the
-                        # rest. Nothing here reads those -- the player fetches
-                        # the exact file it asked for -- and they are what
-                        # actually fills the bucket queue this run then waits
-                        # on: 1,559 files sent were 1,559 derive tasks, and
-                        # the upload spent its time behind work whose output
-                        # nobody wants. Measured at roughly 17 files landing
-                        # per 25 minutes with derives on, which is 37 hours.
+                        # rest. Nothing here reads any of that: the player
+                        # fetches the exact file it asked for, by name.
+                        #
+                        # Those derives share the bucket queue this run waits
+                        # on, and they are slow, so with them on the queue
+                        # never drains and the upload spends its time behind
+                        # work whose output nobody will ever fetch. Measured
+                        # both ways on the same corpus: about 17 files landing
+                        # per 25 minutes with derives on, and 7 a minute with
+                        # them off -- 37 hours against under three.
+                        #
+                        # The ceiling above is what keeps that true. Pushing
+                        # harder than the queue drains only deepens it, and a
+                        # deep queue is what makes the archive look like it is
+                        # rationing when it is not: a run measured mid-backlog
+                        # reported one file every ten minutes, which was this
+                        # script's own congestion being timed, not the server.
                         queue_derive=False,
                         verbose=False, retries=5)
             for r in rs:
