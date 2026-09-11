@@ -12,6 +12,12 @@ here stops being true, the post is wrong, not the site.
 then the site offers no recorded audio and every claim below about listening
 is false.
 
+**That precondition is met.** Verified 2026-09-10: 1,559 chapters rendered,
+both encodings (3,118 audio files plus 1,559 offset files) on the archive
+item, `data-audio="published"` live, and the reading confirmed playing on the
+site in a browser answering as Safari does. Numbers below were re-checked
+against the build the same day.
+
 ---
 
 ## r/AcademicBiblical
@@ -88,13 +94,17 @@ grandiose.
 > **The audiobook was precomputed because it could not be live.** Kokoro (82M
 > params) runs at about 0.43x realtime in Chromium on one thread — WebAssembly
 > gets no threads without COOP/COEP headers, which GitHub Pages cannot send.
-> So the arithmetic is done once: ~100 hours of audio at ~3.7x realtime on a
-> desktop, one Opus file per chapter with a JSON of per-verse offsets beside
-> it. Seeking to a verse is then one assignment to currentTime and speed is
-> playbackRate, which browsers time-stretch without shifting pitch. Each verse
-> is synthesised separately so the offsets are exact rather than
-> forced-aligned. It is 1.4GB, which is over the Pages artifact cap, so it
-> lives on the Internet Archive.
+> So the arithmetic is done once: 91.5 hours of audio over 1,559 chapters at
+> 3.6x realtime on a desktop, one file per chapter with a JSON of per-verse
+> offsets beside it. Seeking to a verse is then one assignment to currentTime
+> and speed is playbackRate, which browsers time-stretch without shifting
+> pitch. Each verse is synthesised separately so the offsets are exact rather
+> than forced-aligned. It is 1.4GB as Opus, and it ships twice — Opus for
+> browsers that take it and AAC/m4a for Safari, which decodes neither Ogg nor
+> a file archive.org serves as application/octet-stream. Both are cut from the
+> same render and agree to within a millisecond, so one set of offsets indexes
+> both. 3.2GB in total, which is well over the Pages artifact cap, so it lives
+> on the Internet Archive.
 >
 > **The tests are mostly about not lying.** The build fails if the front page
 > claims a canon is complete while the data says it is short; if the parsed
