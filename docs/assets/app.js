@@ -403,6 +403,27 @@
               "a range you can see and argue with. The dating is sourced, " +
               "the coverage gaps are named with their reasons, and every " +
               "chapter has a recorded reading. Free, no account, no tracking."
+      }),
+      /* Shown only on a phone, where the paragraph above is clamped to three
+         lines so the first screen can carry something to do as well as
+         something to read. The whole paragraph is in the page either way --
+         this opens it rather than fetching it -- so a search engine and a
+         screen reader both get all of it regardless. */
+      el("button", {
+        class: "hero-more", type: "button", "aria-expanded": "false",
+        text: "More about this edition",
+        onclick: function (e) {
+          var hero = e.currentTarget.parentNode;
+          var open = !hero.querySelector(".lede").classList.contains("is-open");
+          // Both paragraphs, because both are clamped at this width and
+          // opening one while the other stays cut reads as a bug.
+          ["lede", "hero-for"].forEach(function (c) {
+            var p = hero.querySelector("." + c);
+            if (p) p.classList.toggle("is-open", open);
+          });
+          e.currentTarget.setAttribute("aria-expanded", open ? "true" : "false");
+          e.currentTarget.textContent = open ? "Less" : "More about this edition";
+        }
       })
     ]));
     /* --8<-- hero: end --8<-- */
@@ -423,6 +444,24 @@
           el("b", { text: fmt(p[0]) }), el("span", { text: p[1] })
         ]));
       });
+    /* What a visitor can do, before what the site has to say about itself.
+
+       Measured on an iPhone SE, the front page opened on a 72px headline and
+       a 356px paragraph and nothing else: 729px of prose, then six thread
+       cards, then the colophon, and the box you type a reference into at
+       3,589px with the library itself below that. Six screens of scrolling
+       to reach a book, on the page whose whole job is to hand you one.
+
+       So the order is: what this is, how to get into it, the library, and
+       then the argument for reading it this way. The essay has not been cut
+       -- it is what distinguishes this edition and a reader who wants it
+       will scroll -- but it no longer stands between the visitor and the
+       texts. */
+    var findSlot = el("div");
+    wrap.appendChild(findSlot);
+    var timelineSlot = el("div");
+    wrap.appendChild(timelineSlot);
+
     wrap.appendChild(stats);
 
     /* Under the colophon and above the threads: it is a way in rather than
@@ -575,7 +614,7 @@
     ]);
 
     var filterSlot = el("div", { class: "home-filter-slot" });
-    wrap.appendChild(el("section", { class: "home-find" }, [
+    findSlot.appendChild(el("section", { class: "home-find" }, [
       jumpForm, jumpSays, filterSlot
     ]));
 
@@ -683,7 +722,7 @@
       line.appendChild(era);
     });
 
-    wrap.appendChild(line);
+    timelineSlot.appendChild(line);
 
     /* The filter is built here but its data is not fetched here.
 

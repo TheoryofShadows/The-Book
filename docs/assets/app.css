@@ -380,6 +380,52 @@ h3 { font-size: 1.12rem; margin: var(--gap-wide) 0 var(--gap-hair); }
   text-wrap: pretty;
 }
 
+/* Hidden by default and shown only at phone width, where the paragraphs are
+   clamped. Declared before the media query so the query wins: the other way
+   round this rule overrides it and the button is never shown at all, which
+   leaves the clamped text with no way to open. */
+.hero-more {
+  display: none; margin-top: .35rem;
+  background: none; border: 0; padding: 0;
+  font: inherit; font-size: .78rem; font-family: var(--mono);
+  letter-spacing: .04em; text-transform: uppercase;
+  color: var(--ink-faint); cursor: pointer;
+}
+.hero-more:hover { color: var(--accent); }
+
+/* On a phone the hero is the whole first screen, and it was all prose: a
+   72px headline over a 356px paragraph, with the box you type a reference
+   into five screens below. The argument keeps its full voice on a wide
+   screen, where there is room for it beside everything else; here it is set
+   at reading size rather than display size so that what a visitor can
+   actually do is on the screen with it.
+
+   The second paragraph goes behind a line at this width. It is written for
+   a reader who already knows the field and is deciding on the apparatus --
+   a real reader, and not the one who needs the first screen. */
+@media (max-width: 620px) {
+  .hero { padding-top: 1rem; }
+  .hero h1 { font-size: 1.55rem; max-width: 22ch; }
+  /* Both paragraphs fold on a phone, and the first one is the reason this
+     is here: six lines of dense prose at 264px, above everything a visitor
+     can act on. Three lines say what this is; the rest is there for whoever
+     wants it, one tap away and fully in the page for a crawler either way.
+     "It opens with a war poem, not with Genesis" is the sentence that sells
+     this edition and it was the sixth line down, unread. */
+  .hero .lede {
+    font-size: 1rem; line-height: 1.5; margin-top: .7rem;
+    max-height: 4.5em; overflow: hidden;
+  }
+  .hero .lede.is-open { max-height: none; }
+  .hero-for {
+    margin-top: .6rem; font-size: .88rem; line-height: 1.5;
+    max-height: 3em; overflow: hidden;
+  }
+  .hero-for.is-open { max-height: none; }
+  .hero-more { display: inline-block; }
+}
+
+
 /* ---------- the way in, for a reader who knows where they are going ----------
 
    Two controls over the eras: a reference box and a canon filter. They sit

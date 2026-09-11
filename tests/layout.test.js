@@ -208,6 +208,89 @@ module.exports = async function layout(t, ctx) {
   }
   await desk.close();
 
+  /* ---- what the front page opens on ----
+
+     It opened on a 72px headline and a 356px paragraph and nothing else. The
+     box you type a reference into was at 3,589px and the library below that:
+     six screens of scrolling on a phone, on the page whose job is to hand a
+     visitor a book. The essay is still there and still says what it said --
+     it is what distinguishes this edition -- but it is no longer what stands
+     between somebody arriving and the texts.
+
+     Gated as positions rather than as a screenshot, because this is exactly
+     the sort of thing that drifts back one section at a time. */
+  {
+    const { devices } = require('playwright');
+    for (const name of ['iPhone SE', 'iPhone 14 Pro', 'Pixel 7']) {
+      const phone = await ctx.browser.newContext({ ...devices[name] });
+      const page = await phone.newPage();
+      await page.goto(ctx.base + '#/');
+      await page.waitForSelector('.timeline .era');
+      await page.waitForTimeout(400);
+      const seen = await page.evaluate(() => {
+        const top = q => {
+          const e = document.querySelector(q);
+          return e ? Math.round(e.getBoundingClientRect().top + window.scrollY) : null;
+        };
+        return {
+          vh: window.innerHeight,
+          jump: top('.home-jump-input'),
+          era: top('.timeline .era'),
+          stats: top('.stats'),
+          threads: top('.threads-hero')
+        };
+      });
+      t.check(name + ': a visitor can type a reference without scrolling',
+              seen.jump !== null && seen.jump < seen.vh,
+              'jump box at ' + seen.jump + 'px of ' + seen.vh);
+      /* The library above the argument for it. Both are on the page; this is
+         only about which one a visitor meets first. */
+      t.check(name + ': the library comes before the essay about it',
+              seen.era < seen.threads && (seen.stats === null || seen.era < seen.stats),
+              'era ' + seen.era + ', stats ' + seen.stats + ', threads ' + seen.threads);
+      await phone.close();
+    }
+
+    /* The whole of the hero is in the page at every width -- clamped is a
+       height, not a truncation -- so a crawler and a screen reader get the
+       sentence that sells this edition whether or not anyone taps More. */
+    const phone = await ctx.browser.newContext({ ...devices['iPhone SE'] });
+    const page = await phone.newPage();
+    await page.goto(ctx.base + '#/');
+    await page.waitForSelector('.hero-more');
+    const hero = await page.evaluate(() => ({
+      text: document.querySelector('.lede').textContent,
+      clamped: Math.round(document.querySelector('.lede').getBoundingClientRect().height)
+    }));
+    t.check('the clamped hero still carries its whole sentence',
+            /war poem, not with Genesis/.test(hero.text),
+            hero.clamped + 'px tall, ' + hero.text.length + ' characters');
+
+    await page.locator('.hero-more').click();
+    await page.waitForTimeout(250);
+    const opened = await page.evaluate(() => ({
+      lede: Math.round(document.querySelector('.lede').getBoundingClientRect().height),
+      apparatus: Math.round(document.querySelector('.hero-for').getBoundingClientRect().height),
+      label: document.querySelector('.hero-more').textContent
+    }));
+    t.check('and More opens both paragraphs, not one of them',
+            opened.lede > hero.clamped && opened.apparatus > 50 &&
+            /less/i.test(opened.label),
+            'lede ' + hero.clamped + ' -> ' + opened.lede +
+            ', apparatus ' + opened.apparatus + ', label ' + opened.label);
+    await phone.close();
+
+    /* On a wide screen nothing is folded and no button is offered. */
+    const desk = await ctx.browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const wide = await desk.newPage();
+    await wide.goto(ctx.base + '#/');
+    await wide.waitForSelector('.timeline .era');
+    t.check('a wide screen gets the argument in full, with nothing to expand',
+            await wide.evaluate(() =>
+              document.querySelector('.hero-more').offsetHeight === 0));
+    await desk.close();
+  }
+
   /* ---- how far down the scripture starts on a phone ----
 
      Measured at 743px on a 568px iPhone SE, which is a Bible you arrive at
