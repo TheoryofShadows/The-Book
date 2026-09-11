@@ -1513,7 +1513,25 @@
     var fold = null;
     if (strip) {
       var count = strip.querySelectorAll("a").length;
-      fold = el("details", { class: "chapter-fold" }, [
+      /* Left the way the reader last left it.
+
+         Shut by default, because the page has to open on scripture. But a
+         reader working through one book wants the numbers, and having to tap
+         them open on every single chapter is the same complaint as having to
+         scroll to the bottom for them -- one tap instead of one scroll, paid
+         over and over. So the state is remembered, and it is remembered for
+         the reader rather than for the book: somebody who wants the picker
+         open in Isaiah wants it open in Jeremiah too.
+
+         The cost is real and is why this is not simply open: on an iPhone SE
+         the strip pushes the first verse from 536px to 666px, off the first
+         screen. That is the reader's call to make, not a default to impose. */
+      var openNow = store.get("chapters-open", false);
+      fold = el("details", {
+        class: "chapter-fold",
+        open: openNow ? "" : null,
+        ontoggle: function (e) { store.set("chapters-open", e.currentTarget.open); }
+      }, [
         el("summary", { text: "Chapters (" + count + ")" })
       ]);
     }

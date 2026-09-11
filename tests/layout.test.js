@@ -421,6 +421,41 @@ module.exports = async function layout(t, ctx) {
             JSON.stringify(opened));
     t.check('and the last chapter is a link away from the top of the page',
             opened.reachable === '#/read/genesis/49', String(opened.reachable));
+
+    /* Opened, it stays opened -- for the reader, not for the book.
+
+       Shut is the right default, because the page has to open on scripture:
+       the strip pushes the first verse from 536px to 666px on an iPhone SE,
+       off the first screen. But a reader working through Isaiah wants the
+       numbers, and tapping them open on every chapter is the same complaint
+       as scrolling to the bottom for them, paid over and over. So the choice
+       is remembered, and it carries into the next book as well. */
+    await page.goto(ctx.base + '#/read/genesis/7');
+    await page.waitForSelector('.reader .v');
+    await page.waitForTimeout(300);
+    const stillOpen = await page.evaluate(() =>
+      !!document.querySelector('.chapter-fold[open]'));
+    t.check('a picker the reader opened is still open in the next chapter',
+            stillOpen, String(stillOpen));
+
+    await page.goto(ctx.base + '#/read/amos/0');
+    await page.waitForSelector('.reader .v');
+    await page.waitForTimeout(300);
+    t.check('and in the next book',
+            await page.evaluate(() => !!document.querySelector('.chapter-fold[open]')));
+
+    await page.locator('.chapter-fold > summary').click();
+    await page.waitForTimeout(250);
+    await page.goto(ctx.base + '#/read/genesis/0');
+    await page.waitForSelector('.reader .v');
+    await page.waitForTimeout(300);
+    const shutAgain = await page.evaluate(() => ({
+      open: !!document.querySelector('.chapter-fold[open]'),
+      verse: Math.round(document.querySelector('.reader .v')
+               .getBoundingClientRect().top + window.scrollY)
+    }));
+    t.check('and shutting it is remembered too, giving the screen back',
+            !shutAgain.open, JSON.stringify(shutAgain));
     await phone.close();
   }
 
