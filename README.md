@@ -6,6 +6,12 @@
 
 ## Read it here → https://thebookandme.com/
 
+**One-liner:** A searchable chronological library of biblical and related literature — arranged by when scholars date each work was written, not by traditional canon order. Live reader: [thebookandme.com](https://thebookandme.com).
+
+**Audio honesty:** Press **Listen** (or `l`) in any chapter for on-device text-to-speech. Nothing is uploaded; nothing is downloaded as an audiobook file. There is **no recorded human/neural audiobook yet** — see [Listening to it](#listening-to-it) for what the player actually does.
+
+If this is useful, a GitHub **⭐ star** helps others find it.
+
 ---
 
 Every text of the Jewish, Protestant, Catholic and Eastern Orthodox canons, and
