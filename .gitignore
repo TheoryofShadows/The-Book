@@ -30,3 +30,8 @@ docs/sw.js
 # that tools/render_audio.py names the URLs for. Neither is committed.
 dist/
 source/voice/
+
+# Environment files -- never commit real credentials.
+.env
+.env.*
+!.env.example
