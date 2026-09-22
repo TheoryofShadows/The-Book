@@ -237,12 +237,16 @@ module.exports = async function layout(t, ctx) {
           jump: top('.home-jump-input'),
           era: top('.timeline .era'),
           stats: top('.stats'),
-          threads: top('.threads-hero')
+          threads: top('.threads-hero'),
+          start: top('.start-here')
         };
       });
       t.check(name + ': a visitor can type a reference without scrolling',
               seen.jump !== null && seen.jump < seen.vh,
               'jump box at ' + seen.jump + 'px of ' + seen.vh);
+      t.check(name + ': and can open the first work without scrolling',
+              seen.start !== null && seen.start < seen.vh,
+              'begin-here at ' + seen.start + 'px of ' + seen.vh);
       /* The library above the argument for it. Both are on the page; this is
          only about which one a visitor meets first. */
       t.check(name + ': the library comes before the essay about it',
@@ -288,6 +292,32 @@ module.exports = async function layout(t, ctx) {
     t.check('a wide screen gets the argument in full, with nothing to expand',
             await wide.evaluate(() =>
               document.querySelector('.hero-more').offsetHeight === 0));
+
+    /* The first era opens on a first visit, and its cards name a chapter
+       count rather than verses and words. A wall of shut eras was a table
+       of contents you had to tap; three numbers on every card was a
+       spreadsheet. */
+    const firstOpen = await wide.evaluate(() => {
+      const first = document.querySelector('.era.open');
+      const meta = Array.from(document.querySelectorAll('.era.open .work-meta'))
+        .map(e => e.textContent);
+      const door = document.querySelector('.start-here-title');
+      return {
+        roman: first && (first.querySelector('.era-num') || {}).textContent,
+        works: first ? first.querySelectorAll('.work').length : 0,
+        noisy: meta.filter(t => /verses|words/i.test(t)),
+        href: door ? door.getAttribute('href') : null,
+        label: door ? door.textContent : null
+      };
+    });
+    t.check('the first era is open, so a visitor sees a book',
+            firstOpen.roman === 'I' && firstOpen.works > 0,
+            'era ' + firstOpen.roman + ', ' + firstOpen.works + ' works');
+    t.check('and the cards do not dump verses and word counts',
+            firstOpen.noisy.length === 0, firstOpen.noisy.slice(0, 3).join(' | '));
+    t.check('begin-here opens the first work that carries text',
+            /^#\/read\/.+\/0$/.test(firstOpen.href || '') && /song of the sea/i.test(firstOpen.label || ''),
+            (firstOpen.label || '?') + ' -> ' + (firstOpen.href || '?'));
     await desk.close();
   }
 
