@@ -428,6 +428,33 @@
     ]));
     /* --8<-- hero: end --8<-- */
 
+    /* The sentence that sells this edition used to be the sixth line of a
+       paragraph, unread. It is a door now: the first work that carries text,
+       which is the Song of the Sea, not Genesis. Taken from the manifest
+       rather than typed, so a first work that moved would move the door
+       with it. Compact on purpose -- a verse here would push the jump box
+       off a phone, and the chapter is one tap away. */
+    var opening = null;
+    manifest.sections.some(function (s) {
+      if (!s.roman) return false;
+      return s.works.some(function (w) {
+        if (w.chapters > 0) { opening = { work: w, section: s }; return true; }
+        return false;
+      });
+    });
+    if (opening) {
+      wrap.appendChild(el("p", { class: "start-here" }, [
+        el("span", { class: "start-here-kicker", text: "Begin here" }),
+        el("a", {
+          class: "start-here-title",
+          href: "#/read/" + opening.work.id + "/0",
+          text: titleCase(opening.work.title).replace(/\s*\([^)]*\)\s*$/, "")
+        }),
+        el("span", { class: "start-here-why",
+          text: "It opens with a war poem, not with Genesis." })
+      ]));
+    }
+
     /* Counted, not typed. Every other figure in this row comes from the
        manifest and moves when the library moves; this one was the literal
        10, which is right today and is the only number on the front page
@@ -485,11 +512,10 @@
         "Follow one question across eight hundred years of writing. Every " +
         "passage is the text itself; every reference is checked when the site " +
         "is built." }));
-      // Six is what the front page can hold before the threads push the
-      // library itself off the bottom of it. The rest are one link away,
-      // and the count says how many there are rather than implying six is
-      // all of them.
-      var SHOWN = 6;
+      // Three is a sample. Six was a second homepage. The rest are one
+      // link away, and the count says how many there are rather than
+      // implying this is all of them.
+      var SHOWN = 3;
       var grid = el("div", { class: "thread-cards" });
       threads.slice(0, SHOWN).forEach(function (t) {
         grid.appendChild(el("a", { class: "thread-card", href: "#/thread/" + t.id }, [
@@ -510,7 +536,8 @@
       if (anchor) wrap.insertBefore(box, anchor);
     }).catch(function () {});
 
-    wrap.appendChild(el("div", { class: "callout" }, [
+    wrap.appendChild(el("details", { class: "callout about-order" }, [
+      el("summary", { text: "About the order" }),
       el("p", { html:
         "<strong>Read this first.</strong> The order below is a reconstruction, " +
         "not a settled fact. It dates <em>books</em>, not the events or traditions " +
@@ -650,7 +677,8 @@
         });
         era.hidden = !any;
         setOpen(era, ids ? !!any
-                         : store.get("era:" + era.getAttribute("data-era"), false));
+                         : store.get("era:" + era.getAttribute("data-era"),
+                                     era.getAttribute("data-open-default") === "1"));
         kept += any;
       });
       line.classList.toggle("is-filtered", !!ids);
@@ -665,21 +693,25 @@
     manifest.sections.forEach(function (s) {
       if (!s.works.length) return;
       var isCollection = !s.roman;
-      var openState = store.get("era:" + s.id, false);
+      /* Section I opens on a first visit, because a wall of shut eras is a
+         table of contents you have to tap before you see a book. The rest
+         stay shut. A stored choice wins either way, so somebody who closed
+         it keeps it closed. */
+      var defaultOpen = s.roman === "I";
+      var openState = store.get("era:" + s.id, defaultOpen);
 
       var body = el("div", { class: "era-body" });
-      (s.intro || []).slice(0, 2).forEach(function (p) {
-        body.appendChild(el("p", { class: "era-intro", text: p }));
-      });
+      /* The era intros used to print here: two scholarly paragraphs above
+         every list of books. They are still in the manifest, and they still
+         belong on the method page; on this page they were the thing you had
+         to scroll past to reach the works. */
 
       var grid = el("div", { class: "works" });
       s.works.forEach(function (w) {
         var noteOnly = w.chapters === 0;
         var meta = noteOnly
           ? "described, no text in the sources"
-          : w.chapters + (w.chapters === 1 ? " chapter" : " chapters") +
-            (w.verses ? " · " + fmt(w.verses) + " verses" : "") +
-            " · " + fmt(w.words) + " words";
+          : w.chapters + (w.chapters === 1 ? " chapter" : " chapters");
         grid.appendChild(el("a", {
           class: "work" + (noteOnly ? " note-only" : ""),
           href: "#/read/" + w.id + "/0",
@@ -698,7 +730,8 @@
         "data-collection": isCollection ? "1" : "0",
         // So clearing the filter can put this era back the way the reader
         // had it, rather than leaving it forced open.
-        "data-era": s.id
+        "data-era": s.id,
+        "data-open-default": defaultOpen ? "1" : "0"
       });
 
       var head = el("button", {
@@ -855,7 +888,6 @@
       if (mode === "chrono") {
         table.appendChild(el("thead", {}, [el("tr", {}, [
           el("th", { text: "Era" }), el("th", { text: "Work" }),
-          el("th", { text: "Dated" }),
           el("th", { class: "num", text: "Chapters" }),
           el("th", { class: "num", text: "Words" })
         ])]));
@@ -865,7 +897,6 @@
             tb.appendChild(el("tr", {}, [
               el("td", { class: "muted", text: s.roman || "—" }),
               el("td", {}, [el("a", { href: "#/read/" + w.id + "/0", text: titleCase(w.title) })]),
-              el("td", { class: "muted", text: s.dates || "—" }),
               el("td", { class: "num", text: w.chapters || "—" }),
               el("td", { class: "num", text: w.words ? fmt(w.words) : "—" })
             ]));
