@@ -19,6 +19,22 @@ async function open(ctx, route, ...engines) {
   return page;
 }
 
+/* The context already answers archive.org with {}, which is "no item".
+   These cases are about a collection that is there, so they say so before
+   the page asks. A page route wins over the context. The index is one
+   verse, enough that a later abort of the audio file is actually reached. */
+async function archiveHasItem(page) {
+  const cors = { 'access-control-allow-origin': '*' };
+  await page.route(/archive\.org\/metadata\//, r => r.fulfill({
+    status: 200, headers: cors, contentType: 'application/json',
+    body: JSON.stringify({ metadata: { identifier: 'the-book-read-aloud' } })
+  }));
+  await page.route(/archive\.org\/download\/.*\.json(?:\?|$)/, r => r.fulfill({
+    status: 200, headers: cors, contentType: 'application/json',
+    body: JSON.stringify({ d: 1.35, v: [[1, 0, 1]] })
+  }));
+}
+
 /* Speed, pace, voice and sleep live behind the gear now: they are set once
    and left alone, and on a phone having them on the face of the bar made two
    crowded rows with the voice name clipped mid-word. Opening the drawer is
@@ -999,6 +1015,7 @@ module.exports = async function listening(t, ctx) {
       HTMLMediaElement.prototype.canPlayType = function () { return ''; };
       document.documentElement.setAttribute('data-audio', 'published');
     });
+    await archiveHasItem(page);
     await page.goto(ctx.base + '#/read/psalms/22');
     await page.waitForSelector('.reader .v');
     const listen = page.locator('.reader-controls button:has-text("Listen")');
@@ -1029,6 +1046,7 @@ module.exports = async function listening(t, ctx) {
       };
       document.documentElement.setAttribute('data-audio', 'published');
     });
+    await archiveHasItem(page);
     const asked = [];
     await page.route('**/archive.org/download/**', route => {
       asked.push(route.request().url());
@@ -1090,6 +1108,7 @@ module.exports = async function listening(t, ctx) {
     await page.addInitScript(() => {
       document.documentElement.setAttribute('data-audio', 'published');
     });
+    await archiveHasItem(page);
     // Every audio file refuses to load, which is what an undecodable
     // encoding looked like from here.
     await page.route('**/archive.org/download/**/*.opus', r => r.abort());
@@ -1302,6 +1321,7 @@ module.exports = async function listening(t, ctx) {
     await page.addInitScript(() => {
       document.documentElement.setAttribute('data-audio', 'published');
     });
+    await archiveHasItem(page);
     // amos/0 is missing from the item; everything else is there.
     await page.route('**/archive.org/download/**/amos/0.*', r => r.fulfill({
       status: 404,

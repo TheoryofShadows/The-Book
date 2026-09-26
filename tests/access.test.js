@@ -18,12 +18,6 @@
  * are built after the page is.
  */
 
-const fs = require('fs');
-const path = require('path');
-
-const AXE = fs.readFileSync(
-  path.join(__dirname, 'node_modules', 'axe-core', 'axe.min.js'), 'utf8');
-
 const ROUTES = ['#/', '#/threads', '#/contents', '#/canons', '#/search/shepherd',
                 '#/saved', '#/accuracy', '#/method', '#/timeline',
                 '#/read/genesis/0', '#/read/amos/2'];
@@ -34,11 +28,6 @@ module.exports = async function access(t, ctx) {
       await ctx.browser.newPage({ colorScheme: scheme }), 'access ' + scheme);
 
     const found = [];
-    await page.route('**/__axe.js', route => route.fulfill({
-      status: 200,
-      contentType: 'application/javascript',
-      body: AXE,
-    }));
     for (const route of ROUTES) {
       await page.goto(ctx.base + route, { waitUntil: 'networkidle' });
       await page.waitForTimeout(400);
@@ -53,6 +42,10 @@ module.exports = async function access(t, ctx) {
         }
       }
 
+      /* Same-origin on purpose. script-src is 'self', so axe cannot be an
+         inline script, and the service worker claims the page and fetches
+         this URL itself. The test server answers /__axe.js from axe-core;
+         a page route never saw the request and the script 404'd. */
       await page.addScriptTag({ url: new URL('__axe.js', page.url()).href });
       const result = await page.evaluate(async () => await window.axe.run(
         document,

@@ -38,6 +38,14 @@ function serve(root) {
     const rel = decodeURIComponent(req.url.split('?')[0].split('#')[0]);
     let file = path.join(root, rel);
     if (!file.startsWith(path.resolve(root))) { res.writeHead(403).end(); return; }
+    /* axe-core, for tests/access.test.js. script-src is 'self', so the scan
+       cannot be an inline script, and the service worker claims the page and
+       then fetches this itself -- a page.route() never sees that request,
+       which is how /__axe.js came back 404 from this server. The file lives
+       in the test dependencies and is not part of the site. */
+    if (rel === '/__axe.js') {
+      file = path.join(__dirname, 'node_modules', 'axe-core', 'axe.min.js');
+    }
     /* A directory is its index.html, which is what GitHub Pages does and what
        every one of the prerendered pages depends on: they live at
        /read/genesis/1/ and nowhere else. Without this the pages built by
@@ -97,11 +105,51 @@ function serve(root) {
 }
 
 /* Playwright ships its own Chromium. CHROME_PATH overrides it, which is how
-   this runs on a machine that already has one and should not fetch another. */
+   this runs on a machine that already has one and should not fetch another.
+
+   Every context answers archive.org itself. data-audio="published" makes a
+   chapter ask the item on load, and a page that is not passed through
+   Tally.watch() -- the weight checks, the day's passage, several of the
+   listening cases -- would otherwise wait on the real archive. From CI that
+   request often never finishes, and a goto that waits for the network to go
+   idle sits there until the timeout. The answer is {} -- the item is not
+   there -- which is the same shrug a watched page gets, and what the reader
+   is built to do by staying on the device engine. A test that needs the item
+   to be there registers its own page route first; a page route wins. Abort
+   is not used: an aborted request is a console error, and a console error
+   fails whichever watched suite happened to be open. */
+async function stubArchive(context) {
+  await context.route(/archive\.org/, route => route.fulfill({
+    status: 200,
+    headers: { 'access-control-allow-origin': '*' },
+    contentType: 'application/json',
+    body: '{}'
+  }));
+}
+
 async function launch() {
   const { chromium } = require('playwright');
   const opts = process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {};
-  return chromium.launch(opts);
+  const browser = await chromium.launch(opts);
+  const origNewContext = browser.newContext.bind(browser);
+
+  browser.newContext = async function (options) {
+    const context = await origNewContext(options);
+    await stubArchive(context);
+    return context;
+  };
+  /* browser.newPage() is a context plus a page, and the context is closed
+     with the page. Rebuilding it here is what lets the archive stub sit on
+     that context; closing the context on page close is the behaviour the
+     suites already rely on, so a page close does not leak a context. */
+  browser.newPage = async function (options) {
+    const context = await origNewContext(options);
+    await stubArchive(context);
+    const page = await context.newPage();
+    page.once('close', () => { context.close().catch(() => {}); });
+    return page;
+  };
+  return browser;
 }
 
 class Tally {
@@ -121,23 +169,21 @@ class Tally {
       if (m.type() === 'error') this.check(`${label}: no console error`, false, m.text());
     });
 
-    /* No suite talks to the real archive.org.
+    /* No suite talks to the real archive.org. launch() already answers it
+       on the context, which is what covers a page this never sees. This
+       route is the incidental ask on a watched page: {} -- the item is not
+       there -- and it wins over the context because a page route is checked
+       first. recordedEngine() installs a fetch stub of its own and is added
+       after this, so the suites that mean to exercise the recording still
+       override both.
 
-       docs/index.html carries data-audio="published", and the recording is
-       what a reader gets without choosing (audioWanted in app.js), so every
-       page now asks about the item on load -- not only the ones testing the
-       recorded voice. Left alone that means the whole suite depends on a
-       third party being reachable, and it is not reachable from here on any
-       terms that work: archive.org sends no Access-Control-Allow-Origin to
-       a 127.0.0.1 origin, so the fetch fails, the console error is counted
-       as a failure of whichever suite happened to be running, and the wait
-       for it times out.
-
-       recordedEngine() installs a fetch stub of its own and is added after
-       this, so the suites that mean to exercise the recording still
-       override this. What this answers is the incidental ask: {} -- the
-       item is not there -- which is what the reader is built to shrug off
-       by staying on the device engine. */
+       Left on the network, the whole suite depends on a third party being
+       reachable, and it is not reachable from here on any terms that work:
+       archive.org sends no Access-Control-Allow-Origin to a 127.0.0.1
+       origin, so the fetch fails, the console error is counted as a failure
+       of whichever suite happened to be running, and a goto that waits for
+       the network to go idle times out. The reader is built to shrug an
+       empty answer off by staying on the device engine. */
     page.route(/archive\.org/, r => r.fulfill({
       status: 200,
       headers: { 'access-control-allow-origin': '*' },
