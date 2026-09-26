@@ -34,6 +34,11 @@ module.exports = async function access(t, ctx) {
       await ctx.browser.newPage({ colorScheme: scheme }), 'access ' + scheme);
 
     const found = [];
+    await page.route('**/__axe.js', route => route.fulfill({
+      status: 200,
+      contentType: 'application/javascript',
+      body: AXE,
+    }));
     for (const route of ROUTES) {
       await page.goto(ctx.base + route, { waitUntil: 'networkidle' });
       await page.waitForTimeout(400);
@@ -48,7 +53,7 @@ module.exports = async function access(t, ctx) {
         }
       }
 
-      await page.addScriptTag({ content: AXE });
+      await page.addScriptTag({ url: new URL('__axe.js', page.url()).href });
       const result = await page.evaluate(async () => await window.axe.run(
         document,
         { runOnly: { type: 'tag',
