@@ -204,6 +204,8 @@ def head(title, description, canonical, depth, extra_head="", og_type="article")
         # different colour on all 2,709 of these pages than on the page they
         # link to. Both are gated now.
         '<meta name="theme-color" content="#632a55">',
+        '<meta name="referrer" content="strict-origin-when-cross-origin">',
+        '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; base-uri \'self\'; object-src \'none\'; img-src \'self\' data:; style-src \'self\'; script-src \'self\'; worker-src \'self\'; manifest-src \'self\'; connect-src \'self\'">',
         '<meta property="og:type" content="%s">' % e(og_type),
         '<meta property="og:site_name" content="%s">' % e(SITE),
         '<meta property="og:title" content="%s">' % e(title),
@@ -833,6 +835,8 @@ def not_found_page(out_dir):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Not found — {site}</title>
 <meta name="robots" content="noindex">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data:; style-src 'self'; script-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self'">
 <link rel="stylesheet" href="{base}/assets/app.css">
 <link rel="icon" href="{base}/assets/favicon.svg" type="image/svg+xml">
 </head>
