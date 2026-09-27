@@ -1520,6 +1520,11 @@ mark { background: var(--mark); color: inherit; padding: 0 .1em; border-radius: 
   .topbar { transition: transform .2s ease; }
   .topbar.tucked { transform: translateY(-100%); }
 
+  /* The live banner is a soft desktop CTA. On a phone it costs a row the
+     fold and scripture-budget checks cannot spare, and the bar already
+     tucks away while reading -- so the strip stays off small screens. */
+  .live-now { display: none !important; }
+
 
   /* Keep the name, drop only the strapline. A lone icon is not a wordmark. */
   .brand-sub { display: none; }
