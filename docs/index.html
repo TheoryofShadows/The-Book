@@ -92,6 +92,23 @@
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="topbar">
+  <!-- online-only:start -->
+  <!-- Soft live CTA for an ongoing stream. Remove this block when the
+       reading is no longer live. data-live-key bumps dismiss memory. -->
+  <aside class="live-now" id="live-now" role="status" data-live-key="2026-09-26"
+         aria-label="Live stream">
+    <span class="live-now-dot" aria-hidden="true"></span>
+    <span class="live-now-text">
+      <strong>Live now</strong> — reading The Book in written order
+    </span>
+    <span class="live-now-links">
+      <a href="https://www.twitch.tv/xtheorx" rel="noopener noreferrer" target="_blank">Twitch</a>
+      <a href="https://kick.com/jonesproject" rel="noopener noreferrer" target="_blank">Kick</a>
+      <span class="live-now-stay">or Listen here (<kbd>l</kbd>)</span>
+    </span>
+    <button type="button" class="live-now-dismiss ghost" aria-label="Dismiss live banner">Dismiss</button>
+  </aside>
+  <!-- online-only:end -->
   <a class="brand" href="#/" aria-label="The Book, home">
     <span class="brand-mark" aria-hidden="true">
       <!-- The mark: an open book, two boards and three leaves a side, every
