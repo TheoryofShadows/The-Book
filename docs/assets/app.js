@@ -8561,6 +8561,26 @@
      -- one gesture, no button, and it is always there at the top of a page.
      Wide screens have the room and keep it in place. */
 
+  /* Soft live banner: session-dismissible, inside the topbar so phone
+     tuck still clears the whole chrome when reading. */
+  (function liveBanner() {
+    var banner = document.getElementById("live-now");
+    if (!banner) return;
+    var key = "thebook:live-banner:" + (banner.getAttribute("data-live-key") || "1");
+    try {
+      if (sessionStorage.getItem(key) === "1") {
+        banner.hidden = true;
+        return;
+      }
+    } catch (err) { /* private mode: leave it visible */ }
+    var dismiss = banner.querySelector(".live-now-dismiss");
+    if (!dismiss) return;
+    dismiss.addEventListener("click", function () {
+      banner.hidden = true;
+      try { sessionStorage.setItem(key, "1"); } catch (err) {}
+    });
+  })();
+
   var topbar = document.querySelector(".topbar");
   var lastY = window.pageYOffset, tucked = false;
 
