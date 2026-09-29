@@ -7149,7 +7149,12 @@
     audioItemReady(function (present) {
       if (!present) { done(null); return; }
 
-      fetchJSON(AUDIO_BASE + ctx.work + "/" + ctx.chapter + ".json",
+      /* The download URL redirects chapter indexes to an IA CDN host.
+         Firefox checks that redirect against CSP before fetchJSON can read
+         the response, just as it does for the recording itself. The CORS
+         gateway serves the same JSON with an allow-origin header. */
+      var indexBase = needsTypedAudio() ? AUDIO_CORS : AUDIO_BASE;
+      fetchJSON(indexBase + ctx.work + "/" + ctx.chapter + ".json",
         function (data) {
           if (!data || !data.v || !data.v.length) {
             aud.tried[key] = false;
