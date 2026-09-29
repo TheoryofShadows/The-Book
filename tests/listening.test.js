@@ -29,12 +29,10 @@ async function archiveHasItem(page) {
     status: 200, headers: cors, contentType: 'application/json',
     body: JSON.stringify({ metadata: { identifier: 'the-book-read-aloud' } })
   }));
-  const index = r => r.fulfill({
+  await page.route(/archive\.org\/download\/.*\.json(?:\?|$)/, r => r.fulfill({
     status: 200, headers: cors, contentType: 'application/json',
     body: JSON.stringify({ d: 1.35, v: [[1, 0, 1]] })
-  });
-  await page.route(/archive\.org\/download\/.*\.json(?:\?|$)/, index);
-  await page.route(/cors\.archive\.org\/cors\/.*\.json(?:\?|$)/, index);
+  }));
 }
 
 /* Speed, pace, voice and sleep live behind the gear now: they are set once
@@ -1093,8 +1091,22 @@ module.exports = async function listening(t, ctx) {
     });
     await archiveHasItem(page);
     const asked = [];
+    /* The verse index and the file share this host. The index is asked
+       first. Answering it with audio bytes makes JSON.parse fail, and the
+       .opus request this case exists to see never happens. */
     await page.route(/cors\.archive\.org\/cors\//, route => {
-      asked.push(route.request().url());
+      const url = route.request().url();
+      asked.push(url);
+      if (/\.json(?:\?|$)/.test(url)) {
+        return route.fulfill({
+          status: 200,
+          headers: {
+            'access-control-allow-origin': '*',
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify({ d: 1.35, v: [[1, 0, 1]] })
+        });
+      }
       return route.fulfill({
         status: 200,
         headers: {
@@ -1113,7 +1125,9 @@ module.exports = async function listening(t, ctx) {
     const listen = page.locator('.reader-controls button:has-text("Listen")');
     if (await listen.count()) {
       await listen.first().click();
-      await page.waitForRequest(/cors\.archive\.org\/cors\//, { timeout: 8000 }).catch(() => {});
+      /* The first request on this host is the verse index, not the file.
+         Waiting for any of them returns before the .opus is asked for. */
+      await page.waitForRequest(/cors\.archive\.org\/cors\/the-book-read-aloud\/psalms\/22\.opus$/, { timeout: 8000 }).catch(() => {});
     }
     t.check('firefox fetches the recording through the cors gateway as opus',
             asked.some(u => /cors\.archive\.org\/cors\/the-book-read-aloud\/psalms\/22\.opus$/.test(u)),
