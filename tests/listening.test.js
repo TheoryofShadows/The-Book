@@ -29,10 +29,12 @@ async function archiveHasItem(page) {
     status: 200, headers: cors, contentType: 'application/json',
     body: JSON.stringify({ metadata: { identifier: 'the-book-read-aloud' } })
   }));
-  await page.route(/archive\.org\/download\/.*\.json(?:\?|$)/, r => r.fulfill({
+  const index = r => r.fulfill({
     status: 200, headers: cors, contentType: 'application/json',
     body: JSON.stringify({ d: 1.35, v: [[1, 0, 1]] })
-  }));
+  });
+  await page.route(/archive\.org\/download\/.*\.json(?:\?|$)/, index);
+  await page.route(/cors\.archive\.org\/cors\/.*\.json(?:\?|$)/, index);
 }
 
 /* Speed, pace, voice and sleep live behind the gear now: they are set once
