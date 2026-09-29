@@ -6841,6 +6841,10 @@
      item because the texts are public domain and so is their reading, and
      because 1.79 GB cannot live in the Pages artifact — that caps at 1 GB. */
   var AUDIO_BASE = "https://archive.org/download/the-book-read-aloud/";
+  /* Same bytes, with a header that lets this page read them. The download
+     URL above redirects onto a CDN that does not send a CORS header for
+     the audio, so the bytes cannot be retyped from there. This host does. */
+  var AUDIO_CORS = "https://cors.archive.org/cors/the-book-read-aloud/";
 
   /* Whether that item exists at all, which is a different question from
      whether a given chapter has a reading, and needs a different answer.
@@ -6943,7 +6947,12 @@
      Asked in preference order rather than by sniffing the browser: a "maybe"
      from Safari about Ogg has been wrong before, so m4a is offered to anyone
      who says they can take it, and Opus is kept ahead of it only where it is
-     answered with the confidence Chrome and Firefox give it. */
+     answered with the confidence Chrome and Firefox give it. Firefox's
+     confidence is real about the codec and wrong about the file: the archive
+     labels that Opus application/octet-stream, and Firefox will not sniff
+     it. needsTypedAudio() below is what handles that, not a change of
+     format -- Opus stays the smaller file, and it is handed over as a blob
+     whose type says audio/ogg. */
   function audioFormat() {
     try {
       var probe = document.createElement("audio");
@@ -7017,7 +7026,15 @@
     /* Which verse the pace rest has already been taken for, so it is taken
        once rather than on every tick of the silence that follows it. -1 is
        none, and anything that moves the playhead puts it back there. */
-    rested: -1
+    rested: -1,
+    /* Firefox plays a blob we typed ourselves. blobUrl is that object URL,
+       blobFor is the chapter it belongs to, blobGen throws away a fetch that
+       a later seek has already replaced, and loadingBlob keeps a stale
+       error from the previous source from being read as this one failing. */
+    blobUrl: null,
+    blobFor: null,
+    blobGen: 0,
+    loadingBlob: false
   };
 
   /* Asked once a session rather than once a chapter, and asked once even if
@@ -7194,7 +7211,7 @@
       chapterFinished();
     });
     a.addEventListener("error", function () {
-      if (!usingAudio()) return;
+      if (!usingAudio() || aud.loadingBlob) return;
       fallBackToDevice("The recording could not be played — using this " +
                        "device's own voice instead.");
     });
@@ -7317,6 +7334,39 @@
     }
   }
 
+  /* Firefox will not play a file whose Content-Type does not name the
+     container. The archive serves the Opus as application/octet-stream,
+     because it does not know ".opus", and the AAC as audio/mpeg, because
+     it calls an .m4a an mp3. Chrome sniffs the bytes and plays either.
+     Safari is sent the m4a and plays that. Firefox reports Opus as
+     "probably", is sent the octet-stream, and refuses it -- so the
+     reading never starts, on a file that is there and a codec it has.
+
+     The CORS gateway returns those same bytes with a header this page
+     can read. A blob typed audio/ogg or audio/mp4 is a file Firefox
+     will decode. Decided before the first chapter rather than after it
+     fails, because the failure would otherwise be the start of every
+     visit. */
+  function needsTypedAudio() {
+    return /Firefox\//.test(navigator.userAgent);
+  }
+
+  function fetchTypedAudio(ctx, done) {
+    var type = AUDIO_FORMAT === "m4a" ? "audio/mp4" : "audio/ogg";
+    var url = AUDIO_CORS + ctx.work + "/" + ctx.chapter + "." + AUDIO_FORMAT;
+    try {
+      fetch(url, { mode: "cors" })
+        .then(function (r) {
+          if (!r.ok) throw new Error("status");
+          return r.arrayBuffer();
+        })
+        .then(function (buf) {
+          done(URL.createObjectURL(new Blob([buf], { type: type })));
+        })
+        .catch(function () { done(null); });
+    } catch (e) { done(null); }
+  }
+
   function audioPlayFrom(i) {
     var a = audioElement(), items = nar.items;
     if (!items.length) return;
@@ -7328,29 +7378,72 @@
     // where it used to be is not owed here.
     aud.rested = -1;
 
-    var src = AUDIO_BASE + nar.ctx.work + "/" + nar.ctx.chapter +
+    var direct = AUDIO_BASE + nar.ctx.work + "/" + nar.ctx.chapter +
               "." + AUDIO_FORMAT;
-    if (a.getAttribute("src") !== src) {
-      a.setAttribute("src", src);
-      a.load();
-    }
-    a.playbackRate = store.get("listen-rate", 1);
+    var key = chapterKey(nar.ctx);
 
-    // A seek before the file has any duration is discarded, so it waits for
-    // as much metadata as a seek needs rather than for the whole file.
-    var target = seekTarget(items[nar.at]);
-    function go() {
-      try { a.currentTime = target; } catch (e) { /* seek when it can */ }
-      var playing = a.play();
-      if (playing && playing.catch) {
-        playing.catch(function () {
-          fallBackToDevice("The recording could not be played — using this " +
-                           "device's own voice instead.");
+    function arm(url) {
+      if (a.getAttribute("src") !== url) {
+        if (aud.blobUrl && aud.blobUrl !== url) {
+          URL.revokeObjectURL(aud.blobUrl);
+          aud.blobUrl = null;
+          aud.blobFor = null;
+        }
+        if (url.indexOf("blob:") === 0) {
+          aud.blobUrl = url;
+          aud.blobFor = key;
+        }
+        a.setAttribute("src", url);
+        a.load();
+      }
+      a.playbackRate = store.get("listen-rate", 1);
+
+      // A seek before the file has any duration is discarded, so it waits for
+      // as much metadata as a seek needs rather than for the whole file.
+      var target = seekTarget(items[nar.at]);
+      function go() {
+        try { a.currentTime = target; } catch (e) { /* seek when it can */ }
+        var playing = a.play();
+        if (playing && playing.catch) {
+          playing.catch(function () {
+            if (aud.loadingBlob) return;
+            fallBackToDevice("The recording could not be played — using this " +
+                             "device's own voice instead.");
+          });
+        }
+      }
+      if (a.readyState >= 1 && a.getAttribute("src") === url) go();
+      else a.addEventListener("loadedmetadata", go, { once: true });
+    }
+
+    if (needsTypedAudio()) {
+      if (aud.blobFor === key && aud.blobUrl) {
+        arm(aud.blobUrl);
+      } else {
+        var gen = ++aud.blobGen;
+        aud.loadingBlob = true;
+        fetchTypedAudio(nar.ctx, function (blobUrl) {
+          if (gen !== aud.blobGen) {
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
+            return;
+          }
+          aud.loadingBlob = false;
+          if (!nar.playing || !usingAudio()) {
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
+            return;
+          }
+          if (!blobUrl) {
+            fallBackToDevice("The recording could not be played — using this " +
+                             "device's own voice instead.");
+            return;
+          }
+          arm(blobUrl);
         });
       }
+    } else {
+      aud.loadingBlob = false;
+      arm(direct);
     }
-    if (a.readyState >= 1) go();
-    else a.addEventListener("loadedmetadata", go, { once: true });
 
     mark(items[nar.at]);
     updatePlayer();

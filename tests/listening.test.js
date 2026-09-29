@@ -1076,6 +1076,52 @@ module.exports = async function listening(t, ctx) {
     await page.close();
   }
 
+  /* Firefox says it can play Opus, so it is sent the .opus. The archive
+     serves that as application/octet-stream, which Firefox will not
+     decode, and the reading never starts. The bytes are fetched through
+     the CORS gateway and played as a blob typed audio/ogg. A Firefox
+     that asks archive.org/download for a .opus is the bug. */
+  {
+    const context = await ctx.browser.newContext({
+      userAgent: 'Mozilla/5.0 (X11; Linux x86_64; rv:149.0) Gecko/20100101 Firefox/149.0'
+    });
+    const page = await context.newPage();
+    await page.addInitScript(() => {
+      document.documentElement.setAttribute('data-audio', 'published');
+    });
+    await archiveHasItem(page);
+    const asked = [];
+    await page.route(/cors\.archive\.org\/cors\//, route => {
+      asked.push(route.request().url());
+      return route.fulfill({
+        status: 200,
+        headers: {
+          'access-control-allow-origin': '*',
+          'content-type': 'application/octet-stream'
+        },
+        body: Buffer.from('OggS')
+      });
+    });
+    await page.route(/archive\.org\/download\/.*\.(opus|m4a)(?:\?|$)/, route => {
+      asked.push(route.request().url());
+      return route.abort();
+    });
+    await page.goto(ctx.base + '#/read/psalms/22');
+    await page.waitForSelector('.reader .v');
+    const listen = page.locator('.reader-controls button:has-text("Listen")');
+    if (await listen.count()) {
+      await listen.first().click();
+      await page.waitForRequest(/cors\.archive\.org\/cors\//, { timeout: 8000 }).catch(() => {});
+    }
+    t.check('firefox fetches the recording through the cors gateway as opus',
+            asked.some(u => /cors\.archive\.org\/cors\/the-book-read-aloud\/psalms\/22\.opus$/.test(u)),
+            asked.slice(0, 4).join(', ') || '(none)');
+    t.check('and does not open the octet-stream download url',
+            !asked.some(u => /archive\.org\/download\//.test(u)),
+            asked.filter(u => /download\//.test(u)).slice(0, 2).join(', ') || '(none)');
+    await context.close();
+  }
+
   /* And one that can is still offered it, so the check does not simply
      switch the feature off for everybody. */
   {

@@ -41,7 +41,13 @@
      token by tests/python/test_palette.py, having drifted from #632a55. -->
 <meta name="theme-color" content="#632a55">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self' https://archive.org; media-src 'self' https://archive.org">
+<!-- archive.org answers download/ with a redirect onto a CDN host
+     (ia*.us.archive.org, dn*.ca.archive.org). Firefox, and current
+     Chromium, check that second address against this policy, so naming
+     only archive.org itself blocks the chapter index and the recording.
+     *.archive.org is that CDN. blob: is the typed copy Firefox plays,
+     because the archive labels .opus as application/octet-stream. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self' https://archive.org https://*.archive.org; media-src 'self' blob: https://archive.org https://*.archive.org">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="The Book">
