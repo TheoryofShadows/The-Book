@@ -6872,7 +6872,7 @@
      answers {"error": "Couldn't locate item ..."} rather than the {} the
      bare path gives -- which is why present is read below as the shape of
      an answer rather than as any particular key. */
-  var AUDIO_META = "https://archive.org/metadata/the-book-read-aloud/metadata";
+  var AUDIO_META = "https://archive.org/metadata/the-book-read-aloud";
 
   /* Not in the single-file copy. That build's whole claim is that it opens
      from a file:// URL with the network off and everything in it works, and
