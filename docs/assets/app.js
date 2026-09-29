@@ -7034,7 +7034,11 @@
     blobUrl: null,
     blobFor: null,
     blobGen: 0,
-    loadingBlob: false
+    loadingBlob: false,
+    /* A reader who scrolls the page is looking at something else. The
+       follow waits, then takes the line back. A stream that nobody
+       touches never sets this, so the page keeps moving on its own. */
+    userHold: 0
   };
 
   /* Asked once a session rather than once a chapter, and asked once even if
@@ -7337,7 +7341,68 @@
         aud.rested = nar.at;
       }
     }
+
+    followReading();
   }
+
+  /* The line being read stays a third of the way down the screen, and it
+     moves there on the recording's own clock rather than jumping when a
+     verse happens to leave the window.
+
+     That is the whole of what a stream needs from the page. The playhead
+     says how far through this verse the voice is, the next verse says
+     where the line is going, and the window is walked toward that spot a
+     little on every tick. A long verse crawls. A short one steps. Nobody
+     has to scroll it.
+
+     A reader who takes the wheel is left alone for a few seconds. The
+     alternative is a page that argues with the person holding it, which
+     is worse than a stream that needs one click at the start. Reduced
+     motion, and any gap bigger than a screen, goes in one step: easing
+     across a chapter would be the delay the motion setting exists to
+     refuse. */
+  function followReading() {
+    if (aud.userHold && Date.now() < aud.userHold) return;
+    var item = nar.items[nar.at];
+    var a = aud.el;
+    if (!item || !item.el || !item.el.isConnected || !a) return;
+
+    var next = nar.items[nar.at + 1];
+    var top = item.el.getBoundingClientRect().top + window.scrollY;
+    var nextTop = next && next.el && next.el.isConnected
+      ? next.el.getBoundingClientRect().top + window.scrollY
+      : top + item.el.offsetHeight;
+    var span = item.b - item.a;
+    if (!(span > 0.05)) span = 0.05;
+    var p = (a.currentTime - item.a) / span;
+    if (p < 0) p = 0;
+    if (p > 1) p = 1;
+
+    var want = top + (nextTop - top) * p - window.innerHeight * 0.32;
+    if (want < 0) want = 0;
+    var delta = want - window.scrollY;
+    if (delta < 1 && delta > -1) return;
+    if (reducedMotion() || delta > window.innerHeight ||
+        delta < -window.innerHeight) {
+      window.scrollTo(0, want);
+      return;
+    }
+    window.scrollTo(0, window.scrollY + delta * 0.35);
+  }
+
+  function holdFollow() {
+    if (!nar.playing || !usingAudio()) return;
+    aud.userHold = Date.now() + 6000;
+  }
+
+  window.addEventListener("wheel", holdFollow, { passive: true });
+  window.addEventListener("touchmove", holdFollow, { passive: true });
+  window.addEventListener("keydown", function (e) {
+    if (e.altKey || e.metaKey || e.ctrlKey) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp" ||
+        e.key === "PageDown" || e.key === "PageUp" ||
+        e.key === "Home" || e.key === "End" || e.key === " ") holdFollow();
+  });
 
   /* Firefox will not play a file whose Content-Type does not name the
      container. The archive serves the Opus as application/octet-stream,
@@ -7813,7 +7878,12 @@
 
     var box = item.el.getBoundingClientRect();
     var margin = Math.min(160, window.innerHeight * 0.2);
-    if (box.top < margin || box.bottom > window.innerHeight - margin) {
+    /* The recording has a clock, so followReading() places the line.
+       scrollIntoView here would drop it in the centre and then fight
+       that placement on the next tick. The device voice has no clock,
+       so it still brings the verse back when it has left the window. */
+    if (!usingAudio() &&
+        (box.top < margin || box.bottom > window.innerHeight - margin)) {
       item.el.scrollIntoView({
         block: "center",
         behavior: reducedMotion() ? "auto" : "smooth"
