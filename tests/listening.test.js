@@ -766,6 +766,22 @@ module.exports = async function listening(t, ctx) {
             return m && /^2/.test(m.textContent.trim());
           }));
 
+  /* The page walks itself. A stream leaves the window alone after Listen,
+     so the verse being read has to sit in the upper third without anyone
+     scrolling. A chapter shorter than the screen cannot move, and that is
+     not a failure of the follow. */
+  t.check('the page follows the verse on its own',
+          await page.evaluate(() => {
+            const m = document.querySelector('.is-speaking');
+            if (!m) return false;
+            const pageTall = document.documentElement.scrollHeight >
+                             window.innerHeight + 40;
+            if (!pageTall) return true;
+            const top = m.getBoundingClientRect().top;
+            return top > window.innerHeight * 0.08 &&
+                   top < window.innerHeight * 0.62;
+          }));
+
   /* Speed is playbackRate on a recording, so the sentence being read keeps
      going rather than starting again -- which is what changing speed on the
      device engine has to do, and the one place the two differ visibly. */
