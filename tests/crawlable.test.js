@@ -241,4 +241,12 @@ module.exports = async function crawlable(t, ctx) {
 
   t.check('there is a 404 page for the addresses that are not there',
           fs.existsSync(path.join(docs, '404.html')));
+
+  /* /exodus/31 is how people share a chapter; the page lives at
+     /read/exodus/31/. The 404 sends the short form on, so it has to load
+     the script that does it, from the root, at any depth. */
+  t.check('the 404 page forwards short chapter addresses',
+          fs.readFileSync(path.join(docs, '404.html'), 'utf8')
+            .indexOf('src="/assets/short-link.js"') !== -1 &&
+          fs.existsSync(path.join(docs, 'assets', 'short-link.js')));
 };
