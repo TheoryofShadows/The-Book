@@ -125,6 +125,13 @@ async function stubArchive(context) {
     contentType: 'application/json',
     body: '{}'
   }));
+  /* The pages load the Cloudflare Web Analytics beacon. No suite should count
+     as a visit or wait on a third party, so it is answered here with an
+     empty script and an empty 204, never the network. */
+  await context.route(/cloudflareinsights\.com/, route => route.fulfill(
+    /beacon\.min\.js/.test(route.request().url())
+      ? { status: 200, contentType: 'application/javascript', body: '' }
+      : { status: 204, body: '' }));
 }
 
 async function launch() {
