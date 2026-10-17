@@ -402,7 +402,7 @@
               "Enochic booklets are dated separately, and every placement is " +
               "a range you can see and argue with. The dating is sourced, " +
               "the coverage gaps are named with their reasons, and every " +
-              "chapter has a recorded reading. Free, no account, no tracking."
+              "chapter has a recorded reading. Free, no account, no cookies."
       }),
       /* Shown only on a phone, where the paragraph above is clamped to three
          lines so the first screen can carry something to do as well as

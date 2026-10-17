@@ -211,7 +211,9 @@ def head(title, description, canonical, depth, extra_head="", og_type="article")
         # arrive. *.archive.org is the CDN. blob: is the retyped file
         # Firefox will decode; the archive serves .opus as
         # application/octet-stream.
-        '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; base-uri \'self\'; object-src \'none\'; img-src \'self\' data:; style-src \'self\' \'unsafe-inline\'; script-src \'self\'; worker-src \'self\'; manifest-src \'self\'; connect-src \'self\' https://archive.org https://*.archive.org; media-src \'self\' blob: https://archive.org https://*.archive.org">',
+        '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; base-uri \'self\'; object-src \'none\'; img-src \'self\' data:; style-src \'self\' \'unsafe-inline\'; script-src \'self\' https://static.cloudflareinsights.com; worker-src \'self\'; manifest-src \'self\'; connect-src \'self\' https://cloudflareinsights.com https://archive.org https://*.archive.org; media-src \'self\' blob: https://archive.org https://*.archive.org">',
+        # Cloudflare Web Analytics, cookieless; allowed by the policy above.
+        '<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon=\'{"token": "8f4f21d9a22040fbb72ceb3302ecb4ea"}\'></script>',
         '<meta property="og:type" content="%s">' % e(og_type),
         '<meta property="og:site_name" content="%s">' % e(SITE),
         '<meta property="og:title" content="%s">' % e(title),

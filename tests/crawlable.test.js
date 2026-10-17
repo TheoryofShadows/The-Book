@@ -97,7 +97,8 @@ module.exports = async function crawlable(t, ctx) {
   const page = ctx.tally.watch(await ctx.browser.newPage(), 'crawlable');
   /* A crawler runs nothing. Anything that only appears once a script has run
      is, to the thing being served here, not on the page at all. */
-  await page.route('**/*.js', r => r.abort());
+  await page.route(u => /\.js$/.test(u.pathname) && u.hostname !== 'static.cloudflareinsights.com',
+                   r => r.abort());
 
   await page.goto(ctx.base + 'read/genesis/1/');
   const body = await page.locator('body').innerText();

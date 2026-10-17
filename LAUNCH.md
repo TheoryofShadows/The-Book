@@ -64,7 +64,8 @@ publishes what it is missing.
 > English audio reading of any kind.
 >
 > Everything is public domain or openly licensed, there are no accounts, no
-> tracking and no dependencies, and it works offline. Corrections very
+> cookies and no dependencies, and it works offline. The live site counts visits
+> with cookie-less Cloudflare Web Analytics. Corrections very
 > welcome — there is a published list of known problems and I would rather
 > add to it than not know.
 
@@ -113,8 +114,8 @@ grandiose.
 > archive item is missing. There is a published accuracy report listing what
 > is wrong or absent, which is the part I would most like torn apart.
 >
-> Everything is public domain or openly licensed. No accounts, no tracking, no
-> analytics. Works offline.
+> Everything is public domain or openly licensed. No accounts, no cookies. Visits are
+> counted with cookie-less Cloudflare Web Analytics. Works offline.
 
 ---
 
@@ -138,7 +139,7 @@ engineering.
 > diary if you want to keep track of what you read and what it gave you — kept
 > in your own browser, not on any server.
 >
-> Free, no account, no ads, no tracking. It works offline once you've opened
+> Free, no account, no ads, no cookies. It works offline once you've opened
 > it. Public domain translations throughout.
 >
 > If you find a mistake, please tell me — there's a page listing the ones I

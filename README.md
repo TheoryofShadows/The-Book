@@ -913,7 +913,12 @@ the failure that looks completely normal.
 
 ## How the site works
 
-Static files only — no build step, no dependencies, no tracking. Work texts and
+Static files only — no build step, no dependencies, no accounts, no cookies and
+no ads. **Visit counts:** the live site (not the single-file offline copy)
+loads Cloudflare Web Analytics, a privacy-friendly, cookie-less counter that
+reports page views, referrers and rough country totals, and builds no profile
+of an individual reader. The script is allowed by the page's Content Security
+Policy and nothing else third-party is added. Work texts and
 search-index shards are fetched on demand, so the first paint is small even
 though the library is seven megabytes. Read-aloud is the browser's own
 `speechSynthesis`, with each passage cut into utterances short enough to clear
