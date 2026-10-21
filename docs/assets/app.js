@@ -8741,6 +8741,32 @@
         return;
       }
     } catch (err) { /* private mode: leave it visible */ }
+    // Hidden until a platform confirms the stream is actually live; links
+    // only to the live one(s), Kick first. Any failure leaves it hidden.
+    banner.hidden = true;
+    function get(url, ok) {
+      if (!window.fetch) return Promise.resolve(false);
+      return fetch(url, { cache: "no-store", credentials: "omit" })
+        .then(function (r) { return r.ok ? ok(r) : false; })
+        .catch(function () { return false; });
+    }
+    Promise.all([
+      get("https://kick.com/api/v2/channels/jonesproject", function (r) {
+        return r.json().then(function (j) { return !!(j && j.livestream); });
+      }),
+      get("https://decapi.me/twitch/uptime/xtheorx", function (r) {
+        return r.text().then(function (t) { return !/offline|error|not found/i.test(t) && /\d/.test(t); });
+      })
+    ]).then(function (res) {
+      var kick = banner.querySelector('[data-live="kick"]');
+      var twitch = banner.querySelector('[data-live="twitch"]');
+      if (!res[0] && !res[1]) return;
+      if (kick) kick.hidden = !res[0];
+      if (twitch) twitch.hidden = !res[1];
+      var first = res[0] ? kick : twitch;
+      if (first && first.parentNode) first.parentNode.insertBefore(first, first.parentNode.firstChild);
+      banner.hidden = false;
+    });
     var dismiss = banner.querySelector(".live-now-dismiss");
     if (!dismiss) return;
     dismiss.addEventListener("click", function () {
