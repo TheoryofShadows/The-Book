@@ -47,7 +47,7 @@
      only archive.org itself blocks the chapter index and the recording.
      *.archive.org is that CDN. blob: is the typed copy Firefox plays,
      because the archive labels .opus as application/octet-stream. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self' https://archive.org https://*.archive.org; media-src 'self' blob: https://archive.org https://*.archive.org">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self' https://archive.org https://*.archive.org https://kick.com https://decapi.me; media-src 'self' blob: https://archive.org https://*.archive.org">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="The Book">
@@ -102,14 +102,14 @@
   <!-- Soft live CTA for an ongoing stream. Remove this block when the
        reading is no longer live. data-live-key bumps dismiss memory. -->
   <aside class="live-now" id="live-now" data-live-key="2026-09-26"
-         aria-label="Live stream">
+         aria-label="Live stream" hidden>
     <span class="live-now-dot" aria-hidden="true"></span>
     <span class="live-now-text">
       <strong>Live now</strong> — reading The Book in written order
     </span>
     <span class="live-now-links">
-      <a href="https://www.twitch.tv/xtheorx" rel="noopener noreferrer" target="_blank">Twitch</a>
-      <a href="https://kick.com/jonesproject" rel="noopener noreferrer" target="_blank">Kick</a>
+      <a data-live="twitch" hidden href="https://www.twitch.tv/xtheorx" rel="noopener noreferrer" target="_blank">Twitch</a>
+      <a data-live="kick" hidden href="https://kick.com/jonesproject" rel="noopener noreferrer" target="_blank">Kick</a>
       <span class="live-now-stay">or Listen here (<kbd>l</kbd>)</span>
     </span>
     <button type="button" class="live-now-dismiss ghost" aria-label="Dismiss live banner">Dismiss</button>
