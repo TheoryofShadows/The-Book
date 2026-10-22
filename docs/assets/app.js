@@ -8742,7 +8742,7 @@
       }
     } catch (err) { /* private mode: leave it visible */ }
     // Hidden until a platform confirms the stream is actually live; links
-    // only to the live one(s), Kick first. Any failure leaves it hidden.
+    // YouTube first, then whichever of Kick/Twitch is live. Any failure leaves it hidden.
     banner.hidden = true;
     function get(url, ok) {
       if (!window.fetch) return Promise.resolve(false);
@@ -8764,8 +8764,12 @@
       if (!res[0] && !res[1]) return;
       if (kick) kick.hidden = !res[0];
       if (twitch) twitch.hidden = !res[1];
-      var first = res[0] ? kick : twitch;
-      if (first && first.parentNode) first.parentNode.insertBefore(first, first.parentNode.firstChild);
+      // YouTube carries the same feed, so it leads whenever anything is live.
+      [twitch, res[0] ? kick : null].forEach(function (a) {
+        if (a && a.parentNode) a.parentNode.insertBefore(a, a.parentNode.firstChild);
+      });
+      var yt = banner.querySelector('[data-live="youtube"]');
+      if (yt && yt.parentNode) yt.parentNode.insertBefore(yt, yt.parentNode.firstChild);
       banner.hidden = false;
     }); }
     function later() { setTimeout(check, 4000); }

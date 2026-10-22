@@ -2461,3 +2461,7 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
    about what is at stake, not an error, and a page that shouts at somebody
    for writing in it is a page they stop writing in. */
 .diary-unsaved { color: var(--accent); }
+
+/* Always-visible sleep link to the YouTube live stream. */
+.live-now-links a.live-now-primary { font-weight: 700; }
+.foot .sleep-yt a { font-weight: 600; text-decoration: underline; text-underline-offset: .15em; }
