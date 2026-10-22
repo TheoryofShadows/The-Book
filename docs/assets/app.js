@@ -8750,7 +8750,8 @@
         .then(function (r) { return r.ok ? ok(r) : false; })
         .catch(function () { return false; });
     }
-    Promise.all([
+    // Deferred past first paint so it stays out of the page's load budget.
+    function check() { Promise.all([
       get("https://kick.com/api/v2/channels/jonesproject", function (r) {
         return r.json().then(function (j) { return !!(j && j.livestream); });
       }),
@@ -8766,7 +8767,10 @@
       var first = res[0] ? kick : twitch;
       if (first && first.parentNode) first.parentNode.insertBefore(first, first.parentNode.firstChild);
       banner.hidden = false;
-    });
+    }); }
+    function later() { setTimeout(check, 4000); }
+    if (document.readyState === "complete") later();
+    else window.addEventListener("load", later);
     var dismiss = banner.querySelector(".live-now-dismiss");
     if (!dismiss) return;
     dismiss.addEventListener("click", function () {
