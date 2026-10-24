@@ -149,7 +149,9 @@ they keep, without this site being involved.
       {
         id:   "2026-09-07T02:14:33.219Z",   // also the sort key
         day:  "2026-09-07",                 // local date, for grouping
-        ref:  { work: "psalms", chapter: 23, title: "Psalm 23" },  // or null
+        ref:  { work: "psalms", chapter: 23, title: "Psalm 23",
+                startVerse: 1, endVerse: 6 },  // or null
+        passage: "1 The Lord is my shepherd…", // the words as they stood
         why:  "…",
         took: "…",
         mark: "unsettled"                   // or null
