@@ -7175,7 +7175,7 @@
 
   function fetchJSON(url, done) {
     try {
-      fetch(url, { mode: "cors" })
+      fetch(url, { mode: "cors", credentials: "omit" })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(done)
         .catch(function () { done(null); });
@@ -7425,7 +7425,7 @@
     var type = AUDIO_FORMAT === "m4a" ? "audio/mp4" : "audio/ogg";
     var url = AUDIO_CORS + ctx.work + "/" + ctx.chapter + "." + AUDIO_FORMAT;
     try {
-      fetch(url, { mode: "cors" })
+      fetch(url, { mode: "cors", credentials: "omit" })
         .then(function (r) {
           if (!r.ok) throw new Error("status");
           return r.arrayBuffer();
