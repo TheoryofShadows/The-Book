@@ -130,6 +130,10 @@ module.exports = async function routes(t, ctx) {
     const weighed = [];
     let count = 0;
     fresh.on('response', res => {
+      /* The site's own requests only. The analytics beacon is a third party,
+         answered by the harness with an empty stub, and it loads after the
+         page is already usable; it is not the first-paint cost of the site. */
+      if (res.url().indexOf(ctx.base) !== 0) return;
       count++;
       weighed.push(res.request().sizes()
         .then(s => s.responseBodySize).catch(() => 0));

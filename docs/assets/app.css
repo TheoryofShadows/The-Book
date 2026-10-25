@@ -353,6 +353,13 @@ button.ghost:hover { background: var(--paper-2); color: var(--ink); border-color
 /* ---------- layout ---------- */
 
 main { padding: clamp(1.2rem, 4vw, 2.6rem) clamp(.9rem, 4vw, 2rem) 4rem; }
+/* The reader is filled in by script, so in the HTML that arrives <main> is
+   empty and the footer sits at the top of the page until the first route
+   renders and shoves it down a screen's worth: a layout shift of 0.48 on
+   the home page, measured. Holding the empty shell one viewport tall keeps
+   the footer below the fold until there is something above it. Only the
+   empty shell is held: the generated pages arrive with their text in place. */
+main#main:empty { min-height: 100vh; min-height: 100svh; }
 .wrap { max-width: 60rem; margin: 0 auto; }
 .wrap-wide { max-width: 74rem; margin: 0 auto; }
 
@@ -2465,3 +2472,21 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
 /* Always-visible sleep link to the YouTube live stream. */
 .live-now-links a.live-now-primary { font-weight: 700; }
 .foot .sleep-yt a { font-weight: 600; text-decoration: underline; text-underline-offset: .15em; }
+
+/* ---- optional account (docs/assets/sync.js) ---- */
+.account-body { max-width: var(--measure); }
+.account-form { display: grid; gap: var(--gap-tight); margin-block: 1rem; }
+.account-form label { font-family: var(--sans); font-size: .9rem; color: var(--ink-soft); }
+.account-form input[type="email"] {
+  width: 100%; padding: .55rem .7rem; font: inherit; color: var(--ink);
+  background: var(--raised); border: 1px solid var(--rule); border-radius: var(--radius);
+}
+.account-actions { display: flex; flex-wrap: wrap; gap: var(--gap-tight); margin-block: 1rem; }
+.account-danger { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--rule-soft); }
+.warn-btn { color: var(--warn); border-color: var(--warn); background: var(--warn-bg); }
+.account-prompt {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem 1rem;
+  margin-block: .8rem; padding: .6rem .9rem; font-size: .95rem;
+  background: var(--accent-bg); border-radius: var(--radius);
+}
+.account-prompt p { margin: 0; }

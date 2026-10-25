@@ -16,7 +16,7 @@ const { serve, launch, Tally, runPython } = require('./harness');
    first of the two. run.js clears what it left behind at the end. */
 const SUITES = ['routes', 'layout', 'search', 'words', 'keeping', 'diary',
                 'dating', 'resilience', 'listening', 'access', 'crawlable',
-                'installable', 'caching', 'offline', 'map'];
+                'installable', 'caching', 'accounts', 'offline', 'map'];
 
 /* The follow-along assertion is a timing sample of scroll position. It is
    the right check for a stream, and it is also the one check that has now
@@ -56,7 +56,14 @@ async function main() {
     process.exit(2);
   }
 
-  const site = await serve(path.join(root, 'docs'));
+  /* The account API, for the 'accounts' suite: the real worker handler on an
+     in-memory store, in development mode (which the worker honours only on
+     localhost). Nothing is sent anywhere. */
+  const W = await import(require('url').pathToFileURL(path.join(root, 'worker', 'worker.js')).href);
+  const accountStore = new W.MemoryStore();
+  const accountEnv = { AUTH_DEV_MODE: '1' };
+  const accountApi = W.createHandler({ store: () => accountStore });
+  const site = await serve(path.join(root, 'docs'), { api: req => accountApi(req, accountEnv) });
   let browser;
   try {
     browser = await launch();
@@ -77,7 +84,7 @@ async function main() {
     }
     return rawCheck(name, ok, extra);
   };
-  const ctx = { browser, base: site.url, root, tally, cleanup: [] };
+  const ctx = { browser, base: site.url, root, tally, cleanup: [], accountStore, accountEnv };
   const started = Date.now();
 
   for (const name of suites) {

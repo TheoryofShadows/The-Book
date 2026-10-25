@@ -46,6 +46,9 @@ if [ "$#" -eq 0 ]; then
   echo "==> the build scripts"
   "$PY" -m unittest discover -s tests/python -t tests/python
   echo
+  echo "==> the account API"
+  node tests/worker.test.js
+  echo
   echo "==> the reader"
 fi
 

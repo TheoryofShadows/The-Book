@@ -211,14 +211,20 @@ def head(title, description, canonical, depth, extra_head="", og_type="article")
         # arrive. *.archive.org is the CDN. blob: is the retyped file
         # Firefox will decode; the archive serves .opus as
         # application/octet-stream.
-        '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; base-uri \'self\'; object-src \'none\'; img-src \'self\' data:; style-src \'self\' \'unsafe-inline\'; script-src \'self\'; worker-src \'self\'; manifest-src \'self\'; connect-src \'self\' https://archive.org https://*.archive.org; media-src \'self\' blob: https://archive.org https://*.archive.org">',
+        '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; base-uri \'self\'; form-action \'self\'; object-src \'none\'; img-src \'self\' data:; style-src \'self\' \'unsafe-inline\'; script-src \'self\' https://static.cloudflareinsights.com; worker-src \'self\'; manifest-src \'self\'; connect-src \'self\' https://cloudflareinsights.com https://archive.org https://*.archive.org; media-src \'self\' blob: https://archive.org https://*.archive.org">',
+        # Cloudflare Web Analytics, cookieless; allowed by the policy above.
+        '<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon=\'{"token": "8f4f21d9a22040fbb72ceb3302ecb4ea"}\'></script>',
         '<meta property="og:type" content="%s">' % e(og_type),
         '<meta property="og:site_name" content="%s">' % e(SITE),
         '<meta property="og:title" content="%s">' % e(title),
         '<meta property="og:description" content="%s">' % e(description),
         '<meta property="og:url" content="%s">' % e(canonical),
-        '<meta property="og:image" content="%s/assets/icon-512.png">' % BASE,
-        '<meta name="twitter:card" content="summary">',
+        '<meta property="og:image" content="%s/assets/og-card.jpg">' % BASE,
+        '<meta property="og:image:width" content="1200">',
+        '<meta property="og:image:height" content="630">',
+        '<meta property="og:image:alt" content="The Book and Me: an open book by candlelight under a night sky">',
+        '<meta name="twitter:card" content="summary_large_image">',
+        '<meta name="twitter:image" content="%s/assets/og-card.jpg">' % BASE,
         extra_head,
         "</head>",
     ])
@@ -267,6 +273,12 @@ def footer(depth, what="a plain page of one chapter"):
     Deuterocanon, R. H. Charles's 1917 Enoch and Jubilees, and the Ante-Nicene
     Fathers of 1870 and 1885. The <a href="{up}#/accuracy">accuracy report</a>
     sets out what was verified, what was corrected, and what is still missing.
+  </p>
+  <p class="muted foot-links">
+    <a href="{up}about/">About</a> · <a href="{up}contact/">Contact</a> ·
+    <a href="{up}privacy/">Privacy</a> · <a href="{up}press/">Press and credits</a> ·
+    <a href="{up}#/account">Account (optional)</a>
+    — read aloud by an AI voice.
   </p>
   <p class="muted">
     This is {what}. The
@@ -842,7 +854,7 @@ def not_found_page(out_dir):
 <title>Not found — {site}</title>
 <meta name="robots" content="noindex">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self' https://archive.org https://*.archive.org; media-src 'self' blob: https://archive.org https://*.archive.org">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self' https://archive.org https://*.archive.org; media-src 'self' blob: https://archive.org https://*.archive.org">
 <link rel="stylesheet" href="{base}/assets/app.css">
 <link rel="icon" href="{base}/assets/favicon.svg" type="image/svg+xml">
 <script src="/assets/short-link.js"></script>
@@ -868,6 +880,401 @@ def not_found_page(out_dir):
     write(os.path.join(out_dir, "404.html"), page)
 
 
+# ---------------------------------------------------------------- about, contact, privacy, press
+#
+# Four plain pages that say who is behind the site, how the audio is made,
+# what is counted and where to reach it. Everything on them is a fact that can
+# be checked in this repository or on the pages linked from them; nothing is
+# claimed about a company, an address, staff or awards, because none is
+# documented anywhere. The voice is synthetic and the pages say so first.
+
+ORG = "The Book and Me"
+# The publisher, by the owner's say-so. A name and nothing else: no address, staff or claims.
+PUBLISHER = "OpenPrints"
+ORG_ID = BASE + "/#organization"
+CHANNELS = [
+    ("YouTube", "https://www.youtube.com/@thebookandme"),
+    ("Twitch", "https://www.twitch.tv/xtheorx"),
+    ("Kick", "https://kick.com/jonesproject"),
+]
+YOUTUBE = CHANNELS[0][1]
+REPO = "https://github.com/TheoryofShadows/The-Book"
+AUDIO_ITEM = "https://archive.org/details/the-book-read-aloud"
+POLICY_DATE = "25 October 2026"
+
+# Who sends the sign-in email. The privacy page names it, so it must be the
+# service the deployed worker actually uses (see ACCOUNTS.md).
+MAIL_PROVIDER = "Resend"
+
+# The public contact address: Cloudflare Email Routing forwards it to the
+# maintainer. Set to None to fall back to the YouTube/GitHub contact text.
+CONTACT_EMAIL = "hello@thebookandme.com"
+
+INFO_PAGES = ["about", "contact", "privacy", "press"]
+
+
+def org_schema():
+    node = {
+        "@type": "Organization",
+        "@id": ORG_ID,
+        "name": PUBLISHER,
+        "url": BASE + "/",
+        "logo": BASE + "/assets/icon-512.png",
+        "brand": {"@type": "Brand", "name": ORG, "alternateName": SITE},
+        "description": ("A free, searchable library of biblical and related "
+                        "ancient texts in the order they were written, read "
+                        "aloud by a synthetic voice."),
+        "sameAs": [u for _, u in CHANNELS],
+    }
+    if CONTACT_EMAIL:
+        node["email"] = CONTACT_EMAIL
+    return node
+
+
+def website_schema():
+    return {
+        "@type": "WebSite",
+        "@id": BASE + "/#website",
+        "name": ORG,
+        "alternateName": SITE,
+        "url": BASE + "/",
+        "inLanguage": "en",
+        "isAccessibleForFree": True,
+        "publisher": {"@id": ORG_ID},
+    }
+
+
+def _ext(url, text):
+    return '<a href="%s" rel="noopener noreferrer">%s</a>' % (e(url), e(text))
+
+
+def _channel_links():
+    return " · ".join(_ext(u, n) for n, u in CHANNELS)
+
+
+def _info_page(slug, title, description, body, page_type, manifest):
+    """Write /<slug>/index.html and return its URL."""
+    url = "%s/%s/" % (BASE, slug)
+    nodes = [{
+        "@type": page_type,
+        "@id": url + "#page",
+        "name": title,
+        "url": url,
+        "description": description,
+        "inLanguage": "en",
+        "isPartOf": {"@id": BASE + "/#website"},
+        "about": {"@id": ORG_ID},
+    }]
+    if slug == "about":
+        nodes += [org_schema(), website_schema()]
+    schema = {"@context": "https://schema.org", "@graph": nodes}
+    page = "\n".join([
+        head(title, description, url, 1, ld(schema), og_type="website"),
+        "<body>",
+        topbar(1),
+        '<main id="main">',
+        '<div class="wrap">',
+        '<div class="crumbs"><a href="../">The Book</a> → <span>%s</span></div>'
+        % e(title.split(" — ")[0]),
+        body,
+        "</div>",
+        "</main>",
+        footer(1, "an information page about the project"),
+    ])
+    write(os.path.join(slug_dir(slug), "index.html"), page)
+    return url
+
+
+_OUT = [None]
+
+
+def slug_dir(slug):
+    return os.path.join(_OUT[0], slug)
+
+
+def about_page(manifest):
+    t = manifest.get("totals") or {}
+    works, chapters = t.get("works", 0), t.get("chapters", 0)
+    body = """
+<h1>About {org}</h1>
+<p class="lede">{org} is a free, independent project. It publishes biblical
+and related ancient texts in the order scholars believe they were written,
+lets you search and read them, and reads them aloud — in a synthetic voice,
+not a human one.</p>
+
+<h2>The voice is AI-generated</h2>
+<p>Every recorded reading on this site, and on our 24/7 streams, is produced by
+a text-to-speech model (<strong>Kokoro</strong>, voice “bm_lewis”). There is no
+human narrator. The audio files are published at the
+{ia} as one audio file per chapter ({chapters:,} chapters) with verse timings;
+the Internet Archive hosts them, it did not record them. When you press
+Listen, the page plays that synthetic reading, or your own device’s built-in
+speech voice if the recording is not available.</p>
+
+<h2>What the library is</h2>
+<p>{works:,} works and {chapters:,} chapters of the Jewish, Protestant,
+Catholic, Orthodox and Ethiopian canons, with the apocrypha, pseudepigrapha
+and Apostolic Fathers, arranged by when each is dated — not by traditional
+Bible order. That order is a scholarly reconstruction, not a fact, and the
+site says so. The texts are public domain: the World English Bible
+(eBible.org) for the canonical books, R. H. Charles’s 1917 Enoch and Jubilees,
+and the Ante-Nicene Fathers, among others. Nothing is taken from a modern
+copyrighted translation. See the <a href="../press/">credits</a> for the
+full list, and the <a href="../#/accuracy">accuracy report</a> for what has
+been checked and what has not.</p>
+
+<h2>The livestreams</h2>
+<p>The same reading plays around the clock on {channels}. These are
+pre-rendered playback streams in the order the texts were written, not live
+performances. Where a platform has a rerun label we use it. Some replies in
+stream chat are written by an AI assistant working for the project.</p>
+
+<h2>What this is not</h2>
+<ul>
+<li>It is not medical, mental-health or pastoral advice. Many people listen at
+bedtime; we make no claim that it helps with sleep, anxiety or any condition.</li>
+<li>It takes no side between the canons: it prints them all and says which is
+which.</li>
+<li>It has no ads and needs no account. Reading and listening are free; an account is an optional way to keep your place across devices.</li>
+</ul>
+
+<h2>Who runs it</h2>
+<p>{org} is published by {publisher}, an independent publisher. The code is open source (MIT licence) and
+public at {repo}; the texts are public domain and the reference data carries
+its own credits on the <a href="../press/">credits page</a>. See
+<a href="../contact/">Contact</a> to get in touch and
+<a href="../privacy/">Privacy</a> for what is and is not collected.</p>
+""".format(org=e(ORG), publisher=e(PUBLISHER), works=works, chapters=chapters,
+           ia=_ext(AUDIO_ITEM, "Internet Archive"),
+           channels=_channel_links(), repo=_ext(REPO, "GitHub"))
+    return _info_page(
+        "about", "About — " + ORG,
+        "The Book and Me is a free, independent library of biblical and related "
+        "ancient texts in the order they were written, read aloud by a "
+        "synthetic (AI) voice.", body, "AboutPage", manifest)
+
+
+def contact_page(manifest):
+    if CONTACT_EMAIL:
+        mail = ('<li><strong>Email:</strong> <a href="mailto:{m}">{m}</a></li>'
+                .format(m=e(CONTACT_EMAIL)))
+    else:
+        mail = ""
+    body = """
+<h1>Contact</h1>
+<p class="lede">How to reach {org}. It is a small independent project, so
+replies can take a few days.</p>
+<ul>
+{mail}
+<li><strong>YouTube:</strong> {yt}. Comment on a video or in the live chat.</li>
+<li><strong>Twitch and Kick:</strong> {tw}, {kick} — stream chat.</li>
+<li><strong>Corrections to a text or a date:</strong> open an issue on
+{repo}. Say the work, the chapter and what is wrong; the accuracy report
+explains how checks are done.</li>
+</ul>
+<p class="muted">We will never ask for a password, payment or personal
+details by message. See <a href="../privacy/">Privacy</a>.</p>
+""".format(org=e(ORG), mail=mail, yt=_ext(YOUTUBE, "The Book and Me on YouTube"),
+           tw=_ext(CHANNELS[1][1], "twitch.tv/xtheorx"),
+           kick=_ext(CHANNELS[2][1], "kick.com/jonesproject"),
+           repo=_ext(REPO + "/issues", "the project’s GitHub issues"))
+    return _info_page(
+        "contact", "Contact — " + ORG,
+        "How to reach The Book and Me: the YouTube channel, stream chat, "
+        "and GitHub issues for corrections.", body, "ContactPage", manifest)
+
+
+def privacy_page(manifest):
+    reach = ("through the contact address on the <a href=\"../contact/\">Contact</a> page"
+             if CONTACT_EMAIL else
+             "through the channels on the <a href=\"../contact/\">Contact</a> page")
+    mail_note = (
+        "<li><strong>Email.</strong> If you write to us, we keep your message "
+        "and address only to reply and to fix what you reported. They are not "
+        "shared or sold.</li>" if CONTACT_EMAIL else
+        "<li><strong>Messages.</strong> If you contact us through YouTube, "
+        "Twitch, Kick or GitHub, that platform’s own privacy policy applies to "
+        "the message.</li>")
+    body = """
+<h1>Privacy</h1>
+<p class="lede">Short version: accounts are optional and off by default, so
+nothing you save leaves your device unless you choose to sign in. No ads, no
+sale of personal data, and no cookies unless you sign in. Last updated
+{date}.</p>
+
+<h2>What this site counts</h2>
+<p>We use <strong>Cloudflare Web Analytics</strong> to count visits: which pages
+are read and roughly where visitors come from. Cloudflare describes it as
+cookie-less and says it does not use client-side storage or fingerprinting to
+build a profile of a person. We use the totals to see which texts are read; we
+do not look at individuals and we do not sell or share the data. Cloudflare
+also serves the site and, like any host, handles the technical details of a
+request (such as the IP address) to deliver pages and block abuse, under its
+<a href="https://www.cloudflare.com/privacypolicy/" rel="noopener noreferrer">own
+privacy policy</a>.</p>
+
+<h2>What stays on your device</h2>
+<p>The reader remembers your theme, reading position, saved verses and any
+diary notes in your browser’s local storage, and keeps an offline copy of
+pages through a service worker. Unless you sign in (next section), this data
+is on your device only; the site has no server that receives it, and clearing
+your browser’s site data removes it.</p>
+
+<h2 id="accounts">Optional accounts</h2>
+<p>You never need an account. If you want your saved verses and notes on more
+than one device you can sign in with your email address. There is no password:
+we email you a one-time link that works once and expires in 15 minutes.</p>
+<p><strong>What is stored on our server if you sign in:</strong></p>
+<ul>
+<li>your email address;</li>
+<li>the things you chose to keep: saved verses (with the verse text and
+reference), your notes on them, your diary entries, your reading position, and
+a few settings (theme, text size, listening speed and pace and similar);</li>
+<li>a hash of your current sign-in session on each device, and, for a short
+time, a hash of an unused sign-in link;</li>
+<li>abuse-limit counters keyed by a hash of your address and connection, not
+the address itself, kept for at most two days.</li>
+</ul>
+<p><strong>What is not stored:</strong> any password (none exists), your search
+history, which chapters you read or listen to, or any profile of you. Signing
+in does not change how the Cloudflare visit counter above works.</p>
+<p><strong>Cookie.</strong> Signing in sets one cookie, <code>tbm_session</code>. It
+is HttpOnly, sent only to this site’s sign-in and sync addresses, and lasts 30
+days (renewed when you use it). Signing out removes it. Nobody who has not
+signed in is given a cookie.</p>
+<p><strong>Who handles it.</strong> The data is held in a Cloudflare D1 database in
+our Cloudflare account. The sign-in email is sent through {mail_provider}, which
+therefore sees your address and the message. We do not sell or share the data,
+and we do not use it for advertising.</p>
+<p><strong>Keeping it, taking it, deleting it.</strong> Your data is kept until you
+delete it. On the <a href="../#/account">Account page</a> you can download
+everything held for you, sign out, or choose <em>Delete my account and data</em>,
+which immediately and permanently removes your email address, your items and
+all your sessions from our database. Items you delete yourself are kept as
+small deletion markers, without their content, for up to 90 days so your other
+devices learn of the deletion, and then removed. Copies already in your own
+browsers are not touched and remain yours. Cloudflare’s database platform keeps
+point-in-time recovery history for a short period (up to 30 days), so deleted
+data can persist there until it ages out. If you cannot use the page, write to
+us and we will delete it by hand. We do not currently delete inactive accounts
+automatically.</p>
+
+<h2>Other services your browser contacts</h2>
+<ul>
+<li><strong>Internet Archive</strong> (archive.org) — when you play the recorded
+reading, your browser fetches the audio from there, so it sees your IP address
+and the file requested, under <a href="https://archive.org/about/terms.php"
+rel="noopener noreferrer">its terms</a>.</li>
+<li><strong>Kick and decapi.me</strong> — the front page checks whether our
+streams are live by asking kick.com and decapi.me (a Twitch uptime lookup). Those
+requests carry no cookies from us, but those services see your IP address.</li>
+<li><strong>Links out</strong> — YouTube, Twitch, Kick and GitHub. Once you follow a
+link, that site’s policy applies.</li>
+</ul>
+
+<h2>What we do not do</h2>
+<ul>
+<li>No required accounts, newsletters or advertising, and no sign-up wall.</li>
+<li>No selling or renting of personal data, and no data brokers.</li>
+<li>No health, location or other sensitive data is asked for or collected.</li>
+</ul>
+{mail}
+<p>Questions about any of this? Ask {reach}. If this page ever stops matching
+how the site works, that is a bug we want to hear about.</p>
+""".format(date=POLICY_DATE, mail="<ul>%s</ul>" % mail_note, reach=reach,
+           mail_provider=e(MAIL_PROVIDER))
+    return _info_page(
+        "privacy", "Privacy — " + ORG,
+        "Optional accounts, no ads, no sale of personal data. The Book and Me "
+        "counts visits with cookie-less Cloudflare Web Analytics; reader data "
+        "stays on your device unless you choose to sign in.", body, "WebPage", manifest)
+
+
+def press_page(manifest):
+    t = manifest.get("totals") or {}
+    works, chapters = t.get("works", 0), t.get("chapters", 0)
+    assets = [
+        ("Mark (SVG)", "../assets/logo.svg"),
+        ("Wordmark lockup (SVG)", "../assets/lockup.svg"),
+        ("Icon, 512 px (PNG)", "../assets/icon-512.png"),
+        ("Channel avatar, 800 px (PNG)", "../assets/press/the-book-and-me-avatar.png"),
+        ("Channel banner, 2560 × 1440 (JPG)", "../assets/press/the-book-and-me-banner.jpg"),
+    ]
+    asset_li = "\n".join('<li><a href="%s">%s</a></li>' % (e(h), e(n)) for n, h in assets)
+    short = ("%s is a free, independent library of %d biblical and related "
+             "ancient texts, arranged in the order scholars believe they were "
+             "written and read aloud by a synthetic (AI) voice. The texts are "
+             "public domain. thebookandme.com" % (ORG, works))
+    contact = ("Email %s, or " % CONTACT_EMAIL) if CONTACT_EMAIL else ""
+    body = """
+<h1>Press and credits</h1>
+<p class="lede">Facts, a short description and logo files for anyone writing
+about {org}. Everything here can be checked on the site.</p>
+
+<h2>Quick facts</h2>
+<ul>
+<li><strong>Name:</strong> {org} (the reader is titled “The Book”)</li>
+<li><strong>Publisher:</strong> {publisher}</li>
+<li><strong>What it is:</strong> A free, searchable reader and 24/7 read-aloud stream of
+{works:,} biblical and related ancient texts ({chapters:,} chapters), ordered by
+date of composition rather than by traditional Bible order.</li>
+<li><strong>Voice:</strong> <strong>AI-generated.</strong> Kokoro text-to-speech, voice
+“bm_lewis”. No human narrator. Audio is hosted by the {ia}.</li>
+<li><strong>Streams:</strong> Pre-rendered playback on {channels}.</li>
+<li><strong>Cost:</strong> Free to read and listen. No account needed, no ads.</li>
+<li><strong>Website:</strong> <a href="{base}/">thebookandme.com</a></li>
+<li><strong>Source:</strong> Code under the MIT licence at {repo}.</li>
+</ul>
+
+<h2>Short description</h2>
+<p>{short}</p>
+
+<h2>Logos and images</h2>
+<p>Provided for press and review use. Please do not imply endorsement.</p>
+<p><img src="../assets/press/the-book-and-me-avatar.png" alt="The Book and Me logo: an open book with a flame, cream on plum" width="160" height="160"></p>
+<ul>
+{assets}
+</ul>
+
+<h2>Texts, data and audio credits</h2>
+<ul>
+<li><strong>World English Bible with Deuterocanon</strong> (eBible.org), dedicated
+to the public domain: the canonical Old and New Testaments and the deuterocanon.</li>
+<li><strong>R. H. Charles</strong> (1917, Enoch and Jubilees), the
+<strong>Ante-Nicene Fathers</strong> (1870 and 1885), and the other editions named
+on each work’s page: public domain by age. The full list of editions is in the
+<a href="{repo_url}#sources">project README</a>.</li>
+<li><strong>Word definitions:</strong> Easton’s Bible Dictionary (1897, public
+domain) in a parse by NEUU, CC BY 4.0.</li>
+<li><strong>Place coordinates:</strong> OpenBible.info Bible Geocoding, CC BY 4.0,
+with parts derived from OpenStreetMap contributors (ODbL). Land outlines: Natural
+Earth, public domain.</li>
+<li><strong>Voice:</strong> Kokoro text-to-speech model, rendered by this project;
+the resulting audio is published at the {ia} with a CC0 dedication.</li>
+</ul>
+<p>The <a href="../#/accuracy">accuracy report</a> sets out what was checked
+against the sources, what was corrected and what is still missing.</p>
+
+<h2>Press contact</h2>
+<p>{contact}see <a href="../contact/">Contact</a>. For how the site handles
+data, see <a href="../privacy/">Privacy</a>.</p>
+""".format(org=e(ORG), publisher=e(PUBLISHER), works=works, chapters=chapters, base=BASE,
+           ia=_ext(AUDIO_ITEM, "Internet Archive"), channels=_channel_links(),
+           repo=_ext(REPO, "GitHub"), repo_url=e(REPO), short=e(short),
+           assets=asset_li, contact=contact)
+    return _info_page(
+        "press", "Press and credits — " + ORG,
+        "Facts, a short description, logo files and source credits for The "
+        "Book and Me, a free library of ancient texts read aloud by a "
+        "synthetic (AI) voice.", body, "WebPage", manifest)
+
+
+def info_pages(manifest, out_dir):
+    _OUT[0] = out_dir
+    return [about_page(manifest), contact_page(manifest),
+            privacy_page(manifest), press_page(manifest)]
+
+
 NL = chr(10)
 
 
@@ -890,13 +1297,65 @@ def sitemap(out_dir, urls, changed=None):
                          % (len(urls), len(set(urls))))
     if changed is None:
         changed = source_date()
+    # The text pages carry the date the text moved. The home page and the
+    # about, contact, privacy and press pages are the site's own writing, which
+    # moves on a different clock (privacy says "last updated" on its face), so
+    # they carry the date of the last commit that touched that writing. Never
+    # earlier than the text date: a page cannot be older than the library it
+    # describes.
+    own = max(changed, site_date())
+    own_urls = {BASE + "/"} | {"%s/%s/" % (BASE, p) for p in INFO_PAGES}
     out = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
         out.append("  <url><loc>%s</loc><lastmod>%s</lastmod></url>"
-                   % (e(u), changed))
+                   % (e(u), own if u in own_urls else changed))
     out.append("</urlset>")
     write(os.path.join(out_dir, "sitemap.xml"), NL.join(out) + NL)
+
+
+def _env_date(name):
+    """A date handed in by the deploy, which builds in a copy of the repo with
+    no git history and so cannot ask git itself. Only a real YYYY-MM-DD is
+    believed."""
+    got = os.environ.get(name, "").strip()
+    if len(got) == 10 and got[4] == "-":
+        try:
+            import datetime
+            datetime.date.fromisoformat(got)
+            return got
+        except ValueError:
+            pass
+    return None
+
+
+def site_date():
+    """When the site's own writing last changed, as YYYY-MM-DD: the last commit
+    that touched the generator, the home page or the stylesheet and script.
+    Falls back to the newest mtime of those files, like source_date()."""
+    import subprocess, datetime
+    got = _env_date("BOOK_SITE_DATE")
+    if got:
+        return got
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
+    paths = ["tools/build_pages.py", "docs/index.html"]
+    try:
+        run = subprocess.run(
+            ["git", "-C", root, "log", "-1", "--format=%cs", "--"] + paths,
+            capture_output=True, text=True, encoding="utf-8", timeout=20)
+        stamp = (run.stdout or "").strip()
+        if len(stamp) == 10 and stamp[4] == "-":
+            return stamp
+    except Exception:
+        pass
+    newest = 0
+    for rel in paths:
+        try:
+            newest = max(newest, os.path.getmtime(os.path.join(root, rel)))
+        except OSError:
+            pass
+    return (datetime.date.fromtimestamp(newest) if newest
+            else datetime.date.today()).isoformat()
 
 
 def source_date():
@@ -909,6 +1368,9 @@ def source_date():
     different one.
     """
     import subprocess, datetime
+    forced = _env_date("BOOK_SOURCE_DATE")
+    if forced:
+        return forced
     root = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
     try:
         got = subprocess.run(
@@ -960,6 +1422,7 @@ def build(out_dir):
     urls = [BASE + "/", contents_page(manifest, out_dir),
             timeline_page(manifest, out_dir),
             thread_hub_page(threads, out_dir)]
+    urls.extend(info_pages(manifest, out_dir))
     for t in threads:
         urls.append(thread_page(manifest, slugs_by_work, t, out_dir))
     works = 0
@@ -1020,9 +1483,9 @@ def build(out_dir):
 
     print("  %d work pages" % works)
     print("  %d chapter pages" % chapters_written)
-    print("  the timeline, and %d thread pages under a hub" % len(threads))
+    print("  the timeline, %d thread pages under a hub, and the about, contact, privacy and press pages" % len(threads))
     print("  %d URLs in sitemap.xml, plus robots.txt and 404.html" % len(urls))
-    print("  %d pages" % (works + chapters_written + len(threads) + 4))
+    print("  %d pages" % (works + chapters_written + len(threads) + 4 + len(INFO_PAGES)))
 
 
 def main(argv):

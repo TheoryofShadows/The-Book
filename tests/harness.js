@@ -33,9 +33,32 @@ const TYPES = {
 };
 
 /* A static file server, so the checks need nothing installed to serve with. */
-function serve(root) {
+function serve(root, opts) {
+  const api = opts && opts.api;
   const server = http.createServer((req, res) => {
     const rel = decodeURIComponent(req.url.split('?')[0].split('#')[0]);
+    /* /api/* goes to the account worker when a suite supplies one -- the real
+       handler from worker/worker.js, not a copy of it. */
+    if (api && (rel === '/api' || rel.startsWith('/api/'))) {
+      const chunks = [];
+      req.on('data', c => chunks.push(c));
+      req.on('end', async () => {
+        try {
+          const body = chunks.length ? Buffer.concat(chunks) : undefined;
+          const r = await api(new Request('http://' + req.headers.host + req.url, {
+            method: req.method, headers: req.headers,
+            body: req.method === 'GET' || req.method === 'HEAD' ? undefined : body
+          }));
+          const headers = {};
+          r.headers.forEach((v, k) => { if (k !== 'set-cookie') headers[k] = v; });
+          const cookies = r.headers.getSetCookie ? r.headers.getSetCookie() : [];
+          if (cookies.length) headers['set-cookie'] = cookies;
+          res.writeHead(r.status, headers);
+          res.end(Buffer.from(await r.arrayBuffer()));
+        } catch (e) { res.writeHead(500).end(String(e)); }
+      });
+      return;
+    }
     let file = path.join(root, rel);
     if (!file.startsWith(path.resolve(root))) { res.writeHead(403).end(); return; }
     /* axe-core, for tests/access.test.js. script-src is 'self', so the scan
@@ -125,6 +148,13 @@ async function stubArchive(context) {
     contentType: 'application/json',
     body: '{}'
   }));
+  /* The pages load the Cloudflare Web Analytics beacon. No suite should count
+     as a visit or wait on a third party, so it is answered here with an
+     empty script and an empty 204, never the network. */
+  await context.route(/cloudflareinsights\.com/, route => route.fulfill(
+    /beacon\.min\.js/.test(route.request().url())
+      ? { status: 200, contentType: 'application/javascript', body: '' }
+      : { status: 204, body: '' }));
 }
 
 async function launch() {

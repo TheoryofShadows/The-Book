@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Book — Biblical and Related Ancient Texts in Order of Composition</title>
-<meta name="description" content="The Jewish, Protestant, Catholic and Eastern Orthodox canons complete, the Ethiopian all but four books that survive in no public-domain English, together with the apocrypha and the Apostolic Fathers, arranged by when they were written. Fully searchable, with a published accuracy audit.">
+<meta name="description" content="The Bible and the ancient texts around it, 172 works in the order they were written. Free, searchable, read aloud by an AI voice. Public domain.">
 <link rel="stylesheet" href="assets/app.css">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
@@ -47,15 +47,22 @@
      only archive.org itself blocks the chapter index and the recording.
      *.archive.org is that CDN. blob: is the typed copy Firefox plays,
      because the archive labels .opus as application/octet-stream. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self' https://archive.org https://*.archive.org https://kick.com https://decapi.me; media-src 'self' blob: https://archive.org https://*.archive.org">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' https://static.cloudflareinsights.com; worker-src 'self'; manifest-src 'self'; connect-src 'self' https://cloudflareinsights.com https://archive.org https://*.archive.org https://kick.com https://decapi.me; media-src 'self' blob: https://archive.org https://*.archive.org">
+<!-- Cloudflare Web Analytics: cookieless visit counts. In the head so the
+     offline single-file copy, which keeps only the body, does not carry it. -->
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "8f4f21d9a22040fbb72ceb3302ecb4ea"}'></script><!-- End Cloudflare Web Analytics -->
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="The Book">
 <meta property="og:title" content="The Book — the library in the order it was written">
 <meta property="og:description" content="172 works, 2,537 chapters, 1.22 million words of the Jewish, Protestant, Catholic, Orthodox and Ethiopian canons, arranged by date of composition. Public domain, searchable, and audited.">
-<meta property="og:image" content="https://thebookandme.com/assets/icon-512.png">
+<meta property="og:image" content="https://thebookandme.com/assets/og-card.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Book and Me: an open book by candlelight under a night sky">
 <meta property="og:url" content="https://thebookandme.com/">
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://thebookandme.com/assets/og-card.jpg">
 
 <!-- The 2,723 generated pages under /read/, /contents/, /threads/ and
      /timeline/ each carry Chapter, Book, Article or CollectionPage
@@ -69,8 +76,20 @@
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "The Book",
-  "alternateName": "The Book \u2014 the library in the order it was written",
+  "alternateName": ["The Book and Me", "The Book \u2014 the library in the order it was written"],
   "url": "https://thebookandme.com/",
+  "publisher": {
+    "@type": "Organization",
+    "name": "OpenPrints",
+    "brand": {"@type": "Brand", "name": "The Book and Me"},
+    "url": "https://thebookandme.com/",
+    "logo": "https://thebookandme.com/assets/icon-512.png",
+    "sameAs": [
+      "https://www.youtube.com/@thebookandme",
+      "https://www.twitch.tv/xtheorx",
+      "https://kick.com/jonesproject"
+    ]
+  },
   "description": "The Jewish, Protestant, Catholic and Eastern Orthodox canons complete, the Ethiopian all but four books that survive in no public-domain English, together with the apocrypha and the Apostolic Fathers, arranged by when they were written.",
   "inLanguage": "en",
   "license": "https://creativecommons.org/licenses/by/4.0/",
@@ -189,17 +208,17 @@
        other end of it. tools/build_standalone.py cuts everything between
        these two markers out of the body it inlines. -->
   <!-- online-only:start -->
+  <p class="muted foot-links">
+    <a href="/about/">About</a> · <a href="/contact/">Contact</a> ·
+    <a href="/privacy/">Privacy</a> · <a href="/press/">Press and credits</a> ·
+    <a href="#/account">Account (optional)</a>
+    — read aloud by an AI voice.
+  </p>
   <p class="muted">
     <strong>Take the whole library with you.</strong>
     <a href="the-book.html" download>Download it as one file</a> — every text,
     the search, the definitions and the map in a single page that opens from
     your own disk with the network off.
-  </p>
-  <p class="muted">
-    <strong>The reading stays free.</strong>
-    If the library is useful, you can
-    <a href="https://chaostheorx.gumroad.com/l/sxjsqm">leave something toward the work</a>.
-    The amount is yours to set.
   </p>
   <!-- online-only:end -->
 

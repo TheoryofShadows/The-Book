@@ -23,7 +23,7 @@ async function waitTucked(page, want, ms) {
 }
 
 const ROUTES = ['#/', '#/threads', '#/contents', '#/search/lion', '#/canons',
-                '#/saved', '#/accuracy', '#/read/amos/2', '#/read/psalms/118'];
+                '#/saved', '#/account', '#/accuracy', '#/read/amos/2', '#/read/psalms/118'];
 
 module.exports = async function layout(t, ctx) {
   for (const width of PHONES) {
