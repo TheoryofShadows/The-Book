@@ -889,6 +889,8 @@ def not_found_page(out_dir):
 # documented anywhere. The voice is synthetic and the pages say so first.
 
 ORG = "The Book and Me"
+# The publisher, by the owner's say-so. A name and nothing else: no address, staff or claims.
+PUBLISHER = "OpenPrints"
 ORG_ID = BASE + "/#organization"
 CHANNELS = [
     ("YouTube", "https://www.youtube.com/@thebookandme"),
@@ -915,10 +917,10 @@ def org_schema():
     node = {
         "@type": "Organization",
         "@id": ORG_ID,
-        "name": ORG,
-        "alternateName": SITE,
+        "name": PUBLISHER,
         "url": BASE + "/",
         "logo": BASE + "/assets/icon-512.png",
+        "brand": {"@type": "Brand", "name": ORG, "alternateName": SITE},
         "description": ("A free, searchable library of biblical and related "
                         "ancient texts in the order they were written, read "
                         "aloud by a synthetic voice."),
@@ -1037,12 +1039,12 @@ which.</li>
 </ul>
 
 <h2>Who runs it</h2>
-<p>An independent maintainer. The code is open source (MIT licence) and
+<p>{org} is published by {publisher}, an independent publisher. The code is open source (MIT licence) and
 public at {repo}; the texts are public domain and the reference data carries
 its own credits on the <a href="../press/">credits page</a>. See
 <a href="../contact/">Contact</a> to get in touch and
 <a href="../privacy/">Privacy</a> for what is and is not collected.</p>
-""".format(org=e(ORG), works=works, chapters=chapters,
+""".format(org=e(ORG), publisher=e(PUBLISHER), works=works, chapters=chapters,
            ia=_ext(AUDIO_ITEM, "Internet Archive"),
            channels=_channel_links(), repo=_ext(REPO, "GitHub"))
     return _info_page(
@@ -1212,6 +1214,7 @@ about {org}. Everything here can be checked on the site.</p>
 <h2>Quick facts</h2>
 <ul>
 <li><strong>Name:</strong> {org} (the reader is titled “The Book”)</li>
+<li><strong>Publisher:</strong> {publisher}</li>
 <li><strong>What it is:</strong> A free, searchable reader and 24/7 read-aloud stream of
 {works:,} biblical and related ancient texts ({chapters:,} chapters), ordered by
 date of composition rather than by traditional Bible order.</li>
@@ -1255,7 +1258,7 @@ against the sources, what was corrected and what is still missing.</p>
 <h2>Press contact</h2>
 <p>{contact}see <a href="../contact/">Contact</a>. For how the site handles
 data, see <a href="../privacy/">Privacy</a>.</p>
-""".format(org=e(ORG), works=works, chapters=chapters, base=BASE,
+""".format(org=e(ORG), publisher=e(PUBLISHER), works=works, chapters=chapters, base=BASE,
            ia=_ext(AUDIO_ITEM, "Internet Archive"), channels=_channel_links(),
            repo=_ext(REPO, "GitHub"), repo_url=e(REPO), short=e(short),
            assets=asset_li, contact=contact)

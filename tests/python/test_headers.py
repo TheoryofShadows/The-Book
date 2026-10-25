@@ -55,7 +55,8 @@ class TheHeaders(unittest.TestCase):
 
     def test_the_offline_copy_is_not_given_the_policy(self):
         """It has an inline script, so the header policy would blank it."""
-        self.assertRegex(self.h, r"/the-book\.html\n  ! Content-Security-Policy")
+        for path in ("/the-book", "/the-book.html"):
+            self.assertIn(path + "\n  ! Content-Security-Policy", self.h)
 
 
 if __name__ == "__main__":

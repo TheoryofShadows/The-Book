@@ -34,6 +34,8 @@ HEADERS = f"""/*
   X-Frame-Options: DENY
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=()
   Content-Security-Policy: {CSP}
+/the-book
+  ! Content-Security-Policy
 /the-book.html
   ! Content-Security-Policy
 /sw.js
@@ -112,10 +114,15 @@ def deploy(site, project, token, account, branch="main"):
     n_up, n_all = upload(files, jwt)
     man = {k: v[0] for k, v in files.items()}
     b = uuid.uuid4().hex
-    parts = [("manifest", json.dumps(man)), ("branch", branch), ("_headers", (site / "_headers").read_text())]
-    if (site / "_routes.json").exists():
-        parts.append(("_routes.json", (site / "_routes.json").read_text()))
+    parts = [("manifest", json.dumps(man)), ("branch", branch)]
     body = b"".join(f'--{b}\r\nContent-Disposition: form-data; name="{n}"\r\n\r\n{v}\r\n'.encode() for n, v in parts)
+    # _headers and _routes.json must be sent as FILE parts (with a filename), the way wrangler
+    # does. As plain form fields the API accepts them and silently ignores them, which is how
+    # the header rules went unapplied until now (sw.js was not no-cache, no HSTS).
+    for name, ctype in (("_headers", "text/plain"), ("_routes.json", "application/json")):
+        if (site / name).exists():
+            body += (f'--{b}\r\nContent-Disposition: form-data; name="{name}"; filename="{name}"\r\n'
+                     f'Content-Type: {ctype}\r\n\r\n').encode() + (site / name).read_bytes() + b"\r\n"
     if (site / "_worker.js").exists():
         body += (f'--{b}\r\nContent-Disposition: form-data; name="_worker.js"; filename="_worker.js"\r\n'
                  f'Content-Type: application/javascript+module\r\n\r\n').encode() + (site / "_worker.js").read_bytes() + b"\r\n"

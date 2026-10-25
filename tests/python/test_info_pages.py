@@ -51,7 +51,13 @@ class InfoPages(unittest.TestCase):
                       self.html["about"], re.S)
         graph = json.loads(m.group(1))["@graph"]
         org = [n for n in graph if n["@type"] == "Organization"][0]
-        self.assertEqual(org["name"], "The Book and Me")
+        self.assertEqual(org["name"], "OpenPrints")
+        self.assertEqual(org["brand"]["name"], "The Book and Me")
+        # a name and nothing else: no invented address, staff or claims
+        for banned in ("address", "founder", "employee", "telephone", "foundingDate", "award"):
+            self.assertNotIn(banned, org)
+        for slug in ("about", "press"):
+            self.assertIn("OpenPrints", self.html[slug])
         self.assertEqual(sorted(org["sameAs"]), sorted([
             "https://www.youtube.com/@thebookandme",
             "https://www.twitch.tv/xtheorx",
