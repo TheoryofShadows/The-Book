@@ -211,7 +211,7 @@ def head(title, description, canonical, depth, extra_head="", og_type="article")
         # arrive. *.archive.org is the CDN. blob: is the retyped file
         # Firefox will decode; the archive serves .opus as
         # application/octet-stream.
-        '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; base-uri \'self\'; object-src \'none\'; img-src \'self\' data:; style-src \'self\' \'unsafe-inline\'; script-src \'self\' https://static.cloudflareinsights.com; worker-src \'self\'; manifest-src \'self\'; connect-src \'self\' https://cloudflareinsights.com https://archive.org https://*.archive.org; media-src \'self\' blob: https://archive.org https://*.archive.org">',
+        '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; base-uri \'self\'; form-action \'self\'; object-src \'none\'; img-src \'self\' data:; style-src \'self\' \'unsafe-inline\'; script-src \'self\' https://static.cloudflareinsights.com; worker-src \'self\'; manifest-src \'self\'; connect-src \'self\' https://cloudflareinsights.com https://archive.org https://*.archive.org; media-src \'self\' blob: https://archive.org https://*.archive.org">',
         # Cloudflare Web Analytics, cookieless; allowed by the policy above.
         '<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon=\'{"token": "8f4f21d9a22040fbb72ceb3302ecb4ea"}\'></script>',
         '<meta property="og:type" content="%s">' % e(og_type),
@@ -272,7 +272,8 @@ def footer(depth, what="a plain page of one chapter"):
   </p>
   <p class="muted foot-links">
     <a href="{up}about/">About</a> · <a href="{up}contact/">Contact</a> ·
-    <a href="{up}privacy/">Privacy</a> · <a href="{up}press/">Press and credits</a>
+    <a href="{up}privacy/">Privacy</a> · <a href="{up}press/">Press and credits</a> ·
+    <a href="{up}#/account">Account (optional)</a>
     — read aloud by an AI voice.
   </p>
   <p class="muted">
@@ -849,7 +850,7 @@ def not_found_page(out_dir):
 <title>Not found — {site}</title>
 <meta name="robots" content="noindex">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self' https://archive.org https://*.archive.org; media-src 'self' blob: https://archive.org https://*.archive.org">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self' https://archive.org https://*.archive.org; media-src 'self' blob: https://archive.org https://*.archive.org">
 <link rel="stylesheet" href="{base}/assets/app.css">
 <link rel="icon" href="{base}/assets/favicon.svg" type="image/svg+xml">
 <script src="/assets/short-link.js"></script>
@@ -894,6 +895,10 @@ YOUTUBE = CHANNELS[0][1]
 REPO = "https://github.com/TheoryofShadows/The-Book"
 AUDIO_ITEM = "https://archive.org/details/the-book-read-aloud"
 POLICY_DATE = "25 October 2026"
+
+# Who sends the sign-in email. The privacy page names it, so it must be the
+# service the deployed worker actually uses (see ACCOUNTS.md).
+MAIL_PROVIDER = "Resend"
 
 # The public contact address: Cloudflare Email Routing forwards it to the
 # maintainer. Set to None to fall back to the YouTube/GitHub contact text.
@@ -1024,7 +1029,7 @@ stream chat are written by an AI assistant working for the project.</p>
 bedtime; we make no claim that it helps with sleep, anxiety or any condition.</li>
 <li>It takes no side between the canons: it prints them all and says which is
 which.</li>
-<li>It has no accounts and no ads. Reading and listening are free.</li>
+<li>It has no ads and needs no account. Reading and listening are free; an account is an optional way to keep your place across devices.</li>
 </ul>
 
 <h2>Who runs it</h2>
@@ -1086,8 +1091,10 @@ def privacy_page(manifest):
         "the message.</li>")
     body = """
 <h1>Privacy</h1>
-<p class="lede">Short version: no accounts, no ads, no sale of personal data,
-and no cookies set by this site. Last updated {date}.</p>
+<p class="lede">Short version: accounts are optional and off by default, so
+nothing you save leaves your device unless you choose to sign in. No ads, no
+sale of personal data, and no cookies unless you sign in. Last updated
+{date}.</p>
 
 <h2>What this site counts</h2>
 <p>We use <strong>Cloudflare Web Analytics</strong> to count visits: which pages
@@ -1103,8 +1110,48 @@ privacy policy</a>.</p>
 <h2>What stays on your device</h2>
 <p>The reader remembers your theme, reading position, saved verses and any
 diary notes in your browser’s local storage, and keeps an offline copy of
-pages through a service worker. This data is on your device only; the site has
-no server that receives it, and clearing your browser’s site data removes it.</p>
+pages through a service worker. Unless you sign in (next section), this data
+is on your device only; the site has no server that receives it, and clearing
+your browser’s site data removes it.</p>
+
+<h2 id="accounts">Optional accounts</h2>
+<p>You never need an account. If you want your saved verses and notes on more
+than one device you can sign in with your email address. There is no password:
+we email you a one-time link that works once and expires in 15 minutes.</p>
+<p><strong>What is stored on our server if you sign in:</strong></p>
+<ul>
+<li>your email address;</li>
+<li>the things you chose to keep: saved verses (with the verse text and
+reference), your notes on them, your diary entries, your reading position, and
+a few settings (theme, text size, listening speed and pace and similar);</li>
+<li>a hash of your current sign-in session on each device, and, for a short
+time, a hash of an unused sign-in link;</li>
+<li>abuse-limit counters keyed by a hash of your address and connection, not
+the address itself, kept for at most two days.</li>
+</ul>
+<p><strong>What is not stored:</strong> any password (none exists), your search
+history, which chapters you read or listen to, or any profile of you. Signing
+in does not change how the Cloudflare visit counter above works.</p>
+<p><strong>Cookie.</strong> Signing in sets one cookie, <code>tbm_session</code>. It
+is HttpOnly, sent only to this site’s sign-in and sync addresses, and lasts 30
+days (renewed when you use it). Signing out removes it. Nobody who has not
+signed in is given a cookie.</p>
+<p><strong>Who handles it.</strong> The data is held in a Cloudflare D1 database in
+our Cloudflare account. The sign-in email is sent through {mail_provider}, which
+therefore sees your address and the message. We do not sell or share the data,
+and we do not use it for advertising.</p>
+<p><strong>Keeping it, taking it, deleting it.</strong> Your data is kept until you
+delete it. On the <a href="../#/account">Account page</a> you can download
+everything held for you, sign out, or choose <em>Delete my account and data</em>,
+which immediately and permanently removes your email address, your items and
+all your sessions from our database. Items you delete yourself are kept as
+small deletion markers, without their content, for up to 90 days so your other
+devices learn of the deletion, and then removed. Copies already in your own
+browsers are not touched and remain yours. Cloudflare’s database platform keeps
+point-in-time recovery history for a short period (up to 30 days), so deleted
+data can persist there until it ages out. If you cannot use the page, write to
+us and we will delete it by hand. We do not currently delete inactive accounts
+automatically.</p>
 
 <h2>Other services your browser contacts</h2>
 <ul>
@@ -1121,19 +1168,20 @@ link, that site’s policy applies.</li>
 
 <h2>What we do not do</h2>
 <ul>
-<li>No accounts, sign-ups, newsletters or advertising.</li>
+<li>No required accounts, newsletters or advertising, and no sign-up wall.</li>
 <li>No selling or renting of personal data, and no data brokers.</li>
 <li>No health, location or other sensitive data is asked for or collected.</li>
 </ul>
 {mail}
 <p>Questions about any of this? Ask {reach}. If this page ever stops matching
 how the site works, that is a bug we want to hear about.</p>
-""".format(date=POLICY_DATE, mail="<ul>%s</ul>" % mail_note, reach=reach)
+""".format(date=POLICY_DATE, mail="<ul>%s</ul>" % mail_note, reach=reach,
+           mail_provider=e(MAIL_PROVIDER))
     return _info_page(
         "privacy", "Privacy — " + ORG,
-        "No accounts, no ads, no sale of personal data. The Book and Me counts "
-        "visits with cookie-less Cloudflare Web Analytics; reader data stays "
-        "on your device.", body, "WebPage", manifest)
+        "Optional accounts, no ads, no sale of personal data. The Book and Me "
+        "counts visits with cookie-less Cloudflare Web Analytics; reader data "
+        "stays on your device unless you choose to sign in.", body, "WebPage", manifest)
 
 
 def press_page(manifest):
@@ -1166,7 +1214,7 @@ date of composition rather than by traditional Bible order.</li>
 <li><strong>Voice:</strong> <strong>AI-generated.</strong> Kokoro text-to-speech, voice
 “bm_lewis”. No human narrator. Audio is hosted by the {ia}.</li>
 <li><strong>Streams:</strong> Pre-rendered playback on {channels}.</li>
-<li><strong>Cost:</strong> Free to read and listen. No accounts, no ads.</li>
+<li><strong>Cost:</strong> Free to read and listen. No account needed, no ads.</li>
 <li><strong>Website:</strong> <a href="{base}/">thebookandme.com</a></li>
 <li><strong>Source:</strong> Code under the MIT licence at {repo}.</li>
 </ul>

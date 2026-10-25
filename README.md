@@ -913,8 +913,9 @@ the failure that looks completely normal.
 
 ## How the site works
 
-Static files only — no build step, no dependencies, no accounts, no cookies and
-no ads. **Visit counts:** the live site (not the single-file offline copy)
+Static files only for the reader — no build step, no dependencies, no required
+accounts, no cookies unless a reader chooses to sign in, and no ads. (The optional
+sign-in lives in `worker/` and is described in `ACCOUNTS.md`.) **Visit counts:** the live site (not the single-file offline copy)
 loads Cloudflare Web Analytics, a privacy-friendly, cookie-less counter that
 reports page views, referrers and rough country totals, and builds no profile
 of an individual reader. The script is allowed by the page's Content Security

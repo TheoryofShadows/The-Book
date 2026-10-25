@@ -19,7 +19,7 @@
  */
 
 const ROUTES = ['#/', '#/threads', '#/contents', '#/canons', '#/search/shepherd',
-                '#/saved', '#/accuracy', '#/method', '#/timeline',
+                '#/saved', '#/account', '#/accuracy', '#/method', '#/timeline',
                 '#/read/genesis/0', '#/read/amos/2'];
 
 module.exports = async function access(t, ctx) {

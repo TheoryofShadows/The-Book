@@ -67,7 +67,14 @@ class InfoPages(unittest.TestCase):
         text = self.html["privacy"]
         self.assertIn("cookie-less", text)
         self.assertIn("Cloudflare Web Analytics", text)
-        self.assertIn("No accounts", text)
+        # Accounts are optional; the page must say what is stored, for how
+        # long, and how to delete it.
+        self.assertIn("Optional accounts", text)
+        self.assertIn("tbm_session", text)
+        self.assertIn("Delete my account and data", text)
+        self.assertIn("90 days", text)
+        self.assertIn("Resend", text)
+        self.assertNotIn("no accounts", text.lower())
 
     def test_no_health_claims(self):
         for text in self.html.values():

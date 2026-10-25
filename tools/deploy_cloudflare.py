@@ -13,13 +13,15 @@ import argparse, base64, json, mimetypes, os, shutil, subprocess, sys, urllib.re
 from pathlib import Path
 
 API = "https://api.cloudflare.com/client/v4"
-SKIP = {".nojekyll", "CNAME", "_headers", "_redirects", "_worker.js", ".DS_Store"}
+SKIP = {".nojekyll", "CNAME", "_headers", "_redirects", "_routes.json", "_worker.js", ".DS_Store"}
 HEADERS = """/*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
 /sw.js
   Cache-Control: no-cache
 """
+
+ROUTES = json.dumps({"version": 1, "include": ["/api/*"], "exclude": []})
 
 def call(method, url, token, body=None, ctype="application/json"):
     data = body if isinstance(body, (bytes, type(None))) else json.dumps(body).encode()
@@ -37,6 +39,13 @@ def stage(repo, out):
                 ["tools/build_sw.py", "docs"]):
         subprocess.run([sys.executable] + cmd, cwd=out, check=True, stdout=subprocess.DEVNULL)
     (out / "docs" / "_headers").write_text(HEADERS)
+    # The account API (worker/worker.js) rides along as the Pages "advanced mode"
+    # worker. _routes.json limits it to /api/*, so every page and asset is still
+    # served as plain static files, never through a Worker invocation.
+    src = repo / "worker" / "worker.js"
+    if src.exists():
+        shutil.copyfile(src, out / "docs" / "_worker.js")
+        (out / "docs" / "_routes.json").write_text(ROUTES)
     return out / "docs"
 
 def manifest(site):
@@ -72,16 +81,22 @@ def upload(files, jwt):
     call("POST", API + "/pages/assets/upsert-hashes", jwt, {"hashes": hashes})
     return len(todo), len(hashes)
 
-def deploy(site, project, token, account):
+def deploy(site, project, token, account, branch="main"):
     files = manifest(site)
     jwt = call("GET", f"{API}/accounts/{account}/pages/projects/{project}/upload-token", token)["result"]["jwt"]
     n_up, n_all = upload(files, jwt)
     man = {k: v[0] for k, v in files.items()}
     b = uuid.uuid4().hex
-    parts = [("manifest", json.dumps(man)), ("branch", "main"), ("_headers", (site / "_headers").read_text())]
-    body = b"".join(f'--{b}\r\nContent-Disposition: form-data; name="{n}"\r\n\r\n{v}\r\n'.encode() for n, v in parts) + f"--{b}--\r\n".encode()
+    parts = [("manifest", json.dumps(man)), ("branch", branch), ("_headers", (site / "_headers").read_text())]
+    if (site / "_routes.json").exists():
+        parts.append(("_routes.json", (site / "_routes.json").read_text()))
+    body = b"".join(f'--{b}\r\nContent-Disposition: form-data; name="{n}"\r\n\r\n{v}\r\n'.encode() for n, v in parts)
+    if (site / "_worker.js").exists():
+        body += (f'--{b}\r\nContent-Disposition: form-data; name="_worker.js"; filename="_worker.js"\r\n'
+                 f'Content-Type: application/javascript+module\r\n\r\n').encode() + (site / "_worker.js").read_bytes() + b"\r\n"
+    body += f"--{b}--\r\n".encode()
     r = call("POST", f"{API}/accounts/{account}/pages/projects/{project}/deployments", token, body, f"multipart/form-data; boundary={b}")
-    return n_up, n_all, r["result"]["url"]
+    return n_up, n_all, r["result"]["url"], r["result"].get("environment")
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
@@ -89,6 +104,9 @@ if __name__ == "__main__":
     ap.add_argument("--dir", help="deploy an already-built dir instead of building")
     ap.add_argument("--project", default="thebookandme")
     ap.add_argument("--stage-only", action="store_true")
+    ap.add_argument("--branch", default="main",
+                    help="'main' is PRODUCTION. Any other branch name makes a preview deployment "
+                         "at <branch>.<project>.pages.dev that does not touch production.")
     ap.add_argument("--scratch", default="/tmp/thebook-site-build")
     a = ap.parse_args()
     repo = Path(__file__).resolve().parent.parent
@@ -96,5 +114,5 @@ if __name__ == "__main__":
     if a.stage_only:
         print(site); sys.exit(0)
     token, account = os.environ["CLOUDFLARE_API_TOKEN"], os.environ["CLOUDFLARE_ACCOUNT_ID"]
-    up, total, url = deploy(site, a.project, token, account)
-    print(f"uploaded {up} new of {total} unique files -> {url}")
+    up, total, url, env = deploy(site, a.project, token, account, a.branch)
+    print(f"uploaded {up} new of {total} unique files -> {url} ({env or 'unknown'} environment, branch {a.branch})")

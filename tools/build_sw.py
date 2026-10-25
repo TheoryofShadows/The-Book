@@ -39,6 +39,7 @@ HASHED = (
     "index.html",
     "site.webmanifest",
     "assets/app.js",
+    "assets/sync.js",
     "assets/app.css",
     "assets/sw-register.js",
     "data",
@@ -74,6 +75,7 @@ var PRECACHE = [
   "./index.html",
   "./assets/app.css",
   "./assets/app.js",
+  "./assets/sync.js",
   "./assets/favicon.svg",
   "./site.webmanifest"
 ];
@@ -112,6 +114,9 @@ self.addEventListener("activate", function (e) {
    ever read. */
 function cacheable(url) {
   if (url.pathname.indexOf("/the-book.html") !== -1) return false;
+  /* Account calls carry a reader's own data and a session; they are never
+     kept, and never answered from a cache when the network is down. */
+  if (url.pathname.indexOf("/api/") === 0) return false;
   return true;
 }
 

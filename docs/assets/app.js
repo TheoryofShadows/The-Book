@@ -402,7 +402,7 @@
               "Enochic booklets are dated separately, and every placement is " +
               "a range you can see and argue with. The dating is sourced, " +
               "the coverage gaps are named with their reasons, and every " +
-              "chapter has a recorded reading. Free, no account, no cookies."
+              "chapter has a recorded reading. Free, no account needed."
       }),
       /* Shown only on a phone, where the paragraph above is clamped to three
          lines so the first screen can carry something to do as well as
@@ -3752,7 +3752,10 @@
       words: "accuracy errors report findings removals splices corrections mistakes" },
     { href: "#/saved", title: "Saved",
       note: "Verses you have kept",
-      words: "saved bookmarks kept favourites favorites my verses highlights" }
+      words: "saved bookmarks kept favourites favorites my verses highlights" },
+    { href: "#/account", title: "Account",
+      note: "Optional: keep your place and notes across devices",
+      words: "account sign login log signin sync devices email" }
   ];
 
   function resolveSitePages(query) {
@@ -5990,9 +5993,58 @@
     return form;
   }
 
+  /* The optional account lives in docs/assets/sync.js and is fetched only when
+     something needs it: the reader is already signed in, or opens the Account
+     page, or is on Saved or Diary with something kept and has not said no. A
+     reader who does none of those never downloads it, so the first paint and
+     the request count are what they were before accounts existed. Absent in
+     the offline single-file copy, where there is nothing to sign in to. */
+  var accountScript = null;
+  function withAccount(cb) {
+    if (window.TheBookAccount) { cb(window.TheBookAccount); return; }
+    if (!/^https?:$/.test(location.protocol)) { cb(null); return; }
+    if (!accountScript) {
+      accountScript = new Promise(function (resolve, reject) {
+        var s = document.createElement("script");
+        s.src = "assets/sync.js";
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    accountScript.then(function () { cb(window.TheBookAccount || null); },
+                       function () { accountScript = null; cb(null); });
+  }
+
+  /* One dismissible line under the heading, shown only to a reader who has
+     something saved, is not signed in and has not said no -- and never again
+     once they have. */
+  function accountNote(wrap) {
+    if (store.get("account", null) || store.get("account-prompt", null)) return;
+    if (!savedItems().length && !diaryEntries().length) return;
+    withAccount(function (A) {
+      if (!A || !wrap.isConnected) return;
+      var n = A.prompt({ el: el, announce: announce });
+      var h1 = wrap.querySelector("h1");
+      if (n) wrap.insertBefore(n, h1 ? h1.nextSibling : wrap.firstChild);
+    });
+  }
+
+  /* Data arrived from the reader's other device. Redraw what is on screen from
+     it, unless they are in the middle of typing -- a sync must never take a
+     note out from under the cursor. */
+  window.addEventListener("thebook:synced", function (e) {
+    if (!e.detail || !e.detail.changed) return;
+    applyTheme(store.get("theme", "auto"));
+    refreshResume();
+    var a = document.activeElement;
+    if (a && /^(input|textarea|select)$/i.test(a.tagName)) return;
+    if (/^#\/(saved|diary)\b/.test(location.hash)) route();
+  });
+
   function viewDiary() {
     var wrap = el("div", { class: "wrap" });
     wrap.appendChild(el("h1", { text: "Diary" }));
+    accountNote(wrap);
 
     if (!store.works()) {
       wrap.appendChild(el("p", { class: "warn", text: STORAGE_FAILED }));
@@ -6155,6 +6207,7 @@
   function viewSaved() {
     var wrap = el("div", { class: "wrap" });
     wrap.appendChild(el("h1", { text: "Saved" }));
+    accountNote(wrap);
 
     // Older builds saved whole chapters under a different key. Carry them
     // over rather than appearing to lose someone's work.
@@ -8929,6 +8982,24 @@
         window.scrollTo(0, 0);
         return;
       }
+      if (view === "account") {
+        setNav("");
+        setTitle("Account");
+        return new Promise(function (done) {
+          withAccount(function (A) {
+            main.innerHTML = "";
+            main.appendChild(A
+              ? A.view({ el: el, announce: announce })
+              : el("div", { class: "wrap" }, [
+                  el("h1", { text: "Account" }),
+                  el("p", { text: "Accounts need the online site at thebookandme.com. " +
+                    "This copy keeps everything in this browser, as it always has." })
+                ]));
+            window.scrollTo(0, 0);
+            done();
+          });
+        });
+      }
       if (view === "saved") {
         setNav("saved");
         setTitle("Saved");
@@ -8991,6 +9062,7 @@
   });
 
   refreshResume();
+  if (store.get("account", null)) withAccount(function () {});
   initLexicon();
   initLookupKeys();
   route();
