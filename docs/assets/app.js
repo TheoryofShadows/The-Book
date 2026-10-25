@@ -455,6 +455,16 @@
       ]));
     }
 
+    /* Two things the reader does that nothing on the page used to say. One
+       quiet line and a button, under the door rather than above it: the
+       first job of this page is to hand someone a text. */
+    wrap.appendChild(el("p", { class: "discover-strip" }, [
+      el("span", { class: "discover-kicker", text: "Good to know" }),
+      el("span", { class: "discover-text", html:
+        "Tap any word for its definition; tap a <span class=\"discover-pin\" aria-hidden=\"true\">📍</span>place to open Google Maps." }),
+      el("button", { type: "button", class: "chip", "data-tour": "1", text: "Show me, 30 seconds" })
+    ]));
+
     /* Counted, not typed. Every other figure in this row comes from the
        manifest and moves when the library moves; this one was the literal
        10, which is right today and is the only number on the front page
@@ -983,6 +993,30 @@
                           (section.dates ? " · " + section.dates : "") })
     ]));
     head.appendChild(el("h1", { text: titleCase(meta.title) }));
+    /* Where this work falls in the order the volume exists to show. Only the
+       dated eras are in that order -- the collections after them are grouped
+       by author or book -- so a work in one of those gets no meter rather
+       than a number that means something else. */
+    if (section.roman) {
+      var seen = 0, ofN = 0;
+      manifest.sections.forEach(function (sec) {
+        if (!sec.roman) return;
+        sec.works.forEach(function (w) {
+          ofN++;
+          if (w.id === workId) seen = ofN;
+        });
+      });
+      if (seen) {
+        var pct = Math.max(2, Math.round(seen / ofN * 100));
+        var label = "Work " + seen + " of " + ofN + " in the order written";
+        var fill = el("span", { class: "order-meter-fill" });
+        fill.style.width = pct + "%";      // CSSOM, so no inline-style rule applies
+        head.appendChild(el("div", { class: "order-meter" }, [
+          el("span", { class: "order-meter-bar", role: "img", "aria-label": label }, [fill]),
+          el("span", { class: "order-meter-text", text: label })
+        ]));
+      }
+    }
     /* The chapter picker and the work's notes go in boxes of their own so
        that arranging them below is moving two nodes rather than four, and so
        that putting them back is an insertBefore against an anchor that has
@@ -1282,6 +1316,12 @@
         });
       }
       body.appendChild(reader);
+
+      /* After the chapter is rendered, because the underlines are Ranges
+         over the text nodes in `passages`. The legend goes under the
+         controls; the switch for dictionary underlines joins them. */
+      var legend = discoverChapter(passages, workId, idx, controls);
+      controls.parentNode.insertBefore(legend, controls.nextSibling);
 
       attachListening({
         work: workId, workTitle: meta.title, chapter: idx, label: chapter.label,
@@ -3181,7 +3221,7 @@
 
   function initLexicon() {
     document.addEventListener("click", function (e) {
-      if (e.target.closest(".lex")) return;
+      if (e.target.closest(".lex, .tour-card, .tour-invite")) return;
       var reader = e.target.closest(".reader");
       if (!reader) { closeSheet(); return; }
       if (e.target.closest("a")) return;          // let verse links work
@@ -3235,6 +3275,474 @@
         if (term) lookupAndShow(term.trim());
       }
     });
+  }
+
+  /* ================================================================
+     DISCOVERY -- making the two clicks findable
+     ------------------------------------------------------------------
+     Two things in the reader were true and invisible. Any word opens its
+     definition, and any place opens on Google Maps from the same panel, and
+     nothing on the page said either. A feature nobody knows about is a
+     feature that does not exist for them, so this does three small things:
+
+       1. Names the places it knows are in a chapter with a dotted underline,
+          and (if asked) the words that have a definition.
+       2. Says so, in one line above the text.
+       3. Offers a short tour -- once, never forced, never repeated unless
+          asked for -- that shows each thing on a real chapter.
+
+     The underlines are drawn with the CSS Custom Highlight API rather than
+     by wrapping text in spans. The narrator holds references to the very
+     text nodes it reads and the word lookup finds a word by its position in
+     one; splitting those nodes to decorate them would break both. A browser
+     without the API simply shows no underline and still gets the line and
+     the tour. Nothing here sends anything anywhere: the places come from
+     the same mentions index the map uses, and the tour's "seen" flag is one
+     value in this browser's own storage.
+     ================================================================ */
+
+  var CAN_HIGHLIGHT = typeof window.Highlight === "function" &&
+                      typeof CSS !== "undefined" && !!CSS.highlights;
+  var discover = { token: 0, passages: null, work: null, chapter: null,
+                   ranges: [], ready: Promise.resolve([]) };
+
+  function forgetMarks() {
+    discover.token++;
+    discover.passages = null;
+    discover.ranges = [];
+    if (CAN_HIGHLIGHT) {
+      CSS.highlights.delete("tbm-place");
+      CSS.highlights.delete("tbm-term");
+    }
+  }
+
+  function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+  /* Every occurrence, as Ranges over the text nodes the chapter is made of.
+     `re` must be global; group 2 is the part to mark. */
+  function rangesFor(passages, re) {
+    var out = [];
+    passages.forEach(function (p) {
+      var node = p.node;
+      if (!node || node.nodeType !== 3) return;
+      var text = node.nodeValue, m;
+      re.lastIndex = 0;
+      while ((m = re.exec(text))) {
+        var start = m.index + m[1].length;
+        var r = document.createRange();
+        r.setStart(node, start);
+        r.setEnd(node, start + m[2].length);
+        out.push(r);
+      }
+    });
+    return out;
+  }
+
+  /* The places this chapter is recorded as naming, found in its text. The
+     list is a curated one -- the same references the map draws -- so a name
+     here is one somebody checked belongs to this chapter. */
+  function markPlaces(passages, workId, idx, token) {
+    return getJSON("mentions.json").then(function (table) {
+      var keys = table[workId + "/" + idx] || [];
+      if (!keys.length) return [];
+      var shards = {};
+      keys.forEach(function (k) { shards[/^[a-z]/.test(k) ? k[0] : "0"] = true; });
+      return Promise.all(Object.keys(shards).map(function (s) {
+        return getJSON("places/" + s + ".json").catch(function () { return {}; });
+      })).then(function (loaded) {
+        var names = Object.create(null);
+        loaded.forEach(function (t) {
+          keys.forEach(function (k) {
+            var p = t[k];
+            if (p && p.name && /^[A-Z][A-Za-z’' ]{2,}$/.test(p.name)) names[p.name] = 1;
+          });
+        });
+        var list = Object.keys(names).sort(function (a, b) { return b.length - a.length; });
+        if (!list.length || discover.token !== token) return [];
+        var re = new RegExp("(^|[^A-Za-z’'])(" + list.map(escRe).join("|") +
+                            ")(?![A-Za-z])", "g");
+        var ranges = rangesFor(passages, re);
+        if (discover.token !== token) return [];
+        discover.ranges = ranges;
+        if (CAN_HIGHLIGHT && ranges.length) {
+          var h = new Highlight();
+          ranges.forEach(function (r) { h.add(r); });
+          h.priority = 2;
+          CSS.highlights.set("tbm-place", h);
+        }
+        return ranges;
+      });
+    }).catch(function () { return []; });
+  }
+
+  /* Every word in the chapter that has a definition. Only when the reader
+     asks, because it fetches the dictionary shards the chapter touches --
+     most of the 2.8 MB of them for a long chapter -- and a first visit
+     should not pay that for an underline. */
+  function markTerms(passages, token) {
+    var words = Object.create(null);
+    passages.forEach(function (p) {
+      if (!p.node || p.node.nodeType !== 3) return;
+      (p.node.nodeValue.match(/[A-Za-z][A-Za-z’']{2,}/g) || []).forEach(function (w) {
+        var k = normTerm(w);
+        if (k && !own(STOP_ANSWERS, k)) words[k] = 1;
+      });
+    });
+    return getJSON("lexicon-aliases.json").catch(function () { return {}; })
+      .then(function (al) {
+        var keys = Object.keys(words), want = Object.create(null), shards = {};
+        keys.forEach(function (k) {
+          var t = al[k] || k;
+          want[k] = t;
+          shards[/^[a-z]/.test(t) ? t[0] : "0"] = true;
+          if (!al[k] && /s$/.test(k)) shards[k[0]] = true;
+        });
+        return Promise.all(Object.keys(shards).map(function (s) {
+          return getJSON("lexicon/" + s + ".json").catch(function () { return {}; });
+        })).then(function (loaded) {
+          var table = Object.create(null);
+          loaded.forEach(function (t) { Object.keys(t).forEach(function (k) { table[k] = 1; }); });
+          var defined = Object.create(null);
+          keys.forEach(function (k) {
+            var t = want[k];
+            if (table[t] || (/s$/.test(t) && table[t.replace(/s$/, "")]) || table[t + "s"]) {
+              defined[k] = 1;
+            }
+          });
+          if (discover.token !== token) return 0;
+          var out = [];
+          passages.forEach(function (p) {
+            if (!p.node || p.node.nodeType !== 3) return;
+            var text = p.node.nodeValue, re = /[A-Za-z][A-Za-z’']{2,}/g, m;
+            while ((m = re.exec(text))) {
+              if (!defined[normTerm(m[0])]) continue;
+              var r = document.createRange();
+              r.setStart(p.node, m.index);
+              r.setEnd(p.node, m.index + m[0].length);
+              out.push(r);
+            }
+          });
+          if (CAN_HIGHLIGHT) {
+            var h = new Highlight();
+            out.forEach(function (r) { h.add(r); });
+            h.priority = 1;
+            CSS.highlights.set("tbm-term", h);
+          }
+          return out.length;
+        });
+      }).catch(function () { return 0; });
+  }
+
+  function discoveryLegend() {
+    return el("p", { class: "reader-legend" }, [
+      el("span", { class: "legend-term", text: "Tap any word" }),
+      " for its definition. ",
+      el("span", { class: "legend-pin", "aria-hidden": "true", text: "📍" }),
+      el("span", { class: "legend-place", text: "Dotted names" }),
+      " are places: tap one",
+      el("span", { class: "legend-long", text: ", then Open in Google Maps" }),
+      "."
+    ]);
+  }
+
+  /* Wires one rendered chapter: the underlines, the switch for the
+     dictionary ones, and the line that explains them. */
+  function discoverChapter(passages, workId, idx, controls) {
+    forgetMarks();
+    discover.passages = passages;
+    discover.work = workId;
+    discover.chapter = idx;
+    var token = discover.token;
+    discover.ready = markPlaces(passages, workId, idx, token);
+
+    /* Not on a phone: every word there is tappable anyway, and the row of
+       controls has a height budget. */
+    if (CAN_HIGHLIGHT && !phone()) {
+      var on = store.get("mark-terms", false);
+      var chip = el("button", {
+        class: "chip chip-terms", type: "button", "aria-pressed": on ? "true" : "false",
+        text: "Underline defined words",
+        title: "Underline every word in this chapter that has a dictionary entry",
+        onclick: function (e) {
+          on = !on;
+          store.set("mark-terms", on);
+          e.currentTarget.setAttribute("aria-pressed", on ? "true" : "false");
+          if (on) {
+            announce("Finding the defined words…");
+            markTerms(passages, token).then(function (n) {
+              announce(n + " defined " + (n === 1 ? "word" : "words") + " underlined.");
+            });
+          } else if (discover.token === token) {
+            CSS.highlights.delete("tbm-term");
+          }
+        }
+      });
+      controls.appendChild(chip);
+      if (on) markTerms(passages, token);
+    }
+    return discoveryLegend();
+  }
+
+  /* ---------------- the tour ---------------- */
+
+  var tour = null;
+
+  function reducedMotion() {
+    return !!(window.matchMedia &&
+              window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+
+  function tourSeen() { return store.get("tour", null); }
+  function tourMark(v) { store.set("tour", v); }
+
+  function rectOf(t) {
+    if (!t) return null;
+    var r = t.getClientRects ? t.getClientRects()[0] : null;
+    if (!r || (!r.width && !r.height)) r = t.getBoundingClientRect();
+    return r && (r.width || r.height) ? r : null;
+  }
+
+  function waitFor(test, ms) {
+    return new Promise(function (resolve) {
+      var t0 = Date.now();
+      (function tick() {
+        var v = test();
+        if (v) return resolve(v);
+        if (Date.now() - t0 > ms) return resolve(null);
+        setTimeout(tick, 80);
+      })();
+    });
+  }
+
+  function tourSteps() {
+    var place = discover.ranges[0] || null;
+    var placeName = place ? String(place) : null;
+    var steps = [];
+
+    steps.push({
+      title: place ? "Tap any word" : "Tap any word to define it",
+      text: (place
+        ? "Names and many ordinary words have a definition, from Easton’s Bible Dictionary (1897). " +
+          "Try it on “" + placeName + "”, the place picked out below. "
+        : "Names and many ordinary words have a definition, from Easton’s Bible Dictionary (1897). ") +
+        "Press Next and the panel opens by itself.",
+      target: function () { return place || document.querySelector(".reader .v"); },
+      before: function () { return Promise.resolve(); },
+      after: function () {
+        if (!placeName) return Promise.resolve();
+        lookupAndShow(placeName);
+        return waitFor(function () {
+          return document.querySelector(".lex .place-links .chip.primary");
+        }, 4000);
+      }
+    });
+
+    if (place) steps.push({
+      title: "Places open on Google Maps",
+      text: "A place’s panel has an Open in Google Maps button (and Google Earth). " +
+            "It opens in a new tab; this site sends nothing to Google until you press it.",
+      target: function () { return document.querySelector(".lex .place-links .chip.primary"); },
+      after: function () { closeSheet(); return Promise.resolve(); }
+    });
+
+    steps.push({
+      title: "Or see the whole chapter on a map",
+      text: "Every chapter has a map of the places it names. " +
+            "Dotted names in the text are the same places.",
+      target: function () { return document.querySelector(".chapter-map > summary"); },
+      before: function () {
+        var s = document.querySelector(".chapter-map");
+        if (s) s.scrollIntoView({ block: "center" });
+        return Promise.resolve();
+      }
+    });
+
+    steps.push({
+      title: "Listen, and read at night",
+      text: "Listen reads the chapter aloud in an AI voice, not a person. " +
+            "The ◐ button in the header switches light and dark. Press L to listen.",
+      target: function () {
+        return document.querySelector("[data-listen]:not([disabled])") ||
+               document.getElementById("theme");
+      }
+    });
+
+    steps.push({
+      title: "Keep your place",
+      text: "Save the chapter, or tap any verse number to save that verse or write in your diary. " +
+            "It stays on this device; no account needed. An optional account only syncs it.",
+      target: function () { return document.querySelector(".reader-controls"); }
+    });
+
+    return steps;
+  }
+
+  function endTour(how) {
+    if (!tour) return;
+    var t = tour;
+    tour = null;
+    t.nodes.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+    window.removeEventListener("scroll", t.onMove, true);
+    window.removeEventListener("resize", t.onMove);
+    document.removeEventListener("keydown", t.onKey, true);
+    closeSheet();
+    tourMark(how);
+    if (t.opener && document.contains(t.opener)) t.opener.focus();
+    announce(how === "done" ? "Tour finished." : "Tour closed. Take the tour any time from the footer.");
+  }
+
+  function placeTour() {
+    if (!tour) return;
+    var t = tour.step.target ? tour.step.target() : null;
+    var r = rectOf(t);
+    var ring = tour.ring, card = tour.card;
+    if (!r) { ring.hidden = true; card.className = "tour-card tour-bottom"; return; }
+    ring.hidden = false;
+    var pad = 4;
+    ring.style.left = Math.max(0, r.left - pad) + "px";
+    ring.style.top = Math.max(0, r.top - pad) + "px";
+    ring.style.width = (r.width + pad * 2) + "px";
+    ring.style.height = (r.height + pad * 2) + "px";
+    /* The card goes to whichever edge the target is not near, so it never
+       covers the thing it is describing. */
+    var mid = r.top + r.height / 2;
+    card.className = "tour-card " + (mid > window.innerHeight * 0.5 ? "tour-top" : "tour-bottom");
+  }
+
+  function showStep(i) {
+    if (!tour) return;
+    var steps = tour.steps, s = steps[i];
+    tour.i = i; tour.step = s;
+    var go = function () {
+      if (!tour || tour.i !== i) return;
+      var t = s.target ? s.target() : null;
+      if (t) {
+        var node = t.nodeType === 1 ? t : (t.startContainer && t.startContainer.parentElement);
+        if (node && node.scrollIntoView) {
+          node.scrollIntoView({ block: "center", behavior: reducedMotion() ? "auto" : "smooth" });
+        }
+      }
+      tour.title.textContent = s.title;
+      tour.text.textContent = s.text;
+      tour.count.textContent = "Step " + (i + 1) + " of " + steps.length;
+      tour.dots.forEach(function (d, k) {
+        d.className = "tour-dot" + (k === i ? " is-here" : k < i ? " is-done" : "");
+      });
+      tour.back.hidden = i === 0;
+      tour.next.textContent = i === steps.length - 1 ? "Done" : "Next";
+      tour.live.textContent = "Step " + (i + 1) + " of " + steps.length + ": " + s.title + ". " + s.text;
+      placeTour();
+      setTimeout(placeTour, reducedMotion() ? 0 : 350);
+      tour.next.focus({ preventScroll: true });
+    };
+    (s.before ? s.before() : Promise.resolve()).then(go);
+  }
+
+  function advance(delta) {
+    if (!tour) return;
+    var i = tour.i, s = tour.step;
+    var j = i + delta;
+    if (j >= tour.steps.length) { endTour("done"); return; }
+    if (j < 0) return;
+    var run = delta > 0 && s.after ? s.after() : Promise.resolve();
+    tour.busy = true;
+    run.then(function () { tour.busy = false; showStep(j); });
+  }
+
+  function buildTour(opener) {
+    var steps = tourSteps();
+    var title = el("h2", { class: "tour-title", id: "tour-title" });
+    var text = el("p", { class: "tour-text", id: "tour-text" });
+    var count = el("span", { class: "tour-count" });
+    var live = el("p", { class: "tour-live", "aria-live": "polite" });
+    var dots = steps.map(function () { return el("span", { class: "tour-dot" }); });
+    var back = el("button", { type: "button", class: "chip tour-back", text: "Back",
+                              onclick: function () { advance(-1); } });
+    var next = el("button", { type: "button", class: "chip primary tour-next", text: "Next",
+                              onclick: function () { advance(1); } });
+    var skip = el("button", { type: "button", class: "tour-skip", text: "Skip the tour",
+                              onclick: function () { endTour("skipped"); } });
+    var card = el("section", {
+      class: "tour-card tour-bottom", role: "dialog", "aria-modal": "false",
+      "aria-labelledby": "tour-title", "aria-describedby": "tour-text"
+    }, [
+      el("div", { class: "tour-head" }, [count, el("span", { class: "tour-dots", "aria-hidden": "true" }, dots)]),
+      title, text,
+      el("div", { class: "tour-actions" }, [skip, el("span", { class: "tour-spacer" }), back, next]),
+      live
+    ]);
+    var ring = el("div", { class: "tour-ring", "aria-hidden": "true" });
+    ring.hidden = true;
+
+    var onMove = function () { placeTour(); };
+    var onKey = function (e) {
+      if (!tour) return;
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); endTour("skipped"); return; }
+      if (e.target.closest && !e.target.closest(".tour-card")) return;
+      if (e.key === "ArrowRight") { e.preventDefault(); e.stopPropagation(); if (!tour.busy) advance(1); }
+      if (e.key === "ArrowLeft") { e.preventDefault(); e.stopPropagation(); if (!tour.busy) advance(-1); }
+    };
+    window.addEventListener("scroll", onMove, true);
+    window.addEventListener("resize", onMove);
+    document.addEventListener("keydown", onKey, true);
+
+    document.body.appendChild(ring);
+    document.body.appendChild(card);
+    tour = { steps: steps, i: 0, step: steps[0], ring: ring, card: card, title: title,
+             text: text, count: count, dots: dots, back: back, next: next, live: live,
+             nodes: [ring, card], onMove: onMove, onKey: onKey, opener: opener, busy: false };
+    showStep(0);
+  }
+
+  /* Opens the demonstration chapter -- Jonah 1 names Joppa, Nineveh and
+     Tarshish, three places with definitions, in one short chapter -- unless
+     the reader is already on a chapter that names a place. */
+  function startTour(opener) {
+    if (tour) return;
+    removeInvite();
+    var onDemo = /^#\/read\/jonah\/0\b/.test(location.hash);
+    if (!onDemo) location.hash = "#/read/jonah/0";
+    waitFor(function () {
+      return document.querySelector(".reader .v") && discover.work === "jonah" &&
+             discover.passages ? true : null;
+    }, 8000).then(function (ok) {
+      if (!ok) { announce("The tour needs the chapter to load first."); return; }
+      return discover.ready.then(function () { buildTour(opener || null); });
+    });
+  }
+
+  var invite = null;
+  function removeInvite() {
+    if (invite && invite.parentNode) invite.parentNode.removeChild(invite);
+    invite = null;
+  }
+
+  /* An offer, not a gate: a quiet card at the foot of the page, a few
+     seconds in, once. Either button means it never comes back unprompted. */
+  function initTour() {
+    var replay = document.getElementById("tour-replay");
+    if (replay) replay.addEventListener("click", function (e) { startTour(e.currentTarget); });
+    document.addEventListener("click", function (e) {
+      var t = e.target.closest && e.target.closest("[data-tour]");
+      if (t) { e.preventDefault(); startTour(t); }
+    });
+    if (tourSeen() !== null || !store.set("tour-check", 1)) return;
+    setTimeout(function () {
+      if (tourSeen() !== null || tour || invite) return;
+      if (document.querySelector(".lex")) return;
+      var yes = el("button", { type: "button", class: "chip primary", text: "Take the 30-second tour",
+        onclick: function (e) { startTour(e.currentTarget); } });
+      var no = el("button", { type: "button", class: "chip", text: "No thanks",
+        onclick: function () { tourMark("skipped"); removeInvite(); announce("Tour dismissed."); } });
+      invite = el("aside", { class: "tour-invite", "aria-label": "Tour of the reader" }, [
+        el("p", { class: "tour-invite-text" }, [
+          el("strong", { text: "New here? " }),
+          "Tap any word for its definition. Tap a place to see it on Google Maps. Here is a quick look."
+        ]),
+        el("div", { class: "tour-actions" }, [yes, no])
+      ]);
+      document.body.appendChild(invite);
+    }, 3000);
   }
 
   /* ================================================================
@@ -8874,6 +9382,7 @@
     // saved page and sits there.
     closeSheet();
     closeMenu();
+    forgetMarks();
     listeningPageChange();
     /* Same reason as the two above: the reading page registers a media-query
        listener to keep the apparatus on the right side of the chapter, and a
@@ -9065,5 +9574,6 @@
   if (store.get("account", null)) withAccount(function () {});
   initLexicon();
   initLookupKeys();
+  initTour();
   route();
 })();

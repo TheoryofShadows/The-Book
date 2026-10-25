@@ -142,6 +142,20 @@ function serve(root, opts) {
    is not used: an aborted request is a console error, and a console error
    fails whichever watched suite happened to be open. */
 async function stubArchive(context) {
+  /* The first-visit tour offer is for people, not for the checks: left to
+     itself it would appear three seconds into every suite and sit over
+     whatever they click. Every page starts as one who has already answered
+     it. The tour's own suite opens the site with ?firsttime to be a new
+     visitor instead -- the query string survives the hash routes and
+     reloads, which is what makes it a switch rather than a one-off. */
+  await context.addInitScript(() => {
+    try {
+      if (!/[?&]firsttime/.test(location.search) &&
+          localStorage.getItem('thebook:tour') === null) {
+        localStorage.setItem('thebook:tour', '"skipped"');
+      }
+    } catch (e) { /* storage refused: the tour offer stays off by itself */ }
+  });
   await context.route(/archive\.org/, route => route.fulfill({
     status: 200,
     headers: { 'access-control-allow-origin': '*' },

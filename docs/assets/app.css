@@ -1475,7 +1475,9 @@ mark { background: var(--mark); color: inherit; padding: 0 .1em; border-radius: 
   border: 1px solid var(--rule); color: var(--ink-soft);
   background: var(--raised); cursor: pointer; font-family: inherit;
   text-decoration: none;
+  transition: border-color .15s, color .15s, background-color .15s;
 }
+@media (prefers-reduced-motion: reduce) { .chip { transition: none; } }
 .chip:hover { border-color: var(--accent); color: var(--accent); }
 .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--paper); }
 
@@ -2490,3 +2492,174 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
   background: var(--accent-bg); border-radius: var(--radius);
 }
 .account-prompt p { margin: 0; }
+
+/* ---------- discovery: the two clicks, made findable ----------
+   Places the chapter is recorded as naming get a dotted rubric underline and
+   a faint tint; words that have a dictionary entry (when asked for) get a
+   finer grey-violet dotted one. Drawn by the CSS Custom Highlight API, which
+   allows colour, background and text-decoration only -- so there is no pin
+   glyph on the word itself, and the legend carries it instead. Spelt in hex,
+   not var(), because a highlight pseudo-element does not reliably see the
+   page's custom properties. */
+::highlight(tbm-place) {
+  color: inherit;
+  background-color: rgba(155, 47, 33, .08);
+  text-decoration: underline dotted #9b2f21 2px;
+}
+::highlight(tbm-term) {
+  color: inherit;
+  text-decoration: underline dotted #7c6f86 1px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) ::highlight(tbm-place) {
+    background-color: rgba(226, 131, 107, .14);
+    text-decoration: underline dotted #e2836b 2px;
+  }
+  :root:not([data-theme="light"]) ::highlight(tbm-term) {
+    text-decoration: underline dotted #a79db0 1px;
+  }
+}
+:root[data-theme="dark"] ::highlight(tbm-place) {
+  background-color: rgba(226, 131, 107, .14);
+  text-decoration: underline dotted #e2836b 2px;
+}
+:root[data-theme="dark"] ::highlight(tbm-term) {
+  text-decoration: underline dotted #a79db0 1px;
+}
+
+/* The one line above the text that says what the underlines are. */
+.reader-legend {
+  max-width: var(--leaf);
+  margin: .1rem auto .9rem;
+  font-size: .8rem; line-height: 1.5; color: var(--ink-faint);
+}
+.legend-term { color: var(--ink-soft); font-weight: 600; }
+.legend-pin { margin: 0 .2rem 0 .1rem; }
+.legend-place {
+  color: var(--ink-soft); font-weight: 600;
+  text-decoration: underline dotted var(--rubric) 2px;
+  text-underline-offset: 3px;
+}
+
+/* Front page: a single quiet line, same weight as the "Begin here" row. */
+.discover-strip {
+  display: flex; align-items: center; flex-wrap: wrap; gap: .35rem .7rem;
+  margin: .55rem 0 0; max-width: 46rem;
+  font-size: .88rem; color: var(--ink-soft);
+}
+.discover-kicker {
+  font-family: var(--mono); font-size: .7rem; font-weight: 600;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--rubric);
+}
+.discover-text { flex: 1 1 14rem; }
+.discover-pin { margin-right: .15rem; }
+/* A phone's first screen is measured (tests/layout.test.js): the reference
+   box has to stay above the fold, and the tour offer card and the legend in
+   a chapter already say the same thing there. */
+@media (max-width: 620px) {
+  .discover-strip { display: none; }
+}
+
+/* The replay link in the footer. */
+.tour-replay {
+  font: inherit; color: var(--accent); background: none; border: 0; padding: 0;
+  cursor: pointer; text-decoration: underline; text-underline-offset: .15em;
+  font-weight: 600;
+}
+.tour-replay:hover { color: var(--accent-2); }
+
+/* ---------- the tour ----------
+   Not a modal: the page behind stays live and scrollable. A ring marks the
+   thing being described, a card says what it is, and the card sits on
+   whichever edge the thing is not near. */
+.tour-ring {
+  position: fixed; z-index: 90; pointer-events: none;
+  border-radius: 10px;
+  box-shadow: 0 0 0 3px var(--accent), 0 0 0 9999px rgba(20, 14, 26, .45);
+  animation: tour-pulse 2.2s ease-in-out infinite;
+}
+.tour-ring[hidden] { display: none; }
+@keyframes tour-pulse {
+  50% { box-shadow: 0 0 0 6px var(--accent-2), 0 0 0 9999px rgba(20, 14, 26, .45); }
+}
+.tour-card, .tour-invite {
+  position: fixed; z-index: 95;
+  background: var(--raised); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: .9rem 1rem 1rem;
+  width: min(26rem, calc(100vw - 1.5rem));
+  left: 50%; transform: translateX(-50%);
+  font-size: .92rem; line-height: 1.5;
+}
+.tour-bottom { bottom: .75rem; }
+.tour-top { top: .75rem; }
+.tour-head { display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
+.tour-count {
+  font-family: var(--mono); font-size: .7rem; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+.tour-dots { display: inline-flex; gap: .3rem; }
+.tour-dot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--rule); }
+.tour-dot.is-done { background: var(--accent-2); }
+.tour-dot.is-here { background: var(--accent); transform: scale(1.25); }
+.tour-title { font-family: var(--serif); font-size: 1.12rem; margin: .45rem 0 .25rem; }
+.tour-text { margin: 0 0 .8rem; color: var(--ink-soft); }
+.tour-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); margin: 0; }
+.tour-actions { display: flex; align-items: center; gap: .45rem; flex-wrap: wrap; }
+.tour-spacer { flex: 1; }
+.tour-skip {
+  font: inherit; font-size: .8rem; color: var(--ink-faint); background: none;
+  border: 0; padding: .3rem .2rem; cursor: pointer;
+  text-decoration: underline; text-underline-offset: .15em;
+}
+.tour-skip:hover { color: var(--ink); }
+.tour-card .chip, .tour-invite .chip { padding: .35rem .85rem; font-size: .84rem; }
+.tour-back[hidden] { display: none; }
+.tour-invite { bottom: .75rem; animation: tour-in .25s ease-out; }
+.tour-invite-text { margin: 0 0 .65rem; }
+@keyframes tour-in { from { opacity: 0; transform: translate(-50%, .5rem); } }
+@media (min-width: 900px) {
+  .tour-invite { left: 1.25rem; bottom: 1.25rem; transform: none; }
+  @keyframes tour-in { from { opacity: 0; transform: translateY(.5rem); } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-ring, .tour-invite { animation: none; }
+}
+/* A little more room to land a thumb. */
+@media (pointer: coarse) {
+  .tour-card .chip, .tour-invite .chip, .tour-skip { min-height: 2.5rem; }
+}
+@media print { .tour-ring, .tour-card, .tour-invite { display: none; } }
+
+/* ---------- polish ----------
+   Focus is visible on every control that did not already have its own, and a
+   button presses. Nothing here changes layout. */
+.chip:focus-visible, .ghost:focus-visible, .nav a:focus-visible, .tour-replay:focus-visible,
+.tour-skip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip:active { transform: translateY(1px); }
+@media (prefers-reduced-motion: reduce) { .chip:active { transform: none; } }
+
+/* Where the work falls in the order written: a hairline and one sentence. */
+.order-meter { display: flex; align-items: center; gap: .6rem; margin: .1rem 0 .7rem; }
+.order-meter-bar {
+  flex: 0 0 7rem; height: 3px; border-radius: 2px;
+  background: var(--rule); overflow: hidden;
+}
+.order-meter-fill { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+.order-meter-text { font-size: .76rem; color: var(--ink-faint); font-family: var(--mono); letter-spacing: .02em; }
+
+/* "Begin here": the one primary action on the front page reads as one. */
+.start-here-title::after { content: " \2192"; color: var(--accent); }
+
+/* Phones: the scripture has a height budget, so the legend is one short line,
+   the meter is the bar alone, and the dictionary-underline switch (a nicety,
+   since every word is tappable anyway) waits for a wider screen. */
+@media (max-width: 620px) {
+  .reader-legend { margin-bottom: .4rem; font-size: .74rem; line-height: 1.4; }
+  .legend-long { display: none; }
+  .order-meter { margin: 0 0 .35rem; }
+  .order-meter-bar { flex-basis: 100%; }
+  .order-meter-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .reader-controls .chip-terms { display: none; }
+}
