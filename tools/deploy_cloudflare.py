@@ -14,9 +14,28 @@ from pathlib import Path
 
 API = "https://api.cloudflare.com/client/v4"
 SKIP = {".nojekyll", "CNAME", "_headers", "_redirects", "_routes.json", "_worker.js", ".DS_Store"}
-HEADERS = """/*
+# The policy is the home page's own <meta> policy (the widest one the site uses: it
+# adds the live-status hosts the Watch box asks), so the header never blocks anything
+# a page's own policy allows, and adds frame-ancestors, which a <meta> cannot carry.
+# Both are enforced together, so each page is held to the stricter of the two.
+CSP = ("default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; "
+       "frame-ancestors 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
+       "script-src 'self' https://static.cloudflareinsights.com; worker-src 'self'; manifest-src 'self'; "
+       "connect-src 'self' https://cloudflareinsights.com https://archive.org https://*.archive.org "
+       "https://kick.com https://decapi.me; media-src 'self' blob: https://archive.org https://*.archive.org")
+# HSTS: six months, and deliberately NOT includeSubDomains or preload -- send.thebookandme.com
+# and the mail records live on subdomains this file knows nothing about, and preload is not
+# something to turn on by accident. /api/* responses come from the Worker, which sets its own
+# headers (Pages does not apply this file to them).
+HEADERS = f"""/*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=15552000
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=()
+  Content-Security-Policy: {CSP}
+/the-book.html
+  ! Content-Security-Policy
 /sw.js
   Cache-Control: no-cache
 """
@@ -34,6 +53,12 @@ def stage(repo, out):
     if out.exists():
         shutil.rmtree(out)
     shutil.copytree(repo, out, ignore=shutil.ignore_patterns(".git", "node_modules", "__pycache__"))
+    # The scratch copy has no git history, so the sitemap dates are asked of the real
+    # repo here and handed down (see build_pages.source_date / site_date).
+    sys.path.insert(0, str(repo / "tools"))
+    import build_pages
+    os.environ["BOOK_SOURCE_DATE"] = build_pages.source_date()
+    os.environ["BOOK_SITE_DATE"] = build_pages.site_date()
     for cmd in (["tools/build_pages.py", "docs"],
                 ["tools/build_standalone.py", "docs", "docs/the-book.html"],
                 ["tools/build_sw.py", "docs"]):

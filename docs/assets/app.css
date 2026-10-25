@@ -353,6 +353,13 @@ button.ghost:hover { background: var(--paper-2); color: var(--ink); border-color
 /* ---------- layout ---------- */
 
 main { padding: clamp(1.2rem, 4vw, 2.6rem) clamp(.9rem, 4vw, 2rem) 4rem; }
+/* The reader is filled in by script, so in the HTML that arrives <main> is
+   empty and the footer sits at the top of the page until the first route
+   renders and shoves it down a screen's worth: a layout shift of 0.48 on
+   the home page, measured. Holding the empty shell one viewport tall keeps
+   the footer below the fold until there is something above it. Only the
+   empty shell is held: the generated pages arrive with their text in place. */
+main#main:empty { min-height: 100vh; min-height: 100svh; }
 .wrap { max-width: 60rem; margin: 0 auto; }
 .wrap-wide { max-width: 74rem; margin: 0 auto; }
 

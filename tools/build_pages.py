@@ -219,8 +219,12 @@ def head(title, description, canonical, depth, extra_head="", og_type="article")
         '<meta property="og:title" content="%s">' % e(title),
         '<meta property="og:description" content="%s">' % e(description),
         '<meta property="og:url" content="%s">' % e(canonical),
-        '<meta property="og:image" content="%s/assets/icon-512.png">' % BASE,
-        '<meta name="twitter:card" content="summary">',
+        '<meta property="og:image" content="%s/assets/og-card.jpg">' % BASE,
+        '<meta property="og:image:width" content="1200">',
+        '<meta property="og:image:height" content="630">',
+        '<meta property="og:image:alt" content="The Book and Me: an open book by candlelight under a night sky">',
+        '<meta name="twitter:card" content="summary_large_image">',
+        '<meta name="twitter:image" content="%s/assets/og-card.jpg">' % BASE,
         extra_head,
         "</head>",
     ])
@@ -1290,13 +1294,65 @@ def sitemap(out_dir, urls, changed=None):
                          % (len(urls), len(set(urls))))
     if changed is None:
         changed = source_date()
+    # The text pages carry the date the text moved. The home page and the
+    # about, contact, privacy and press pages are the site's own writing, which
+    # moves on a different clock (privacy says "last updated" on its face), so
+    # they carry the date of the last commit that touched that writing. Never
+    # earlier than the text date: a page cannot be older than the library it
+    # describes.
+    own = max(changed, site_date())
+    own_urls = {BASE + "/"} | {"%s/%s/" % (BASE, p) for p in INFO_PAGES}
     out = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
         out.append("  <url><loc>%s</loc><lastmod>%s</lastmod></url>"
-                   % (e(u), changed))
+                   % (e(u), own if u in own_urls else changed))
     out.append("</urlset>")
     write(os.path.join(out_dir, "sitemap.xml"), NL.join(out) + NL)
+
+
+def _env_date(name):
+    """A date handed in by the deploy, which builds in a copy of the repo with
+    no git history and so cannot ask git itself. Only a real YYYY-MM-DD is
+    believed."""
+    got = os.environ.get(name, "").strip()
+    if len(got) == 10 and got[4] == "-":
+        try:
+            import datetime
+            datetime.date.fromisoformat(got)
+            return got
+        except ValueError:
+            pass
+    return None
+
+
+def site_date():
+    """When the site's own writing last changed, as YYYY-MM-DD: the last commit
+    that touched the generator, the home page or the stylesheet and script.
+    Falls back to the newest mtime of those files, like source_date()."""
+    import subprocess, datetime
+    got = _env_date("BOOK_SITE_DATE")
+    if got:
+        return got
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
+    paths = ["tools/build_pages.py", "docs/index.html"]
+    try:
+        run = subprocess.run(
+            ["git", "-C", root, "log", "-1", "--format=%cs", "--"] + paths,
+            capture_output=True, text=True, encoding="utf-8", timeout=20)
+        stamp = (run.stdout or "").strip()
+        if len(stamp) == 10 and stamp[4] == "-":
+            return stamp
+    except Exception:
+        pass
+    newest = 0
+    for rel in paths:
+        try:
+            newest = max(newest, os.path.getmtime(os.path.join(root, rel)))
+        except OSError:
+            pass
+    return (datetime.date.fromtimestamp(newest) if newest
+            else datetime.date.today()).isoformat()
 
 
 def source_date():
@@ -1309,6 +1365,9 @@ def source_date():
     different one.
     """
     import subprocess, datetime
+    forced = _env_date("BOOK_SOURCE_DATE")
+    if forced:
+        return forced
     root = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
     try:
         got = subprocess.run(
