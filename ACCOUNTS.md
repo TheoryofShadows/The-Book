@@ -52,7 +52,7 @@ the comment above `diaryShape` in app.js).
 
 Limits: 500 changes/request, 32 KB/item, 3,000 items/user, 1 MB/request.
 
-## Deploying (needs the user's go-ahead; this branch has NOT been deployed to production)
+## Deploying (LIVE on production since 2026-10-25)
 
 Free tier only. Production is the Pages project `thebookandme`, account
 `575b607656db70c0664da716f53b4a18`.
@@ -71,7 +71,8 @@ Free tier only. Production is the Pages project `thebookandme`, account
      **leave open and click tracking OFF** (click tracking rewrites the link and would break it);
    - create an API key with *Sending access* only;
    - add it to Pages > Settings > Variables and Secrets > Production as the **secret**
-     `RESEND_API_KEY`; optionally `MAIL_FROM` = `The Book and Me <login@thebookandme.com>`.
+     `RESEND_API_KEY`; optionally `MAIL_FROM` = `The Book and Me <login@thebookandme.com>`
+     (production uses `The Book and Me <signin@thebookandme.com>`).
    - If you pick a different provider, change `MAIL_PROVIDER` in `tools/build_pages.py`
      so the Privacy page names the right company.
 5. **Deploy** from this branch after review/merge:
@@ -97,3 +98,27 @@ ahead of reality, so do the steps first or revert that wording.
 * Look at a user's data: D1 console `SELECT k, t, d FROM items WHERE user_id = ?`. Do not read values without cause.
 * Delete someone by request: `DELETE FROM items WHERE user_id=?; DELETE FROM sessions WHERE user_id=?; DELETE FROM users WHERE id=?;`
 * Roll back: remove the D1 binding (Pages > Settings > Bindings). `/api/*` returns 503 and the site is otherwise unchanged.
+
+## Production state (2026-10-25)
+
+* D1 database `thebookandme-accounts` (`dce57c27-778d-40cc-91f8-1b67e454da2d`) bound as `DB` to the Pages **production** environment;
+  the preview environment keeps `thebookandme-accounts-preview` (`3e2f5569-b5c6-4283-8668-7876252e4a1a`).
+* Production secret `RESEND_API_KEY` (a Resend send-only key; it cannot list or read mail) and variable
+  `MAIL_FROM` = `The Book and Me <signin@thebookandme.com>`. Resend domain thebookandme.com verified; open/click tracking off.
+* `curl https://thebookandme.com/api/health` -> `{"ok":true,"accounts":true,"mail":"resend"}`.
+* Production deployment before accounts went live: `cc7b308b-3310-4b25-a779-a71066755f8a`.
+
+## Rolling back
+
+Pick the smallest step that fixes the problem.
+
+1. **Stop accounts, keep everything else** (fastest, the site is otherwise unchanged): Pages project `thebookandme` > Settings >
+   Bindings > remove D1 binding `DB` from Production (or API: PATCH the project with
+   `deployment_configs.production.d1_databases = {"DB": null}`), then redeploy
+   (`bash tools/deploy_cloudflare.sh`). `/api/*` then answers 503 and the Account page says sign-in is unavailable.
+2. **Stop only the emails:** delete the `RESEND_API_KEY` secret (and redeploy). Sign-in then says it is not switched on;
+   existing sessions keep syncing. Or revoke the key in the Resend dashboard (sign-in then answers 502 `mail_failed`).
+3. **Go back to the pre-accounts site:** Pages > Deployments > the production deployment `cc7b308b-3310-4b25-a779-a71066755f8a`
+   > Rollback to this deployment. (The Privacy page of that deployment describes no accounts.) If accounts stay switched
+   off for good, also remove the D1 binding and delete the D1 database, which erases all stored reader data.
+4. Keep the Privacy page truthful in every case: if accounts are rolled back, so is the page (step 3 does both).
