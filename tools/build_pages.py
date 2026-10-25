@@ -895,11 +895,9 @@ REPO = "https://github.com/TheoryofShadows/The-Book"
 AUDIO_ITEM = "https://archive.org/details/the-book-read-aloud"
 POLICY_DATE = "25 October 2026"
 
-# The public contact address. Leave None until mail to it is confirmed to
-# arrive: a published address that bounces is worse than none. While it is
-# None the contact page points at the YouTube channel and the GitHub issue
-# tracker instead, and no page or schema mentions an address.
-CONTACT_EMAIL = None
+# The public contact address: Cloudflare Email Routing forwards it to the
+# maintainer. Set to None to fall back to the YouTube/GitHub contact text.
+CONTACT_EMAIL = "hello@thebookandme.com"
 
 INFO_PAGES = ["about", "contact", "privacy", "press"]
 
@@ -1026,8 +1024,7 @@ stream chat are written by an AI assistant working for the project.</p>
 bedtime; we make no claim that it helps with sleep, anxiety or any condition.</li>
 <li>It takes no side between the canons: it prints them all and says which is
 which.</li>
-<li>It has no accounts and no ads. Reading and listening are free; the front
-page footer has an optional link for contributions toward the work.</li>
+<li>It has no accounts and no ads. Reading and listening are free.</li>
 </ul>
 
 <h2>Who runs it</h2>
@@ -1118,9 +1115,8 @@ rel="noopener noreferrer">its terms</a>.</li>
 <li><strong>Kick and decapi.me</strong> — the front page checks whether our
 streams are live by asking kick.com and decapi.me (a Twitch uptime lookup). Those
 requests carry no cookies from us, but those services see your IP address.</li>
-<li><strong>Links out</strong> — YouTube, Twitch, Kick, GitHub and a Gumroad page
-where you can leave an optional contribution. Once you follow a link, that site’s
-policy applies; any payment is handled by Gumroad and we never see card details.</li>
+<li><strong>Links out</strong> — YouTube, Twitch, Kick and GitHub. Once you follow a
+link, that site’s policy applies.</li>
 </ul>
 
 <h2>What we do not do</h2>
