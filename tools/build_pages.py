@@ -270,6 +270,11 @@ def footer(depth, what="a plain page of one chapter"):
     Fathers of 1870 and 1885. The <a href="{up}#/accuracy">accuracy report</a>
     sets out what was verified, what was corrected, and what is still missing.
   </p>
+  <p class="muted foot-links">
+    <a href="{up}about/">About</a> · <a href="{up}contact/">Contact</a> ·
+    <a href="{up}privacy/">Privacy</a> · <a href="{up}press/">Press and credits</a>
+    — read aloud by an AI voice.
+  </p>
   <p class="muted">
     This is {what}. The
     <a href="{up}">reader</a> has the search, the map, the word definitions,
@@ -870,6 +875,355 @@ def not_found_page(out_dir):
     write(os.path.join(out_dir, "404.html"), page)
 
 
+# ---------------------------------------------------------------- about, contact, privacy, press
+#
+# Four plain pages that say who is behind the site, how the audio is made,
+# what is counted and where to reach it. Everything on them is a fact that can
+# be checked in this repository or on the pages linked from them; nothing is
+# claimed about a company, an address, staff or awards, because none is
+# documented anywhere. The voice is synthetic and the pages say so first.
+
+ORG = "The Book and Me"
+ORG_ID = BASE + "/#organization"
+CHANNELS = [
+    ("YouTube", "https://www.youtube.com/@thebookandme"),
+    ("Twitch", "https://www.twitch.tv/xtheorx"),
+    ("Kick", "https://kick.com/jonesproject"),
+]
+YOUTUBE = CHANNELS[0][1]
+REPO = "https://github.com/TheoryofShadows/The-Book"
+AUDIO_ITEM = "https://archive.org/details/the-book-read-aloud"
+POLICY_DATE = "25 October 2026"
+
+# The public contact address. Leave None until mail to it is confirmed to
+# arrive: a published address that bounces is worse than none. While it is
+# None the contact page points at the YouTube channel and the GitHub issue
+# tracker instead, and no page or schema mentions an address.
+CONTACT_EMAIL = None
+
+INFO_PAGES = ["about", "contact", "privacy", "press"]
+
+
+def org_schema():
+    node = {
+        "@type": "Organization",
+        "@id": ORG_ID,
+        "name": ORG,
+        "alternateName": SITE,
+        "url": BASE + "/",
+        "logo": BASE + "/assets/icon-512.png",
+        "description": ("A free, searchable library of biblical and related "
+                        "ancient texts in the order they were written, read "
+                        "aloud by a synthetic voice."),
+        "sameAs": [u for _, u in CHANNELS],
+    }
+    if CONTACT_EMAIL:
+        node["email"] = CONTACT_EMAIL
+    return node
+
+
+def website_schema():
+    return {
+        "@type": "WebSite",
+        "@id": BASE + "/#website",
+        "name": ORG,
+        "alternateName": SITE,
+        "url": BASE + "/",
+        "inLanguage": "en",
+        "isAccessibleForFree": True,
+        "publisher": {"@id": ORG_ID},
+    }
+
+
+def _ext(url, text):
+    return '<a href="%s" rel="noopener noreferrer">%s</a>' % (e(url), e(text))
+
+
+def _channel_links():
+    return " · ".join(_ext(u, n) for n, u in CHANNELS)
+
+
+def _info_page(slug, title, description, body, page_type, manifest):
+    """Write /<slug>/index.html and return its URL."""
+    url = "%s/%s/" % (BASE, slug)
+    nodes = [{
+        "@type": page_type,
+        "@id": url + "#page",
+        "name": title,
+        "url": url,
+        "description": description,
+        "inLanguage": "en",
+        "isPartOf": {"@id": BASE + "/#website"},
+        "about": {"@id": ORG_ID},
+    }]
+    if slug == "about":
+        nodes += [org_schema(), website_schema()]
+    schema = {"@context": "https://schema.org", "@graph": nodes}
+    page = "\n".join([
+        head(title, description, url, 1, ld(schema), og_type="website"),
+        "<body>",
+        topbar(1),
+        '<main id="main">',
+        '<div class="wrap">',
+        '<div class="crumbs"><a href="../">The Book</a> → <span>%s</span></div>'
+        % e(title.split(" — ")[0]),
+        body,
+        "</div>",
+        "</main>",
+        footer(1, "an information page about the project"),
+    ])
+    write(os.path.join(slug_dir(slug), "index.html"), page)
+    return url
+
+
+_OUT = [None]
+
+
+def slug_dir(slug):
+    return os.path.join(_OUT[0], slug)
+
+
+def about_page(manifest):
+    t = manifest.get("totals") or {}
+    works, chapters = t.get("works", 0), t.get("chapters", 0)
+    body = """
+<h1>About {org}</h1>
+<p class="lede">{org} is a free, independent project. It publishes biblical
+and related ancient texts in the order scholars believe they were written,
+lets you search and read them, and reads them aloud — in a synthetic voice,
+not a human one.</p>
+
+<h2>The voice is AI-generated</h2>
+<p>Every recorded reading on this site, and on our 24/7 streams, is produced by
+a text-to-speech model (<strong>Kokoro</strong>, voice “bm_lewis”). There is no
+human narrator. The audio files are published at the
+{ia} as one audio file per chapter ({chapters:,} chapters) with verse timings;
+the Internet Archive hosts them, it did not record them. When you press
+Listen, the page plays that synthetic reading, or your own device’s built-in
+speech voice if the recording is not available.</p>
+
+<h2>What the library is</h2>
+<p>{works:,} works and {chapters:,} chapters of the Jewish, Protestant,
+Catholic, Orthodox and Ethiopian canons, with the apocrypha, pseudepigrapha
+and Apostolic Fathers, arranged by when each is dated — not by traditional
+Bible order. That order is a scholarly reconstruction, not a fact, and the
+site says so. The texts are public domain: the World English Bible
+(eBible.org) for the canonical books, R. H. Charles’s 1917 Enoch and Jubilees,
+and the Ante-Nicene Fathers, among others. Nothing is taken from a modern
+copyrighted translation. See the <a href="../press/">credits</a> for the
+full list, and the <a href="../#/accuracy">accuracy report</a> for what has
+been checked and what has not.</p>
+
+<h2>The livestreams</h2>
+<p>The same reading plays around the clock on {channels}. These are
+pre-rendered playback streams in the order the texts were written, not live
+performances. Where a platform has a rerun label we use it. Some replies in
+stream chat are written by an AI assistant working for the project.</p>
+
+<h2>What this is not</h2>
+<ul>
+<li>It is not medical, mental-health or pastoral advice. Many people listen at
+bedtime; we make no claim that it helps with sleep, anxiety or any condition.</li>
+<li>It takes no side between the canons: it prints them all and says which is
+which.</li>
+<li>It has no accounts and no ads. Reading and listening are free; the front
+page footer has an optional link for contributions toward the work.</li>
+</ul>
+
+<h2>Who runs it</h2>
+<p>An independent maintainer. The code is open source (MIT licence) and
+public at {repo}; the texts are public domain and the reference data carries
+its own credits on the <a href="../press/">credits page</a>. See
+<a href="../contact/">Contact</a> to get in touch and
+<a href="../privacy/">Privacy</a> for what is and is not collected.</p>
+""".format(org=e(ORG), works=works, chapters=chapters,
+           ia=_ext(AUDIO_ITEM, "Internet Archive"),
+           channels=_channel_links(), repo=_ext(REPO, "GitHub"))
+    return _info_page(
+        "about", "About — " + ORG,
+        "The Book and Me is a free, independent library of biblical and related "
+        "ancient texts in the order they were written, read aloud by a "
+        "synthetic (AI) voice.", body, "AboutPage", manifest)
+
+
+def contact_page(manifest):
+    if CONTACT_EMAIL:
+        mail = ('<li><strong>Email:</strong> <a href="mailto:{m}">{m}</a></li>'
+                .format(m=e(CONTACT_EMAIL)))
+    else:
+        mail = ""
+    body = """
+<h1>Contact</h1>
+<p class="lede">How to reach {org}. It is a small independent project, so
+replies can take a few days.</p>
+<ul>
+{mail}
+<li><strong>YouTube:</strong> {yt}. Comment on a video or in the live chat.</li>
+<li><strong>Twitch and Kick:</strong> {tw}, {kick} — stream chat.</li>
+<li><strong>Corrections to a text or a date:</strong> open an issue on
+{repo}. Say the work, the chapter and what is wrong; the accuracy report
+explains how checks are done.</li>
+</ul>
+<p class="muted">We will never ask for a password, payment or personal
+details by message. See <a href="../privacy/">Privacy</a>.</p>
+""".format(org=e(ORG), mail=mail, yt=_ext(YOUTUBE, "The Book and Me on YouTube"),
+           tw=_ext(CHANNELS[1][1], "twitch.tv/xtheorx"),
+           kick=_ext(CHANNELS[2][1], "kick.com/jonesproject"),
+           repo=_ext(REPO + "/issues", "the project’s GitHub issues"))
+    return _info_page(
+        "contact", "Contact — " + ORG,
+        "How to reach The Book and Me: the YouTube channel, stream chat, "
+        "and GitHub issues for corrections.", body, "ContactPage", manifest)
+
+
+def privacy_page(manifest):
+    reach = ("through the contact address on the <a href=\"../contact/\">Contact</a> page"
+             if CONTACT_EMAIL else
+             "through the channels on the <a href=\"../contact/\">Contact</a> page")
+    mail_note = (
+        "<li><strong>Email.</strong> If you write to us, we keep your message "
+        "and address only to reply and to fix what you reported. They are not "
+        "shared or sold.</li>" if CONTACT_EMAIL else
+        "<li><strong>Messages.</strong> If you contact us through YouTube, "
+        "Twitch, Kick or GitHub, that platform’s own privacy policy applies to "
+        "the message.</li>")
+    body = """
+<h1>Privacy</h1>
+<p class="lede">Short version: no accounts, no ads, no sale of personal data,
+and no cookies set by this site. Last updated {date}.</p>
+
+<h2>What this site counts</h2>
+<p>We use <strong>Cloudflare Web Analytics</strong> to count visits: which pages
+are read and roughly where visitors come from. Cloudflare describes it as
+cookie-less and says it does not use client-side storage or fingerprinting to
+build a profile of a person. We use the totals to see which texts are read; we
+do not look at individuals and we do not sell or share the data. Cloudflare
+also serves the site and, like any host, handles the technical details of a
+request (such as the IP address) to deliver pages and block abuse, under its
+<a href="https://www.cloudflare.com/privacypolicy/" rel="noopener noreferrer">own
+privacy policy</a>.</p>
+
+<h2>What stays on your device</h2>
+<p>The reader remembers your theme, reading position, saved verses and any
+diary notes in your browser’s local storage, and keeps an offline copy of
+pages through a service worker. This data is on your device only; the site has
+no server that receives it, and clearing your browser’s site data removes it.</p>
+
+<h2>Other services your browser contacts</h2>
+<ul>
+<li><strong>Internet Archive</strong> (archive.org) — when you play the recorded
+reading, your browser fetches the audio from there, so it sees your IP address
+and the file requested, under <a href="https://archive.org/about/terms.php"
+rel="noopener noreferrer">its terms</a>.</li>
+<li><strong>Kick and decapi.me</strong> — the front page checks whether our
+streams are live by asking kick.com and decapi.me (a Twitch uptime lookup). Those
+requests carry no cookies from us, but those services see your IP address.</li>
+<li><strong>Links out</strong> — YouTube, Twitch, Kick, GitHub and a Gumroad page
+where you can leave an optional contribution. Once you follow a link, that site’s
+policy applies; any payment is handled by Gumroad and we never see card details.</li>
+</ul>
+
+<h2>What we do not do</h2>
+<ul>
+<li>No accounts, sign-ups, newsletters or advertising.</li>
+<li>No selling or renting of personal data, and no data brokers.</li>
+<li>No health, location or other sensitive data is asked for or collected.</li>
+</ul>
+{mail}
+<p>Questions about any of this? Ask {reach}. If this page ever stops matching
+how the site works, that is a bug we want to hear about.</p>
+""".format(date=POLICY_DATE, mail="<ul>%s</ul>" % mail_note, reach=reach)
+    return _info_page(
+        "privacy", "Privacy — " + ORG,
+        "No accounts, no ads, no sale of personal data. The Book and Me counts "
+        "visits with cookie-less Cloudflare Web Analytics; reader data stays "
+        "on your device.", body, "WebPage", manifest)
+
+
+def press_page(manifest):
+    t = manifest.get("totals") or {}
+    works, chapters = t.get("works", 0), t.get("chapters", 0)
+    assets = [
+        ("Mark (SVG)", "../assets/logo.svg"),
+        ("Wordmark lockup (SVG)", "../assets/lockup.svg"),
+        ("Icon, 512 px (PNG)", "../assets/icon-512.png"),
+        ("Channel avatar, 800 px (PNG)", "../assets/press/the-book-and-me-avatar.png"),
+        ("Channel banner, 2560 × 1440 (JPG)", "../assets/press/the-book-and-me-banner.jpg"),
+    ]
+    asset_li = "\n".join('<li><a href="%s">%s</a></li>' % (e(h), e(n)) for n, h in assets)
+    short = ("%s is a free, independent library of %d biblical and related "
+             "ancient texts, arranged in the order scholars believe they were "
+             "written and read aloud by a synthetic (AI) voice. The texts are "
+             "public domain. thebookandme.com" % (ORG, works))
+    contact = ("Email %s, or " % CONTACT_EMAIL) if CONTACT_EMAIL else ""
+    body = """
+<h1>Press and credits</h1>
+<p class="lede">Facts, a short description and logo files for anyone writing
+about {org}. Everything here can be checked on the site.</p>
+
+<h2>Quick facts</h2>
+<ul>
+<li><strong>Name:</strong> {org} (the reader is titled “The Book”)</li>
+<li><strong>What it is:</strong> A free, searchable reader and 24/7 read-aloud stream of
+{works:,} biblical and related ancient texts ({chapters:,} chapters), ordered by
+date of composition rather than by traditional Bible order.</li>
+<li><strong>Voice:</strong> <strong>AI-generated.</strong> Kokoro text-to-speech, voice
+“bm_lewis”. No human narrator. Audio is hosted by the {ia}.</li>
+<li><strong>Streams:</strong> Pre-rendered playback on {channels}.</li>
+<li><strong>Cost:</strong> Free to read and listen. No accounts, no ads.</li>
+<li><strong>Website:</strong> <a href="{base}/">thebookandme.com</a></li>
+<li><strong>Source:</strong> Code under the MIT licence at {repo}.</li>
+</ul>
+
+<h2>Short description</h2>
+<p>{short}</p>
+
+<h2>Logos and images</h2>
+<p>Provided for press and review use. Please do not imply endorsement.</p>
+<p><img src="../assets/press/the-book-and-me-avatar.png" alt="The Book and Me logo: an open book with a flame, cream on plum" width="160" height="160"></p>
+<ul>
+{assets}
+</ul>
+
+<h2>Texts, data and audio credits</h2>
+<ul>
+<li><strong>World English Bible with Deuterocanon</strong> (eBible.org), dedicated
+to the public domain: the canonical Old and New Testaments and the deuterocanon.</li>
+<li><strong>R. H. Charles</strong> (1917, Enoch and Jubilees), the
+<strong>Ante-Nicene Fathers</strong> (1870 and 1885), and the other editions named
+on each work’s page: public domain by age. The full list of editions is in the
+<a href="{repo_url}#sources">project README</a>.</li>
+<li><strong>Word definitions:</strong> Easton’s Bible Dictionary (1897, public
+domain) in a parse by NEUU, CC BY 4.0.</li>
+<li><strong>Place coordinates:</strong> OpenBible.info Bible Geocoding, CC BY 4.0,
+with parts derived from OpenStreetMap contributors (ODbL). Land outlines: Natural
+Earth, public domain.</li>
+<li><strong>Voice:</strong> Kokoro text-to-speech model, rendered by this project;
+the resulting audio is published at the {ia} with a CC0 dedication.</li>
+</ul>
+<p>The <a href="../#/accuracy">accuracy report</a> sets out what was checked
+against the sources, what was corrected and what is still missing.</p>
+
+<h2>Press contact</h2>
+<p>{contact}see <a href="../contact/">Contact</a>. For how the site handles
+data, see <a href="../privacy/">Privacy</a>.</p>
+""".format(org=e(ORG), works=works, chapters=chapters, base=BASE,
+           ia=_ext(AUDIO_ITEM, "Internet Archive"), channels=_channel_links(),
+           repo=_ext(REPO, "GitHub"), repo_url=e(REPO), short=e(short),
+           assets=asset_li, contact=contact)
+    return _info_page(
+        "press", "Press and credits — " + ORG,
+        "Facts, a short description, logo files and source credits for The "
+        "Book and Me, a free library of ancient texts read aloud by a "
+        "synthetic (AI) voice.", body, "WebPage", manifest)
+
+
+def info_pages(manifest, out_dir):
+    _OUT[0] = out_dir
+    return [about_page(manifest), contact_page(manifest),
+            privacy_page(manifest), press_page(manifest)]
+
+
 NL = chr(10)
 
 
@@ -962,6 +1316,7 @@ def build(out_dir):
     urls = [BASE + "/", contents_page(manifest, out_dir),
             timeline_page(manifest, out_dir),
             thread_hub_page(threads, out_dir)]
+    urls.extend(info_pages(manifest, out_dir))
     for t in threads:
         urls.append(thread_page(manifest, slugs_by_work, t, out_dir))
     works = 0
@@ -1022,9 +1377,9 @@ def build(out_dir):
 
     print("  %d work pages" % works)
     print("  %d chapter pages" % chapters_written)
-    print("  the timeline, and %d thread pages under a hub" % len(threads))
+    print("  the timeline, %d thread pages under a hub, and the about, contact, privacy and press pages" % len(threads))
     print("  %d URLs in sitemap.xml, plus robots.txt and 404.html" % len(urls))
-    print("  %d pages" % (works + chapters_written + len(threads) + 4))
+    print("  %d pages" % (works + chapters_written + len(threads) + 4 + len(INFO_PAGES)))
 
 
 def main(argv):

@@ -10,7 +10,8 @@
  */
 (function () {
   "use strict";
-  var KEEP = { read: 1, contents: 1, timeline: 1, threads: 1, assets: 1, data: 1 };
+  var KEEP = { read: 1, contents: 1, timeline: 1, threads: 1, assets: 1, data: 1,
+    about: 1, contact: 1, privacy: 1, press: 1 };
   var SEG = /^[a-z0-9][a-z0-9-]*$/;
   var parts = location.pathname.toLowerCase().split("/").filter(function (p) { return p !== ""; });
   if (parts.length < 1 || parts.length > 2 || KEEP[parts[0]]) return;

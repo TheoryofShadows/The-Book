@@ -16,6 +16,11 @@ docs/read/
 docs/contents/
 docs/threads/
 docs/timeline/
+# The about, contact, privacy and press pages: written by tools/build_pages.py
+docs/about/
+docs/contact/
+docs/privacy/
+docs/press/
 docs/sitemap.xml
 docs/robots.txt
 docs/404.html

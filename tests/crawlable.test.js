@@ -207,7 +207,9 @@ module.exports = async function crawlable(t, ctx) {
      the thing this arrangement exists to make possible. */
   const threads = JSON.parse(
     fs.readFileSync(path.join(docs, 'data', 'threads.json'), 'utf8'));
-  const extras = 2 + 2 + threads.length;
+  // root + contents + timeline + threads hub, then the four information pages
+  // (about, contact, privacy, press), then one page per thread.
+  const extras = 2 + 2 + 4 + threads.length;
   t.check('the sitemap lists the root, the hubs, the threads and every page',
           locs.length === expected + extras,
           locs.length + ' of ' + (expected + extras));
@@ -216,6 +218,10 @@ module.exports = async function crawlable(t, ctx) {
           locs.indexOf(BASE_URL + '/threads/') !== -1 &&
           threads.every(x => locs.indexOf(BASE_URL + '/threads/' + x.id + '/') !== -1),
           threads.length + ' threads');
+  t.check('the about, contact, privacy and press pages are listed',
+          ['about', 'contact', 'privacy', 'press'].every(
+            x => locs.indexOf(BASE_URL + '/' + x + '/') !== -1),
+          'four information pages');
   t.check('and lists nothing twice',
           new Set(locs).size === locs.length,
           (locs.length - new Set(locs).size) + ' duplicates');

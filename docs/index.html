@@ -72,8 +72,19 @@
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "The Book",
-  "alternateName": "The Book \u2014 the library in the order it was written",
+  "alternateName": ["The Book and Me", "The Book \u2014 the library in the order it was written"],
   "url": "https://thebookandme.com/",
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Book and Me",
+    "url": "https://thebookandme.com/",
+    "logo": "https://thebookandme.com/assets/icon-512.png",
+    "sameAs": [
+      "https://www.youtube.com/@thebookandme",
+      "https://www.twitch.tv/xtheorx",
+      "https://kick.com/jonesproject"
+    ]
+  },
   "description": "The Jewish, Protestant, Catholic and Eastern Orthodox canons complete, the Ethiopian all but four books that survive in no public-domain English, together with the apocrypha and the Apostolic Fathers, arranged by when they were written.",
   "inLanguage": "en",
   "license": "https://creativecommons.org/licenses/by/4.0/",
@@ -192,6 +203,11 @@
        other end of it. tools/build_standalone.py cuts everything between
        these two markers out of the body it inlines. -->
   <!-- online-only:start -->
+  <p class="muted foot-links">
+    <a href="/about/">About</a> · <a href="/contact/">Contact</a> ·
+    <a href="/privacy/">Privacy</a> · <a href="/press/">Press and credits</a>
+    — read aloud by an AI voice.
+  </p>
   <p class="muted">
     <strong>Take the whole library with you.</strong>
     <a href="the-book.html" download>Download it as one file</a> — every text,
