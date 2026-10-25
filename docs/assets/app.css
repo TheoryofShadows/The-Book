@@ -2674,3 +2674,27 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
 .tour-x:hover { color: var(--ink); background: var(--paper-2); }
 .tour-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tour-invite .tour-invite-text { padding-right: 1.6rem; }
+/* Account page buttons: these were browser-default grey. Same look as the
+   rest of the site; "primary" is the filled accent button. */
+.account-body button, .account-prompt button, .account-form button {
+  font: inherit; font-family: var(--sans); font-size: .92rem;
+  padding: .55rem 1rem; cursor: pointer; color: var(--ink);
+  background: var(--raised); border: 1px solid var(--rule); border-radius: var(--radius);
+}
+.account-body button:hover, .account-prompt button:hover, .account-form button:hover {
+  background: var(--paper-2); border-color: var(--ink-faint);
+}
+.account-body button.primary, .account-form button.primary {
+  background: var(--accent); border-color: var(--accent); color: var(--paper); font-weight: 600;
+}
+.account-body button.primary:hover, .account-form button.primary:hover {
+  background: var(--accent-2); border-color: var(--accent-2);
+}
+.account-body button:focus-visible, .account-prompt button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.account-body button:disabled { opacity: .6; cursor: default; }
+.account-body button.linkish, .account-prompt button.linkish {
+  background: none; border: 0; padding: 0; color: var(--accent);
+  text-decoration: underline; text-underline-offset: .15em; border-radius: 0;
+}
+.account-body button.warn-btn { color: var(--warn); border-color: var(--warn); background: var(--warn-bg); }
+.account-form button.primary { width: 100%; }
