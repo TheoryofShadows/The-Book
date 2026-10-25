@@ -73,11 +73,12 @@ module.exports = async function tour(t, ctx) {
           (await page.$('.tour-card')) === null &&
           (await page.$('.tour-invite')) !== null);
   t.check('the offer has a button to take it and a way to say no',
-          (await page.$$('.tour-invite button')).length === 2);
+          (await page.$$('.tour-invite button:not(.tour-x)')).length === 2 &&
+          (await page.$('.tour-invite .tour-x')) !== null);
   const offerAxe = await axeViolations(page);
   t.check('the offer fails no WCAG A or AA check', offerAxe.length === 0, offerAxe.join(', '));
 
-  await page.click('.tour-invite button:not(.primary)');
+  await page.click('.tour-invite button:not(.primary):not(.tour-x)');
   t.check('"No thanks" removes it', (await page.$('.tour-invite')) === null);
   t.check('and is remembered', await page.evaluate(
     () => localStorage.getItem('thebook:tour')) === '"skipped"');

@@ -3666,6 +3666,8 @@
       class: "tour-card tour-bottom", role: "dialog", "aria-modal": "false",
       "aria-labelledby": "tour-title", "aria-describedby": "tour-text"
     }, [
+      el("button", { type: "button", class: "tour-x", "aria-label": "Close the tour", text: "\u00d7",
+                     onclick: function () { endTour("skipped"); } }),
       el("div", { class: "tour-head" }, [count, el("span", { class: "tour-dots", "aria-hidden": "true" }, dots)]),
       title, text,
       el("div", { class: "tour-actions" }, [skip, el("span", { class: "tour-spacer" }), back, next]),
@@ -3735,6 +3737,8 @@
       var no = el("button", { type: "button", class: "chip", text: "No thanks",
         onclick: function () { tourMark("skipped"); removeInvite(); announce("Tour dismissed."); } });
       invite = el("aside", { class: "tour-invite", "aria-label": "Tour of the reader" }, [
+        el("button", { type: "button", class: "tour-x", "aria-label": "Close", text: "\u00d7",
+          onclick: function () { tourMark("skipped"); removeInvite(); announce("Tour dismissed."); } }),
         el("p", { class: "tour-invite-text" }, [
           el("strong", { text: "New here? " }),
           "Tap any word for its definition. Tap a place to see it on Google Maps. Here is a quick look."

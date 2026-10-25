@@ -2663,3 +2663,14 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
   .order-meter-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .reader-controls .chip-terms { display: none; }
 }
+
+/* Always-visible close button on the tour card and the invitation. */
+.tour-x {
+  position: absolute; top: .3rem; right: .4rem; width: 2rem; height: 2rem;
+  display: grid; place-items: center; padding: 0; cursor: pointer;
+  font: 1.4rem/1 var(--sans); color: var(--ink);
+  background: transparent; border: 0; border-radius: 999px;
+}
+.tour-x:hover { color: var(--ink); background: var(--paper-2); }
+.tour-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tour-invite .tour-invite-text { padding-right: 1.6rem; }
