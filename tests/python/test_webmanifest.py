@@ -110,18 +110,25 @@ class TheIconsAreReallyThere(unittest.TestCase):
         self.assertIn("192x192", sizes, sorted(sizes))
         self.assertIn("512x512", sizes, sorted(sizes))
 
-    def test_no_icon_claims_to_be_maskable(self):
-        """The tile is drawn with Apple's padding, not Android's safe zone.
+    def test_only_the_icon_drawn_for_it_claims_to_be_maskable(self):
+        """The plain tiles are drawn with Apple's padding, not Android's
+        safe zone.
 
         A maskable icon must keep its content inside a circle 80% of the
-        icon wide. These are inset by an eighth, so the corners of the mark
-        sit outside that circle and a launcher applying a round mask would
-        crop them. Claiming maskable would look fine here and be visibly
-        wrong on a phone, which is the reason to state it rather than to
-        leave the absence to chance.
+        icon wide. The plain tiles are inset by an eighth, so the corners of
+        the mark sit near the edge of that circle and a launcher applying a
+        round mask could crop them. Claiming maskable for those would look
+        fine here and be visibly wrong on a phone. The one icon that does
+        claim it is icon-maskable-512.png, drawn smaller for the purpose;
+        test_logo.py checks its mark against the safe zone.
         """
         for icon in manifest()["icons"]:
-            self.assertNotIn("maskable", icon.get("purpose", "any"))
+            purpose = icon.get("purpose", "any")
+            if "maskable" in purpose:
+                self.assertIn("maskable", icon["src"])
+                self.assertEqual(purpose, "maskable")
+            else:
+                self.assertNotIn("maskable", icon["src"])
 
 
 class TheColoursAgreeWithTheSite(unittest.TestCase):
