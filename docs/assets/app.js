@@ -3109,6 +3109,36 @@
     return wrap;
   }
 
+  var UA = (typeof navigator !== "undefined" && navigator.userAgent) || "";
+  var IS_ANDROID = /Android/.test(UA);
+  var IS_MOBILE = IS_ANDROID || /iPhone|iPad|iPod|Mobi/.test(UA);
+  var warmed = false;
+
+  /* One <link rel=preconnect> to Google, added the first time a desktop
+     reader reaches for the Maps chip, and never before: nothing is sent to
+     Google until then. */
+  function warmGoogle() {
+    if (warmed) return;
+    warmed = true;
+    var l = document.createElement("link");
+    l.rel = "preconnect";
+    l.href = "https://www.google.com";
+    document.head.appendChild(l);
+  }
+
+  function mapsChip(href, newTab) {
+    var a = el("a", { class: "chip primary", href: href,
+                      target: newTab ? "_blank" : null,
+                      rel: "noopener noreferrer",
+                      text: "📍  Open in Google Maps" });
+    if (!IS_MOBILE) {
+      ["pointerdown", "focus", "mouseenter"].forEach(function (ev) {
+        a.addEventListener(ev, warmGoogle, { once: true });
+      });
+    }
+    return a;
+  }
+
   function placeBlock(p) {
     var dist = VIEW[p.kind] || 8000;
     // Google Earth's web URL. On a phone with the app installed this opens
@@ -3117,6 +3147,29 @@
                 ",0a," + dist + "d,35y,0h,45t,0r";
     var maps = "https://www.google.com/maps/search/?api=1&query=" +
                p.lat + "," + p.lon;
+    /* How the Google Maps chip leaves the page depends on the device, and
+       only on the device (the user agent, not the window width: a narrow
+       desktop window is still a desktop).
+         Android: a geo: URI. The system hands it straight to the Maps app,
+           with no browser tab opened first. The OpenStreetMap and Earth
+           chips stay web links, so there is still a way out if no app
+           answers.
+         Other phones and tablets: the same https URL, in the same tab and
+           without target=_blank. The universal link is intercepted by the
+           app before any page loads; a new tab is what showed up blank
+           while the hand-off happened.
+         Desktop: unchanged, a new tab, plus a one-time preconnect to Google
+           when the chip is first approached, so the connection is warm by
+           the time it is clicked. */
+    var mapsNew = true;
+    if (IS_ANDROID) {
+      var label = p.name ? "(" + encodeURIComponent(String(p.name))
+        .replace(/\(/g, "%28").replace(/\)/g, "%29") + ")" : "";
+      maps = "geo:" + p.lat + "," + p.lon + "?q=" + p.lat + "," + p.lon + label;
+      mapsNew = false;
+    } else if (IS_MOBILE) {
+      mapsNew = false;
+    }
     var osm = "https://www.openstreetmap.org/?mlat=" + p.lat +
               "&mlon=" + p.lon + "#map=" + (p.kind === "region" ? 6 : 12) +
               "/" + p.lat + "/" + p.lon;
@@ -3146,9 +3199,7 @@
        look at last. On a phone both Google links open the app if it is
        installed. */
     var links = el("div", { class: "place-links" }, [
-      el("a", { class: "chip primary", href: maps,
-                target: "_blank", rel: "noopener noreferrer",
-                text: "📍  Open in Google Maps" }),
+      mapsChip(maps, mapsNew),
       el("a", { class: "chip", href: earth,
                 target: "_blank", rel: "noopener noreferrer",
                 text: "🌍  Google Earth" }),
@@ -3551,7 +3602,7 @@
     if (place) steps.push({
       title: "Places open on Google Maps",
       text: "A place’s panel has an Open in Google Maps button (and Google Earth). " +
-            "It opens in a new tab; this site sends nothing to Google until you press it.",
+            "It opens the Maps app on a phone, or Google Maps in a new tab on a computer; this site sends nothing to Google until you press it.",
       target: function () { return document.querySelector(".lex .place-links .chip.primary"); },
       after: function () { closeSheet(); return Promise.resolve(); }
     });
