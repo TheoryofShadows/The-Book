@@ -310,6 +310,33 @@ a:hover { color: var(--accent-2); }
 }
 .brand-mark { color: var(--rubric); display: flex; align-items: center; }
 .brand:hover .brand-mark { color: var(--rubric-2); }
+/* The mark's colours. The stops in the header's inline SVG are named, and
+   named here, rather than set on the elements, because the page has two
+   themes and an SVG attribute cannot follow one. Navy and gold on the cream
+   ground; the same mark with the blue lifted and the gold brightened on the
+   dark one. Kept to these two blocks and the first, which is the light
+   default, so neither route to dark is the poor relation of the other. */
+.brand-mark svg { display: block; }
+.hmg0 { stop-color: #f6dc9c; } .hmg1 { stop-color: #d9a94f; }
+.hmg2 { stop-color: #a87626; } .hmg3 { stop-color: #7a4f14; }
+.hmn0 { stop-color: #1b3a82; } .hmn1 { stop-color: #12295f; }
+.hmn2 { stop-color: #0b1f4b; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hmg0 { stop-color: #fbe8b4; }
+  :root:not([data-theme="light"]) .hmg1 { stop-color: #e5bb62; }
+  :root:not([data-theme="light"]) .hmg2 { stop-color: #bc8a33; }
+  :root:not([data-theme="light"]) .hmg3 { stop-color: #8f6420; }
+  :root:not([data-theme="light"]) .hmn0 { stop-color: #5a82cf; }
+  :root:not([data-theme="light"]) .hmn1 { stop-color: #3c62b3; }
+  :root:not([data-theme="light"]) .hmn2 { stop-color: #233f82; }
+}
+:root[data-theme="dark"] .hmg0 { stop-color: #fbe8b4; }
+:root[data-theme="dark"] .hmg1 { stop-color: #e5bb62; }
+:root[data-theme="dark"] .hmg2 { stop-color: #bc8a33; }
+:root[data-theme="dark"] .hmg3 { stop-color: #8f6420; }
+:root[data-theme="dark"] .hmn0 { stop-color: #5a82cf; }
+:root[data-theme="dark"] .hmn1 { stop-color: #3c62b3; }
+:root[data-theme="dark"] .hmn2 { stop-color: #233f82; }
 .brand-text { display: flex; flex-direction: column; line-height: 1.05; }
 .brand-name {
   font-family: var(--serif); font-size: 1.16rem; font-weight: 600;
