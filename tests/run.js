@@ -16,7 +16,7 @@ const { serve, launch, Tally, runPython } = require('./harness');
    first of the two. run.js clears what it left behind at the end. */
 const SUITES = ['routes', 'layout', 'search', 'words', 'keeping', 'diary',
                 'dating', 'resilience', 'listening', 'access', 'crawlable',
-                'installable', 'caching', 'accounts', 'tour', 'maphandoff', 'offline', 'map'];
+                'installable', 'caching', 'accounts', 'tour', 'maphandoff', 'install', 'offline', 'map'];
 
 /* The follow-along assertion is a timing sample of scroll position. It is
    the right check for a stream, and it is also the one check that has now

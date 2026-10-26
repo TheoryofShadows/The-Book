@@ -197,13 +197,11 @@ def head(title, description, canonical, depth, extra_head="", og_type="article")
         '<meta name="apple-mobile-web-app-capable" content="yes">',
         '<meta name="apple-mobile-web-app-status-bar-style" content="default">',
         '<meta name="apple-mobile-web-app-title" content="The Book">',
-        # The light accent, spelt out because a browser reads it before any
-        # stylesheet. docs/index.html carries the same value and is held to
-        # it by tests/python/test_palette.py; this copy said #6b2d5b for as
-        # long as that one did, was not corrected with it, and so shipped a
-        # different colour on all 2,709 of these pages than on the page they
-        # link to. Both are gated now.
-        '<meta name="theme-color" content="#632a55">',
+        # The brand navy, spelt out because a browser reads it before any
+        # stylesheet. docs/index.html carries the same two values and
+        # tests/python/test_webmanifest.py holds both copies to the manifest.
+        '<meta name="theme-color" content="#12295f" media="(prefers-color-scheme: light)">',
+        '<meta name="theme-color" content="#0a1d49" media="(prefers-color-scheme: dark)">',
         '<meta name="referrer" content="strict-origin-when-cross-origin">',
         # The download URL redirects onto ia*.us.archive.org and
         # dn*.ca.archive.org. A policy that names only archive.org itself

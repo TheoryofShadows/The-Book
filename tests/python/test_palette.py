@@ -210,40 +210,5 @@ class NoRuleSetsALiteralOnATokenGround(unittest.TestCase):
         self.assertEqual(failures, [], "\n" + "\n".join(failures))
 
 
-class TheBrowserIsToldTheRightColour(unittest.TestCase):
-    """theme-color paints the phone's address bar, and a browser reads it
-    before any stylesheet, so it cannot be var(--accent) and has to be spelt
-    out. Spelt-out values drift: this one said #6b2d5b while the accent it
-    is meant to be had been #632a55 for as long as the file had existed."""
-
-    def test_theme_color_is_the_light_accent(self):
-        with open(os.path.join(ROOT, "docs", "index.html"), encoding="utf-8") as fh:
-            html = fh.read()
-        stated = re.search(r'name="theme-color"\s+content="(#[0-9a-fA-F]{6})"', html)
-        self.assertIsNotNone(
-            stated, "docs/index.html no longer states a theme-color")
-        light, _media, _chosen = palettes()
-        self.assertEqual(stated.group(1).lower(), light["accent"].lower())
-
-    def test_the_generated_pages_are_told_the_same_colour(self):
-        """The front page is one page; tools/build_pages.py writes 2,709 more.
-
-        Its copy of this value was spelt out beside the other one and was not
-        corrected when the other one was, so every generated page painted the
-        address bar #6b2d5b while the page they all link to painted it
-        #632a55. Nothing compared them, because the test above reads only
-        docs/index.html. This reads the generator.
-        """
-        with open(os.path.join(ROOT, "tools", "build_pages.py"),
-                  encoding="utf-8") as fh:
-            source = fh.read()
-        stated = re.search(
-            r'theme-color" content="(#[0-9a-fA-F]{6})"', source)
-        self.assertIsNotNone(
-            stated, "tools/build_pages.py no longer writes a theme-color")
-        light, _media, _chosen = palettes()
-        self.assertEqual(stated.group(1).lower(), light["accent"].lower())
-
-
 if __name__ == "__main__":
     unittest.main()

@@ -4,11 +4,25 @@
   "description": "Every text of the Jewish, Protestant, Catholic, Orthodox and Ethiopian canons, together with the apocrypha and the Apostolic Fathers, arranged by when they were written.",
   "lang": "en",
   "dir": "ltr",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#eee7d9",
-  "theme_color": "#632a55",
+  "categories": ["books", "education"],
+  "background_color": "#061335",
+  "theme_color": "#12295f",
+  "shortcuts": [
+    {
+      "name": "Continue reading",
+      "short_name": "Read",
+      "url": "./#/"
+    },
+    {
+      "name": "Timeline",
+      "short_name": "Timeline",
+      "url": "./#/timeline"
+    }
+  ],
   "icons": [
     {
       "src": "assets/icon-192.png",

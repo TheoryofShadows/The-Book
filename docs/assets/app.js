@@ -3812,6 +3812,97 @@
   }
 
   /* ================================================================
+     INSTALL
+     ================================================================
+
+     One quiet line in the footer, shown only when this device can actually
+     install the site and has not already. Nothing pops up and nothing is
+     remembered: there is no "dismissed" flag because there is nothing to
+     nag with. Chrome, Edge and Android offer an install through
+     beforeinstallprompt, held until the reader presses the chip. Safari on
+     iOS has no such event and no API at all, so the chip opens a small
+     panel that says which two buttons to press. Already installed (running
+     standalone, or appinstalled fires): the line is gone. */
+  function initInstall() {
+    var box = document.getElementById("foot-install");
+    var btn = document.getElementById("install-app");
+    if (!box || !btn) return;
+
+    var nav = window.navigator || {};
+    var standalone = (window.matchMedia &&
+      window.matchMedia("(display-mode: standalone)").matches) ||
+      nav.standalone === true;
+    if (standalone) return;
+
+    var ua = nav.userAgent || "";
+    var ios = /iPhone|iPad|iPod/.test(ua) ||
+      (/Macintosh/.test(ua) && nav.maxTouchPoints > 1);
+    var safari = /Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\//.test(ua);
+    var deferred = null, panel = null;
+
+    function show(label) { btn.textContent = label; box.hidden = false; }
+    function closePanel(refocus) {
+      if (!panel) return;
+      document.removeEventListener("keydown", onKey);
+      if (panel.parentNode) panel.parentNode.removeChild(panel);
+      panel = null;
+      btn.setAttribute("aria-expanded", "false");
+      if (refocus) btn.focus();
+    }
+    function onKey(e) { if (e.key === "Escape") closePanel(true); }
+
+    function openPanel() {
+      var close = el("button", { type: "button", class: "tour-x",
+        "aria-label": "Close", text: "\u00d7", onclick: function () { closePanel(true); } });
+      panel = el("aside", { class: "install-panel", role: "dialog",
+                            "aria-label": "Install The Book" }, [
+        close,
+        el("p", { class: "install-title" }, [el("strong", { text: "Install The Book" })]),
+        el("p", { class: "install-text", text:
+          "Tap Share \u2191 in Safari\u2019s toolbar, then Add to Home Screen. " +
+          "It opens full-screen from your home screen, like an app." }),
+        el("div", { class: "tour-actions" }, [
+          el("button", { type: "button", class: "chip primary", text: "Got it",
+            onclick: function () { closePanel(true); } })
+        ])
+      ]);
+      document.body.appendChild(panel);
+      btn.setAttribute("aria-expanded", "true");
+      document.addEventListener("keydown", onKey);
+      close.focus();
+    }
+
+    window.addEventListener("beforeinstallprompt", function (e) {
+      e.preventDefault();
+      deferred = e;
+      show("Install app");
+    });
+    window.addEventListener("appinstalled", function () {
+      deferred = null;
+      closePanel(false);
+      box.hidden = true;
+      announce("The Book is installed.");
+    });
+
+    if (ios && safari) {
+      show("Install");
+      btn.setAttribute("aria-haspopup", "dialog");
+      btn.setAttribute("aria-expanded", "false");
+    }
+
+    btn.addEventListener("click", function () {
+      if (deferred) {
+        var d = deferred;
+        deferred = null;
+        box.hidden = true;
+        d.prompt();
+        return;
+      }
+      if (panel) closePanel(true); else openPanel();
+    });
+  }
+
+  /* ================================================================
      SEARCH
      ================================================================ */
 
@@ -9641,5 +9732,6 @@
   initLexicon();
   initLookupKeys();
   initTour();
+  initInstall();
   route();
 })();

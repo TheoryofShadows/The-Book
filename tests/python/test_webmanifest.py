@@ -131,29 +131,113 @@ class TheIconsAreReallyThere(unittest.TestCase):
                 self.assertNotIn("maskable", icon["src"])
 
 
-class TheColoursAgreeWithTheSite(unittest.TestCase):
+def png_pixel(path, x, y):
+    """One pixel of an 8-bit RGB or RGBA PNG, decoded by hand so the test
+    needs nothing installed. Not a general decoder: no palette, no
+    interlacing, which is all the icons are."""
+    import zlib
+    with open(path, "rb") as fh:
+        data = fh.read()
+    pos, idat, w, h, ctype = 8, b"", 0, 0, 0
+    while pos < len(data):
+        n, kind = struct.unpack(">I4s", data[pos:pos + 8])
+        body = data[pos + 8:pos + 8 + n]
+        if kind == b"IHDR":
+            w, h, depth, ctype, _c, _f, inter = struct.unpack(">IIBBBBB", body)
+            assert depth == 8 and ctype in (2, 6) and inter == 0, "unsupported PNG"
+        elif kind == b"IDAT":
+            idat += body
+        pos += 12 + n
+    bpp = 3 if ctype == 2 else 4
+    raw = zlib.decompress(idat)
+    stride = w * bpp
+    prev = bytearray(stride)
+    for row in range(y + 1):
+        base = row * (stride + 1)
+        ft, line = raw[base], bytearray(raw[base + 1:base + 1 + stride])
+        for i in range(stride):
+            a_ = line[i - bpp] if i >= bpp else 0
+            b_ = prev[i]
+            c_ = prev[i - bpp] if i >= bpp else 0
+            if ft == 1:
+                line[i] = (line[i] + a_) & 255
+            elif ft == 2:
+                line[i] = (line[i] + b_) & 255
+            elif ft == 3:
+                line[i] = (line[i] + (a_ + b_) // 2) & 255
+            elif ft == 4:
+                pa, pb, pc = abs(b_ - c_), abs(a_ - c_), abs(a_ + b_ - 2 * c_)
+                pr = a_ if pa <= pb and pa <= pc else (b_ if pb <= pc else c_)
+                line[i] = (line[i] + pr) & 255
+        prev = line
+    return tuple(prev[x * bpp:x * bpp + 3])
 
-    def test_theme_color_matches_the_page(self):
+
+def icon_edge():
+    """The ground colour the icon tiles are drawn on, read off a corner."""
+    return "#%02x%02x%02x" % png_pixel(
+        os.path.join(DOCS, "assets", "icon-512.png"), 2, 2)
+
+
+class TheColoursAgreeWithTheLogo(unittest.TestCase):
+    """The installed app wears the brand navy, not the reading page's plum.
+
+    theme_color paints the status bar of the installed app and the address
+    bar; background_color is the splash behind the icon. The splash is the
+    icon's own ground, so the square tile does not show as a tile.
+    """
+
+    def test_theme_color_is_the_logo_navy(self):
+        import sys
+        sys.path.insert(0, os.path.join(ROOT, "tools"))
+        import logo
+        want = "#%02x%02x%02x" % logo.NAVY
+        self.assertEqual(manifest()["theme_color"].lower(), want)
+
+    def test_the_page_light_theme_colour_matches_the_manifest(self):
         stated = re.search(
-            r'name="theme-color"\s+content="(#[0-9a-fA-F]{6})"', index())
-        self.assertIsNotNone(stated, "docs/index.html states no theme-color")
+            r'name="theme-color"\s+content="(#[0-9a-fA-F]{6})"\s+'
+            r'media="\(prefers-color-scheme: light\)"', index())
+        self.assertIsNotNone(stated, "docs/index.html states no light theme-color")
         self.assertEqual(manifest()["theme_color"].lower(),
                          stated.group(1).lower())
 
-    def test_background_color_is_the_paper_the_page_opens_on(self):
-        """The splash screen is painted before any stylesheet runs.
+    def test_the_page_has_a_dark_theme_colour_too(self):
+        self.assertRegex(
+            index(), r'name="theme-color"\s+content="#[0-9a-fA-F]{6}"\s+'
+                     r'media="\(prefers-color-scheme: dark\)"')
 
-        If it is not the page's own ground the app opens on a flash of the
-        wrong colour. There is only one background_color and the site has a
-        dark theme, so this is the light paper by choice: it matches the
-        default a device reports when it has no preference.
-        """
-        with open(os.path.join(DOCS, "assets", "app.css"), encoding="utf-8") as fh:
-            css = fh.read()
-        paper = re.search(r"--paper:\s*(#[0-9a-fA-F]{6})", css)
-        self.assertIsNotNone(paper, "app.css no longer defines --paper")
-        self.assertEqual(manifest()["background_color"].lower(),
-                         paper.group(1).lower())
+    def test_the_generated_pages_say_the_same(self):
+        with open(os.path.join(ROOT, "tools", "build_pages.py"), encoding="utf-8") as fh:
+            source = fh.read()
+        for scheme in ("light", "dark"):
+            m = re.search(r'theme-color" content="(#[0-9a-fA-F]{6})" '
+                          r'media="\(prefers-color-scheme: %s\)"' % scheme, source)
+            self.assertIsNotNone(m, "build_pages.py has no %s theme-color" % scheme)
+            h = re.search(r'name="theme-color"\s+content="(#[0-9a-fA-F]{6})"\s+'
+                          r'media="\(prefers-color-scheme: %s\)"' % scheme, index())
+            self.assertEqual(m.group(1).lower(), h.group(1).lower())
+
+    def test_background_color_is_the_ground_the_icons_are_drawn_on(self):
+        self.assertEqual(manifest()["background_color"].lower(), icon_edge())
+
+
+class TheManifestIsAnApp(unittest.TestCase):
+
+    def test_it_has_a_stable_identity_and_categories(self):
+        m = manifest()
+        self.assertEqual(m["id"], "./")
+        self.assertEqual(m["categories"], ["books", "education"])
+
+    def test_shortcuts_point_at_routes_inside_the_scope(self):
+        shortcuts = manifest()["shortcuts"]
+        self.assertEqual([s["url"] for s in shortcuts], ["./#/", "./#/timeline"])
+        with open(os.path.join(DOCS, "assets", "app.js"), encoding="utf-8") as fh:
+            js = fh.read()
+        self.assertIn('href="#/timeline"', index())
+        self.assertIn('"#/timeline"', js)
+        for s in shortcuts:
+            self.assertTrue(s["url"].startswith(manifest()["scope"]))
 
 
 class BothPlatformsCanInstallIt(unittest.TestCase):
