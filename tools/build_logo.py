@@ -33,9 +33,8 @@ from, and tests/python/test_logo.py holds that to the SVGs this file emits
 now. Change the mark and the build file no longer matches, which is the
 failure that matters: the PNGs are stale.
 
-The second tagline reads SCRIPTURE · HISTORY. The artwork this was drawn
-from has a third term, TRUTH, and it is left off the site's lockup and card
-on purpose -- see the note above LOCKUP_TERMS.
+The second tagline reads SCRIPTURE · HISTORY · TRUTH, as in the owner's own
+artwork (decided with the owner 2026-10-25, so the site matches the platforms).
 """
 
 from __future__ import annotations
@@ -75,15 +74,9 @@ PAD = 1.0 / 8.0
 # spare, which tests/python/test_webmanifest.py checks from these numbers.
 MASKABLE_MARK = 0.62                            # mark width / icon width
 
-# A decision about the signature, not an accident. The volume says, in bold,
-# on its own accuracy page: "That is a decision about order, not a verdict
-# about truth", and closes the section "Nothing here is a claim to have
-# settled a question scholars have not." Claiming TRUTH on the signature while
-# the text underneath declines to is the one contradiction a reader would
-# actually catch, so the site's lockup and card carry two terms. The
-# owner's own artwork has all three; the platform banners made from it
-# (outside this repository) keep them.
-LOCKUP_TERMS = ("SCRIPTURE", "HISTORY")
+# The signature's second tagline. The owner chose (2026-10-25) to carry all
+# three terms so the site matches their own artwork and the platform banners.
+LOCKUP_TERMS = ("SCRIPTURE", "HISTORY", "TRUTH")
 
 CARD = (1200, 630)
 
@@ -222,7 +215,7 @@ def card_svg() -> str:
     tk = 560 / TYPE["TAG1"][1] * 0.98
     out += (f'<path transform="translate({_n(-TYPE["TAG1"][1]*tk/2)} {name_y+112}) scale({_n(tk)})" '
             f'd="{TYPE["TAG1"][0]}" fill="{t["tag"]}"/>')
-    out += _terms("c", t, LOCKUP_TERMS, name_y + 170, 1.55)
+    out += _terms("c", t, LOCKUP_TERMS, name_y + 170, 1.3)
     dk = 1.25
     out += (f'<path transform="translate({_n(-TYPE["DOMAIN"][1]*dk/2)} {name_y+232}) scale({dk})" '
             f'd="{TYPE["DOMAIN"][0]}" fill="{t["tag"]}" opacity=".85"/></g>')

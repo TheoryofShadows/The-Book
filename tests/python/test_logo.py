@@ -169,12 +169,11 @@ class Committed(unittest.TestCase):
             self.assertNotIn("<text", read(name), name)
             self.assertNotIn("font-family", read(name), name)
 
-    def test_the_lockup_carries_two_terms_not_three(self):
-        """See LOCKUP_TERMS in tools/build_logo.py. The site declines to
-        claim truth and its signature does not claim it either."""
-        self.assertEqual(build_logo.LOCKUP_TERMS, ("SCRIPTURE", "HISTORY"))
-        self.assertNotIn(logo_type.TYPE["TRUTH"][0], read("lockup.svg"))
-        self.assertNotIn(logo_type.TYPE["TRUTH"][0], read("lockup-dark.svg"))
+    def test_the_lockup_carries_all_three_terms(self):
+        """See LOCKUP_TERMS in tools/build_logo.py: the site matches the owner's artwork."""
+        self.assertEqual(build_logo.LOCKUP_TERMS, ("SCRIPTURE", "HISTORY", "TRUTH"))
+        self.assertIn(logo_type.TYPE["TRUTH"][0], read("lockup.svg"))
+        self.assertIn(logo_type.TYPE["TRUTH"][0], read("lockup-dark.svg"))
 
     def test_the_tab_icon_is_small(self):
         """The offline copy inlines it as a data: URL in the page."""
