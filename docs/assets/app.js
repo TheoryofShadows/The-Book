@@ -985,12 +985,13 @@
     var wrap = el("div", { class: "wrap" });
     var head = el("div", { class: "reader-head" });
 
+    var crumbEra = (section.roman ? "Section " + section.roman + ". " : "") +
+                   titleCase(section.name || section.title) +
+                   (section.dates ? " \u00b7 " + section.dates : "");
     head.appendChild(el("div", { class: "crumbs" }, [
       el("a", { href: "#/", text: "Timeline" }),
-      document.createTextNode(" → "),
-      el("span", { text: (section.roman ? "Section " + section.roman + ". " : "") +
-                          titleCase(section.name || section.title) +
-                          (section.dates ? " · " + section.dates : "") })
+      document.createTextNode(" \u2192 "),
+      el("span", { class: "crumb-era", title: crumbEra, text: crumbEra })
     ]));
     head.appendChild(el("h1", { text: titleCase(meta.title) }));
     /* Where this work falls in the order the volume exists to show. Only the

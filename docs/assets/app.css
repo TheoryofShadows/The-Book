@@ -2697,6 +2697,15 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
   .order-meter-bar { flex-basis: 100%; }
   .order-meter-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .reader-controls .chip-terms { display: none; }
+  /* The era is a second line of grey above the title and cost ~20px of
+     scripture. One line, cut with an ellipsis; the whole of it is the
+     span's title and is the first thing on the era's own page. */
+  .reader-head .crumbs {
+    display: flex; flex-wrap: nowrap; align-items: baseline; gap: 0 .3em;
+    white-space: nowrap;
+  }
+  .reader-head .crumbs a { flex: 0 0 auto; }
+  .reader-head .crumbs .crumb-era { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 }
 
 /* Always-visible close button on the tour card and the invitation. */
