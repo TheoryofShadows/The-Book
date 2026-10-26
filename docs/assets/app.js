@@ -3109,6 +3109,36 @@
     return wrap;
   }
 
+  var UA = (typeof navigator !== "undefined" && navigator.userAgent) || "";
+  var IS_ANDROID = /Android/.test(UA);
+  var IS_MOBILE = IS_ANDROID || /iPhone|iPad|iPod|Mobi/.test(UA);
+  var warmed = false;
+
+  /* One <link rel=preconnect> to Google, added the first time a desktop
+     reader reaches for the Maps chip, and never before: nothing is sent to
+     Google until then. */
+  function warmGoogle() {
+    if (warmed) return;
+    warmed = true;
+    var l = document.createElement("link");
+    l.rel = "preconnect";
+    l.href = "https://www.google.com";
+    document.head.appendChild(l);
+  }
+
+  function mapsChip(href, newTab) {
+    var a = el("a", { class: "chip primary", href: href,
+                      target: newTab ? "_blank" : null,
+                      rel: "noopener noreferrer",
+                      text: "📍  Open in Google Maps" });
+    if (!IS_MOBILE) {
+      ["pointerdown", "focus", "mouseenter"].forEach(function (ev) {
+        a.addEventListener(ev, warmGoogle, { once: true });
+      });
+    }
+    return a;
+  }
+
   function placeBlock(p) {
     var dist = VIEW[p.kind] || 8000;
     // Google Earth's web URL. On a phone with the app installed this opens
@@ -3117,6 +3147,29 @@
                 ",0a," + dist + "d,35y,0h,45t,0r";
     var maps = "https://www.google.com/maps/search/?api=1&query=" +
                p.lat + "," + p.lon;
+    /* How the Google Maps chip leaves the page depends on the device, and
+       only on the device (the user agent, not the window width: a narrow
+       desktop window is still a desktop).
+         Android: a geo: URI. The system hands it straight to the Maps app,
+           with no browser tab opened first. The OpenStreetMap and Earth
+           chips stay web links, so there is still a way out if no app
+           answers.
+         Other phones and tablets: the same https URL, in the same tab and
+           without target=_blank. The universal link is intercepted by the
+           app before any page loads; a new tab is what showed up blank
+           while the hand-off happened.
+         Desktop: unchanged, a new tab, plus a one-time preconnect to Google
+           when the chip is first approached, so the connection is warm by
+           the time it is clicked. */
+    var mapsNew = true;
+    if (IS_ANDROID) {
+      var label = p.name ? "(" + encodeURIComponent(String(p.name))
+        .replace(/\(/g, "%28").replace(/\)/g, "%29") + ")" : "";
+      maps = "geo:" + p.lat + "," + p.lon + "?q=" + p.lat + "," + p.lon + label;
+      mapsNew = false;
+    } else if (IS_MOBILE) {
+      mapsNew = false;
+    }
     var osm = "https://www.openstreetmap.org/?mlat=" + p.lat +
               "&mlon=" + p.lon + "#map=" + (p.kind === "region" ? 6 : 12) +
               "/" + p.lat + "/" + p.lon;
@@ -3146,9 +3199,7 @@
        look at last. On a phone both Google links open the app if it is
        installed. */
     var links = el("div", { class: "place-links" }, [
-      el("a", { class: "chip primary", href: maps,
-                target: "_blank", rel: "noopener noreferrer",
-                text: "📍  Open in Google Maps" }),
+      mapsChip(maps, mapsNew),
       el("a", { class: "chip", href: earth,
                 target: "_blank", rel: "noopener noreferrer",
                 text: "🌍  Google Earth" }),
@@ -3551,7 +3602,7 @@
     if (place) steps.push({
       title: "Places open on Google Maps",
       text: "A place’s panel has an Open in Google Maps button (and Google Earth). " +
-            "It opens in a new tab; this site sends nothing to Google until you press it.",
+            "It opens the Maps app on a phone, or Google Maps in a new tab on a computer; this site sends nothing to Google until you press it.",
       target: function () { return document.querySelector(".lex .place-links .chip.primary"); },
       after: function () { closeSheet(); return Promise.resolve(); }
     });
@@ -3758,6 +3809,97 @@
       ]);
       document.body.appendChild(invite);
     }, 3000);
+  }
+
+  /* ================================================================
+     INSTALL
+     ================================================================
+
+     One quiet line in the footer, shown only when this device can actually
+     install the site and has not already. Nothing pops up and nothing is
+     remembered: there is no "dismissed" flag because there is nothing to
+     nag with. Chrome, Edge and Android offer an install through
+     beforeinstallprompt, held until the reader presses the chip. Safari on
+     iOS has no such event and no API at all, so the chip opens a small
+     panel that says which two buttons to press. Already installed (running
+     standalone, or appinstalled fires): the line is gone. */
+  function initInstall() {
+    var box = document.getElementById("foot-install");
+    var btn = document.getElementById("install-app");
+    if (!box || !btn) return;
+
+    var nav = window.navigator || {};
+    var standalone = (window.matchMedia &&
+      window.matchMedia("(display-mode: standalone)").matches) ||
+      nav.standalone === true;
+    if (standalone) return;
+
+    var ua = nav.userAgent || "";
+    var ios = /iPhone|iPad|iPod/.test(ua) ||
+      (/Macintosh/.test(ua) && nav.maxTouchPoints > 1);
+    var safari = /Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\//.test(ua);
+    var deferred = null, panel = null;
+
+    function show(label) { btn.textContent = label; box.hidden = false; }
+    function closePanel(refocus) {
+      if (!panel) return;
+      document.removeEventListener("keydown", onKey);
+      if (panel.parentNode) panel.parentNode.removeChild(panel);
+      panel = null;
+      btn.setAttribute("aria-expanded", "false");
+      if (refocus) btn.focus();
+    }
+    function onKey(e) { if (e.key === "Escape") closePanel(true); }
+
+    function openPanel() {
+      var close = el("button", { type: "button", class: "tour-x",
+        "aria-label": "Close", text: "\u00d7", onclick: function () { closePanel(true); } });
+      panel = el("aside", { class: "install-panel", role: "dialog",
+                            "aria-label": "Install The Book" }, [
+        close,
+        el("p", { class: "install-title" }, [el("strong", { text: "Install The Book" })]),
+        el("p", { class: "install-text", text:
+          "Tap Share \u2191 in Safari\u2019s toolbar, then Add to Home Screen. " +
+          "It opens full-screen from your home screen, like an app." }),
+        el("div", { class: "tour-actions" }, [
+          el("button", { type: "button", class: "chip primary", text: "Got it",
+            onclick: function () { closePanel(true); } })
+        ])
+      ]);
+      document.body.appendChild(panel);
+      btn.setAttribute("aria-expanded", "true");
+      document.addEventListener("keydown", onKey);
+      close.focus();
+    }
+
+    window.addEventListener("beforeinstallprompt", function (e) {
+      e.preventDefault();
+      deferred = e;
+      show("Install app");
+    });
+    window.addEventListener("appinstalled", function () {
+      deferred = null;
+      closePanel(false);
+      box.hidden = true;
+      announce("The Book is installed.");
+    });
+
+    if (ios && safari) {
+      show("Install");
+      btn.setAttribute("aria-haspopup", "dialog");
+      btn.setAttribute("aria-expanded", "false");
+    }
+
+    btn.addEventListener("click", function () {
+      if (deferred) {
+        var d = deferred;
+        deferred = null;
+        box.hidden = true;
+        d.prompt();
+        return;
+      }
+      if (panel) closePanel(true); else openPanel();
+    });
   }
 
   /* ================================================================
@@ -9590,5 +9732,6 @@
   initLexicon();
   initLookupKeys();
   initTour();
+  initInstall();
   route();
 })();

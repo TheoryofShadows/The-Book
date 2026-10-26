@@ -2742,3 +2742,23 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
 }
 .account-body button.warn-btn { color: var(--warn); border-color: var(--warn); background: var(--warn-bg); }
 .account-form button.primary { width: 100%; }
+
+/* ---------- install ----------
+   The footer line stays out of the way until the device can install. */
+.foot-install[hidden] { display: none; }
+.foot-install .chip { font-size: .84rem; padding: .3rem .85rem; margin-right: .3rem; }
+.install-panel {
+  position: fixed; z-index: 95; bottom: .75rem; left: 50%; transform: translateX(-50%);
+  width: min(26rem, calc(100vw - 1.5rem));
+  background: var(--raised); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: .9rem 1rem 1rem;
+  font-size: .92rem; line-height: 1.5;
+}
+.install-title { margin: 0 2rem .25rem 0; font-family: var(--serif); font-size: 1.05rem; }
+.install-text { margin: 0 0 .75rem; color: var(--ink-soft); }
+.install-panel .chip { padding: .35rem .85rem; font-size: .84rem; }
+@media (min-width: 900px) {
+  .install-panel { left: 1.25rem; bottom: 1.25rem; transform: none; }
+}
