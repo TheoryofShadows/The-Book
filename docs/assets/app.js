@@ -1321,7 +1321,12 @@
          over the text nodes in `passages`. The legend goes under the
          controls; the switch for dictionary underlines joins them. */
       var legend = discoverChapter(passages, workId, idx, controls);
-      controls.parentNode.insertBefore(legend, controls.nextSibling);
+      /* On a phone the scripture has a height budget (tests/layout.test.js),
+         and a row of its own for this cost about 50px of it. So there it
+         rides on the chapter heading's line, which has the room, and costs
+         none. Everywhere else it stays under the controls. */
+      if (phone()) reader.insertBefore(legend, reader.firstChild);
+      else controls.parentNode.insertBefore(legend, controls.nextSibling);
 
       attachListening({
         work: workId, workTitle: meta.title, chapter: idx, label: chapter.label,
@@ -3434,14 +3439,19 @@
   }
 
   function discoveryLegend() {
-    return el("p", { class: "reader-legend" }, [
+    /* The wide wording is for rooms with space. On a phone the legend shares
+       the chapter heading's line (see .reader > .reader-legend), so it says
+       the same two things in about half the characters. */
+    return el("div", { class: "reader-legend" }, [
       el("span", { class: "legend-term", text: "Tap any word" }),
-      " for its definition. ",
-      el("span", { class: "legend-pin", "aria-hidden": "true", text: "📍" }),
-      el("span", { class: "legend-place", text: "Dotted names" }),
-      " are places: tap one",
+      el("span", { class: "legend-wide", text: " for its definition. " }),
+      el("span", { class: "legend-short", "aria-hidden": "true", text: " \u00b7 " }),
+      el("span", { class: "legend-pin", "aria-hidden": "true", text: "\ud83d\udccd" }),
+      el("span", { class: "legend-place" }, ["Dotted", el("span", { class: "legend-wide", text: " names" })]),
+      el("span", { class: "legend-short", text: " = map" }),
+      el("span", { class: "legend-wide", text: " are places: tap one" }),
       el("span", { class: "legend-long", text: ", then Open in Google Maps" }),
-      "."
+      el("span", { class: "legend-wide", text: "." })
     ]);
   }
 

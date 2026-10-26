@@ -2561,6 +2561,14 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
   font-size: .8rem; line-height: 1.5; color: var(--ink-faint);
 }
 .legend-term { color: var(--ink-soft); font-weight: 600; }
+.legend-short { display: none; }
+/* On a phone the legend sits on the chapter heading's line, inside the leaf,
+   so it adds no height above the scripture. The heading is short and the
+   line has the room; if a long heading wraps, the legend wraps with it. */
+.reader > .reader-legend {
+  float: right; max-width: 62%; margin: 0 0 0 .6rem;
+  font-size: .7rem; line-height: 1.5; text-align: right; white-space: nowrap;
+}
 .legend-pin { margin: 0 .2rem 0 .1rem; }
 .legend-place {
   color: var(--ink-soft); font-weight: 600;
@@ -2679,13 +2687,13 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
 /* "Begin here": the one primary action on the front page reads as one. */
 .start-here-title::after { content: " \2192"; color: var(--accent); }
 
-/* Phones: the scripture has a height budget, so the legend is one short line,
-   the meter is the bar alone, and the dictionary-underline switch (a nicety,
+/* Phones: the scripture has a height budget, so the legend shares the
+   chapter heading's line, the meter is the bar alone, with no margin of its own, and the dictionary-underline switch (a nicety,
    since every word is tappable anyway) waits for a wider screen. */
 @media (max-width: 620px) {
-  .reader-legend { margin-bottom: .4rem; font-size: .74rem; line-height: 1.4; }
-  .legend-long { display: none; }
-  .order-meter { margin: 0 0 .35rem; }
+  .legend-long, .legend-wide { display: none; }
+  .legend-short { display: inline; }
+  .order-meter { margin: -.25rem 0 -.2rem; }
   .order-meter-bar { flex-basis: 100%; }
   .order-meter-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .reader-controls .chip-terms { display: none; }
