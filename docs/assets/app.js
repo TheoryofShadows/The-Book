@@ -3799,6 +3799,119 @@
     });
   }
 
+  /* ================================================================
+     THE INTRO
+     ================================================================
+
+     The first time somebody opens the front page on this device, the
+     wordmark opens like a book: the cover swings back, a few pages turn, and
+     it fades into the page underneath, in under two seconds. Everything on
+     the page is already rendered beneath it -- the intro is a layer laid on
+     top by this script, never in the HTML -- so a crawler, a reader without
+     script, and the largest paint all see the page as it always was.
+
+     Never for prefers-reduced-motion, an automated browser or a crawler;
+     once per device (the "intro" flag, kept like the tour's); a tap or a
+     key opens it at once, and Skip is always on screen. Pressing the
+     wordmark while already on the front page plays it again. The tour's
+     first-visit offer waits for it to end (introDone), so the two never
+     share the screen. */
+  var introDone = Promise.resolve();
+  var introLayer = null;
+
+  function introWanted() {
+    var nav = window.navigator || {};
+    if (nav.webdriver) return false;
+    if (/bot|crawl|spider|slurp|lighthouse|headless|preview/i.test(nav.userAgent || "")) return false;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
+    return true;
+  }
+
+  function onFrontPage() {
+    var h = location.hash || "";
+    return h === "" || h === "#" || h === "#/";
+  }
+
+  function playIntro() {
+    if (introLayer) return introDone;
+    var mark = document.querySelector(".brand-mark svg");
+    var logo = function () {
+      var m = mark ? mark.cloneNode(true) : el("span");
+      m.removeAttribute("width"); m.removeAttribute("height");
+      return el("span", { class: "intro-logo", "aria-hidden": "true" }, [m]);
+    };
+    var leaves = [0, 1, 2].map(function (k) {
+      return el("div", { class: "intro-leaf intro-leaf-" + k }, [
+        el("div", { class: "intro-face intro-face-front" }),
+        el("div", { class: "intro-face intro-face-back" })
+      ]);
+    });
+    var cover = el("div", { class: "intro-cover" }, [
+      el("div", { class: "intro-face intro-face-front intro-cover-front" }, [
+        logo(),
+        el("span", { class: "intro-cover-title", text: "The Book" })
+      ]),
+      el("div", { class: "intro-face intro-face-back intro-cover-inside" })
+    ]);
+    var page = el("div", { class: "intro-page" }, [
+      logo(),
+      el("span", { class: "intro-title", text: "The Book" }),
+      el("span", { class: "intro-sub", text: "in the order it was written" })
+    ]);
+    var resolve;
+    introDone = new Promise(function (r) { resolve = r; });
+    var finished = false, timer = null;
+    function finish() {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      store.set("intro", "seen");
+      layer.classList.add("is-out");
+      setTimeout(function () {
+        if (layer.parentNode) layer.parentNode.removeChild(layer);
+        document.removeEventListener("keydown", onKey, true);
+        introLayer = null;
+        resolve();
+      }, 350);
+    }
+    // A tap during the opening opens it the rest of the way: the animation
+    // jumps to its last frame and the fade starts.
+    function hurry() {
+      if (finished) return;
+      layer.classList.add("is-open-now");
+      finish();
+    }
+    function onKey(e) {
+      if (e.key === "Escape" || e.key === "Enter" || e.key === " ") { e.preventDefault(); hurry(); }
+    }
+    var skip = el("button", { type: "button", class: "intro-skip", text: "Skip",
+      onclick: function (e) { e.stopPropagation(); hurry(); } });
+    var layer = el("div", { class: "intro", role: "presentation", onclick: hurry }, [
+      el("div", { class: "intro-book", "aria-hidden": "true" },
+         [el("div", { class: "intro-left" }), page].concat(leaves).concat([cover])),
+      skip
+    ]);
+    introLayer = layer;
+    document.body.appendChild(layer);
+    document.addEventListener("keydown", onKey, true);
+    // 0.15 s still, cover 0.7 s, three leaves overlapping, fade from 1.5 s:
+    // gone by 1.9 s.
+    timer = setTimeout(finish, 1500);
+    return introDone;
+  }
+
+  function initIntro() {
+    var brand = document.querySelector(".brand");
+    if (brand) brand.addEventListener("click", function (e) {
+      if (!onFrontPage() || !introWanted()) return;
+      e.preventDefault();
+      window.scrollTo(0, 0);
+      playIntro();
+    });
+    if (store.get("intro", null) !== null || !onFrontPage() || !introWanted()) return;
+    playIntro();
+  }
+
   var invite = null;
   function removeInvite() {
     if (invite && invite.parentNode) invite.parentNode.removeChild(invite);
@@ -3815,7 +3928,9 @@
       if (t) { e.preventDefault(); startTour(t); }
     });
     if (tourSeen() !== null || !store.set("tour-check", 1)) return;
-    setTimeout(function () {
+    // After the intro, if one is playing, so the two never overlap.
+    introDone.then(function () { setTimeout(offerTour, 3000); });
+    function offerTour() {
       if (tourSeen() !== null || tour || invite) return;
       if (document.querySelector(".lex")) return;
       var yes = el("button", { type: "button", class: "chip primary", text: "Take the 30-second tour",
@@ -3832,7 +3947,7 @@
         el("div", { class: "tour-actions" }, [yes, no])
       ]);
       document.body.appendChild(invite);
-    }, 3000);
+    }
   }
 
   /* ================================================================
@@ -9755,6 +9870,7 @@
   if (store.get("account", null)) withAccount(function () {});
   initLexicon();
   initLookupKeys();
+  initIntro();
   initTour();
   initInstall();
   route();
