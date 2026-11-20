@@ -3834,30 +3834,34 @@
 
   function playIntro() {
     if (introLayer) return introDone;
-    var mark = document.querySelector(".brand-mark svg");
-    var logo = function () {
-      var m = mark ? mark.cloneNode(true) : el("span");
-      m.removeAttribute("width"); m.removeAttribute("height");
-      return el("span", { class: "intro-logo", "aria-hidden": "true" }, [m]);
+    /* The book is the logo: the favicon's navy and gold mark on a navy
+       cover, "The Book" in the wordmark's serif set in the og-card's gold,
+       and the og-card's rule. Pages carry faint lines of type. When it is
+       open, "Truth" -- the last word of the og-card's motto -- rises out of
+       the gutter with a gold glow before the fade. */
+    var logo = function (cls) {
+      return el("img", { class: cls, src: "assets/favicon.svg", alt: "", width: "64", height: "64",
+                         decoding: "async", draggable: "false" });
     };
+    var lines = function () { return el("div", { class: "intro-lines" }); };
     var leaves = [0, 1, 2].map(function (k) {
       return el("div", { class: "intro-leaf intro-leaf-" + k }, [
-        el("div", { class: "intro-face intro-face-front" }),
-        el("div", { class: "intro-face intro-face-back" })
+        el("div", { class: "intro-face intro-face-front" }, [lines()]),
+        el("div", { class: "intro-face intro-face-back" }, [lines()])
       ]);
     });
     var cover = el("div", { class: "intro-cover" }, [
       el("div", { class: "intro-face intro-face-front intro-cover-front" }, [
-        logo(),
-        el("span", { class: "intro-cover-title", text: "The Book" })
+        logo("intro-cover-mark"),
+        el("span", { class: "intro-cover-title", text: "The Book" }),
+        el("span", { class: "intro-rule" }),
+        el("span", { class: "intro-cover-motto", text: "Scripture \u2022 History \u2022 Truth" })
       ]),
       el("div", { class: "intro-face intro-face-back intro-cover-inside" })
     ]);
-    var page = el("div", { class: "intro-page" }, [
-      logo(),
-      el("span", { class: "intro-title", text: "The Book" }),
-      el("span", { class: "intro-sub", text: "in the order it was written" })
-    ]);
+    var page = el("div", { class: "intro-page" }, [lines()]);
+    var left = el("div", { class: "intro-left" }, [lines()]);
+    var truth = el("div", { class: "intro-truth" }, [el("span", { text: "Truth" })]);
     var resolve;
     introDone = new Promise(function (r) { resolve = r; });
     var finished = false, timer = null;
@@ -3876,10 +3880,14 @@
     }
     // A tap during the opening opens it the rest of the way: the animation
     // jumps to its last frame and the fade starts.
+    var hurried = false;
     function hurry() {
-      if (finished) return;
+      if (finished || hurried) return;
+      hurried = true;
+      // Straight to the open book with the word up, a moment to see it, out.
       layer.classList.add("is-open-now");
-      finish();
+      clearTimeout(timer);
+      timer = setTimeout(finish, 300);
     }
     function onKey(e) {
       if (e.key === "Escape" || e.key === "Enter" || e.key === " ") { e.preventDefault(); hurry(); }
@@ -3888,15 +3896,15 @@
       onclick: function (e) { e.stopPropagation(); hurry(); } });
     var layer = el("div", { class: "intro", role: "presentation", onclick: hurry }, [
       el("div", { class: "intro-book", "aria-hidden": "true" },
-         [el("div", { class: "intro-left" }), page].concat(leaves).concat([cover])),
+         [left, page].concat(leaves).concat([cover, truth])),
       skip
     ]);
     introLayer = layer;
     document.body.appendChild(layer);
     document.addEventListener("keydown", onKey, true);
-    // 0.15 s still, cover 0.7 s, three leaves overlapping, fade from 1.5 s:
-    // gone by 1.9 s.
-    timer = setTimeout(finish, 1500);
+    // 0.15 s still, cover 0.7 s, three leaves overlapping, "Truth" rises
+    // from 0.95 s and glows, fade from 2.05 s: gone by 2.4 s.
+    timer = setTimeout(finish, 2050);
     return introDone;
   }
 

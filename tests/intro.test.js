@@ -19,14 +19,19 @@ module.exports = async function intro(t, ctx) {
     await page.addInitScript(human);
     await page.goto(ctx.base + '?firsttime#/');
     await page.waitForSelector('.intro', { timeout: 3000 });
-    t.check(label + ': a first visit opens on the book',
-            await page.isVisible('.intro-cover') && await page.isVisible('.intro-skip'));
+    t.check(label + ': a first visit opens on the book, the logo on its cover',
+            await page.isVisible('.intro-cover') && await page.isVisible('.intro-skip') &&
+            await page.isVisible('.intro-cover-mark'));
+    await page.waitForTimeout(1500);
+    t.check(label + ': "Truth" rises out of the open book',
+            await page.isVisible('.intro-truth') &&
+            Number(await page.evaluate(() => getComputedStyle(document.querySelector('.intro-truth')).opacity)) > 0.5);
     t.check(label + ': the front page is already rendered underneath it',
             await page.evaluate(() => !!document.querySelector('main .hero h1')));
     t.check(label + ': the tour offer does not share the screen with it',
             !(await page.$('.tour-invite')));
-    await page.waitForSelector('.intro', { state: 'detached', timeout: 2600 });
-    t.check(label + ': it is gone within about two seconds and remembered',
+    await page.waitForSelector('.intro', { state: 'detached', timeout: 3000 });
+    t.check(label + ': it is gone within about two and a half seconds and remembered',
             await page.evaluate(() => localStorage.getItem('thebook:intro')) === '"seen"');
     await page.waitForSelector('.tour-invite', { timeout: 5000 }).catch(() => null);
     t.check(label + ': the tour offer comes after it', !!(await page.$('.tour-invite')));
@@ -41,13 +46,13 @@ module.exports = async function intro(t, ctx) {
     await page.waitForSelector('.intro', { timeout: 1000 });
     t.check(label + ': pressing the wordmark on the front page plays it again', true);
     await page.click('.intro-skip');
-    await page.waitForSelector('.intro', { state: 'detached', timeout: 1000 });
+    await page.waitForSelector('.intro', { state: 'detached', timeout: 1500 });
     t.check(label + ': Skip ends it at once', true);
 
     await page.click('.brand');
     await page.waitForSelector('.intro');
     await page.mouse.click(viewport.width / 2, viewport.height / 2);
-    await page.waitForSelector('.intro', { state: 'detached', timeout: 1000 });
+    await page.waitForSelector('.intro', { state: 'detached', timeout: 1500 });
     t.check(label + ': a tap opens it straight away', true);
     await page.close();
   }
