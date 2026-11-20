@@ -1126,6 +1126,39 @@ table.grid tbody tr:last-child td { border-bottom: 0; }
 }
 .pager a:hover { border-color: var(--accent); color: var(--accent); }
 .pager .spacer { flex: 1; }
+/* The chapter pages' Previous and Next: most readers are on a phone, so each
+   is a full thumb's height, says which way it goes, and the two share the row.
+   The copy above the text is the same pair, so a reader who has finished a
+   chapter and one who wants the last one both find it without scrolling. */
+.pager-big { gap: .6rem; }
+.pager-big a {
+  flex: 1 1 0; max-width: none; min-height: 48px; box-sizing: border-box;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: .6rem .9rem; font-size: 1rem; border-radius: 10px;
+  color: var(--ink); -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.pager-big a[rel="next"], .pager-big a:last-child:not(:first-child) { text-align: right; }
+.pager-big .dir { font-weight: 600; }
+.pager-big .to { font-size: .8rem; color: var(--ink-faint); }
+.pager-big .spacer { flex: 1 1 0; }
+.pager-top { margin: 0 auto var(--gap); }
+
+/* "A new chapter every week" on the Enoch pages: a plain form, no script. */
+.signup {
+  max-width: var(--measure); margin: 2.4rem auto 0; padding: 1rem 1.1rem;
+  border: 1px solid var(--rule); border-radius: 10px;
+}
+.signup h2 { margin: 0 0 .25rem; font-size: 1.1rem; }
+.signup p { margin: 0 0 .7rem; }
+.signup-row { display: flex; gap: .5rem; flex-wrap: wrap; }
+.signup input[type=email] {
+  flex: 1 1 12rem; min-height: 44px; padding: .5rem .7rem; font-size: 16px;
+  border: 1px solid var(--rule); border-radius: 8px; background: transparent; color: var(--ink);
+}
+.signup button { min-height: 44px; padding: .5rem 1.1rem; font-size: 1rem; border-radius: 8px; }
+.signup .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.signup .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
 /* The editor's note on the work: prose about the book, so it is set in the
    book's type. It was in the interface's sans, which put a sentence of

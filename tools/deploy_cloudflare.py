@@ -40,7 +40,16 @@ HEADERS = f"""/*
   ! Content-Security-Policy
 /sw.js
   Cache-Control: no-cache
+https://thebookandme.pages.dev/*
+  X-Robots-Tag: noindex
+https://:branch.thebookandme.pages.dev/*
+  X-Robots-Tag: noindex
 """
+# The two rules above keep the project's own *.pages.dev addresses out of
+# search results. Every page already names https://thebookandme.com/... as
+# its canonical; this makes the copy on pages.dev say outright that it is not
+# the one to index. Pages matches a rule on the host only when it is written
+# as an absolute URL, which is why these two are.
 
 ROUTES = json.dumps({"version": 1, "include": ["/api/*"], "exclude": []})
 

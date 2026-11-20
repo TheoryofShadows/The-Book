@@ -4,7 +4,7 @@
     python3 tools/build_pages.py docs
 
 The reader is a hash-routed single page. A fragment is never sent to a
-server, so every one of the 172 works and 2,537 chapters lives at a URL that
+server, so every one of the 174 works and 2,655 chapters lives at a URL that
 no crawler can ask for and no crawler can index: Google sees the shell, once,
 with no scripture on it at all. This writes the other half -- a plain page per
 chapter, with the text really in the HTML -- and a contents page that links to
@@ -47,6 +47,14 @@ BASE = "https://thebookandme.com"
 # built from this rather than spelt out beside it and left to rot.
 PREFIX = urllib.parse.urlsplit(BASE).path.rstrip("/")
 SITE = "The Book"
+
+# The name the site goes by in a search result: the domain says "The Book and
+# Me", and a chapter title that names it is the one a reader can match to the
+# address they were given.
+BRAND = "The Book and Me"
+
+# The address of the Enoch reading plan, relative to the site root.
+ENOCH_PLAN = "enoch-reading-plan"
 
 # The reader's own title, for the pages that are not a single chapter.
 FULL_TITLE = "The Book — Biblical and Related Ancient Texts in Order of Composition"
@@ -127,6 +135,35 @@ def chapter_heading(work_title, label):
         rest = re.sub(r"^[^A-Za-z0-9]+", "", " ".join(words[run:])).strip()
 
     return (title_case(work_title) + (" " + rest if rest else "")).strip()
+
+
+_ENOCH_WORK = re.compile(r"^([123])-enoch-")
+
+
+def enoch_book(work_id):
+    """"1", "2" or "3" for a work that is part of a book of Enoch, else None."""
+    m = _ENOCH_WORK.match(work_id or "")
+    return m.group(1) if m else None
+
+
+def short_heading(meta, c, heading):
+    """The chapter as a person searching for it would type it.
+
+    "1 Enoch Chapter 84", not "1 Enoch: Dream Visions and the Epistle of
+    Enoch (Chapters 83-108) 84": the volume's sections are how the library
+    files the book, and nobody searches for them. Every other work keeps the
+    heading chapter_heading() gives, which is already what people type.
+    """
+    book = enoch_book(meta.get("id"))
+    n = c.get("n")
+    if book and isinstance(n, int) and n > 0:
+        return "%s Enoch Chapter %d" % (book, n)
+    return heading
+
+
+def page_title(short):
+    """The <title> of a chapter page. One rule for every chapter."""
+    return "%s – Read Along | %s" % (short, BRAND)
 
 
 def describe(text, limit=155):
@@ -268,8 +305,9 @@ def footer(depth, what="a plain page of one chapter"):
     return """<footer class="foot">
   <p>
     <strong>The texts are public domain</strong> — the World English Bible with
-    Deuterocanon, R. H. Charles's 1917 Enoch and Jubilees, and the Ante-Nicene
-    Fathers of 1870 and 1885. The <a href="{up}#/accuracy">accuracy report</a>
+    Deuterocanon, R. H. Charles's 1917 Enoch and Jubilees, Morfill's 2 Enoch
+    (1896) and Odeberg's 3 Enoch (1928), and the Ante-Nicene Fathers of 1870
+    and 1885. The <a href="{up}#/accuracy">accuracy report</a>
     sets out what was verified, what was corrected, and what is still missing.
   </p>
   <p class="muted foot-links">
@@ -294,20 +332,33 @@ def ld(obj):
             % json.dumps(obj, ensure_ascii=False, separators=(",", ":")))
 
 
-def pager(prev, nxt):
+def pager(prev, nxt, big=False, top=False):
     """Real anchors, because a crawler follows anchors and nothing else.
 
     The arrows are the reader's, so a keyboard reader arriving from there
     finds the same two shapes in the same two corners.
+
+    big is the chapter pages' version: three of every four readers arrive on
+    a phone, so the two buttons are a thumb's width tall and say which way
+    they go. top is a second copy above the text, which carries no rel --
+    one rel="next" per page is what a crawler and the tests both expect.
     """
-    parts = ['<div class="pager">']
+    cls = "pager" + (" pager-big" if big else "") + (" pager-top" if top else "")
+    parts = ['<nav class="%s" aria-label="%s">'
+             % (cls, "Chapters, top" if top else "Chapters")] if big else ['<div class="pager">']
+    rel_p = "" if top else ' rel="prev"'
+    rel_n = "" if top else ' rel="next"'
     if prev:
-        parts.append('<a rel="prev" href="%s">← %s</a>' % (e(prev[0]), e(prev[1])))
+        inner = ('<span class="dir">← Previous</span><span class="to">%s</span>' % e(prev[1])
+                 if big else "← %s" % e(prev[1]))
+        parts.append('<a%s href="%s">%s</a>' % (rel_p, e(prev[0]), inner))
     else:
         parts.append('<span class="spacer"></span>')
     if nxt:
-        parts.append('<a rel="next" href="%s">%s →</a>' % (e(nxt[0]), e(nxt[1])))
-    parts.append("</div>")
+        inner = ('<span class="dir">Next →</span><span class="to">%s</span>' % e(nxt[1])
+                 if big else "%s →" % e(nxt[1]))
+        parts.append('<a%s href="%s">%s</a>' % (rel_n, e(nxt[0]), inner))
+    parts.append("</nav>" if big else "</div>")
     return "\n".join(parts)
 
 
@@ -348,7 +399,7 @@ def crumbs(depth, section, work=None):
 
 def strip_html(work_id, chapters, slugs, current, depth):
     """The chapter strip, every entry a real link. This is what makes a work
-    page worth crawling: 2,537 addresses reachable in two hops from the root."""
+    page worth crawling: 2,655 addresses reachable in two hops from the root."""
     if len(chapters) < 2:
         return ""
     up = "../" * (depth - 2)          # back up to /read/<work>/
@@ -370,16 +421,27 @@ def chapter_page(manifest, section, meta, work, chapters, slugs, i, out_dir):
     work_url = "%s/read/%s/" % (BASE, meta["id"])
     url = "%s/read/%s/%s/" % (BASE, meta["id"], slug)
     heading = chapter_heading(meta["title"], c.get("label") or "")
-    title = heading + " — " + SITE
+    short = short_heading(meta, c, heading)
+    title = page_title(short)
 
     verses = c.get("verses") or []
     paras = c.get("paras") or []
     opening = (verses[0]["t"] if verses else (paras[0] if paras else meta["title"]))
-    description = describe(opening)
+    src = (manifest.get("sources") or {}).get(meta.get("source"))
+    by = (" (%s)" % src["label"]) if src and meta.get("source") != "web" else ""
+    description = describe("Read %s%s free online: %s" % (short, by, opening))
 
-    prev = (("../%s/" % slugs[i - 1]), chapters[i - 1].get("label")) if i > 0 else None
-    nxt = (("../%s/" % slugs[i + 1]), chapters[i + 1].get("label")) \
+    def near(k):
+        return chapter_heading(meta["title"], chapters[k].get("label") or "")
+    book = enoch_book(meta["id"])
+    prev = (("../%s/" % slugs[i - 1]), short_heading(meta, chapters[i - 1], near(i - 1))) \
+        if i > 0 else None
+    nxt = (("../%s/" % slugs[i + 1]), short_heading(meta, chapters[i + 1], near(i + 1))) \
         if i < len(chapters) - 1 else None
+    # The last chapter of a section of Enoch goes on to the reading plan,
+    # which says where the next part is, rather than stopping dead.
+    if book and nxt is None:
+        nxt = ("../../../%s/" % ENOCH_PLAN, "Enoch reading plan")
 
     body = [
         '<div class="wrap">',
@@ -388,6 +450,7 @@ def chapter_page(manifest, section, meta, work, chapters, slugs, i, out_dir):
         "<h1>%s</h1>" % e(title_case(meta["title"])),
         strip_html(meta["id"], chapters, slugs, slug, 3),
         "</div>",
+        pager(prev, nxt, big=True, top=True),
         '<div class="reader">',
         '<h2 class="chapter-title">%s</h2>' % e(c.get("label") or heading),
     ]
@@ -412,15 +475,18 @@ def chapter_page(manifest, section, meta, work, chapters, slugs, i, out_dir):
     # which is why these pages use the printed number instead -- but the link
     # back into the reader has to speak the reader's own arithmetic.
     body.append('<p><a class="chip" href="../../../#/read/%s/%d">Open in the reader</a> '
-                '<a class="chip" href="../">All of %s</a></p>'
-                % (e(meta["id"]), i, e(title_case(meta["title"]))))
+                '<a class="chip" href="../">All of %s</a>%s</p>'
+                % (e(meta["id"]), i, e(title_case(meta["title"])),
+                   (' <a class="chip" href="../../../%s/">Enoch reading plan</a>' % ENOCH_PLAN)
+                   if book else ""))
 
-    src = (manifest.get("sources") or {}).get(meta.get("source"))
     if src:
         body.append('<div class="apparatus"><strong>Text.</strong> %s. %s</div>'
                     % (e(src.get("label")), e(src.get("detail"))))
 
-    body.append(pager(prev, nxt))
+    body.append(pager(prev, nxt, big=True))
+    if book:
+        body.append(signup_form("/read/%s/%s/" % (meta["id"], slug)))
     body.append("</div>")
 
     schema = {
@@ -594,7 +660,7 @@ def contents_page(manifest, out_dir):
 #
 # These two are the site's argument, and until now they were the two parts of
 # it with no address a crawler, a preview card or a footnote could use. The
-# reader has 2,537 chapters at real URLs and eleven threads at fragments --
+# reader has 2,655 chapters at real URLs and eleven threads at fragments --
 # which is the wrong way round, because the chapters are in every Bible and
 # the threads are the thing this arrangement exists to make possible.
 
@@ -898,7 +964,7 @@ CHANNELS = [
 YOUTUBE = CHANNELS[0][1]
 REPO = "https://github.com/TheoryofShadows/The-Book"
 AUDIO_ITEM = "https://archive.org/details/the-book-read-aloud"
-POLICY_DATE = "25 October 2026"
+POLICY_DATE = "19 November 2026"
 
 # Who sends the sign-in email. The privacy page names it, so it must be the
 # service the deployed worker actually uses (see ACCOUNTS.md).
@@ -1157,6 +1223,14 @@ data can persist there until it ages out. If you cannot use the page, write to
 us and we will delete it by hand. We do not currently delete inactive accounts
 automatically.</p>
 
+<h2 id="weekly">A new chapter every week</h2>
+<p>The Enoch pages have a small form, <em>A new chapter every week</em>. If you
+fill it in, we keep your email address, the date you signed up and the page you
+signed up from, in the same Cloudflare D1 database as the accounts, and use the
+address only to send that weekly chapter. Nothing else is asked for and no
+cookie is set. To come off the list, write to us, and we will remove the address
+straight away.</p>
+
 <h2>Other services your browser contacts</h2>
 <ul>
 <li><strong>Internet Archive</strong> (archive.org) — when you play the recorded
@@ -1172,7 +1246,7 @@ link, that site’s policy applies.</li>
 
 <h2>What we do not do</h2>
 <ul>
-<li>No required accounts, newsletters or advertising, and no sign-up wall.</li>
+<li>No required accounts and no advertising; no email from us unless you sign up for the weekly chapter; no sign-up wall.</li>
 <li>No selling or renting of personal data, and no data brokers.</li>
 <li>No health, location or other sensitive data is asked for or collected.</li>
 </ul>
@@ -1271,6 +1345,133 @@ def info_pages(manifest, out_dir):
     _OUT[0] = out_dir
     return [about_page(manifest), contact_page(manifest),
             privacy_page(manifest), press_page(manifest)]
+
+
+# ---------------------------------------------------------------- Enoch plan
+
+# The sections of the three books of Enoch, in the order the books number
+# their chapters -- which is not the order the library files them in: the
+# library goes by date, and puts the Astronomical Book before the Parables.
+# Each intro says only what the volume's own notes on these works say.
+ENOCH_GROUPS = [
+    ("1 Enoch", "The Book of the Watchers", "1-enoch-the-book-of-the-watchers-chapters-1-36", 1, 36,
+     "Third century BCE, one of the earliest Jewish apocalypses. The Watchers, "
+     "angels who take human wives, are bound; Enoch is taken on journeys through "
+     "the cosmos. Quoted in Jude 14-15."),
+    ("1 Enoch", "The Book of Parables", "1-enoch-the-book-of-parables-chapters-37-71", 37, 71,
+     "Three parables of the coming judgment, probably late first century BCE or "
+     "first century CE, and the latest part of 1 Enoch. The figure called the Son "
+     "of Man, the Elect One, sits on a throne of glory."),
+    ("1 Enoch", "The Astronomical Book", "1-enoch-the-astronomical-book-chapters-72-82", 72, 82,
+     "Possibly the oldest part of 1 Enoch. The angel Uriel shows Enoch the laws of "
+     "the sun, moon and stars, and a calendar of 364 days."),
+    ("1 Enoch", "The Dream Visions", "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108", 83, 90,
+     "Second century BCE. Two dream visions; the second, the Animal Apocalypse, "
+     "retells Israel's history with the people as animals."),
+    ("1 Enoch", "The Epistle of Enoch", "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108", 91, 108,
+     "Enoch's instruction to his children: the Apocalypse of Weeks, woes against the "
+     "rich and the oppressor, and the birth of Noah."),
+    ("2 Enoch", "The Book of the Secrets of Enoch", "2-enoch-the-book-of-the-secrets-of-enoch", 1, None,
+     "Slavonic Enoch, probably late first century CE. Enoch passes through the "
+     "heavens, is shown the week of creation, and returns to teach his sons."),
+    ("3 Enoch", "The Hebrew Book of Enoch", "3-enoch-the-hebrew-book-of-enoch", 1, None,
+     "A much later Hebrew work, in its final form fifth or sixth century CE. Rabbi "
+     "Ishmael ascends to heaven and meets the angel Metatron, who was Enoch."),
+]
+
+
+def signup_form(from_path):
+    """"A new chapter every week": a plain form, so it needs no script.
+
+    It posts to /api/subscribe, which keeps the address in the site's own
+    Cloudflare D1 database (worker/worker.js, migrations/0002_subscribers.sql)
+    and answers with a page of its own. The hidden "website" field is the
+    same honeypot the sign-in form uses.
+    """
+    return "\n".join([
+        '<form class="signup" method="post" action="/api/subscribe">',
+        '<h2>A new chapter every week</h2>',
+        '<p class="muted">Leave your email and get one chapter a week. Your address '
+        'is used for nothing else, and you can unsubscribe at any time.</p>',
+        '<input type="hidden" name="from" value="%s">' % e(from_path),
+        '<label class="hp" aria-hidden="true">Leave this empty '
+        '<input type="text" name="website" tabindex="-1" autocomplete="off"></label>',
+        '<div class="signup-row">',
+        '<label for="signup-email" class="sr">Email address</label>',
+        '<input id="signup-email" type="email" name="email" required maxlength="254" '
+        'autocomplete="email" inputmode="email" placeholder="you@example.com">',
+        '<button type="submit">Sign up</button>',
+        "</div>",
+        "</form>",
+    ])
+
+
+def enoch_plan_page(manifest, out_dir):
+    """/enoch-reading-plan/: every chapter of the three books of Enoch, in order."""
+    works = {w["id"]: w for sec in manifest["sections"] for w in sec["works"]}
+    data = os.path.join(out_dir, "data", "works")
+    url = "%s/%s/" % (BASE, ENOCH_PLAN)
+    title = "Enoch Reading Plan: 1, 2 and 3 Enoch, Chapter by Chapter | " + BRAND
+    total = 0
+    blocks = []
+    current = None
+    for book, name, wid, lo, hi, intro in ENOCH_GROUPS:
+        meta = works.get(wid)
+        if not meta:
+            raise SystemExit("enoch plan: no work %s in the manifest" % wid)
+        with open(os.path.join(data, wid + ".json"), encoding="utf-8") as fh:
+            chapters = json.load(fh).get("chapters") or []
+        slugs = chapter_slugs(meta, chapters)
+        links = []
+        for c, slug in zip(chapters, slugs):
+            n = c.get("n")
+            if not isinstance(n, int) or n < lo or (hi is not None and n > hi):
+                continue
+            links.append('<a href="../read/%s/%s/" title="%s Enoch Chapter %d">%d</a>'
+                         % (e(wid), e(slug), book[0], n, n))
+        if not links:
+            raise SystemExit("enoch plan: %s has no chapters %s-%s" % (wid, lo, hi))
+        total += len(links)
+        last = hi if hi is not None else max(c.get("n") or 0 for c in chapters)
+        if book != current:
+            blocks.append("<h2>%s</h2>" % e(book))
+            current = book
+        blocks.append('<h3>%s <span class="muted">· chapters %d–%d</span></h3>' % (e(name), lo, last))
+        blocks.append("<p>%s</p>" % e(intro))
+        blocks.append('<nav class="chapter-strip" aria-label="%s, %s">%s</nav>'
+                      % (e(book), e(name), "".join(links)))
+    description = ("All %d chapters of 1, 2 and 3 Enoch in order, grouped by section, "
+                   "free to read and listen to." % total)
+    sources = manifest.get("sources") or {}
+    credit = "; ".join(sources[k]["label"] for k in ("charles", "morfill", "odeberg") if k in sources)
+    body = "\n".join([
+        "<h1>Enoch reading plan</h1>",
+        '<p class="lede">Every chapter of the three books of Enoch, in the order '
+        "the books number them: %d chapters, one link each. Read them in order, "
+        "a chapter at a time, at whatever pace suits you.</p>" % total,
+        "\n".join(blocks),
+        signup_form("/%s/" % ENOCH_PLAN),
+        '<p class="muted">Translations: %s. The library itself files these works '
+        'by the date scholars give them, which is why the <a href="../contents/">contents</a> '
+        "list them in a different order.</p>" % e(credit),
+    ])
+    schema = {"@context": "https://schema.org", "@type": "CollectionPage",
+              "name": "Enoch reading plan", "url": url, "description": description,
+              "inLanguage": "en", "isPartOf": {"@id": BASE + "/#website"}}
+    page = "\n".join([
+        head(title, description, url, 1, ld(schema), og_type="website"),
+        "<body>",
+        topbar(1),
+        '<main id="main">',
+        '<div class="wrap">',
+        '<div class="crumbs"><a href="../">The Book</a> → <span>Enoch reading plan</span></div>',
+        body,
+        "</div>",
+        "</main>",
+        footer(1, "a reading plan for the books of Enoch"),
+    ])
+    write(os.path.join(out_dir, ENOCH_PLAN, "index.html"), page)
+    return url, total
 
 
 NL = chr(10)
@@ -1421,6 +1622,8 @@ def build(out_dir):
             timeline_page(manifest, out_dir),
             thread_hub_page(threads, out_dir)]
     urls.extend(info_pages(manifest, out_dir))
+    plan_url, plan_total = enoch_plan_page(manifest, out_dir)
+    urls.append(plan_url)
     for t in threads:
         urls.append(thread_page(manifest, slugs_by_work, t, out_dir))
     works = 0
@@ -1482,6 +1685,7 @@ def build(out_dir):
     print("  %d work pages" % works)
     print("  %d chapter pages" % chapters_written)
     print("  the timeline, %d thread pages under a hub, and the about, contact, privacy and press pages" % len(threads))
+    print("  the Enoch reading plan, %d chapters" % plan_total)
     print("  %d URLs in sitemap.xml, plus robots.txt and 404.html" % len(urls))
     print("  %d pages" % (works + chapters_written + len(threads) + 4 + len(INFO_PAGES)))
 
