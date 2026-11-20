@@ -19,7 +19,10 @@
  *   EMAIL           a Cloudflare Email Service `send_email` binding (alternative)
  *   MAIL_FROM       "Name <address@domain>" for the sign-in email
  *   SITE_ORIGIN     e.g. https://thebookandme.com ; defaults to the request's origin
- *   MAIL_DAILY_CAP  most sign-in emails per day, whole site (default 80)
+ *   MAIL_DAILY_CAP  most emails per day, whole site, sign-in and weekly together
+ *                   (default 80; never above Resend's free 100 a day)
+ *   WEEKLY_SECRET   secret; signs the unsubscribe links and is the password the
+ *                   scheduler (.github/workflows/weekly-email.yml) sends to /api/weekly/run
  *   AUTH_DEV_MODE   "1" returns the link in the response -- honoured ONLY on localhost
  */
 
@@ -156,10 +159,56 @@ export class D1Store {
     ]);
   }
   async unsubscribe(email) {
-    await this.db.batch([
-      this.db.prepare("CREATE TABLE IF NOT EXISTS subscribers (email TEXT PRIMARY KEY, created_at INTEGER NOT NULL, source TEXT)"),
-      this.db.prepare("DELETE FROM subscribers WHERE email = ?1").bind(email)
-    ]);
+    await this.db.batch(WEEKLY_TABLES.map(t => this.db.prepare(t)).concat([
+      this.db.prepare("DELETE FROM subscribers WHERE email = ?1").bind(email),
+      this.db.prepare("DELETE FROM subscriber_progress WHERE email = ?1").bind(email)
+    ]));
+  }
+  /* The weekly send. Who is due: signed up before this week's send began and
+     not yet sent anything since it began. pos is the next chapter's index. */
+  async weeklyDue(weekStart, limit) {
+    await this.db.batch(WEEKLY_TABLES.map(t => this.db.prepare(t)));
+    const r = await this.db.prepare(
+      "SELECT s.email AS email, COALESCE(p.pos, 0) AS pos FROM subscribers s " +
+      "LEFT JOIN subscriber_progress p ON p.email = s.email " +
+      "WHERE s.created_at < ?1 AND (p.last_sent IS NULL OR p.last_sent < ?1) " +
+      "ORDER BY s.created_at, s.email LIMIT ?2").bind(weekStart, limit).all();
+    return r.results || [];
+  }
+  async weeklyCount() {
+    await this.db.batch(WEEKLY_TABLES.map(t => this.db.prepare(t)));
+    const r = await this.db.prepare("SELECT COUNT(*) AS n FROM subscribers").first();
+    return r ? r.n : 0;
+  }
+  /* One statement for the whole list, so a send of any size stays inside
+     D1's 50 queries per request. sent is [{email, pos}] with pos the NEXT index. */
+  async weeklyMarkSent(sent, now) {
+    if (!sent.length) return;
+    await this.db.prepare(
+      "INSERT INTO subscriber_progress(email,pos,last_sent) " +
+      "SELECT json_extract(value,'$.email'), json_extract(value,'$.pos'), ?1 FROM json_each(?2) WHERE true " +
+      "ON CONFLICT(email) DO UPDATE SET pos = excluded.pos, last_sent = excluded.last_sent")
+      .bind(now, JSON.stringify(sent)).run();
+  }
+  async peek(key, bucket) {
+    const r = await this.db.prepare("SELECT n FROM rate WHERE k = ?1 AND bucket = ?2").bind(key, bucket).first();
+    return r ? r.n : 0;
+  }
+  async add(key, bucket, n) {
+    if (!n) return;
+    await this.db.prepare(
+      "INSERT INTO rate(k,bucket,n) VALUES(?1,?2,?3) " +
+      "ON CONFLICT(k,bucket) DO UPDATE SET n=n+?3").bind(key, bucket, n).run();
+  }
+  async monthSent(month) {
+    await this.db.batch(WEEKLY_TABLES.map(t => this.db.prepare(t)));
+    const r = await this.db.prepare("SELECT n FROM mail_month WHERE month = ?1").bind(month).first();
+    return r ? r.n : 0;
+  }
+  async addMonth(month, n) {
+    if (!n) return;
+    await this.db.prepare("INSERT INTO mail_month(month,n) VALUES(?1,?2) " +
+      "ON CONFLICT(month) DO UPDATE SET n=n+?2").bind(month, n).run();
   }
   async deleteUser(userId, email) {
     await this.db.batch([
@@ -175,11 +224,26 @@ export class MemoryStore {
   constructor() {
     this.users = new Map(); this.tokens = new Map(); this.sessions = new Map();
     this.items = new Map(); this.rate = new Map(); this.subscribers = new Map();
+    this.progress = new Map(); this.months = new Map();
   }
   async subscribe(email, now, source) {
     if (!this.subscribers.has(email)) this.subscribers.set(email, { created_at: now, source });
   }
-  async unsubscribe(email) { this.subscribers.delete(email); }
+  async unsubscribe(email) { this.subscribers.delete(email); this.progress.delete(email); }
+  async weeklyDue(weekStart, limit) {
+    return [...this.subscribers.entries()]
+      .filter(([em, s]) => s.created_at < weekStart &&
+        !(this.progress.has(em) && this.progress.get(em).last_sent >= weekStart))
+      .sort((a, b) => a[1].created_at - b[1].created_at || (a[0] < b[0] ? -1 : 1))
+      .slice(0, limit)
+      .map(([em]) => ({ email: em, pos: this.progress.has(em) ? this.progress.get(em).pos : 0 }));
+  }
+  async weeklyCount() { return this.subscribers.size; }
+  async weeklyMarkSent(sent, now) { for (const x of sent) this.progress.set(x.email, { pos: x.pos, last_sent: now }); }
+  async peek(key, bucket) { return this.rate.get(key + "|" + bucket) || 0; }
+  async add(key, bucket, n) { const k = key + "|" + bucket; this.rate.set(k, (this.rate.get(k) || 0) + n); }
+  async monthSent(month) { return this.months.get(month) || 0; }
+  async addMonth(month, n) { this.months.set(month, (this.months.get(month) || 0) + n); }
   async hit(key, bucket) {
     const k = key + "|" + bucket; const n = (this.rate.get(k) || 0) + 1; this.rate.set(k, n); return n;
   }
@@ -239,6 +303,95 @@ export class MemoryStore {
 
 /* ------------------------------------------------------------------ mail */
 
+/* Made here, IF NOT EXISTS, like the subscribers table: see
+   migrations/0003_weekly.sql for what each holds. */
+const WEEKLY_TABLES = [
+  "CREATE TABLE IF NOT EXISTS subscribers (email TEXT PRIMARY KEY, created_at INTEGER NOT NULL, source TEXT)",
+  "CREATE TABLE IF NOT EXISTS subscriber_progress (email TEXT PRIMARY KEY, pos INTEGER NOT NULL, last_sent INTEGER NOT NULL)",
+  "CREATE TABLE IF NOT EXISTS mail_month (month TEXT PRIMARY KEY, n INTEGER NOT NULL)"
+];
+
+/* Resend's free plan: 100 emails a day, 3,000 a month, one batch call takes
+   up to 100. The weekly send leaves room under the day's cap for sign-in
+   links, and stops well short of the month. */
+export const WEEKLY = {
+  resendPerDay: 100,
+  resendPerMonth: 3000,
+  monthHeadroom: 200,
+  signInReserve: 10,
+  batch: 100,
+  // Sunday 13:00 UTC (8 am US Eastern in winter, 9 am in summer), less an
+  // hour's slack so a late or early cron still lands in the right week.
+  anchor: Date.UTC(2026, 10, 1, 12, 0, 0),
+  weekMs: 7 * 24 * 3600 * 1000
+};
+
+export function weekStart(t) {
+  const k = Math.floor((t - WEEKLY.anchor) / WEEKLY.weekMs);
+  return WEEKLY.anchor + k * WEEKLY.weekMs;
+}
+
+async function hmac(secret, text) {
+  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return b64url(new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode(text))));
+}
+
+export async function unsubscribeToken(secret, email) {
+  return (await hmac(secret, "unsubscribe:v1:" + email)).slice(0, 32);
+}
+
+function sameText(a, b) {
+  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
+  let d = 0;
+  for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return d === 0;
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+}
+
+export function weeklyMessage(ch, link, unsubscribe, opts) {
+  const test = opts && opts.test;
+  const name = ch.title + (ch.part ? " \u00b7 " + ch.part : "");
+  const subject = (test ? "[Test] " : "") + "This week's chapter: " + name;
+  const footer = "You are getting this because this address signed up for \"A new chapter every week\" " +
+    "at thebookandme.com. One email a week, nothing else.";
+  const text =
+    "This week's chapter from the Enoch reading plan: " + name + "\n\n" +
+    "\u201c" + ch.excerpt + "\u201d\n\n" +
+    "Read or listen to the whole chapter:\n" + link + "\n\n" +
+    "-- \n" + footer + "\n" +
+    "Unsubscribe (one click): " + unsubscribe + "\n" +
+    "The Book and Me \u00b7 https://thebookandme.com/\n";
+  const html =
+    '<div style="font-family:Georgia,serif;font-size:17px;line-height:1.5;color:#222;max-width:560px">' +
+    "<p>This week's chapter from the Enoch reading plan:</p>" +
+    '<h2 style="font-size:21px;margin:0 0 12px">' + esc(name) + "</h2>" +
+    '<blockquote style="margin:0 0 16px;padding-left:14px;border-left:3px solid #ccc">' + esc(ch.excerpt) + "</blockquote>" +
+    '<p><a href="' + esc(link) + '">Read or listen to the whole chapter</a></p>' +
+    '<hr style="border:0;border-top:1px solid #ddd;margin:24px 0 12px">' +
+    '<p style="font-family:Arial,sans-serif;font-size:12px;color:#666">' + esc(footer) +
+    ' <a href="' + esc(unsubscribe) + '" style="color:#666">Unsubscribe</a> (one click).<br>' +
+    'The Book and Me &middot; <a href="https://thebookandme.com/" style="color:#666">thebookandme.com</a></p></div>';
+  return { subject, text, html, headers: {
+    "List-Unsubscribe": "<" + unsubscribe + ">",
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"
+  } };
+}
+
+/* Up to 100 messages in one Resend call; [{to, msg}]. */
+async function resendBatch(env, list) {
+  const from = env.MAIL_FROM || "The Book and Me <login@thebookandme.com>";
+  const r = await fetch("https://api.resend.com/emails/batch", {
+    method: "POST",
+    headers: { "Authorization": "Bearer " + env.RESEND_API_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify(list.map(x => ({ from, to: [x.to], subject: x.msg.subject, text: x.msg.text,
+                                          html: x.msg.html, headers: x.msg.headers })))
+  });
+  if (!r.ok) throw new Error("resend " + r.status + " " + (await r.text()).slice(0, 200));
+}
+
 export function signInMessage(link) {
   const text =
     "Here is your sign-in link for The Book and Me:\n\n" + link + "\n\n" +
@@ -296,13 +449,13 @@ function json(status, body, extra) {
   return new Response(JSON.stringify(body), { status, headers: Object.assign({}, JSON_HEADERS, extra || {}) });
 }
 
-function noticePage(status, ok, message) {
+function noticePage(status, ok, message, heading) {
   const safe = String(message || "Thank you.").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   const html = '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">' +
     '<meta name="viewport" content="width=device-width, initial-scale=1">' +
     '<meta name="robots" content="noindex"><title>The Book and Me</title>' +
     '<link rel="stylesheet" href="/assets/app.css"></head><body><main id="main"><div class="wrap">' +
-    "<h1>" + (ok ? "Signed up" : "Not yet") + "</h1><p>" + safe + "</p>" +
+    "<h1>" + (heading || (ok ? "Signed up" : "Not yet")) + "</h1><p>" + safe + "</p>" +
     '<p><a class="chip" href="/enoch-reading-plan/">Enoch reading plan</a> <a class="chip" href="/">The Book</a></p>' +
     "</div></main></body></html>";
   return new Response(html, { status, headers: {
@@ -372,6 +525,13 @@ export function createHandler(deps) {
     }
     if (!store) return json(503, { error: "accounts_not_configured" });
 
+    // The two routes a browser on this site does not call: the scheduler,
+    // which proves itself with WEEKLY_SECRET, and the one-click unsubscribe
+    // a mail program posts (RFC 8058), which proves itself with the signed
+    // token in the link. Neither carries this site's Origin.
+    if (path === "/api/weekly/run" && method === "POST") return weeklyRun(request, env, url, store);
+    if (path === "/api/unsubscribe" && url.searchParams.has("t")) return oneClickUnsubscribe(request, env, url, store);
+
     if (method === "POST") {
       // Same-origin only. A browser always sends Origin on a cross-site POST.
       if (request.headers.get("origin") !== url.origin) return json(403, { error: "bad_origin" });
@@ -424,7 +584,7 @@ export function createHandler(deps) {
       body = r.body || {};
     }
     const answer = (status, ok, message) => form
-      ? noticePage(status, ok, message)
+      ? noticePage(status, ok, message, ok && !joining ? "Unsubscribed" : undefined)
       : json(status, ok ? { ok: true } : { error: message });
     const email = (typeof body.email === "string" ? body.email : "").trim().toLowerCase();
     if (email.length > 254 || !EMAIL_OK.test(email)) return answer(400, false, "That doesn't look like an email address. Go back and check it.");
@@ -440,6 +600,104 @@ export function createHandler(deps) {
     return answer(200, true, joining
       ? "Thank you. You're on the list for a new chapter every week."
       : "Done. That address is off the list.");
+  }
+
+  async function oneClickUnsubscribe(request, env, url, store) {
+    if (request.method !== "GET" && request.method !== "POST") return json(405, { error: "method" }, { allow: "GET, POST" });
+    const email = (url.searchParams.get("e") || "").trim().toLowerCase();
+    const t = url.searchParams.get("t") || "";
+    const good = env.WEEKLY_SECRET && EMAIL_OK.test(email) &&
+      sameText(t, await unsubscribeToken(env.WEEKLY_SECRET, email));
+    if (!good) {
+      return noticePage(400, false, "That unsubscribe link is not valid. Write to us and we will remove your address by hand.", "Not done");
+    }
+    await store.unsubscribe(email);
+    if (request.method === "POST") return json(200, { ok: true });
+    return noticePage(200, true, "Done. " + email + " is off the list, and no more weekly chapters will be sent to it.", "Unsubscribed");
+  }
+
+  /* POST /api/weekly/run, Authorization: Bearer <WEEKLY_SECRET>.
+       {"mode":"dry"}                 who would get what, nothing sent
+       {"mode":"test","to":"a@b.c"}   one email, the plan's first chapter, marked [Test];
+                                       touches no subscriber
+       {"mode":"send"}                the real weekly send (what the cron calls)  */
+  async function weeklyRun(request, env, url, store) {
+    const auth = request.headers.get("authorization") || "";
+    if (!env.WEEKLY_SECRET || !sameText(auth, "Bearer " + env.WEEKLY_SECRET)) return json(401, { error: "unauthorized" });
+    const r = await readJson(request);
+    if (r.error) return json(400, { error: r.error });
+    const body = r.body || {};
+    const mode = body.mode;
+    if (!["dry", "test", "send"].includes(mode)) return json(400, { error: "mode" });
+    if (!env.ASSETS) return json(503, { error: "no_assets" });
+    const origin = (env.SITE_ORIGIN || url.origin).replace(/\/+$/, "");
+    const res = await env.ASSETS.fetch(new Request(origin + "/data/weekly.json"));
+    if (!res.ok) return json(503, { error: "no_weekly_order" });
+    const order = (await res.json()).chapters || [];
+    if (!order.length) return json(503, { error: "no_weekly_order" });
+
+    const t = now();
+    const day = Math.floor(t / 86400000) * 24;
+    const month = new Date(t).toISOString().slice(0, 7);
+    const cap = Math.min(Number(env.MAIL_DAILY_CAP) || LIMITS.dailyMailCap, WEEKLY.resendPerDay);
+    const usedToday = await store.peek("global", day);
+    const usedMonth = await store.monthSent(month);
+    const room = Math.max(0, Math.min(
+      cap - WEEKLY.signInReserve - usedToday,
+      WEEKLY.resendPerMonth - WEEKLY.monthHeadroom - usedMonth));
+    const build = async (to, pos, test) => {
+      const ch = order[pos % order.length];
+      const unsub = origin + "/api/unsubscribe?e=" + encodeURIComponent(to) +
+        "&t=" + (await unsubscribeToken(env.WEEKLY_SECRET, to));
+      return { to, pos, chapter: ch.title, msg: weeklyMessage(ch, origin + ch.url, unsub, { test }) };
+    };
+
+    if (mode === "test") {
+      const to = (typeof body.to === "string" ? body.to : "").trim().toLowerCase();
+      if (!EMAIL_OK.test(to)) return json(400, { error: "bad_email" });
+      if (room < 1) return json(429, { error: "daily_cap" });
+      if (!env.RESEND_API_KEY) return json(503, { error: "email_not_configured" });
+      const one = await build(to, 0, true);
+      await resendBatch(env, [one]);
+      await store.add("global", day, 1);
+      await store.addMonth(month, 1);
+      return json(200, { ok: true, mode, sent: 1, chapter: one.chapter, subject: one.msg.subject });
+    }
+
+    const ws = weekStart(t);
+    const total = await store.weeklyCount();
+    const due = await store.weeklyDue(ws, Math.min(room, WEEKLY.batch * 4));
+    const msgs = [];
+    for (const d of due) msgs.push(await build(d.email, d.pos, false));
+    const summary = { ok: true, mode, subscribers: total, weekStart: new Date(ws).toISOString(),
+                      room, due: due.length, chapters: order.length };
+    if (mode === "dry") {
+      // No addresses: the scheduler's log is public. Which chapters, and how many.
+      const by = {};
+      for (const m of msgs) by[m.chapter] = (by[m.chapter] || 0) + 1;
+      summary.preview = by;
+      const one = await build("you@example.com", msgs.length ? msgs[0].pos : 0, false);
+      summary.sample = { subject: one.msg.subject, text: one.msg.text };
+      return json(200, summary);
+    }
+    if (!env.RESEND_API_KEY) return json(503, { error: "email_not_configured" });
+    let sent = 0;
+    for (let i = 0; i < msgs.length; i += WEEKLY.batch) {
+      const chunk = msgs.slice(i, i + WEEKLY.batch);
+      try {
+        await resendBatch(env, chunk);
+      } catch (e) {
+        summary.error = String(e.message || e).slice(0, 300);
+        break;
+      }
+      // Recorded per chunk, so a failure later never re-sends what went.
+      await store.weeklyMarkSent(chunk.map(m => ({ email: m.to, pos: (m.pos + 1) % order.length })), now());
+      await store.add("global", day, chunk.length);
+      await store.addMonth(month, chunk.length);
+      sent += chunk.length;
+    }
+    summary.sent = sent;
+    return json(summary.error ? 502 : 200, summary);
   }
 
   async function requestLink(request, env, url, store) {

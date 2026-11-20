@@ -24,7 +24,10 @@ function d1Shim(DatabaseSync, sql) {
   const db = new DatabaseSync(':memory:');
   db.exec(sql);
   const wrap = (text) => {
-    const stmt = db.prepare(text);
+    // Prepared when first run, as D1 does: a batch may create a table that a
+    // later statement in the same batch writes to.
+    let prepared = null;
+    const stmt = new Proxy({}, { get: (_, k) => { prepared = prepared || db.prepare(text); return prepared[k].bind(prepared); } });
     let args = [];
     const o = {
       bind: (...a) => { args = a; return o; },
@@ -244,6 +247,87 @@ async function suite(label, W, makeStore) {
     check('a provider failure is reported as mail_failed, not as success', r2.status === 502 && r2.json.error === 'mail_failed');
     const remote = await call('POST', '/api/auth/request', { body: { email: 'dev@example.com' }, e: { AUTH_DEV_MODE: '1', SITE_ORIGIN: ORIGIN } });
     check('dev mode is ignored on a real host (a link would be an account takeover)', remote.status === 503 && !remote.json.devLink);
+  }
+
+  // ---- the weekly chapter email
+  {
+    const order = { chapters: [
+      { title: '1 Enoch 1', part: 'The Book of the Watchers', url: '/read/1-enoch/1/', excerpt: 'The words of the blessing of Enoch.' },
+      { title: '1 Enoch 2', part: 'The Book of the Watchers', url: '/read/1-enoch/2/', excerpt: 'Observe ye everything.' }
+    ] };
+    const wenv = { SITE_ORIGIN: ORIGIN, RESEND_API_KEY: 'rk', MAIL_FROM: 'X <x@y.z>', WEEKLY_SECRET: 'sekrit',
+                   ASSETS: { fetch: async () => new Response(JSON.stringify(order)) } };
+    const calls = [];
+    const realFetch = global.fetch;
+    global.fetch = async (u, init) => { calls.push({ u: String(u), body: JSON.parse(init.body) }); return new Response('{"data":[]}', { status: 200 }); };
+    const run = (body, auth = 'Bearer sekrit') => handler(new Request(ORIGIN + '/api/weekly/run', {
+      method: 'POST', headers: { 'content-type': 'application/json', authorization: auth }, body: JSON.stringify(body) }), wenv)
+      .then(async r => ({ status: r.status, json: await r.json() }));
+    clock += 30 * 86400000;
+    check('the weekly run refuses a wrong secret', (await run({ mode: 'send' }, 'Bearer nope')).status === 401);
+    check('the weekly run refuses with no secret configured',
+          (await handler(new Request(ORIGIN + '/api/weekly/run', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' } , body: '{"mode":"dry"}' }), { ...wenv, WEEKLY_SECRET: '' })).status === 401);
+    await call('POST', '/api/subscribe', { body: { email: 'weekly.one@example.com' } });
+    await call('POST', '/api/subscribe', { body: { email: 'weekly.two@example.com' } });
+    let d = await run({ mode: 'dry' });
+    check('a dry run sends nothing and says nobody is due before the week begins',
+          d.status === 200 && calls.length === 0 && d.json.due === 0, JSON.stringify(d.json));
+    clock = W.weekStart(clock) + W.WEEKLY.weekMs + 3600000; // the next Sunday, 13:00 UTC
+    d = await run({ mode: 'dry' });
+    check('a dry run counts who would get which chapter, names nobody, and sends nothing',
+          d.json.due === 2 && d.json.preview['1 Enoch 1'] === 2 && !JSON.stringify(d.json).includes('weekly.one') && calls.length === 0, JSON.stringify(d.json));
+    const t1 = await run({ mode: 'test', to: 'owner@example.com' });
+    const m = calls[0] && calls[0].body[0];
+    check('a test send is one email, marked [Test], through the Resend batch API',
+          t1.status === 200 && calls.length === 1 && calls[0].u === 'https://api.resend.com/emails/batch' &&
+          m.to[0] === 'owner@example.com' && /^\[Test\] This week's chapter: 1 Enoch 1/.test(m.subject), JSON.stringify(t1.json));
+    check('the email has the chapter link, the excerpt, a plain footer and one-click unsubscribe headers',
+          m.text.includes(ORIGIN + '/read/1-enoch/1/') && m.text.includes('The words of the blessing of Enoch.') &&
+          /Unsubscribe \(one click\): https:\/\/thebookandme\.test\/api\/unsubscribe\?e=owner%40example\.com&t=[\w-]{32}/.test(m.text) &&
+          m.headers['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click' && !/<img/i.test(m.html));
+    check('a test send moves nobody along', (await run({ mode: 'dry' })).json.due === 2);
+    calls.length = 0;
+    let s1 = await run({ mode: 'send' });
+    check('the send goes to every due subscriber, each their next chapter',
+          s1.json.sent === 2 && calls.length === 1 && calls[0].body.length === 2 &&
+          calls[0].body.every(x => /1 Enoch 1/.test(x.subject)), JSON.stringify(s1.json));
+    calls.length = 0;
+    s1 = await run({ mode: 'send' });
+    check('a second run the same week sends nothing', s1.json.sent === 0 && calls.length === 0);
+    clock += W.WEEKLY.weekMs;
+    s1 = await run({ mode: 'send' });
+    check('the next week brings the next chapter', s1.json.sent === 2 && calls[0].body.every(x => /1 Enoch 2/.test(x.subject)));
+    const link = /Unsubscribe \(one click\): (\S+)/.exec(calls[0].body[0].text)[1].replace(ORIGIN, '');
+    const who = decodeURIComponent(/e=([^&]+)/.exec(link)[1]);
+    let u = await handler(new Request(ORIGIN + link.replace(/t=[\w-]+/, 't=' + 'x'.repeat(32))), wenv);
+    check('a forged unsubscribe token is refused', u.status === 400);
+    u = await handler(new Request(ORIGIN + link), wenv);
+    check('the unsubscribe link works in one click (GET) and says so', u.status === 200 && /Unsubscribed/.test(await u.text()));
+    calls.length = 0;
+    clock += W.WEEKLY.weekMs;
+    s1 = await run({ mode: 'send' });
+    check('an unsubscribed address gets nothing more', s1.json.sent === 1 && calls[0].body[0].to[0] !== who);
+    const other = calls[0].body[0].to[0];
+    const link2 = /Unsubscribe \(one click\): (\S+)/.exec(calls[0].body[0].text)[1];
+    const p = await handler(new Request(link2, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'List-Unsubscribe=One-Click' }), wenv);
+    check('the RFC 8058 one-click POST from a mail program works without an Origin', p.status === 200);
+    calls.length = 0;
+    clock += W.WEEKLY.weekMs;
+    s1 = await run({ mode: 'send' });
+    check('and that address is off the list too', s1.json.sent === 0 && s1.json.subscribers === 0, other);
+    // the cap: fill the day, and the send waits rather than going over
+    await call('POST', '/api/subscribe', { body: { email: 'weekly.three@example.com' } });
+    clock += W.WEEKLY.weekMs;
+    const day = Math.floor(clock / 86400000) * 24;
+    await store.add('global', day, 75);
+    calls.length = 0;
+    s1 = await run({ mode: 'send' });
+    check('the weekly send keeps sign-in room under the daily cap and waits for another day',
+          s1.json.sent === 0 && s1.json.room === 0 && calls.length === 0, JSON.stringify(s1.json));
+    clock += 86400000;
+    s1 = await run({ mode: 'send' });
+    check('the next day picks up who the cap left over', s1.json.sent === 1);
+    global.fetch = realFetch;
   }
 
   // ---- the deployed entry point hands everything else to the static site

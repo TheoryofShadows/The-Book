@@ -1,0 +1,62 @@
+# The weekly chapter email's alarm clock.
+#
+# Cloudflare Pages cannot run on a schedule, so this does: it calls the site's
+# own /api/weekly/run, and the Pages worker (worker/worker.js) does the sending
+# with the Resend key, MAIL_FROM and D1 database it already has. Free: this
+# repository is public, so Actions minutes cost nothing.
+#
+# When: 13:00 UTC on Sunday -- 8 am US Eastern in winter, 9 am in summer.
+# Monday and Tuesday at the same time only pick up anyone the daily mail cap
+# left over; with nobody left over they send nothing. GitHub may start a
+# scheduled run some minutes late; the worker counts the week from 12:00 UTC
+# Sunday, so a late run still sends once.
+#
+# Stop it: Actions -> "Weekly chapter email" -> "..." -> Disable workflow
+#   (or: gh workflow disable weekly-email.yml). Enable again the same way.
+# Try it: Actions -> "Weekly chapter email" -> Run workflow, mode "dry"
+#   (lists who would get which chapter, sends nothing) or "test" with an address.
+# GitHub turns scheduled workflows off after 60 days with no commits to the
+# repository, and emails the owner first; re-enable it as above.
+name: Weekly chapter email
+
+on:
+  schedule:
+    - cron: "0 13 * * 0,1,2"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry (send nothing), test (one email to the address below) or send"
+        required: true
+        default: dry
+        type: choice
+        options: [dry, test, send]
+      to:
+        description: "for test: the one address to send to"
+        required: false
+        default: ""
+
+permissions: {}
+
+concurrency:
+  group: weekly-email
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call /api/weekly/run
+        env:
+          WEEKLY_SECRET: ${{ secrets.WEEKLY_SECRET }}
+          MODE: ${{ github.event_name == 'schedule' && 'send' || inputs.mode }}
+          TO: ${{ inputs.to }}
+        run: |
+          if [ -z "$WEEKLY_SECRET" ]; then echo "::error::the WEEKLY_SECRET repository secret is not set"; exit 1; fi
+          body=$(jq -cn --arg mode "$MODE" --arg to "$TO" '{mode: $mode} + (if $to == "" then {} else {to: $to} end)')
+          code=$(curl -sS -o out.json -w '%{http_code}' -X POST https://thebookandme.com/api/weekly/run \
+            -H "authorization: Bearer $WEEKLY_SECRET" -H 'content-type: application/json' --data "$body")
+          # The reply names no subscriber: counts, chapters, and a sample email to you@example.com.
+          jq . out.json || cat out.json
+          echo "HTTP $code"
+          [ "$code" = 200 ]
