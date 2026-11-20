@@ -594,7 +594,8 @@ export function createHandler(deps) {
     if ((await store.hit("s:" + await sha256("ip:" + ip), hour)) > LIMITS.perIpPerHour) {
       return answer(429, false, "Too many tries from here just now. Please try again in an hour.");
     }
-    const from = typeof body.from === "string" && /^\/[a-z0-9\/-]{0,200}$/.test(body.from) ? body.from : null;
+    const from = typeof body.from === "string" &&
+      (body.from === "home" || /^\/[a-z0-9\/-]{0,200}$/.test(body.from)) ? body.from : null;
     if (joining) await store.subscribe(email, now(), from);
     else await store.unsubscribe(email);
     return answer(200, true, joining

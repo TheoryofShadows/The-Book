@@ -465,6 +465,28 @@
       el("button", { type: "button", class: "chip", "data-tour": "1", text: "Show me, 30 seconds" })
     ]));
 
+    /* "A new chapter every week" -- the same plain form the Enoch pages carry,
+       posting to /api/subscribe and answered by the worker with a page of its
+       own (worker/worker.js; the weekly send is /api/weekly/run). Not in the
+       offline copy, where there is no server to post to. */
+    if (location.protocol !== "file:") {
+      wrap.appendChild(el("form", { class: "signup signup-home", method: "post", action: "/api/subscribe" }, [
+        el("h2", { text: "One chapter by email, each week" }),
+        el("p", { class: "muted", text:
+          "Every Sunday morning, the next chapter of the Enoch reading plan, from 1 Enoch 1: " +
+          "a link and its opening lines. Nothing else, and you can unsubscribe anytime in one click." }),
+        el("input", { type: "hidden", name: "from", value: "home" }),
+        el("label", { class: "hp", "aria-hidden": "true" }, ["Leave this empty ",
+          el("input", { type: "text", name: "website", tabindex: "-1", autocomplete: "off" })]),
+        el("div", { class: "signup-row" }, [
+          el("label", { for: "home-signup-email", class: "sr", text: "Email address" }),
+          el("input", { id: "home-signup-email", type: "email", name: "email", required: true, maxlength: "254",
+                        autocomplete: "email", inputmode: "email", placeholder: "you@example.com" }),
+          el("button", { type: "submit", text: "Sign up" })
+        ])
+      ]));
+    }
+
     /* Counted, not typed. Every other figure in this row comes from the
        manifest and moves when the library moves; this one was the literal
        10, which is right today and is the only number on the front page

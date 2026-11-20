@@ -1159,6 +1159,12 @@ table.grid tbody tr:last-child td { border-bottom: 0; }
 .signup button { min-height: 44px; padding: .5rem 1.1rem; font-size: 1rem; border-radius: 8px; }
 .signup .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 .signup .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+/* The same form on the front page: tighter, so it fits the first screen of a phone. */
+.signup-home { margin: 1rem 0 0; padding: .8rem 1rem; max-width: 34rem; }
+.signup-home .signup-row { flex-wrap: nowrap; }
+.signup-home input[type=email] { flex: 1 1 9rem; min-width: 0; width: auto; }
+.signup-home h2 { font-size: 1.05rem; }
+.signup-home p { font-size: .9rem; margin-bottom: .55rem; }
 
 /* The editor's note on the work: prose about the book, so it is set in the
    book's type. It was in the interface's sans, which put a sentence of
