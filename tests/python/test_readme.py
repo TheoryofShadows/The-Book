@@ -173,7 +173,7 @@ class TheShareCard(unittest.TestCase):
 
 
 class WhatCountsAsAWork(unittest.TestCase):
-    """The headline counts 172. Nine of them are not texts.
+    """The headline counts 174. Nine of them are not texts.
 
     Checking that the count matches manifest.totals.works proves the arithmetic
     and nothing else -- the number was never the doubtful part, the noun
@@ -191,8 +191,8 @@ class WhatCountsAsAWork(unittest.TestCase):
 
     def test_the_split_between_text_and_apparatus(self):
         texts = [w for w in self.works if w.get("words")]
-        self.assertEqual(len(self.works), 172)
-        self.assertEqual(len(texts), 163)
+        self.assertEqual(len(self.works), 174)
+        self.assertEqual(len(texts), 165)
         self.assertEqual(len(self.works) - len(texts), 9)
 
     def test_the_readme_says_how_many_carry_text(self):

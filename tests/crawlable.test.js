@@ -65,7 +65,8 @@ module.exports = async function crawlable(t, ctx) {
 
        prefix      the label opens with the work's name  (Jubilees)
        word run    the label repeats the title's first words, but is not a
-                   prefix of the whole title  (the Enoch volumes)
+                   prefix of the whole title  (the Enoch volumes, whose
+                   page titles now say "1 Enoch Chapter 1" instead)
        borrowed    the label names the work without matching its opening
                    (the Testaments: "Judah 1" under "The Testament of Judah")
        degenerate  the label is the title and nothing else (Hermas's
@@ -76,13 +77,13 @@ module.exports = async function crawlable(t, ctx) {
      The last is the one with no margin: it is a single-chapter work, so
      there is no sibling page to notice a wrong answer by. */
   const SHAPES = [
-    ['similitude-1/1', 'Similitude 1 — The Book'],
-    ['jubilees/jubilees-prologue', 'Jubilees Prologue — The Book'],
-    ['jubilees/1', 'Jubilees 1 — The Book'],
-    ['the-testament-of-judah/1', 'The Testament of Judah 1 — The Book'],
+    ['similitude-1/1', 'Similitude 1 – Read Along | The Book and Me'],
+    ['jubilees/jubilees-prologue', 'Jubilees Prologue – Read Along | The Book and Me'],
+    ['jubilees/1', 'Jubilees 1 – Read Along | The Book and Me'],
+    ['the-testament-of-judah/1', 'The Testament of Judah 1 – Read Along | The Book and Me'],
     ['1-enoch-the-book-of-the-watchers-chapters-1-36/1',
-     '1 Enoch: the Book of the Watchers (Chapters 1-36) 1 — The Book'],
-    ['genesis/1', 'Genesis 1 — The Book']
+     '1 Enoch Chapter 1 – Read Along | The Book and Me'],
+    ['genesis/1', 'Genesis 1 – Read Along | The Book and Me']
   ];
   const wrongly = SHAPES.filter(([where, want]) => {
     const html = fs.readFileSync(
@@ -107,7 +108,7 @@ module.exports = async function crawlable(t, ctx) {
           body.slice(0, 40).replace(/\s+/g, ' '));
 
   t.check('the chapter has a title of its own',
-          (await page.title()) === 'Genesis 1 — The Book', await page.title());
+          (await page.title()) === 'Genesis 1 – Read Along | The Book and Me', await page.title());
 
   const canonical = await page.getAttribute('link[rel=canonical]', 'href');
   t.check('and a canonical pointing at its own absolute address',
@@ -209,7 +210,8 @@ module.exports = async function crawlable(t, ctx) {
     fs.readFileSync(path.join(docs, 'data', 'threads.json'), 'utf8'));
   // root + contents + timeline + threads hub, then the four information pages
   // (about, contact, privacy, press), then one page per thread.
-  const extras = 2 + 2 + 4 + threads.length;
+  // And the Enoch reading plan.
+  const extras = 2 + 2 + 4 + 1 + threads.length;
   t.check('the sitemap lists the root, the hubs, the threads and every page',
           locs.length === expected + extras,
           locs.length + ' of ' + (expected + extras));

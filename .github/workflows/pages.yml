@@ -95,7 +95,7 @@ jobs:
       # One real page per work and per chapter. The reader is a single page
       # behind hash routes, and a fragment never reaches a server, so without
       # these the whole library is one indexable URL with no scripture on it.
-      # Not committed -- 2,709 files rebuilt on every text change -- so, like
+      # Not committed -- 2,829 files rebuilt on every text change -- so, like
       # the offline copy below, the only place they exist is here, inside the
       # artifact that gets uploaded.
       - name: Build the crawlable static pages

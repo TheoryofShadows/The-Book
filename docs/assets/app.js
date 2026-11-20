@@ -58,14 +58,14 @@
 
   /* Where you are, in the one place a browser puts it.
 
-     A single page that never changes its title gives all 2,537 chapters the
+     A single page that never changes its title gives all 2,655 chapters the
      same name: a bookmark list where every entry reads the same, a history
      that cannot be searched, a row of tabs that cannot be told apart, and a
      screen reader that announces nothing on arrival, because the title is
      what it announces and the title did not move.
 
      The full title stays on the front page, where it is the description of
-     the whole library rather than a label repeated 2,537 times. */
+     the whole library rather than a label repeated 2,655 times. */
   var BASE_TITLE = document.title;
 
   function setTitle(what) {
@@ -798,7 +798,7 @@
         applyFilter(ids, c.title);
       }
     });
-    sel.appendChild(option("", "The whole library — 172 works", true));
+    sel.appendChild(option("", "The whole library — 174 works", true));
 
     var filterBox = el("div", { class: "home-filter is-waiting" }, [
       el("label", { class: "home-filter-label", text: "Show" }), sel
@@ -1081,7 +1081,7 @@
                              (anchor ? "/" + anchor : ""));
       }
 
-      /* 2,537 chapters used to share one title. This is the one place a
+      /* 2,655 chapters used to share one title. This is the one place a
          browser records where you have been, and the one thing a screen
          reader says when a page arrives. */
       setTitle(chapterHeading(meta.title, chapter.label));
@@ -2580,7 +2580,7 @@
     /* How many places, before it is opened rather than after.
 
        The gazetteer covers the Hebrew Bible and the New Testament, so 1,718
-       of the 2,537 chapters have nothing to draw -- and Job has seven maps
+       of the 2,655 chapters have nothing to draw -- and Job has seven maps
        across forty-two chapters, Psalms fifty-five across a hundred and
        fifty. Opening the panel to be told there is nothing, over and over,
        is what a removed feature feels like. The index this counts from is
@@ -4674,7 +4674,7 @@
 
     /* Searching less than the whole library.
 
-       The whole library is 1.22 million words and the results are capped at
+       The whole library is 1.25 million words and the results are capped at
        three hundred, so a common word answers with three hundred verses from
        everywhere and the one you wanted is somewhere inside them. Narrowing
        to a book is the difference between a concordance and a search: it is

@@ -74,3 +74,25 @@ TEXT-PAGE-REFERENCE | the-testament-of-our-lord | a bare page reference in the r
 # in a minute; nobody here can.
 TEXT-NOT-WORDS | the-apostolic-canons | a clump the scanner invented: 'ANDY BNR'
 TEXT-NOT-WORDS | the-apostolic-canons | a clump the scanner invented: 'ee oe ee ee'
+
+# ------------------------------------------------------------------------
+# Odeberg's transliterated Hebrew in 3 Enoch
+#
+# Odeberg prints the Divine Names and angelic names of 3 Enoch in capital
+# transliteration (ESH OKELA, OSE SHALOM, the name lists of 48 B), which reads
+# as non-words. They are the edition, not the scanner. The one exception is
+# 'x l li', the transcription's misreading of the reference "Jer. x. 13, li. 16"
+# in 3 Enoch 23, left as the transcription has it rather than guessed at.
+TEXT-NOT-WORDS | 3-enoch-the-hebrew-book-of-enoch | a clump the scanner invented: 'BSKNYH MZRG'
+TEXT-NOT-WORDS | 3-enoch-the-hebrew-book-of-enoch | a clump the scanner invented: 'ESH OKELA'
+TEXT-NOT-WORDS | 3-enoch-the-hebrew-book-of-enoch | a clump the scanner invented: 'HHYH WH WHYH'
+TEXT-NOT-WORDS | 3-enoch-the-hebrew-book-of-enoch | a clump the scanner invented: 'MIGON MITTON MOTTRON ROSPHIM'
+TEXT-NOT-WORDS | 3-enoch-the-hebrew-book-of-enoch | a clump the scanner invented: 'MKRKK MSPRD'
+TEXT-NOT-WORDS | 3-enoch-the-hebrew-book-of-enoch | a clump the scanner invented: 'MNRTTT BSYRYM MITMON TITMON'
+TEXT-NOT-WORDS | 3-enoch-the-hebrew-book-of-enoch | a clump the scanner invented: 'OSE SHALOM'
+TEXT-NOT-WORDS | 3-enoch-the-hebrew-book-of-enoch | a clump the scanner invented: 'SHADDAI RABBA'
+TEXT-NOT-WORDS | 3-enoch-the-hebrew-book-of-enoch | a clump the scanner invented: 'SHATQIEL SHACHAQIEL BAKARIEL'
+TEXT-NOT-WORDS | 3-enoch-the-hebrew-book-of-enoch | a clump the scanner invented: 'SOGDIN ADRIGON ASUM'
+TEXT-NOT-WORDS | 3-enoch-the-hebrew-book-of-enoch | a clump the scanner invented: 'YAD AL KES YAH'
+TEXT-NOT-WORDS | 3-enoch-the-hebrew-book-of-enoch | a clump the scanner invented: 'YHWH DH WHYH'
+TEXT-NOT-WORDS | 3-enoch-the-hebrew-book-of-enoch | a clump the scanner invented: 'x l li'

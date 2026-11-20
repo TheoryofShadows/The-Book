@@ -27,7 +27,7 @@ interested in method, and they will check. Lead with what is unusual to
 them: the ordering, the Ethiopian material, and the fact that the site
 publishes what it is missing.
 
-> **A free reader for 172 texts — canonical, apocryphal and pseudepigraphal — arranged by date of composition, now with a complete audio reading**
+> **A free reader for 174 texts — canonical, apocryphal and pseudepigraphal — arranged by date of composition, now with a complete audio reading**
 >
 > I've been building this for a while and the audio finished rendering, so it
 > seems a reasonable point to show it: https://thebookandme.com/
@@ -35,7 +35,7 @@ publishes what it is missing.
 > What's in it: the Jewish, Protestant, Catholic and Eastern Orthodox canons
 > complete; the Ethiopian Orthodox canon less four books that survive in no
 > public-domain English translation; the pseudepigrapha, New Testament
-> apocrypha and Apostolic Fathers. 172 works, 2,537 chapters, 1.22 million
+> apocrypha and Apostolic Fathers. 174 works, 2,655 chapters, 1.25 million
 > words. Arranged by when scholars believe each was written rather than by
 > canonical order, which is the thing I actually wanted and couldn't find.
 >
@@ -77,11 +77,11 @@ Here the corpus is the hook but the engineering is the story. State the
 constraints plainly; this audience rewards the specific and punishes the
 grandiose.
 
-**Title:** `The Book – 172 biblical and related texts in composition order, with a rendered audiobook`
+**Title:** `The Book – 174 biblical and related texts in composition order, with a rendered audiobook`
 
 > Author here. The site is a reader for the Jewish, Protestant, Catholic,
 > Orthodox and (nearly all of) the Ethiopian canons plus the apocrypha and
-> Apostolic Fathers — 172 works, 2,537 chapters, 1.22M words — ordered by
+> Apostolic Fathers — 174 works, 2,655 chapters, 1.25M words — ordered by
 > date of composition rather than canonical order.
 >
 > The parts that might interest this crowd:

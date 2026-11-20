@@ -10,6 +10,8 @@
  *   - a session in an HttpOnly cookie that only /api/* ever receives
  *   - per-item, last-write-wins sync of the reader's own data
  *   - export of everything held, and deletion of all of it
+ *   - the "a new chapter every week" email list: POST /api/subscribe and
+ *     /api/unsubscribe, stored in the subscribers table (0002_subscribers.sql)
  *
  * Bindings it reads (all optional except DB when it is used for real):
  *   DB              a D1 database (see migrations/0001_accounts.sql)
@@ -143,6 +145,22 @@ export class D1Store {
       "SELECT k,v,t,d FROM items WHERE user_id = ?1 AND d = 0 ORDER BY k").bind(userId).all();
     return r.results || [];
   }
+  /* The weekly-chapter list. The table is made here, if it is missing, so the
+     list works on the database production already has without a migration
+     being applied by hand. Signing up twice keeps the first date. */
+  async subscribe(email, now, source) {
+    await this.db.batch([
+      this.db.prepare("CREATE TABLE IF NOT EXISTS subscribers (email TEXT PRIMARY KEY, created_at INTEGER NOT NULL, source TEXT)"),
+      this.db.prepare("INSERT INTO subscribers(email,created_at,source) VALUES(?1,?2,?3) " +
+        "ON CONFLICT(email) DO NOTHING").bind(email, now, source)
+    ]);
+  }
+  async unsubscribe(email) {
+    await this.db.batch([
+      this.db.prepare("CREATE TABLE IF NOT EXISTS subscribers (email TEXT PRIMARY KEY, created_at INTEGER NOT NULL, source TEXT)"),
+      this.db.prepare("DELETE FROM subscribers WHERE email = ?1").bind(email)
+    ]);
+  }
   async deleteUser(userId, email) {
     await this.db.batch([
       this.db.prepare("DELETE FROM items WHERE user_id = ?1").bind(userId),
@@ -156,8 +174,12 @@ export class D1Store {
 export class MemoryStore {
   constructor() {
     this.users = new Map(); this.tokens = new Map(); this.sessions = new Map();
-    this.items = new Map(); this.rate = new Map();
+    this.items = new Map(); this.rate = new Map(); this.subscribers = new Map();
   }
+  async subscribe(email, now, source) {
+    if (!this.subscribers.has(email)) this.subscribers.set(email, { created_at: now, source });
+  }
+  async unsubscribe(email) { this.subscribers.delete(email); }
   async hit(key, bucket) {
     const k = key + "|" + bucket; const n = (this.rate.get(k) || 0) + 1; this.rate.set(k, n); return n;
   }
@@ -274,6 +296,22 @@ function json(status, body, extra) {
   return new Response(JSON.stringify(body), { status, headers: Object.assign({}, JSON_HEADERS, extra || {}) });
 }
 
+function noticePage(status, ok, message) {
+  const safe = String(message || "Thank you.").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const html = '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+    '<meta name="robots" content="noindex"><title>The Book and Me</title>' +
+    '<link rel="stylesheet" href="/assets/app.css"></head><body><main id="main"><div class="wrap">' +
+    "<h1>" + (ok ? "Signed up" : "Not yet") + "</h1><p>" + safe + "</p>" +
+    '<p><a class="chip" href="/enoch-reading-plan/">Enoch reading plan</a> <a class="chip" href="/">The Book</a></p>' +
+    "</div></main></body></html>";
+  return new Response(html, { status, headers: {
+    "content-type": "text/html; charset=utf-8", "cache-control": "no-store",
+    "x-content-type-options": "nosniff", "referrer-policy": "no-referrer",
+    "content-security-policy": "default-src 'none'; style-src 'self'; frame-ancestors 'none'; form-action 'self'"
+  } });
+}
+
 function isLocal(url) {
   return url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "[::1]";
 }
@@ -341,6 +379,8 @@ export function createHandler(deps) {
       return json(405, { error: "method" }, { allow: "GET, POST" });
     }
 
+    if (path === "/api/subscribe" && method === "POST") return subscribe(request, url, store, true);
+    if (path === "/api/unsubscribe" && method === "POST") return subscribe(request, url, store, false);
     if (path === "/api/auth/request" && method === "POST") return requestLink(request, env, url, store);
     if (path === "/api/auth/verify" && method === "POST") return verify(request, env, url, store);
 
@@ -364,6 +404,42 @@ export function createHandler(deps) {
       return json(200, { ok: true, deleted: true }, { "set-cookie": sessionCookie("", url, 0) });
     }
     return json(404, { error: "not_found" });
+  }
+
+  /* The signup form on the static pages is a plain HTML form -- those pages
+     run no script -- so this takes a form post as well as JSON, and answers a
+     form with a small page rather than with JSON. It never says whether an
+     address was already on the list. */
+  async function subscribe(request, url, store, joining) {
+    const ct = request.headers.get("content-type") || "";
+    const form = /^application\/x-www-form-urlencoded\b/i.test(ct);
+    let body = {};
+    if (form) {
+      const text = await request.text();
+      if (text.length > 4096) return json(413, { error: "too_large" });
+      body = Object.fromEntries(new URLSearchParams(text));
+    } else {
+      const r = await readJson(request);
+      if (r.error) return json(r.error === "too_large" ? 413 : 400, { error: r.error });
+      body = r.body || {};
+    }
+    const answer = (status, ok, message) => form
+      ? noticePage(status, ok, message)
+      : json(status, ok ? { ok: true } : { error: message });
+    const email = (typeof body.email === "string" ? body.email : "").trim().toLowerCase();
+    if (email.length > 254 || !EMAIL_OK.test(email)) return answer(400, false, "That doesn't look like an email address. Go back and check it.");
+    if (body.website) return answer(200, true, "");
+    const ip = request.headers.get("cf-connecting-ip") || "unknown";
+    const hour = Math.floor(now() / 3600000);
+    if ((await store.hit("s:" + await sha256("ip:" + ip), hour)) > LIMITS.perIpPerHour) {
+      return answer(429, false, "Too many tries from here just now. Please try again in an hour.");
+    }
+    const from = typeof body.from === "string" && /^\/[a-z0-9\/-]{0,200}$/.test(body.from) ? body.from : null;
+    if (joining) await store.subscribe(email, now(), from);
+    else await store.unsubscribe(email);
+    return answer(200, true, joining
+      ? "Thank you. You're on the list for a new chapter every week."
+      : "Done. That address is off the list.");
   }
 
   async function requestLink(request, env, url, store) {

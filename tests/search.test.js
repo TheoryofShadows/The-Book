@@ -24,26 +24,30 @@ const EXPECT = {
      verse that changed it before touching the number. */
   caesar: 60,
   mastema: 11,
-  behemothLeviathan: 2,
+  /* 2 until 3 Enoch was added: its 48 D names both, beside Horeb. */
+  behemothLeviathan: 3,
   /* "shepherd" across everything, and across the books the Tanakh receives.
      Thirty of the ninety-nine verses between those two figures are in works
      no canon holds at all, twenty-five of them in the Shepherd of Hermas --
      which is the reason a canon is worth being able to search on its own. */
-  shepherd: 175,
+  /* 176 and 31 since 3 Enoch 45:2, which has a shepherd in it. */
+  shepherd: 176,
   shepherdJewish: 76,
   /* And in the works no canon holds at all, which is the same question asked
      from the other side. */
-  shepherdLeftOut: 30,
+  shepherdLeftOut: 31,
   /* And the verses outside one reader's own canon rather than outside all
      five: 175 less the 99 the Protestant canon holds. Sirach, Judith,
      Jubilees and Enoch are in it and not in the thirty above, which is the
      difference the setting exists to make. */
-  shepherdOutsideProtestant: 76,
+  shepherdOutsideProtestant: 77,
   /* Horeb is named in Deuteronomy 5, which this volume prints twice: once in
      Deuteronomy and once on its own beside the Nash Papyrus. The second
      printing belongs to no canon's book list, and must still never be
      offered as a book left out of every canon. */
-  horeb: 20
+  /* 21 since 3 Enoch 48 D:10, which names Horeb and is in no canon. The
+     checks below hold the Deuteronomy printings to the rule, not it. */
+  horeb: 21
 };
 
 /* Search does work rather than just drawing, so every assertion waits for it
@@ -146,9 +150,10 @@ module.exports = async function search(t, ctx) {
      Tokens that do not start with a letter go in the "0" shard, and the
      client has to ask for that shard rather than one named after a digit. */
 
+  /* Three since 3 Enoch was added: 5:7 and 22:16 beside 1 Enoch 74:14. */
   r = await run(page, ctx.base, '1000');
   t.check('a number is searchable and lands in the digit shard',
-          r.hits === 1, r.hits + ' results');
+          r.hits === 3, r.hits + ' results');
 
   /* ---- a term is a prefix, at both stages ----
      The index files whole words. Narrowing by the exact token and then
@@ -503,10 +508,10 @@ module.exports = async function search(t, ctx) {
   await page.goto(ctx.base + '#/search/horeb/canon:none');
   await settled(page);
   const horebLeftOut = await worksIn();
+  // 3 Enoch names Horeb too and is in no canon, so it may be here; no
+  // printing of Deuteronomy 5 may.
   t.check('and is never one of the books left out, because it is scripture',
-          horebLeftOut.length === 0 &&
-          /No verse in the books left out of every canon matched/.test(
-            await page.evaluate(() => document.querySelector('.muted').textContent)),
+          horebLeftOut.every(w => !/^deuteronomy/.test(w)),
           horebLeftOut.join(' ') ||
           await page.evaluate(() => document.querySelector('.muted').textContent));
 
@@ -559,8 +564,8 @@ module.exports = async function search(t, ctx) {
   const horebRows = await rows();
   t.check('a chapter printed twice is never marked as outside every canon',
           horebRows.length === EXPECT.horeb &&
-          horebRows.every(r => !r.marked),
-          horebRows.filter(r => r.marked).map(r => r.work).join(' ') ||
+          horebRows.filter(r => /^deuteronomy/.test(r.work)).every(r => !r.marked),
+          horebRows.filter(r => r.marked && /^deuteronomy/.test(r.work)).map(r => r.work).join(' ') ||
           horebRows.length + ' rows, none marked');
 
   /* Under a scope the marking would be a fact the page has already stated,

@@ -70,8 +70,6 @@ V-GAP | sirach-ecclesiasticus | Chapter 3 | missing [19]
 # class, not one by one; any of them that turns out to be a parse fault is
 # a defect and should be fixed rather than left here.
 
-CHAPTERS | 1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108 | expected 26 | got 25
-CHAPTERS | 1-enoch-the-astronomical-book-chapters-72-82 | expected 11 | got 10
 V-GAP | 1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108 | 1 ENOCH 100 | missing [2, 4, 10]
 V-GAP | 1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108 | 1 ENOCH 106 | missing [15, 16]
 V-GAP | 1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108 | 1 ENOCH 90 | missing [14, 15, 17, 18]
@@ -245,3 +243,13 @@ NO-POSITION | vision-2 | placed by its section's era | no dated position record
 NO-POSITION | vision-3 | placed by its section's era | no dated position record
 NO-POSITION | vision-4 | placed by its section's era | no dated position record
 NO-POSITION | vision-5 | placed by its section's era | no dated position record
+
+# ------------------------------------------------------------------------
+# 2 Enoch and 3 Enoch have no dated position record yet
+#
+# Added 2026-11-19 with their texts (Morfill/Charles 1896 via Platt 1926, and
+# Odeberg 1928). Both sit in Section IX by their notes' own account: 2 Enoch
+# for its probable late-first-century date, 3 Enoch beside it so the three
+# books of Enoch read together, not for its date.
+NO-POSITION | 2-enoch-the-book-of-the-secrets-of-enoch | placed by its section's era | no dated position record
+NO-POSITION | 3-enoch-the-hebrew-book-of-enoch | placed by its section's era | no dated position record

@@ -151,12 +151,32 @@ SOURCES = {
                   "word coordinates. His section numbers are the ones "
                   "printed. Not audited.",
     },
+    "morfill": {
+        "label": "W. R. Morfill and R. H. Charles, 1896, in Platt's reprint of 1926",
+        "detail": "Public domain by age. Morfill's English of the Slavonic "
+                  "Secrets of Enoch, edited by Charles, as reprinted in "
+                  "The Forgotten Books of Eden, whose chapter and verse "
+                  "numbers are used. The reprint drops Charles's notes and "
+                  "modernises some wording. Not audited.",
+    },
+    "odeberg": {
+        "label": "Hugo Odeberg, Cambridge, 1928",
+        "detail": "Public domain in the United States, published before "
+                  "1931. The translation only, without Odeberg's "
+                  "commentary, apparatus or footnote markers, from a "
+                  "digitised transcription, so scattered typographic "
+                  "artifacts survive. Not audited.",
+    },
 }
 
 
 def source_for(work_id: str, section_id: str, has_text: bool) -> str:
     if not has_text:
         return "editorial"
+    if work_id.startswith("2-enoch"):
+        return "morfill"
+    if work_id.startswith("3-enoch"):
+        return "odeberg"
     if work_id.startswith("1-enoch") or work_id == "jubilees":
         return "charles"
     if section_id in ANF_SECTIONS:
@@ -399,7 +419,7 @@ WEB_VERSE = re.compile(r"(?:(?<=\s)|^)(\d{1,3})\s\s+")
 CHARLES_VERSE = re.compile(r"(?:(?<=\s)|^)V?(\d{1,3})\.\s+")
 
 
-def split_verses(paras: list[str]) -> tuple[list[dict], str]:
+def split_verses(paras: list[str], allow_single: bool = False) -> tuple[list[dict], str]:
     """Split paragraph text into verses. Returns (verses, style)."""
     body = "\n\n".join(paras)
     for style, pattern in (("web", WEB_VERSE), ("charles", CHARLES_VERSE)):
@@ -415,7 +435,13 @@ def split_verses(paras: list[str]) -> tuple[list[dict], str]:
             if num == expect or (expect < num <= expect + 3):
                 kept.append((start, end, num))
                 expect = num + 1
-        if len(kept) < 2:
+        # A chapter of a single verse is still a chapter of verses when the
+        # text opens on its own "1." -- 2 and 3 Enoch have several. Without
+        # this they were read as prose and printed their "1." as text. Only
+        # those two books ask for it, so no other work's parse moves.
+        single = (allow_single and len(kept) == 1 and style == "charles" and kept[0][2] == 1
+                  and not body[:kept[0][0]].strip())
+        if len(kept) < 2 and not single:
             continue
         verses = []
 
@@ -561,7 +587,8 @@ def parse(path: str) -> dict:
             body = [decontaminate(p, where) for p in body]
             body = [unfurnish(p, where) for p in body]
             body = [p for p in body if p.strip()]
-            verses, style = split_verses(body)
+            verses, style = split_verses(
+                body, allow_single=re.match(r"^[23] ENOCH ", payload) is not None)
             chapter = {"label": label, "n": num, "raw": payload}
             if verses:
                 chapter["verses"] = verses
@@ -626,7 +653,7 @@ def main() -> None:
                 "chapters": nch,
                 "verses": nv,
                 "words": words,
-                # No chapterLabels here. It held a copy of all 2,537 chapter
+                # No chapterLabels here. It held a copy of all 2,655 chapter
                 # labels -- 35 KB, a fifth of this file -- and nothing ever
                 # read it: the reader takes labels off the work file it has
                 # just fetched, which is where they have to come from anyway
