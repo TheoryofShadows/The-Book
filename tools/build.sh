@@ -110,9 +110,9 @@ echo "==> the single-file offline build"
 
 # One plain page per work and per chapter, so the library is reachable by a
 # crawler at all: the reader is hash-routed, and a fragment is never sent to
-# a server, so without these there is exactly one indexable URL for 172 works
-# and 2,537 chapters. Not committed either, for the same reason as above and
-# with more force -- 2,709 files rebuilt on every text change -- so it is
+# a server, so without these there is exactly one indexable URL for 174 works
+# and 2,655 chapters. Not committed either, for the same reason as above and
+# with more force -- 2,829 files rebuilt on every text change -- so it is
 # gitignored and made here and by the deploy. After the audit, like the
 # offline copy: pages nobody has checked are pages of whatever the data
 # happened to be.

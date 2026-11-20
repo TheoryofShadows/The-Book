@@ -48,9 +48,9 @@ failure should point.
 
 It opens with the Song of the Sea, not with Genesis.
 
-**172 works · 2,537 chapters · 40,124 numbered verses · 1.22 million words**
+**174 works · 2,655 chapters · 40,760 numbered verses · 1.25 million words**
 
-Of the 172 entries, **163 carry text**. The other nine are apparatus rather
+Of the 174 entries, **165 carry text**. The other nine are apparatus rather
 than works: the Dead Sea Scrolls summaries, the Psalms of Solomon and Philo
 placeholders, four notes on manuscript discoveries, and two editorial asides.
 They are counted because they are printed and read in sequence with the rest;
@@ -444,7 +444,7 @@ press **Listen** in any chapter, or `l`. Nothing is downloaded, nothing is
 sent anywhere, and it works offline.
 
 This section used to open by saying that no audiobook of these translations
-exists in the public domain and that 1.22 million words cannot be recorded.
+exists in the public domain and that 1.25 million words cannot be recorded.
 Both halves are false, and the sentence mattered, because it was the stated
 reason nobody looked. LibriVox has read the World English Bible straight
 through and dedicated it to the public domain —
@@ -533,7 +533,7 @@ was doing it, and are fixed:
   every one of them was spoken. The blanked set is now every character in the
   volume that is neither a letter, a digit nor ordinary punctuation, and a
   unit test fails if the volume ever grows one that is not on the list — which
-  is the only way to notice, since nobody is listening to 1.22 million words
+  is the only way to notice, since nobody is listening to 1.25 million words
   to find out.
 - **Roman numerals were read as letters.** Charles numbers his chapters inside
   the running text, so two hundred of them stand in the prose of Enoch,
@@ -709,7 +709,7 @@ say so, and the build will stop. Findings are stated so they can be falsified.
 `tools/verify.py` is the same idea one level in. The audit asks whether the
 *shape* of the library matches the reference figures — does Genesis have fifty
 chapters, does Psalms have 2,461 verses. It cannot see what is inside them. So
-this reads all 40,124 verses and every paragraph and asks whether the text is
+this reads all 40,760 verses and every paragraph and asks whether the text is
 the text and nothing else, and whether every one of the 3,851 definitions, 114
 aliases, 1,232 places, 4,684 pins and every internal link points at something
 that exists.
@@ -1173,7 +1173,7 @@ answer, and rebuilds the worker to check the old caches are dropped.
 
 **A crawler is served a different half of the same site.** The reader is a
 hash-routed single page, and a fragment is never sent to a server, so every
-one of the 172 works and 2,537 chapters lived at an address no crawler could
+one of the 174 works and 2,655 chapters lived at an address no crawler could
 ask for: the whole library was one indexable URL with no scripture on it.
 `tools/build_pages.py` writes the other half — a plain page per work and per
 chapter with the text really in the HTML, a contents page linking all of them
@@ -1187,7 +1187,7 @@ chapter it quotes; the timeline is the same reordering the reader draws as
 positioned bars, written out as a table with the ranges in words, because a
 crawler sees no bars and neither does anybody with the stylesheet off.
 
-That is 2,709 pages plus the hubs — one per work, one per chapter, one per
+That is 2,829 pages plus the hubs — one per work, one per chapter, one per
 thread, and three hubs at contents, threads and the timeline — and none of it
 is in this repository: it is derived, it is regenerated whenever the text
 changes, and the deploy builds it into the Pages artifact, exactly as it does
@@ -1225,19 +1225,19 @@ page is **150 KB over six requests** and a chapter **210 KB over eight**,
 first contentful paint about 100 ms in both Chromium and Firefox. A search
 for a common word is the expensive thing here — **1.6 MB over sixty-one
 requests** — because the second stage fetches every work containing a hit.
-That is the price of a concordance over 1.22 million words, and it is paid
+That is the price of a concordance over 1.25 million words, and it is paid
 on a search rather than on arrival. The `routes` suite holds the first two
 to a budget, so a data file cannot quietly wander onto the critical path.
 
 Three things were being shipped and never read, and are not shipped now: the
-manifest carried a copy of all 2,537 chapter labels (35 KB of a 170 KB file
+manifest carried a copy of all 2,655 chapter labels (35 KB of a 170 KB file
 fetched before anything can render), and each of the lexicon's 20,120
 references was stored twice, as Easton's abbreviation and as the expansion,
 where only the expansion can be resolved. The manifest is 20% smaller, the
 lexicon 21%, and the single-file offline copy went from 13.33 MB to 12.59 —
 which also moved it from 89% of its build ceiling to 84%.
 
-Search is a two-stage design: a chapter-granularity inverted index (1.64 MB
+Search is a two-stage design: a chapter-granularity inverted index (1.71 MB
 across 27 shards) narrows candidates, then only the matching works are fetched
 and scanned for exact verses. Quote a phrase to match it exactly. The
 dictionary and the gazetteer are sharded the same way, by first letter, and
@@ -1254,7 +1254,7 @@ filed here" is a fact about the corpus and belongs in the data.
 `.github/workflows/pages.yml` runs the lint and the unit tests, rebuilds the
 data from source, fails the build if `docs/data` has drifted or the audit finds
 anything not in the baseline, and runs the browser checks. Then it builds the
-three derived things that are never committed — the 2,709 crawlable pages
+three derived things that are never committed — the 2,829 crawlable pages
 with their threads, their three hubs, sitemap and `robots.txt`; the single-file offline copy; and
 the service worker, stamped last because the stamp is a hash of the rest — and
 publishes `docs/` with all of them inside. None of the three exists anywhere
@@ -1300,7 +1300,7 @@ The old address, `https://theoryofshadows.github.io/The-Book/`, still works:
 GitHub redirects it to the custom domain.
 
 Moving the site again is four places, and it is worth knowing which four.
-Every absolute address the 2,723 generated pages state about themselves —
+Every absolute address the 2,843 generated pages state about themselves —
 canonical, `og:url`, the sitemap, `robots.txt`, the 404 — comes from one
 constant, `BASE` in `tools/build_pages.py`. `docs/CNAME` is the second. The
 third is `docs/index.html`, which is the one hand-written page in the site and
