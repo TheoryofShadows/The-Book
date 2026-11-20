@@ -468,9 +468,12 @@
     /* "A new chapter every week" -- the same plain form the Enoch pages carry,
        posting to /api/subscribe and answered by the worker with a page of its
        own (worker/worker.js; the weekly send is /api/weekly/run). Not in the
-       offline copy, where there is no server to post to. */
-    if (location.protocol !== "file:") {
-      wrap.appendChild(el("form", { class: "signup signup-home", method: "post", action: "/api/subscribe" }, [
+       offline copy, where there is no server to post to. It goes in under
+       the jump box and the filter, not above them: on a phone the box you
+       type a reference into has to be on the first screen (layout.test.js),
+       and the form above it pushed it off. */
+    var signupForm = location.protocol === "file:" ? null :
+      el("form", { class: "signup signup-home", method: "post", action: "/api/subscribe" }, [
         el("h2", { text: "One chapter by email, each week" }),
         el("p", { class: "muted", text:
           "Every Sunday morning, the next chapter of the Enoch reading plan, from 1 Enoch 1: " +
@@ -484,8 +487,7 @@
                         autocomplete: "email", inputmode: "email", placeholder: "you@example.com" }),
           el("button", { type: "submit", text: "Sign up" })
         ])
-      ]));
-    }
+      ]);
 
     /* Counted, not typed. Every other figure in this row comes from the
        manifest and moves when the library moves; this one was the literal
@@ -674,7 +676,7 @@
 
     var filterSlot = el("div", { class: "home-filter-slot" });
     findSlot.appendChild(el("section", { class: "home-find" }, [
-      jumpForm, jumpSays, filterSlot
+      jumpForm, jumpSays, filterSlot, signupForm
     ]));
 
     var line = el("div", { class: "timeline" });
