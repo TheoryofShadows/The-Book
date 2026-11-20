@@ -1227,9 +1227,13 @@ automatically.</p>
 <p>The Enoch pages have a small form, <em>A new chapter every week</em>. If you
 fill it in, we keep your email address, the date you signed up and the page you
 signed up from, in the same Cloudflare D1 database as the accounts, and use the
-address only to send that weekly chapter. Nothing else is asked for and no
-cookie is set. To come off the list, write to us, and we will remove the address
-straight away.</p>
+address only to send that weekly chapter: one email each Sunday morning (US
+Eastern time), with the next chapter of the Enoch reading plan, starting at
+1 Enoch 1. We also keep which chapter you are up to and when the last one was
+sent. The emails go out through Resend, which therefore handles your address.
+Nothing else is asked for and no cookie is set. Every email has a one-click
+unsubscribe link; using it deletes your address and your place in the plan
+straight away. You can also write to us and we will remove it by hand.</p>
 
 <h2>Other services your browser contacts</h2>
 <ul>
@@ -1391,8 +1395,10 @@ def signup_form(from_path):
     return "\n".join([
         '<form class="signup" method="post" action="/api/subscribe">',
         '<h2>A new chapter every week</h2>',
-        '<p class="muted">Leave your email and get one chapter a week. Your address '
-        'is used for nothing else, and you can unsubscribe at any time.</p>',
+        '<p class="muted">Leave your email and get one chapter of the Enoch reading plan '
+        'each Sunday morning, in order from 1 Enoch 1: a link to the chapter and its '
+        'opening lines. Your address is used for nothing else, and every email has a '
+        'one-click unsubscribe link.</p>',
         '<input type="hidden" name="from" value="%s">' % e(from_path),
         '<label class="hp" aria-hidden="true">Leave this empty '
         '<input type="text" name="website" tabindex="-1" autocomplete="off"></label>',
@@ -1415,6 +1421,7 @@ def enoch_plan_page(manifest, out_dir):
     total = 0
     blocks = []
     current = None
+    weekly = []
     for book, name, wid, lo, hi, intro in ENOCH_GROUPS:
         meta = works.get(wid)
         if not meta:
@@ -1427,6 +1434,8 @@ def enoch_plan_page(manifest, out_dir):
             n = c.get("n")
             if not isinstance(n, int) or n < lo or (hi is not None and n > hi):
                 continue
+            weekly.append({"title": "%s %d" % (book, n), "part": name,
+                           "url": "/read/%s/%s/" % (wid, slug), "excerpt": weekly_excerpt(c)})
             links.append('<a href="../read/%s/%s/" title="%s Enoch Chapter %d">%d</a>'
                          % (e(wid), e(slug), book[0], n, n))
         if not links:
@@ -1471,7 +1480,34 @@ def enoch_plan_page(manifest, out_dir):
         footer(1, "a reading plan for the books of Enoch"),
     ])
     write(os.path.join(out_dir, ENOCH_PLAN, "index.html"), page)
+    # The weekly email's running order, read by worker/worker.js: one entry
+    # per chapter, in the plan's order, each with its opening words exactly as
+    # the chapter page prints them.
+    if len(weekly) != total:
+        raise SystemExit("enoch plan: %d weekly entries for %d chapters" % (len(weekly), total))
+    write(os.path.join(out_dir, "data", "weekly.json"),
+          json.dumps({"order": "enoch-reading-plan", "chapters": weekly},
+                     ensure_ascii=False, separators=(",", ":")))
     return url, total
+
+
+def weekly_excerpt(c, most=320):
+    """The opening of a chapter, whole verses or paragraphs only, as printed."""
+    parts = [v["t"] for v in (c.get("verses") or [])] or list(c.get("paras") or [])
+    out = ""
+    for t in parts:
+        t = " ".join(str(t).split())
+        if not t:
+            continue
+        if out and len(out) + 1 + len(t) > most:
+            break
+        out = (out + " " + t) if out else t
+        if len(out) >= most // 2:
+            break
+    if len(out) > most:
+        cut = out[:most].rsplit(" ", 1)[0]
+        out = cut.rstrip(",;:") + "…"
+    return out
 
 
 NL = chr(10)

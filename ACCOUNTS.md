@@ -122,3 +122,37 @@ Pick the smallest step that fixes the problem.
    > Rollback to this deployment. (The Privacy page of that deployment describes no accounts.) If accounts stay switched
    off for good, also remove the D1 binding and delete the D1 database, which erases all stored reader data.
 4. Keep the Privacy page truthful in every case: if accounts are rolled back, so is the page (step 3 does both).
+
+## The weekly chapter email
+
+People who use the "A new chapter every week" form (`/api/subscribe`) get one
+email a week: the next chapter of the Enoch reading plan (224 chapters, 1 Enoch 1
+onward, then 2 and 3 Enoch, then it starts again), its opening lines exactly as
+the chapter page prints them, the link, a plain footer and a signed one-click
+unsubscribe link (`/api/unsubscribe?e=...&t=...`, also sent as
+`List-Unsubscribe` / `List-Unsubscribe-Post` so mail programs show their own
+button). Each subscriber has their own place (`subscriber_progress`,
+`migrations/0003_weekly.sql`), so someone who joins late starts at 1 Enoch 1.
+
+- **Running order**: `docs/data/weekly.json`, written by `tools/build_pages.py`
+  alongside the reading plan page.
+- **Sending**: `POST /api/weekly/run` in `worker/worker.js`, authorised by the
+  `WEEKLY_SECRET` Pages secret (`tools/set_weekly_secret.py`). Modes: `dry`
+  (counts only, names nobody, sends nothing), `test` (one email marked [Test]
+  to one address, moves nobody along) and `send`.
+- **Schedule**: `.github/workflows/weekly-email.yml`, GitHub Actions (free on
+  this public repository), 13:00 UTC Sunday = 8 am Eastern in winter, 9 am in
+  summer; Monday and Tuesday runs only catch up anyone the cap held back. It
+  needs the repository secret `WEEKLY_SECRET`, the same value as on Pages.
+  Cloudflare Cron Triggers would do the same job, but the deploy token here has
+  no Workers permission.
+- **Limits**: one Resend batch call per 100 emails; the weekly send uses at most
+  `MAIL_DAILY_CAP` (80) minus 10 kept for sign-in links per day, never above
+  Resend's free 100 a day, and stops at 2,800 a month (`mail_month`) against
+  Resend's free 3,000. Past about 70 subscribers the send spreads over Sunday to
+  Tuesday; past about 200, raise the cap with a paid Resend plan or accept that
+  some go out a day or two late.
+- **Stop it**: Actions -> "Weekly chapter email" -> Disable workflow, or
+  `gh workflow disable weekly-email.yml`. Nothing is sent while it is disabled.
+- **Try it**: Actions -> "Weekly chapter email" -> Run workflow with mode `dry`
+  or `test`.
