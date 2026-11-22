@@ -23,8 +23,13 @@ const fullDisk = () => ({ content: `
     };
     Object.defineProperty(dead, 'length', { get: () => real.length });
     Object.defineProperty(window, 'localStorage', { value: dead, configurable: true });
+    /* And no IndexedDB either -- the site falls back to it when localStorage
+       is full, so a disk refusing everything has to refuse both. */
+    if (!window.__keepIDB) Object.defineProperty(window, 'indexedDB', { get: () => undefined, configurable: true });
   })();
 ` });
+/* localStorage full, IndexedDB still working: the fallback must keep it. */
+const fullLocal = () => ({ content: 'window.__keepIDB = true;' + fullDisk().content });
 
 const seed = (page, key, value) => page.addInitScript({ content:
   `try { localStorage.setItem(${JSON.stringify('thebook:' + key)}, ` +
@@ -290,7 +295,15 @@ module.exports = async function keeping(t, ctx) {
        rather than navigated: the page is already at #/saved, and going to
        the hash it is on is not a navigation, so nothing would re-render and
        the check would be reading the rows from before the clear. */
+    /* localStorage alone losing the list is recovered from the IndexedDB
+       mirror, with nothing for the reader to do. */
     await page.evaluate(() => localStorage.removeItem('thebook:saved'));
+    await page.reload();
+    await page.waitForSelector('.saved-row', { timeout: 5000 }).catch(() => null);
+    t.check('a list lost from localStorage alone comes back from IndexedDB',
+            (await page.locator('.saved-row').count()) === before);
+    /* A real eviction takes both. */
+    await page.evaluate(() => { localStorage.removeItem('thebook:saved'); indexedDB.deleteDatabase('thebook'); });
     await page.reload();
     await page.waitForSelector('.empty');
     t.check('with the storage cleared, the saved page is empty',

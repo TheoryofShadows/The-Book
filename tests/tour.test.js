@@ -14,6 +14,13 @@
 const AXE = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
 async function axeViolations(page) {
+  /* Let the chapter's fade-in finish first. Measured mid-fade, axe blends
+     the text with the page behind it and reports a contrast that no reader
+     ever sees once the page has settled (4.13 at 40% opacity). */
+  await page.evaluate(() => Promise.race([
+    Promise.all(document.getAnimations().map(a => a.finished.catch(() => null))),
+    new Promise(r => setTimeout(r, 3000))
+  ]));
   await page.addScriptTag({ url: new URL('__axe.js', page.url()).href });
   const r = await page.evaluate(async tags => await window.axe.run(
     document, { runOnly: { type: 'tag', values: tags } }), AXE);
@@ -174,7 +181,15 @@ module.exports = async function tour(t, ctx) {
     viewport: { width: 375, height: 667 }, hasTouch: true, isMobile: true
   }), 'tour phone');
   await phone.goto(ctx.base + '?firsttime#/');
+  /* A phone's first screen is left to the text: the offer waits for a
+     scroll or a second page. */
+  await phone.waitForTimeout(4500);
+  t.check('on a phone the offer does not cover the first screen',
+          (await phone.$('.tour-invite')) === null);
+  await phone.evaluate(() => window.scrollTo(0, 800));
   await phone.waitForSelector('.tour-invite', { timeout: 8000 });
+  t.check('it comes once the reader scrolls', (await phone.$('.tour-invite')) !== null);
+  await phone.evaluate(() => window.scrollTo(0, 0));
   t.check('on a phone the offer fits inside the screen', await phone.evaluate(() => {
     const b = document.querySelector('.tour-invite').getBoundingClientRect();
     return b.left >= 0 && b.right <= innerWidth && b.bottom <= innerHeight;

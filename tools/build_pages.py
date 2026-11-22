@@ -615,6 +615,11 @@ def chapter_page(manifest, section, meta, work, chapters, slugs, i, out_dir):
         strip_html(meta["id"], chapters, slugs, slug, 3),
         "</div>",
         pager(prev, nxt, big=True, top=True),
+        # Most visitors to a chapter page arrive from a YouTube "read along"
+        # link expecting to hear it. The recorded reading lives in the reader,
+        # so say so above the text instead of only at the foot of the page.
+        '<p class="listen-cta"><a class="chip primary" href="../../../#/read/%s/%d">'
+        '\u25b6 Listen to this chapter</a></p>' % (e(meta["id"]), i),
         '<div class="reader">',
         '<h2 class="chapter-title">%s</h2>' % e(c.get("label") or heading),
     ]
@@ -1292,7 +1297,9 @@ its own credits on the <a href="../press/">credits page</a>. See
 
 def contact_page(manifest):
     if CONTACT_EMAIL:
-        mail = ('<li><strong>Email:</strong> <a href="mailto:{m}">{m}</a></li>'
+        # email_off: Cloudflare's Email Obfuscation would otherwise rewrite this
+        # into /cdn-cgi/l/email-protection, a link that 404s without JavaScript.
+        mail = ('<li><strong>Email:</strong> <!--email_off--><a href="mailto:{m}">{m}</a><!--/email_off--></li>'
                 .format(m=e(CONTACT_EMAIL)))
     else:
         mail = ""
@@ -1452,7 +1459,7 @@ def press_page(manifest):
              "ancient texts, arranged in the order scholars believe they were "
              "written and read aloud by a synthetic (AI) voice. The texts are "
              "public domain. thebookandme.com" % (ORG, works))
-    contact = ("Email %s, or " % CONTACT_EMAIL) if CONTACT_EMAIL else ""
+    contact = ("Email <!--email_off-->%s<!--/email_off-->, or " % CONTACT_EMAIL) if CONTACT_EMAIL else ""
     body = """
 <h1>Press and credits</h1>
 <p class="lede">Facts, a short description and logo files for anyone writing

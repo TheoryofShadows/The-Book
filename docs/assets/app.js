@@ -148,6 +148,23 @@
     setTimeout(function () { liveRegion.textContent = message; }, 60);
   }
 
+  /* The same message, seen. A screen reader hears announce(); everybody else
+     used to see nothing at all after keeping an entry, because the page
+     redraws around it. A short line at the foot of the screen, gone on its
+     own, says it was kept. */
+  var toastTimer = null;
+  function toast(message, warn) {
+    var t = document.getElementById("toast");
+    if (!t) {
+      t = el("div", { id: "toast", class: "toast", "aria-hidden": "true" });
+      document.body.appendChild(t);
+    }
+    t.textContent = message;
+    t.className = "toast is-on" + (warn ? " is-warn" : "");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.className = "toast"; }, warn ? 6000 : 2200);
+  }
+
   var cache = {};
   function getJSON(path) {
     // The single-file build inlines every data file under this global, so
@@ -176,25 +193,211 @@
      thing instead. */
   var storageWorks = true;
 
+  /* Three places a value can live, tried in order, so that no single way a
+     browser refuses to keep things loses what somebody wrote:
+
+       1. localStorage -- the real store, synchronous, what every page reads.
+       2. IndexedDB -- a second, much larger store. The diary and the saved
+          list are always mirrored into it, and any value localStorage
+          refuses (a full quota is the usual reason) is kept there instead and
+          put back on the next visit. Its writes are asynchronous; it is
+          opened and tested once at start-up, and only counted on if that
+          test write landed.
+       3. memory -- for this tab only, so a draft typed while the browser is
+          storing nothing at all still follows the reader around the site
+          until the tab is closed. Never reported as kept: set() returns false
+          and the page says so.
+
+     A value that will not parse is never thrown away: the raw text is copied
+     under "corrupt:<key>" (and into IndexedDB) before anything is written
+     over it, so a damaged diary can still be recovered by hand. */
+  var PFX = "thebook:";
+  var memory = {};
+  var DURABLE = /^(saved|diary|diary-copy|diary-draft.*|schema)$/;
+  var idb = { db: null, ok: false, loaded: false, cache: {}, waiters: [] };
+
+  function lsGet(k) {
+    try { return localStorage.getItem(PFX + k); } catch (e) { return null; }
+  }
+  function quarantine(k, raw) {
+    if (/^corrupt:/.test(k)) return;
+    try {
+      if (localStorage.getItem(PFX + "corrupt:" + k) !== raw) {
+        localStorage.setItem(PFX + "corrupt:" + k, raw);
+      }
+    } catch (e) { /* the IndexedDB copy below is the other chance */ }
+    idbPut("corrupt:" + k, raw, false);
+  }
+  function idbPut(k, v, override) {
+    idb.cache[k] = { v: v, o: !!override, t: Date.now() };
+    if (!idb.db) return;
+    try {
+      var tx = idb.db.transaction("kv", "readwrite");
+      tx.objectStore("kv").put({ v: v, o: !!override, t: Date.now() }, k);
+      tx.onerror = function () {
+        idb.ok = false;
+        if (override) { try { memory[k] = JSON.stringify(v); } catch (e) {} storageWorks = false; }
+        storageTrouble();
+      };
+    } catch (e) { idb.ok = false; }
+  }
+  function idbDrop(k) {
+    delete idb.cache[k];
+    if (!idb.db) return;
+    try { idb.db.transaction("kv", "readwrite").objectStore("kv").delete(k); }
+    catch (e) { /* nothing to do */ }
+  }
+  /* Opened once. Everything it holds is read into idb.cache, so get() stays
+     synchronous; values localStorage had refused are written back into it if
+     it will take them now. Resolves either way, within a second and a half,
+     so a browser with no IndexedDB never holds the page up. */
+  var idbReady = new Promise(function (resolve) {
+    var done = false;
+    var finish = function () {
+      if (done) return;
+      done = true; idb.loaded = true;
+      /* Anything that had to wait in memory for IndexedDB to open goes into
+         it now, so it outlives the tab after all. */
+      if (idb.ok) Object.keys(memory).forEach(function (k) {
+        try { idbPut(k, JSON.parse(memory[k]), true); delete memory[k]; } catch (e) {}
+      });
+      idb.waiters.forEach(function (f) { try { f(); } catch (e) {} });
+      resolve();
+    };
+    setTimeout(finish, 1500);
+    try {
+      if (!window.indexedDB) { finish(); return; }
+      var req = indexedDB.open("thebook", 1);
+      req.onupgradeneeded = function () { req.result.createObjectStore("kv"); };
+      req.onerror = finish;
+      req.onblocked = finish;
+      req.onsuccess = function () {
+        var db = req.result;
+        idb.db = db;
+        try {
+          var tx = db.transaction("kv", "readwrite");
+          var os = tx.objectStore("kv");
+          os.put(Date.now(), "__probe");
+          var keys = os.getAllKeys(), vals = os.getAll();
+          tx.oncomplete = function () {
+            idb.ok = true;
+            keys.result.forEach(function (k, i) {
+              var rec = vals.result[i];
+              if (k !== "__probe" && rec && typeof rec === "object") idb.cache[k] = rec;
+            });
+            Object.keys(idb.cache).forEach(function (k) {
+              var rec = idb.cache[k];
+              /* Something localStorage does not have: either it refused it,
+                 or it lost it. Either way the pages showing it redraw. */
+              if (rec.o || (DURABLE.test(k) && lsGet(k) === null)) idb.changed = true;
+              if (!rec.o) return;
+              try {
+                localStorage.setItem(PFX + k, JSON.stringify(rec.v));
+                rec.o = false; idbPut(k, rec.v, false);
+              } catch (e) { /* still full; IndexedDB keeps holding it */ }
+            });
+            finish();
+          };
+          tx.onerror = tx.onabort = finish;
+        } catch (e) { finish(); }
+      };
+    } catch (e) { finish(); }
+  });
+
+  /* A strip at the top of every page, once, when nothing can be kept at all.
+     The diary and saved pages say it again where it matters; this is for the
+     reader who is about to type something somewhere else. */
+  function storageTrouble() {
+    if (!idb.loaded) { store.ready(storageTrouble); return; }
+    if (idb.ok || document.getElementById("storage-warn")) return;
+    if (!Object.keys(memory).length) return;
+    var bar = el("div", { id: "storage-warn", class: "storage-banner", role: "alert" }, [
+      "This browser is not letting the site keep anything right now. What you " +
+      "write stays only while this tab is open. Use “Keep a copy” on the Diary " +
+      "or Saved page to download it before you close the tab."
+    ]);
+    var main = document.getElementById("main") || document.body;
+    main.parentNode.insertBefore(bar, main);
+  }
+
   var store = {
     get: function (k, d) {
-      try { var v = localStorage.getItem("thebook:" + k); return v === null ? d : JSON.parse(v); }
-      catch (e) { return d; }
+      if (Object.prototype.hasOwnProperty.call(memory, k)) {
+        try { return JSON.parse(memory[k]); } catch (e) { return d; }
+      }
+      var rec = idb.cache[k];
+      var copy = function () {
+        try { return JSON.parse(JSON.stringify(rec.v)); } catch (e) { return d; }
+      };
+      if (rec && rec.o) return copy();
+      var raw = lsGet(k);
+      if (raw === null) return rec ? copy() : d;
+      try { return JSON.parse(raw); }
+      catch (e) { quarantine(k, raw); return rec ? copy() : d; }
     },
+    /* True only when the value is somewhere that outlives the tab. */
     set: function (k, v) {
+      var json;
+      try { json = JSON.stringify(v); } catch (e) { return false; }
       try {
-        localStorage.setItem("thebook:" + k, JSON.stringify(v));
+        localStorage.setItem(PFX + k, json);
+        delete memory[k];
         storageWorks = true;
+        if (DURABLE.test(k)) idbPut(k, v, false);
+        else if (idb.cache[k]) idbDrop(k);
         return true;
       } catch (e) {
+        if (idb.ok) {
+          delete memory[k];
+          idbPut(k, v, true);
+          storageWorks = true;
+          return true;
+        }
+        memory[k] = json;
         storageWorks = false;
+        storageTrouble();
         return false;
       }
     },
+    remove: function (k) {
+      delete memory[k];
+      try { localStorage.removeItem(PFX + k); } catch (e) {}
+      if (idb.cache[k]) idbDrop(k);
+    },
     /* False once a write has been refused. Read it after set(), not before:
        a quota is only ever discovered by trying. */
-    works: function () { return storageWorks; }
+    works: function () { return storageWorks; },
+    /* Runs f once IndexedDB has been read (at once if it already has). */
+    ready: function (f) { if (idb.loaded) f(); else idb.waiters.push(f); }
   };
+
+  /* The schema the stored data is in. Version 2 is the diary with its second
+     copy. Migrations only ever add: nothing older is deleted, and a version
+     this build does not know is left exactly as it is. */
+  var SCHEMA = 2;
+  (function migrate() {
+    var have = store.get("schema", 1);
+    if (typeof have !== "number" || have >= SCHEMA) return;
+    if (lsGet("diary") === null && lsGet("saved") === null) return;  // nothing to migrate yet
+    var diary = store.get("diary", null);
+    if (Array.isArray(diary) && !Array.isArray(store.get("diary-copy", null))) {
+      store.set("diary-copy", diary);
+    }
+    store.set("schema", SCHEMA);
+  })();
+
+  /* Everything typed and not yet written is flushed here: when the tab is
+     hidden, closed, or the page is about to change. A phone that discards a
+     background tab gives no other warning. */
+  var flushers = [];
+  function flushAll() {
+    flushers = flushers.filter(function (f) { return f() !== false; });
+  }
+  window.addEventListener("pagehide", flushAll);
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") flushAll();
+  });
+  window.addEventListener("beforeunload", flushAll);
 
   /* Why the write failed, in the terms that decide what the reader can do
      about it. Quota is recoverable by removing saved items; private browsing
@@ -1779,7 +1982,22 @@
     } catch (e) { /* older browsers, and private modes that refuse to answer */ }
   }
 
-  function savedItems() { return store.get("saved", []); }
+  /* Only what can be shown. A list holding a null or a number -- from an
+     old build, a hand-edited file or a sync gone wrong -- used to take the
+     whole Saved page down with it. The raw list is quarantined first, so
+     dropping the unusable rows here loses nothing. */
+  function savedItems() {
+    var list = store.get("saved", []);
+    if (!Array.isArray(list)) {
+      if (lsGet("saved") !== null) quarantine("saved", lsGet("saved"));
+      return [];
+    }
+    var good = list.filter(function (s) {
+      return s && typeof s === "object" && typeof s.id === "string";
+    });
+    if (good.length !== list.length && lsGet("saved") !== null) quarantine("saved", lsGet("saved"));
+    return good;
+  }
 
   function isSaved(id) {
     return savedItems().some(function (s) { return s.id === id; });
@@ -3936,8 +4154,30 @@
       if (t) { e.preventDefault(); startTour(t); }
     });
     if (tourSeen() !== null || !store.set("tour-check", 1)) return;
+    /* On a phone the offer used to arrive on the very first screen and
+       cover most of it -- the first thing a new reader saw was a card in
+       front of the text they came for. There it waits until they have
+       shown they are staying: a scroll down the page, or a second page
+       (another chapter in this visit, or a later visit). Wider screens have
+       room beside the text and keep the old timing. */
+    var narrow = window.matchMedia && window.matchMedia("(max-width: 700px)").matches;
+    var visits = (store.get("tour-views", 0) | 0) + 1;
+    if (narrow) store.set("tour-views", visits);
     // After the intro, if one is playing, so the two never overlap.
-    introDone.then(function () { setTimeout(offerTour, 3000); });
+    introDone.then(function () {
+      if (!narrow || visits > 1) { setTimeout(offerTour, 3000); return; }
+      var armed = true;
+      var go = function () {
+        if (!armed) return;
+        armed = false;
+        window.removeEventListener("scroll", onScroll);
+        window.removeEventListener("hashchange", go);
+        setTimeout(offerTour, 1200);
+      };
+      var onScroll = function () { if (window.scrollY > 300) go(); };
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("hashchange", go);
+    });
     function offerTour() {
       if (tourSeen() !== null || tour || invite) return;
       if (document.querySelector(".lex")) return;
@@ -6573,15 +6813,36 @@
     { id: "stayed", label: "Stayed with me" }
   ];
 
+  function cleanDiary(list) {
+    if (!Array.isArray(list)) return null;
+    return list.filter(function (e) {
+      return e && typeof e === "object" && typeof e.id === "string" &&
+             typeof e.took === "string";
+    }).map(function (e) {
+      if (typeof e.day !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(e.day)) {
+        var d = new Date(e.id);
+        e.day = isNaN(d) ? "1970-01-01" : localDay(d);
+      }
+      if (typeof e.why !== "string") e.why = "";
+      if (e.ref && (typeof e.ref !== "object" || !e.ref.work)) e.ref = null;
+      return e;
+    });
+  }
+
   function diaryEntries() {
-    var main = store.get(DIARY_KEY, null);
-    if (Array.isArray(main)) return main;
-    /* The main key is gone or unreadable and the shadow is not. This is the
-       case the second copy exists for, so it is used rather than reported:
-       an empty diary shown to somebody who wrote in it is the worst outcome
-       available. */
-    var shadow = store.get(DIARY_SHADOW, null);
-    return Array.isArray(shadow) ? shadow : [];
+    var raw = store.get(DIARY_KEY, null);
+    var main = cleanDiary(raw);
+    if (main && raw.length !== main.length && lsGet(DIARY_KEY) !== null) {
+      quarantine(DIARY_KEY, lsGet(DIARY_KEY));
+    }
+    if (main && main.length) return main;
+    /* The main key is gone, unreadable or empty and the shadow is not. This
+       is the case the second copy exists for, so it is used rather than
+       reported: an empty diary shown to somebody who wrote in it is the
+       worst outcome available. */
+    var shadow = cleanDiary(store.get(DIARY_SHADOW, null));
+    if (shadow && shadow.length) return shadow;
+    return main || shadow || [];
   }
 
   /* Written shadow-first, so that the moment where neither copy is whole is
@@ -6748,15 +7009,42 @@
       why.value = draft.why || "";
       took.value = draft.took || "";
     }
+    /* Written a moment after typing stops, and at once when the tab is
+       hidden, closed or the page changes, so the last few words before a
+       phone drops the tab are not the ones lost. The line under the button
+       says which happened, in words: kept on this device, or only in this
+       tab. */
+    var draftTimer = null;
     var saveDraft = function () {
+      clearTimeout(draftTimer); draftTimer = null;
       if (took.value.trim() || why.value.trim()) {
-        store.set(draftKey, { why: why.value, took: took.value });
+        var ok = store.set(draftKey, { why: why.value, took: took.value });
+        status.textContent = ok
+          ? "Draft saved on this device."
+          : "Draft held in this tab only — this browser is not storing anything.";
+        status.className = "diary-status" + (ok ? " is-saved" : " is-warn");
       } else {
-        try { localStorage.removeItem("thebook:" + draftKey); } catch (e) {}
+        store.remove(draftKey);
+        status.textContent = "";
       }
     };
-    why.addEventListener("input", saveDraft);
-    took.addEventListener("input", saveDraft);
+    var draftSoon = function () {
+      status.textContent = "Saving draft…";
+      status.className = "diary-status";
+      clearTimeout(draftTimer);
+      draftTimer = setTimeout(saveDraft, 400);
+    };
+    why.addEventListener("input", draftSoon);
+    took.addEventListener("input", draftSoon);
+    why.addEventListener("blur", function () { if (draftTimer) saveDraft(); });
+    took.addEventListener("blur", function () { if (draftTimer) saveDraft(); });
+    flushers.push(function () {
+      if (draftTimer) saveDraft();
+      return form.isConnected || !!draftTimer;
+    });
+    if (draft && (draft.took || draft.why)) {
+      status.textContent = "Your unsent draft, put back.";
+    }
 
     form.addEventListener("submit", function (e) {
       e.preventDefault();
@@ -6781,9 +7069,23 @@
          stays exactly where it is -- in the box, selectable, still theirs to
          copy somewhere else. Announcing a save that did not happen is how a
          person loses something they cannot write again. */
+      clearTimeout(draftTimer); draftTimer = null;
       if (!addDiaryEntry(entry)) {
         status.textContent = "";
-        form.appendChild(el("p", { class: "warn", text: STORAGE_FAILED }));
+        /* The text stays in the box, and there is a way to take it away
+           from here that does not depend on this browser at all. */
+        if (!form.querySelector(".warn")) {
+          form.appendChild(el("p", { class: "warn" }, [
+            STORAGE_FAILED + " Your words are still in the box above. ",
+            el("button", {
+              type: "button", class: "linkish", text: "Download this entry",
+              onclick: function (ev) {
+                saveFile(diaryAsText([entry]), ev.currentTarget,
+                         "diary-entry-" + entry.day + ".txt", "text/plain");
+              }
+            })
+          ]));
+        }
         announce(STORAGE_FAILED);
         return;
       }
@@ -6792,13 +7094,16 @@
       /* Released only here, after the write returned true. Clearing it any
          earlier would throw away the copy that exists precisely because the
          other one might not. */
-      try { localStorage.removeItem("thebook:" + draftKey); } catch (e) {}
+      store.remove(draftKey);
+      status.textContent = "Saved.";
+      status.className = "diary-status is-saved";
       if (checked) checked.checked = false;
       announce(diaryDropped
         ? "Entry kept. That is " + DIARY_CAP + " entries, the most this " +
           "browser is asked to hold, so the oldest was removed to make room. " +
           "Keep a copy first if you want it back."
         : "Entry kept.");
+      toast("Saved ✓ Entry kept on this device.");
       if (onSaved) onSaved();
     });
 
@@ -6850,6 +7155,77 @@
     refreshResume();
     var a = document.activeElement;
     if (a && /^(input|textarea|select)$/i.test(a.tagName)) return;
+    if (/^#\/(saved|diary)\b/.test(location.hash)) route();
+  });
+
+  /* A removed entry can be put back for as long as the page is open: a stray
+     tap on a phone should not be the end of something nobody can rewrite. */
+  function offerUndo(entry) {
+    var main = document.getElementById("main");
+    var h1 = main && main.querySelector("h1");
+    if (!h1) return;
+    var note = el("p", { class: "diary-undo", role: "status" }, [
+      "Entry removed. ",
+      el("button", {
+        type: "button", class: "linkish", text: "Undo",
+        onclick: function () {
+          var list = diaryEntries().filter(function (x) { return x.id !== entry.id; });
+          list.push(entry);
+          list.sort(function (a, b) { return a.id < b.id ? 1 : -1; });
+          if (writeDiary(list)) { announce("Entry put back."); route(); }
+          else announce(STORAGE_FAILED);
+        }
+      })
+    ]);
+    h1.parentNode.insertBefore(note, h1.nextSibling);
+  }
+
+  /* Edited in place. The id -- which is also when it was first written --
+     stays, so the entry keeps its day and its place; the edit is dated
+     beside it. Nothing on screen changes until the write has landed. */
+  function editDiaryCard(card, entry) {
+    if (card.querySelector(".diary-edit")) return;
+    var why = el("textarea", { rows: "2", class: "diary-edit-why",
+                               "aria-label": "Why this today" });
+    var took = el("textarea", { rows: "6", class: "diary-edit-took",
+                                "aria-label": "What you took from it" });
+    why.value = entry.why || "";
+    took.value = entry.took || "";
+    var msg = el("p", { class: "diary-status", role: "status" });
+    var box = el("div", { class: "diary-edit" }, [why, took, el("div", { class: "diary-actions" }, [
+      el("button", { type: "button", class: "primary", text: "Save changes",
+        onclick: function () {
+          var body = took.value.trim();
+          if (!body) { msg.textContent = "An entry needs some words. Use Remove to delete it."; return; }
+          var list = diaryEntries();
+          var found = false;
+          list.forEach(function (x) {
+            if (x.id === entry.id) {
+              x.why = why.value.trim(); x.took = body;
+              x.edited = new Date().toISOString(); found = true;
+            }
+          });
+          if (!found) { msg.textContent = "That entry is no longer here (was it removed in another tab?)."; return; }
+          if (!writeDiary(list)) { msg.textContent = STORAGE_FAILED; announce(STORAGE_FAILED); return; }
+          announce("Changes saved.");
+          toast("Saved ✓ Changes kept on this device.");
+          route();
+        } }),
+      el("button", { type: "button", text: "Cancel",
+        onclick: function () { route(); } }),
+      msg
+    ])]);
+    card.appendChild(box);
+    took.focus();
+  }
+
+  /* Another tab changed the diary or the saved list. Redraw from it, unless
+     somebody is typing here: two tabs must never take words out from under
+     the cursor. */
+  window.addEventListener("storage", function (ev) {
+    if (!ev.key || !/^thebook:(diary|saved)$/.test(ev.key)) return;
+    var a = document.activeElement;
+    if (a && /^(input|textarea|select)$/i.test(a.tagName) && a.value) return;
     if (/^#\/(saved|diary)\b/.test(location.hash)) route();
   });
 
@@ -7003,10 +7379,23 @@
         var m = MARKS.filter(function (x) { return x.id === e.mark; })[0];
         if (m) card.appendChild(el("p", { class: "diary-mark", text: m.label }));
       }
+      if (e.edited) {
+        card.appendChild(el("p", { class: "diary-edited tiny",
+          text: "Edited " + new Date(e.edited).toLocaleString() }));
+      }
+      card.appendChild(el("button", {
+        class: "linkish", text: "Edit",
+        "aria-label": "Edit this entry",
+        onclick: function () { editDiaryCard(card, e); }
+      }));
       card.appendChild(el("button", {
         class: "linkish", text: "Remove",
         onclick: function () {
-          if (removeDiaryEntry(e.id)) { announce("Entry removed."); route(); }
+          if (removeDiaryEntry(e.id)) {
+            announce("Entry removed.");
+            route();
+            offerUndo(e);
+          }
           else announce(STORAGE_FAILED);
         }
       }));
@@ -7313,12 +7702,35 @@
                       " " + item.label
       });
       note.value = item.note || "";
-      note.addEventListener("change", function () {
+      /* Kept as it is typed, not only when the box loses focus: a note typed
+         and followed by a closed tab or a reload used to be lost, because
+         the only thing that wrote it was the change event. */
+      var noteMsg = el("span", { class: "saved-note-status tiny", role: "status" });
+      var noteTimer = null;
+      var writeNote = function (said) {
+        clearTimeout(noteTimer); noteTimer = null;
         var all = savedItems();
-        all.forEach(function (s) { if (s.id === item.id) s.note = note.value; });
-        announce(store.set("saved", all) ? "Note saved" : STORAGE_FAILED);
+        var hit = false;
+        all.forEach(function (s) { if (s.id === item.id) { s.note = note.value; hit = true; } });
+        if (!hit) return;
+        var ok = store.set("saved", all);
+        noteMsg.textContent = ok ? "Note saved" : "Not saved: this browser is not storing anything";
+        noteMsg.className = "saved-note-status tiny " + (ok ? "is-saved" : "is-warn");
+        if (!ok) announce(STORAGE_FAILED);
+        else if (said) announce("Note saved");
+      };
+      note.addEventListener("input", function () {
+        noteMsg.textContent = "Saving…";
+        clearTimeout(noteTimer);
+        noteTimer = setTimeout(writeNote, 400);
+      });
+      note.addEventListener("change", function () { writeNote(true); });
+      flushers.push(function () {
+        if (noteTimer) writeNote();
+        return note.isConnected;
       });
       row.appendChild(note);
+      row.appendChild(noteMsg);
 
       row.appendChild(el("button", {
         class: "chip", text: "Remove",
@@ -9610,7 +10022,10 @@
     // for another platform to vouch for it: YouTube always leads. Kick carries
     // the same feed and its link is added when Kick's API says it is up; a
     // failure there only leaves the Kick link off, never the banner.
-    banner.hidden = true;
+    // The banner is in the page from the first paint (no hidden attribute in
+    // the HTML), so it never pushes the page down after a visitor has started
+    // reading or reaching for a link. Revealing it four seconds after load
+    // used to shift the whole desktop front page (CLS ~0.5-0.75).
     function get(url, ok) {
       if (!window.fetch) return Promise.resolve(false);
       return fetch(url, { cache: "no-store", credentials: "omit" })
@@ -9619,7 +10034,6 @@
     }
     // Deferred past first paint so it stays out of the page's load budget.
     function check() {
-      banner.hidden = false;
       get("https://kick.com/api/v2/channels/jonesproject", function (r) {
         return r.json().then(function (j) { return !!(j && j.livestream); });
       }).then(function (live) {
@@ -9667,6 +10081,7 @@
   topbar.addEventListener("focusin", function () { tuck(false); });
 
   function route() {
+    flushAll();
     var hash = location.hash.replace(/^#\/?/, "");
     var parts = hash.split("/").filter(function (p) { return p !== ""; });
     var view = parts[0] || "home";
@@ -9865,6 +10280,16 @@
   });
 
   refreshResume();
+  /* IndexedDB is read after the first paint. If it held something
+     localStorage did not -- a diary written while the quota was full, or a
+     list localStorage lost -- the pages that show it are drawn again. */
+  store.ready(function () {
+    if (!idb.changed) return;
+    refreshResume();
+    var a = document.activeElement;
+    if (a && /^(input|textarea|select)$/i.test(a.tagName) && a.value) return;
+    if (/^#\/(saved|diary)\b/.test(location.hash)) route();
+  });
   if (store.get("account", null)) withAccount(function () {});
   initLexicon();
   initLookupKeys();
