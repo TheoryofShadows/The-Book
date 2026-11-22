@@ -9610,7 +9610,10 @@
     // for another platform to vouch for it: YouTube always leads. Kick carries
     // the same feed and its link is added when Kick's API says it is up; a
     // failure there only leaves the Kick link off, never the banner.
-    banner.hidden = true;
+    // The banner is in the page from the first paint (no hidden attribute in
+    // the HTML), so it never pushes the page down after a visitor has started
+    // reading or reaching for a link. Revealing it four seconds after load
+    // used to shift the whole desktop front page (CLS ~0.5-0.75).
     function get(url, ok) {
       if (!window.fetch) return Promise.resolve(false);
       return fetch(url, { cache: "no-store", credentials: "omit" })
@@ -9619,7 +9622,6 @@
     }
     // Deferred past first paint so it stays out of the page's load budget.
     function check() {
-      banner.hidden = false;
       get("https://kick.com/api/v2/channels/jonesproject", function (r) {
         return r.json().then(function (j) { return !!(j && j.livestream); });
       }).then(function (live) {
