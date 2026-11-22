@@ -615,6 +615,11 @@ def chapter_page(manifest, section, meta, work, chapters, slugs, i, out_dir):
         strip_html(meta["id"], chapters, slugs, slug, 3),
         "</div>",
         pager(prev, nxt, big=True, top=True),
+        # Most visitors to a chapter page arrive from a YouTube "read along"
+        # link expecting to hear it. The recorded reading lives in the reader,
+        # so say so above the text instead of only at the foot of the page.
+        '<p class="listen-cta"><a class="chip primary" href="../../../#/read/%s/%d">'
+        '\u25b6 Listen to this chapter</a></p>' % (e(meta["id"]), i),
         '<div class="reader">',
         '<h2 class="chapter-title">%s</h2>' % e(c.get("label") or heading),
     ]

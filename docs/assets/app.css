@@ -387,6 +387,10 @@ main { padding: clamp(1.2rem, 4vw, 2.6rem) clamp(.9rem, 4vw, 2rem) 4rem; }
    the footer below the fold until there is something above it. Only the
    empty shell is held: the generated pages arrive with their text in place. */
 main#main:empty { min-height: 100vh; min-height: 100svh; }
+/* Same hold while the data loads: the shell's "Loading..." line is 222px
+   tall, which pulled the footer up into view for ~100 ms and then shoved it
+   off again (CLS 0.5 on the desktop front page, measured Nov 22, 2026). */
+main#main > .loading:only-child { min-height: 100vh; min-height: 100svh; box-sizing: border-box; margin: 0; }
 .wrap { max-width: 60rem; margin: 0 auto; }
 .wrap-wide { max-width: 74rem; margin: 0 auto; }
 
