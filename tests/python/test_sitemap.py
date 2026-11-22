@@ -39,6 +39,10 @@ def read():
         return fh.read()
 
 
+def notes():
+    return build_pages.load_notes(os.path.join(ROOT, "docs", "data"))
+
+
 class TheDate(unittest.TestCase):
     """What the lastmod says, and whether it is entitled to say it."""
 
@@ -75,19 +79,31 @@ class TheDate(unittest.TestCase):
         "not today", so that it still holds on the day the text really does
         change.
         """
-        stamps = set(re.findall(r"<lastmod>([^<]+)</lastmod>", self.xml))
+        # A third kind of date is allowed, and only where it is true: a
+        # chapter page carrying a hand-written note moved on the day the note
+        # says it was written (docs/data/chapter_notes.json, "updated").
+        noted = {}
+        for key, note in notes().items():
+            work, slug = key.split("/", 1)
+            noted["https://thebookandme.com/read/%s/%s/" % (work, slug)] = note["updated"]
+        pairs = re.findall(r"<loc>([^<]+)</loc><lastmod>([^<]+)</lastmod>", self.xml)
+        text = max(build_pages.source_date(), build_pages.PAGES_DATE)
+        own = max(text, build_pages.site_date())
+        for loc, stamp in pairs:
+            if loc in noted:
+                self.assertEqual(stamp, max(text, noted[loc]), loc)
+        stamps = {stamp for loc, stamp in pairs if loc not in noted}
         # Two clocks at most: the text's, and the site's own writing (home,
         # about, contact, privacy, press), which may only be newer.
         self.assertLessEqual(len(stamps), 2,
                              "got %r" % (sorted(stamps),))
         # The text pages move with the text, or with PAGES_DATE when the
         # generated pages themselves changed in substance.
-        text = max(build_pages.source_date(), build_pages.PAGES_DATE)
-        own = max(text, build_pages.site_date())
         self.assertEqual(stamps, {text, own})
         # Every text page carries the text date, and only the five pages of
         # the site's own writing may carry the later one.
-        later = re.findall(r"<loc>([^<]+)</loc><lastmod>%s</lastmod>" % own, self.xml)
+        later = [loc for loc in re.findall(
+            r"<loc>([^<]+)</loc><lastmod>%s</lastmod>" % own, self.xml) if loc not in noted]
         if own != text:
             self.assertEqual(len(later), 5, later)
 
@@ -99,7 +115,8 @@ class TheDate(unittest.TestCase):
         """
         got = subprocess.run(
             ["git", "-C", ROOT, "log", "-1", "--format=%cs",
-             "--", "source", "docs/data"],
+             "--", "source", "docs/data",
+             ":(exclude)docs/data/" + build_pages.NOTES_FILE],
             capture_output=True, text=True, encoding="utf-8", timeout=20)
         stamp = (got.stdout or "").strip()
         if not stamp:

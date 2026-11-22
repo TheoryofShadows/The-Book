@@ -1209,6 +1209,14 @@ table.grid tbody tr:last-child td { border-bottom: 0; }
 .note-block p:first-child { margin-top: 0; }
 .note-block p:last-child { margin-bottom: 0; }
 
+/* The note written for a chapter page, above the text: an intro, then a line
+   on each place the chapter names. Plain static text, so nothing moves when
+   it arrives. */
+.chapter-intro h2 { font-size: 1rem; margin: 0 0 .3rem; }
+.chapter-intro h3 { font-size: .9rem; margin: .7rem 0 .2rem; }
+.place-notes { margin: 0; padding-left: 1.1rem; }
+.place-notes li { margin: .15rem 0; }
+
 /* ---------- who wrote this, and when ----------
    Two columns, deliberately identical in weight. Neither tradition is
    styled as the default reading; the reader compares and decides. */
