@@ -58,6 +58,12 @@ class TheHeaders(unittest.TestCase):
         for path in ("/the-book", "/the-book.html"):
             self.assertIn(path + "\n  ! Content-Security-Policy", self.h)
 
+    def test_the_offline_copy_is_not_for_search(self):
+        """Pages serves the file at /the-book; that URL must say noindex."""
+        for path in ("/the-book", "/the-book.html"):
+            block = self.h.split(path, 1)[1].split("\n/")[0]
+            self.assertIn("X-Robots-Tag: noindex", block, path)
+
 
 if __name__ == "__main__":
     unittest.main()

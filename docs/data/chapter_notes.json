@@ -1,0 +1,945 @@
+{
+ "about": [
+  "Original notes written for this site, one per chapter page, keyed by work id and the chapter's address (the URL /read/<work>/<slug>/ is the key <work>/<slug>).",
+  "intro: two to four plain sentences on what happens in the chapter and why it matters, written after reading that chapter. Its opening sentence or two become the page's meta description.",
+  "places: optional, places the chapter really names, each with one line on where or what it is. Leave out any place whose map data is known to be wrong.",
+  "updated: the day the note was written or last changed (YYYY-MM-DD). The sitemap gives the page this date, so change it only when the note changes.",
+  "No links, no copying from other sites, no claims of doctrine as fact, no health claims. tests/python/test_chapter_notes.py checks the shape."
+ ],
+ "notes": {
+  "obadiah/1": {
+   "intro": "The shortest book in the Hebrew Bible is a single chapter of twenty-one verses against Edom, the nation descended from Jacob's brother Esau. Edom is condemned for standing by, and even joining in, when Jerusalem was plundered, and warned that \"as you have done, it will be done to you.\" Its first verses closely match Jeremiah 49, and it ends with exiles returning and the kingdom belonging to the Lord.",
+   "places": [
+    {
+     "name": "Edom",
+     "note": "The hill country south and east of the Dead Sea, in today's southern Jordan."
+    },
+    {
+     "name": "Teman",
+     "note": "A region or town of Edom, named for its warriors."
+    },
+    {
+     "name": "Mount Zion",
+     "note": "The hill of Jerusalem, a name for the city as God's dwelling."
+    },
+    {
+     "name": "Samaria",
+     "note": "The former capital of the northern kingdom of Israel, north of Jerusalem."
+    },
+    {
+     "name": "Gilead",
+     "note": "The highlands east of the Jordan River."
+    },
+    {
+     "name": "Zarephath",
+     "note": "A coastal town between Tyre and Sidon in modern Lebanon."
+    },
+    {
+     "name": "Sepharad",
+     "note": "A place of exile, often identified with Sardis in western Turkey; later Jewish tradition used the name for Spain."
+    },
+    {
+     "name": "Negeb",
+     "note": "The dry south of Judah, usually spelled Negev."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "psalms/91": {
+   "intro": "A psalm of trust, spoken first by someone who calls God \"my refuge and my fortress\" and closed by God's own promise to answer and rescue. Its images, shelter under wings, angels that bear you up so you do not strike your foot on a stone, treading on the lion and the serpent, are some of the best known in the Psalter. In the Gospels of Matthew and Luke, the devil quotes verses 11 and 12 to Jesus during the temptation in the wilderness.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-the-watchers-chapters-1-36/1": {
+   "intro": "The opening of 1 Enoch introduces Enoch as a righteous man whose eyes God opened, and says his vision is meant not for his own generation but for a distant one. God comes down on Mount Sinai, mountains melt like wax, and judgment falls on all, while the righteous receive peace. Verse 9, \"He cometh with ten thousands of His holy ones,\" is the line the Letter of Jude quotes in the New Testament.",
+   "places": [
+    {
+     "name": "Mount Sinai",
+     "note": "The mountain of the law in Exodus, traditionally placed in the south of the Sinai Peninsula."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-the-watchers-chapters-1-36/6": {
+   "intro": "The story that gives this book its name begins here. Two hundred angels, the Watchers, desire human women and, led by Semjaza, swear an oath together on Mount Hermon to take wives. The text explains the mountain's name through a wordplay on the Hebrew for a binding oath, then lists the leaders of tens. It is a much longer telling of the strange episode in Genesis 6:1-4.",
+   "places": [
+    {
+     "name": "Mount Hermon",
+     "note": "The tall snow-capped mountain on today's border of Syria and Lebanon, above the Golan Heights."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-the-watchers-chapters-1-36/7": {
+   "intro": "The Watchers take wives and teach them charms, spells and the cutting of roots. Their children are giants of impossible size who eat everything people produce and then turn on people themselves. The chapter ends with the earth itself bringing an accusation against them.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-the-watchers-chapters-1-36/8": {
+   "intro": "Here the forbidden knowledge is listed. Azazel teaches metalworking, weapons, jewellery and eye cosmetics; other Watchers teach spells, astrology and the signs of the sun, moon and clouds. Corruption spreads, and as people die their cry rises to heaven. The idea that civilisation's arts came from fallen angels is one of this book's most distinctive features.",
+   "description": "Azazel and the other Watchers teach metalworking, weapons, cosmetics, spells and astrology, and the earth's cry rises to heaven.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-the-watchers-chapters-1-36/10": {
+   "intro": "God answers the cry of the earth by sending out the archangels. Uriel warns Noah of the flood; Raphael binds Azazel and throws him into a pit in the desert at Dudael; Gabriel sets the giants against one another; and Michael binds Semjaza and his company under the earth for seventy generations. The chapter ends with a picture of a cleansed earth full of vines, grain and olive oil.",
+   "places": [
+    {
+     "name": "Dudael",
+     "note": "A desert place named only in Enoch, where Azazel is imprisoned under jagged rocks; its location is unknown."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-the-watchers-chapters-1-36/14": {
+   "intro": "Enoch tells the Watchers that their petition for mercy has been refused, then describes the vision in which he learned it. Winds lift him into heaven, through a wall of crystal and fire, into a house that is \"hot as fire and cold as ice,\" and then into a greater house where the Great Glory sits on a crystal throne. It is one of the earliest Jewish descriptions of a heavenly ascent, and it influenced later throne visions.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108/84": {
+   "intro": "After his first dream, a vision of the earth collapsing into the abyss, Enoch prays. He praises God as king of all creation, admits that the angels have sinned and that judgment hangs over humanity, and asks that God not wipe out all flesh but leave a righteous remnant as \"a plant of the eternal seed.\" The prayer sets up the flood story that the next vision tells in animal form.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108/85": {
+   "intro": "Here the Animal Apocalypse begins, Enoch's second dream, told to his son Methuselah. History is replayed with cattle: a white bull (Adam), a heifer (Eve), a black bull who gores a red one (Cain and Abel), and a new white bull (Seth) whose line multiplies. The colours carry meaning throughout, with white marking the righteous line.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108/86": {
+   "intro": "The Watchers story in animal form. A star falls from heaven and grazes among the cattle, then many more stars follow, become bulls and mate with the cows, who give birth to elephants, camels and asses, the giants of the older story. The newcomers terrify and devour the cattle, and the earth begins to tremble.",
+   "description": "The Watchers story told with animals: falling stars become bulls, and their offspring are elephants, camels and asses.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108/87": {
+   "intro": "The earth cries out as the beasts devour each other. Beings \"like white men\" come down from heaven, four first and then three, a way of picturing archangels. The three lift Enoch to a high tower so he can watch everything that happens to the stars, the cattle and their monstrous offspring.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108/90": {
+   "intro": "The Animal Apocalypse reaches its climax. After Israel suffers under seventy shepherds and the birds of prey, lambs are born, and a great horn grows on one of the sheep; most scholars see Judas Maccabeus in it, which dates the vision to around 160 BCE. Judgment follows, then a new, larger house replaces the old one, and a white bull is born whom all the beasts honour.",
+   "description": "The Animal Apocalypse ends with a great horn, often read as Judas Maccabeus, the judgment, and a new house for the flock.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108/91": {
+   "intro": "This page holds the end of the Apocalypse of Weeks, which divides all history into ten \"weeks.\" The eighth week brings a sword for the righteous, the ninth reveals judgment to the whole world, and the tenth ends with the judgment of the angels and a new heaven shining with sevenfold light. R. H. Charles moved these verses to follow chapter 93, where the first seven weeks appear, and his order is kept here.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108/92": {
+   "intro": "A title page for the Epistle of Enoch, which runs to chapter 105. Enoch addresses his writing to all his descendants and to future generations who keep to uprightness, and tells them not to be troubled by the times, because God has appointed days for everything.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108/93": {
+   "intro": "The Apocalypse of Weeks begins. Enoch says he was born \"the seventh in the first week\" and moves through history: the flood in the second week, Abraham in the third, the law at Sinai in the fourth, the temple in the fifth, its burning in the sixth, and an apostate generation in the seventh. A short bracketed passage then asks who could ever understand the heavens.",
+   "description": "The Apocalypse of Weeks begins: Enoch traces history from his own birth to an apostate seventh week.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108/94": {
+   "intro": "Enoch urges his sons to walk in the paths of righteousness, then the first of the Epistle's famous woes begins. \"Woe to you, ye rich, for ye have trusted in your riches\" is close in spirit to the woes in Luke 6, and the chapter warns those who build houses through oppression.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108/95": {
+   "intro": "The chapter opens with grief, Enoch wishing his eyes were clouds so he could weep over the sinners. He reassures the righteous not to fear, then delivers woes against people who curse others, repay evil for evil, bear false witness and persecute the innocent.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108/98": {
+   "intro": "Enoch swears a series of oaths against the powerful who dress in purple and gold. His central claim is striking: sin was not sent upon the earth, but people created it themselves. Every act of oppression, he says, is written down in heaven each day.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108/99": {
+   "intro": "More woes, this time against people who twist the words of uprightness, use false measures, worship idols, and build their houses \"through the grievous toil of others.\" Between the warnings comes a blessing on those who accept wisdom and walk in God's path.",
+   "description": "Woes against those who twist the truth, use false measures and build their houses on the toil of others.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108/106": {
+   "intro": "One of the most memorable stories in 1 Enoch: the birth of Noah. The baby is white as snow and red as a rose, his eyes light up the house, and he speaks to God in the midwife's hands. His father Lamech fears he is the child of angels, so Methuselah travels to the ends of the earth to ask Enoch, who reassures him and foretells the flood. A version of this story is also found in the Genesis Apocryphon from Qumran.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108/107": {
+   "intro": "The Noah story ends. Enoch tells Methuselah that sin will continue generation after generation until a righteous generation finally arises, and that Lamech's son is truly his own. Methuselah returns home, and the child is named Noah, because \"he will comfort the earth.\"",
+   "description": "The birth of Noah story ends: Enoch reassures Methuselah, and the child is named Noah, \"for he will comfort the earth.\"",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108/108": {
+   "intro": "The last chapter of 1 Enoch, which Charles called an appendix, is presented as another book Enoch wrote for Methuselah. It contrasts a place of fire and weeping for sinners with the reward of the humble, who loved heaven more than gold or silver. God promises to bring them out in shining light and seat each on a throne of honour.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/37": {
+   "intro": "The Book of Parables begins by giving Enoch's full family line back to Adam and calling what follows \"the vision of wisdom.\" Enoch says he received three parables, or similitudes, from the Lord of Spirits, a title for God used constantly in this section and almost nowhere else. The chapter works as a title page for chapters 38 to 71.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/38": {
+   "intro": "The first parable opens on the day of judgment. When \"the Righteous One\" appears, the text asks, where will sinners live? Kings and the powerful who \"possess the earth\" will lose their strength and be handed over to the righteous, a theme of reversal that runs through all three parables.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/39": {
+   "intro": "A whirlwind carries Enoch to the end of the heavens, where he sees the dwellings of the righteous and the angels interceding for humanity. He sees \"the Elect One\" under the wings of the Lord of Spirits and hears the angels who never sleep sing \"Holy, holy, holy,\" with a twist on Isaiah 6: the Lord of Spirits \"filleth the earth with spirits.\"",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/41": {
+   "intro": "Enoch is shown how human deeds are weighed in a balance, then the secret workings of nature: the chambers of the winds, hail and mist, and the paths of the sun and moon. The sun and moon are said to keep an oath with one another and never stray from their courses, an idea the Astronomical Book develops at length.",
+   "description": "Enoch sees deeds weighed in a balance and the hidden chambers of wind, hail and mist, and the sworn paths of sun and moon.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/43": {
+   "intro": "A short chapter in which Enoch watches God call the stars by name and weigh them by their light. When he asks what they mean, the angel answers that the stars stand for the names of the faithful on earth, which is one of the few places where a parable in this book is explained outright.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/47": {
+   "intro": "The prayers and the blood of the righteous rise to heaven, and the angels join in asking for justice. Then the Head of Days, the white-haired figure borrowed from Daniel 7's Ancient of Days, takes his throne and the books of the living are opened. The holy ones rejoice that the prayer has been heard.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/48": {
+   "intro": "One of the most studied chapters in 1 Enoch. Beside a fountain of righteousness, the Son of Man is named before the Lord of Spirits, and the text says his name was named \"before the sun and the signs were created.\" He is called a staff for the righteous and \"the light of the Gentiles,\" and the chapter ends with the kings who denied \"His Anointed,\" one of the few uses of that title in the book.",
+   "description": "The Son of Man is named before the Lord of Spirits, a name given before the sun and stars were made.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/49": {
+   "intro": "A brief hymn about the Elect One. Wisdom pours out like water before him, and the spirits of wisdom, insight, understanding and might rest on him, wording that echoes Isaiah 11. He judges secret things, and no lie can be spoken in his presence.",
+   "description": "A short hymn on the Elect One, on whom rest the spirits of wisdom, insight, understanding and might.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/50": {
+   "intro": "This chapter adds a third group to the usual two. Besides the righteous and the unrepentant sinners, there are \"the others,\" who see the righteous win and turn from their ways; they have no honour, but they are saved through God's mercy. It is one of the gentler passages in the Parables.",
+   "description": "Besides the righteous and the sinners, a third group sees the righteous win, repents, and is saved by God's mercy.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/51": {
+   "intro": "The earth, Sheol and hell give back what they hold: a clear statement of the resurrection of the dead. The Elect One sits on God's throne and pours out wisdom, while mountains leap like rams and the righteous live on a renewed earth.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/54": {
+   "intro": "Enoch sees a deep valley of fire and iron chains being forged for \"the hosts of Azazel,\" the leader of the fallen angels. The four archangels, Michael, Gabriel, Raphael and Phanuel, will throw them into a burning furnace. The chapter then breaks into a fragment about the flood, which describes the waters above and below the earth joining as male and female.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/55": {
+   "intro": "After the flood, the Head of Days says it was in vain to destroy everyone on earth and swears never to do it again, setting a sign in the heavens, much like the rainbow promise of Genesis 9. The second half turns to the final judgment, where the mighty kings must watch the Elect One judge Azazel and his followers.",
+   "description": "After the flood God swears never to destroy the earth again, then the Elect One judges Azazel and his hosts.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/56": {
+   "intro": "Angels of punishment carry scourges and chains toward a valley. Then the scene shifts to a last attack on the land of the elect led by \"the Parthians and Medes,\" which ends when the invaders turn on one another. Many scholars connect this with the Parthian invasion of Judea in 40 BCE, and it is one of the clues used to date the Parables.",
+   "places": [
+    {
+     "name": "Parthia",
+     "note": "An empire centred on Iran and Mesopotamia that was Rome's great rival in the east."
+    },
+    {
+     "name": "Media",
+     "note": "The homeland of the Medes in northwest Iran."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/57": {
+   "intro": "A short closing scene for the second parable. Wagons full of riders come on the winds from east and west, so loud that the pillars of the earth shake, and everyone falls down to worship. It is usually read as the scattered people of Israel coming home.",
+   "description": "Wagons of riders come on the winds from east and west, a closing scene usually read as the exiles coming home.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/58": {
+   "intro": "The third parable begins with a beatitude: \"Blessed are ye, ye righteous and elect.\" The chapter is all light, the light of the sun and of eternal life, a light that never ends once darkness has been destroyed. It is one of the most hopeful passages in the book.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/59": {
+   "intro": "Enoch is shown the secrets of lightning and thunder and is told they strike for blessing or for curse as God wills. The whole chapter sits inside square brackets in this printing, the editor's sign that he doubted it belonged here, and it reads like a short echo of the nature secrets in chapter 41.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/60": {
+   "intro": "Dated by Noah's lifetime, this chapter is usually treated as a fragment of a lost Book of Noah worked into Enoch. Heaven shakes, Michael explains the coming judgment, and Enoch learns of two monsters, Leviathan in the sea and Behemoth in the desert. A long section follows on the spirits that govern thunder, hail, frost, snow, mist, dew and rain.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/61": {
+   "intro": "Angels fly north with measuring cords to measure out the places of the righteous. The text promises that even those lost in the desert, eaten by beasts or drowned at sea will return. The Elect One is enthroned to judge even the holy ones in heaven, and all creation joins one long song of blessing.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/62": {
+   "intro": "The great judgment scene of the Parables. Kings and landowners are told to look up and recognise the Elect One, and when they see the Son of Man on his throne they are seized with pain like a woman in labour. The text says he was hidden from the beginning and revealed to the elect, who will eat and rest with him forever in garments that never wear out.",
+   "description": "Kings and landowners see the Son of Man on his throne of glory, while the righteous are clothed in garments of life.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/63": {
+   "intro": "The kings and the mighty beg for a little time to confess and praise God, and the chapter gives their prayer in full: they trusted the sceptre of their kingdom instead of the Lord of Spirits. Their regret comes too late, and the scene ends in darkness and shame before the Son of Man.",
+   "description": "The kings and the mighty beg for time to confess, admitting they trusted their sceptres, but their regret comes too late.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/64": {
+   "intro": "Just two verses. Enoch sees other figures hidden in the place of punishment, and an angel tells him these are the angels who came down to earth, revealed hidden things to humans and led them into sin, a direct link back to the Watchers story of chapters 6 to 16.",
+   "description": "Two verses: in the place of punishment Enoch is shown the angels who came down and taught humans to sin.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/65": {
+   "intro": "The voice changes from Enoch to his great-grandson Noah, called his grandson here. Seeing the earth sinking toward ruin, Noah runs to the ends of the earth and cries three times to Enoch, who explains that humanity is doomed because it learned the angels' secrets, sorcery and metalworking. Noah, however, is declared pure and promised a righteous line.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/66": {
+   "intro": "A three-verse scene. Enoch shows Noah the angels in charge of the waters beneath the earth, ready to release the flood, and God orders them to hold the waters back for now.",
+   "description": "Enoch shows Noah the angels who hold the waters under the earth, and God orders them to hold back the flood.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/67": {
+   "intro": "God tells Noah that angels are building a wooden structure, the ark, from which new life will come. The fallen angels are to be imprisoned in a burning valley full of molten metal and sulphurous water, and the same waters are said to soothe the bodies of kings while condemning their spirits. Many scholars link this to the hot springs east of the Dead Sea that Herod the Great visited near the end of his life, and use it to date the Parables.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/69": {
+   "intro": "This long chapter names the leaders of the fallen angels and what each one taught: Gadreel brought weapons and led Eve astray, Penemue taught writing with ink and paper, and Kasdeja taught harmful spells. It then describes a secret oath that holds the sea, sun, moon and stars in place. The third parable closes with joy that the Son of Man's name has been revealed and with him seated in judgment.",
+   "description": "The fallen angels are named with what each taught, a secret oath holds the cosmos together, and the third parable ends.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/70": {
+   "intro": "In four verses Enoch is lifted away from the earth on \"chariots of the spirit\" and is no longer counted among the living, a retelling of Genesis 5:24, where Enoch \"was not, for God took him.\" He is set between the north and the west, in the place measured out for the righteous, and sees the first fathers there.",
+   "description": "Enoch is lifted away on chariots of the spirit, a retelling of Genesis 5:24, and sees the first fathers in their place.",
+   "updated": "2026-11-22"
+  },
+  "1-enoch-the-book-of-parables-chapters-37-71/71": {
+   "intro": "The last chapter of the Parables, and the most debated. Enoch ascends past streams of fire to a house of crystal, meets the Head of Days, and is told about the Son of Man \"born unto righteousness.\" The Ethiopic manuscripts have the angel say \"You are the Son of Man,\" naming Enoch himself; R. H. Charles, whose 1917 translation is printed here, changed this to \"This is,\" and scholars still argue over which reading the author meant.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-reuben/1": {
+   "intro": "The Testaments of the Twelve Patriarchs open here, with Jacob's eldest son on his sickbed at one hundred and twenty-five. Reuben confesses the sin Genesis 35 mentions in a single line, sleeping with his father's concubine Bilhah, and describes seven months of illness and seven years of penance without wine or meat. The confession sets the pattern for the whole collection: each brother admits a failing and warns his children against it.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-reuben/2": {
+   "intro": "Reuben describes what he learned during his years of repentance: seven spirits of deceit that work against a person, and seven spirits given at creation, from life and sight through speech and taste. The last, the spirit of procreation, is placed last in creation but first in youth, which is why he thinks it leads young people astray. It is an early attempt at a map of human desire.",
+   "description": "Reuben's teaching on the seven spirits of deceit and the seven spirits given to every person at creation.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-reuben/4": {
+   "intro": "Reuben tells his sons to keep busy with work, study and their flocks rather than dwell on attraction, and admits he could not look Jacob in the face until his father died. He then praises Joseph, who in this retelling resisted the Egyptian woman's magicians and love potions as well as her advances.",
+   "places": [
+    {
+     "name": "Egypt",
+     "note": "Where Joseph served in Potiphar's house and resisted his master's wife."
+    }
+   ],
+   "description": "Reuben urges his sons to work and study, admits his lasting shame, and praises Joseph's self-control in Egypt.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-reuben/5": {
+   "intro": "One of the harshest passages in the Testaments, reflecting the author's suspicion of women and their adornment, which modern readers often find hard to read. Reuben's argument leads into a retelling of the Watchers story from 1 Enoch: here the fallen angels take human shape, and the women's desire for them produces the giants.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-simeon/2": {
+   "intro": "Simeon, Jacob's second son, admits he was proud of his strength and had a hard heart. Jealous of Joseph, he meant to kill him; in this telling he was away at Shechem when Judah sold Joseph, and he raged at Judah for letting him live. His right hand withered for seven days, which he took as a sign and repented.",
+   "places": [
+    {
+     "name": "Shechem",
+     "note": "A town in the hills of Samaria, near modern Nablus, where Simeon went for supplies."
+    },
+    {
+     "name": "Dothan",
+     "note": "Spelled Dotham here; the place in Genesis 37 where the brothers were grazing the flocks when Joseph found them."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-simeon/4": {
+   "intro": "When Joseph later held Simeon in Egypt as a supposed spy, Simeon says he knew the punishment was deserved. What struck him was that Joseph never held the sale against them and treated them better than his own sons. The chapter ends with a vivid description of how envy torments a person even at night.",
+   "places": [
+    {
+     "name": "Egypt",
+     "note": "Where Simeon is bound as a hostage in Genesis 42."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-simeon/7": {
+   "intro": "In this edition the chapter is only one line: Simeon tells his sons to obey Levi and to look to Judah for redemption. The pairing of the priestly tribe and the royal tribe recurs across all twelve testaments.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-judah/2": {
+   "intro": "Judah boasts about his youthful strength in a string of hunting stories: outrunning deer and a wild mare, killing a lion, throwing a bear over a cliff, and flinging a leopard from Hebron toward Gaza. The exaggeration is part of the point, setting up the warrior who will later fall through money and desire.",
+   "places": [
+    {
+     "name": "Hebron",
+     "note": "The family's home in the southern hills, where the leopard attacks."
+    },
+    {
+     "name": "Gaza",
+     "note": "A city on the Mediterranean coast, many miles to the west; the distance is part of the boast."
+    }
+   ],
+   "description": "Judah's tall tales of youthful strength: deer outrun, a lion killed, a bear thrown off a cliff, a leopard flung toward Gaza.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-judah/17": {
+   "intro": "Judah names the two things that undid him, love of money and a woman's beauty, which led him to marry Bathshua the Canaanite. He warns that the same two weaknesses will weaken the kingdom of Judah. Still, he insists he never disobeyed his father and that kingship will come from his line.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-dan/1": {
+   "intro": "Dan, one of Bilhah's sons, opens with a confession that is hard to read: he was glad when Joseph was sold and believed to be dead. A spirit of anger urged him to kill Joseph so their father would love him instead. His testament goes on to warn against anger and lying, which he names here as the roots of every wrong.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-naphtali/1": {
+   "intro": "Naphtali, son of Jacob and Bilhah, is one hundred and thirty-two and still in good health when he throws a feast for his sons, then announces the next morning that he is about to die. They do not believe him. He opens by explaining his birth: Rachel gave her maid Bilhah to Jacob, and Bilhah bore him on Rachel's lap.",
+   "description": "At 132 Naphtali throws a feast, announces his death, and explains how he was born to Bilhah on Rachel's lap.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-naphtali/2": {
+   "intro": "Naphtali was quick on his feet, so Jacob made him the family's runner and blessed him as a deer. From there he builds a small philosophy of creation: like a potter who knows each vessel, God fits every spirit to its body by weight and measure. A list of body parts and their supposed purposes follows, and the chapter closes with a plea to do everything in its proper order.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-naphtali/3": {
+   "intro": "The idea of order carries on. Sun, moon and stars never leave their courses, Naphtali says, and his sons should not leave God's law either. He names two warnings from older stories: Sodom, and the Watchers, the fallen angels of the Book of Enoch, who both \"changed the order of their nature\" and were judged.",
+   "places": [
+    {
+     "name": "Sodom",
+     "note": "The city destroyed in Genesis 19, used here as a byword for a people who broke the order of nature."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-naphtali/4": {
+   "intro": "Citing \"the holy writing of Enoch,\" Naphtali sketches the future of his people as a cycle: they will stray, go into captivity, repent and come home, then stray again and be scattered across the earth. The cycle ends only with the arrival of a man who works righteousness and shows mercy to those far and near.",
+   "description": "Citing Enoch, Naphtali foresees his people's cycle of straying, captivity and return, ended by a man of mercy.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-naphtali/5": {
+   "intro": "The first of Naphtali's two dreams. On the Mount of Olives the sun and moon stand still; Isaac tells the brothers to seize them, Levi takes the sun and Judah the moon, and Joseph rides off on a winged bull. A writing then lists the empires that will carry the twelve tribes into captivity.",
+   "places": [
+    {
+     "name": "Mount of Olives",
+     "note": "The ridge just east of Jerusalem's old city, across the Kidron Valley."
+    },
+    {
+     "name": "Jerusalem",
+     "note": "The city the vision faces, though in Naphtali's day it was not yet Israel's capital."
+    }
+   ],
+   "description": "Naphtali's dream on the Mount of Olives: Levi seizes the sun, Judah the moon, and Joseph rides off on a winged bull.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-naphtali/6": {
+   "intro": "Seven months later comes a second dream, by the sea at Jamnia. A ship marked \"Jacob\" sails up with no crew; the family boards, a storm hits, Jacob vanishes from the helm, and the brothers are scattered on planks while Joseph escapes in a small boat. Levi's prayer calms the sea and the father returns, a picture of the tribes broken apart and brought back.",
+   "places": [
+    {
+     "name": "Jamnia",
+     "note": "Yavne, a town near the Mediterranean coast south of modern Tel Aviv."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-naphtali/7": {
+   "intro": "A short, human scene. Naphtali tells Jacob both dreams, and Jacob replies that he believes Joseph is still alive, then weeps for the son he cannot see. Naphtali admits that he burned to tell his father the truth about the sale but was too afraid of his brothers.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-naphtali/8": {
+   "intro": "Naphtali tells his sons to stay loyal to Levi and Judah, the priestly and royal tribes, through whom salvation will come. He promises that good work earns a good name with God and with people, and he closes with a thought about timing: some commands look opposed, like the time to embrace and the time to abstain, and wisdom is knowing which season you are in.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-naphtali/9": {
+   "intro": "The ending is brief and gentle. After eating and drinking \"with a merry heart,\" Naphtali covers his face and dies, and his sons carry out his wish to be buried at Hebron with his fathers.",
+   "places": [
+    {
+     "name": "Hebron",
+     "note": "The family burial ground of Abraham, Isaac and Jacob."
+    }
+   ],
+   "description": "After a cheerful last meal Naphtali dies, and his sons bury him at Hebron with his fathers.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-gad/1": {
+   "intro": "Gad, Jacob's seventh son, starts by remembering how strong he was as a shepherd, grabbing wild animals by the foot and flinging them. Then he gets to the real subject: Joseph reported to their father that the sons of Zilpah and Bilhah were eating the best of the flock. Gad explains what actually happened with the lamb and admits he hated Joseph from that day on.",
+   "places": [
+    {
+     "name": "Hebron",
+     "note": "Jacob's home, where Joseph went back to rest after falling sick in the heat."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-gad/2": {
+   "intro": "A blunt confession. Gad says he often wanted to kill Joseph and hated him even more for his dreams. In this telling, he and Judah sold Joseph to the Ishmaelites for thirty pieces of gold, hid ten, and showed the others twenty, which is a different figure from the twenty pieces of silver in Genesis.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-gad/3": {
+   "intro": "Gad begins his teaching on hatred, the vice the whole testament is about. A person ruled by hate, he says, cannot praise anyone, even someone who keeps God's law; it despises truth and envies the upright. He ends by naming himself as the example: that is how he once looked at Joseph.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-gad/4": {
+   "intro": "Hatred is set against love in a sharp pair of images. When a brother stumbles, hatred wants the whole world told and the offender punished, while love would bring the dead back to life. Gad links hatred with Satan and haste, and love with God's law and patience.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-gad/5": {
+   "intro": "Gad lists what hatred does to perception: it makes small things huge and calls sweet things bitter. Righteousness and humility drive it out. He then says he learned this the hard way, describing an illness of the heart that lasted eleven months, as long as his envy of Joseph had lasted, and which he took as a fitting punishment.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-gad/6": {
+   "intro": "Gad gives steps for handling a wrong: tell the person gently, forgive if they admit it, don't argue if they deny it, keep the quarrel private, and if they never repent, forgive anyway and leave vengeance to God. Readers often compare it with Matthew 18 and Luke 17. It may be the most practical passage in the whole collection.",
+   "description": "Gad's steps for handling a wrong: speak gently, forgive the one who repents, and leave vengeance to God.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-gad/7": {
+   "intro": "Gad turns from hatred to envy. If someone does better than you, pray for them; if a wicked man grows rich, as Esau did, wait for God's judgment rather than resent him. The chapter's punchline is that a poor man without envy, who gives thanks in everything, is the richest of all.",
+   "description": "Gad on envy: pray for those who prosper, don't resent the wicked rich, and give thanks, which makes the poor man rich.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-gad/8": {
+   "intro": "In his last words Gad tells his sons to honour Judah and Levi, predicts that later generations will drift away, and asks to be buried with his fathers. Five years after his death, his family carries his body to Hebron.",
+   "places": [
+    {
+     "name": "Hebron",
+     "note": "The burial place of the patriarchs, where Gad's sons lay him to rest."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-asher/6": {
+   "intro": "Asher's testament is about the \"two ways\" and the danger of being two-faced. Here he urges singleness of purpose and says that the goals people pursue reveal whether they are righteous. He ends with a picture of the soul at death meeting either a tormenting spirit or the angel of peace.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-asher/7": {
+   "intro": "Asher predicts that his descendants will sin, lose their land and be scattered to the four corners of the earth. His source, he says, is the \"Heavenly Tablets,\" a phrase also found in Jubilees and 1 Enoch. The chapter mixes Jewish hope for the gathering of Israel with lines about God coming as a man, which many scholars regard as Christian additions.",
+   "places": [
+    {
+     "name": "Sodom",
+     "note": "Remembered here as the city that did not recognise the angels of the Lord."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-joseph/2": {
+   "intro": "Joseph's testament is the longest after Judah's and Levi's, and it centres on his patience. Here he sums up his trials in Potiphar's house and in prison, and says God stepped away only \"for a little\" to test him. He counts ten temptations and calls endurance \"a mighty charm.\"",
+   "places": [
+    {
+     "name": "Egypt",
+     "note": "Where Joseph served Potiphar, here called Pharaoh's chief cook, and was imprisoned."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-joseph/7": {
+   "intro": "Potiphar's wife fakes an illness to her husband and then threatens Joseph that she will kill herself if he refuses her. Joseph tries to talk her out of it by reminding her what a rival concubine would do to her children, and she mistakes his concern for affection. He closes with an observation about how desire twists whatever it hears.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-joseph/11": {
+   "intro": "Joseph tells his sons to honour their brothers, then gives an example from his own life. When traders questioned him, he kept insisting he was the Ishmaelites' slave rather than shame his brothers by telling how he was sold. In Egypt he was left with a merchant whose house prospered under him.",
+   "places": [
+    {
+     "name": "Egypt",
+     "note": "Where the traders leave Joseph with a merchant of their trade."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-joseph/19": {
+   "intro": "Joseph's vision of twelve deer, nine scattered and three apart, recalls the split between the northern and southern tribes. It then turns to a spotless lamb born of a virgin from Judah who defeats the beasts. Scholars usually treat this section, which survives in different forms in the Greek and Armenian versions, as reworked by Christian copyists.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-joseph/20": {
+   "intro": "Joseph foresees that Egypt will turn against his people and asks that his bones go with them when God brings them out, an echo of Genesis 50. He also asks that Zilpah be buried near Bilhah and Rachel. He dies mourned by Israel and Egypt alike, because he had cared for the Egyptians as well.",
+   "places": [
+    {
+     "name": "Egypt",
+     "note": "Where Joseph dies, and where Israel will later be oppressed."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-benjamin/1": {
+   "intro": "Benjamin, the youngest of Jacob's twelve sons, begins his farewell at the age of one hundred and twenty. He tells how his mother Rachel died bringing him into the world, so that Bilhah nursed him, and how Rachel had waited twelve years after Joseph before praying and fasting for another child. The chapter ends on the meaning of his name, which the text explains as \"son of days.\"",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-benjamin/2": {
+   "intro": "A private conversation in Egypt: Joseph, newly reunited with his little brother, asks what the others told their father after selling him. Benjamin describes the bloodied coat, and Joseph fills in a detail Genesis never mentions, a lion that killed the Ishmaelite who hid his garment. It is a good example of how the Testaments retell the Joseph story with their own additions.",
+   "places": [
+    {
+     "name": "Egypt",
+     "note": "Where Joseph was sold as a slave and later rose to power, and where Jacob's family settled."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-benjamin/3": {
+   "intro": "Here Benjamin turns from memory to counsel. He holds up Joseph as the model of a person no evil scheme could master, because he feared God and loved his neighbour, and he recalls Joseph asking Jacob to pray that his brothers would not be held guilty. The closing lines about the Lamb of God are among the passages many scholars read as later Christian additions to the text.",
+   "description": "Benjamin holds up Joseph as proof that a person who fears God and loves a neighbour cannot be mastered by evil.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-benjamin/4": {
+   "intro": "A short portrait of \"the good man,\" built as a list of what he does and does not do. He shows mercy even to people who plot against him, feels no envy when others succeed, and protects anyone who fears God. The chapter is practical rather than visionary, more like a character sketch than a prophecy.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-benjamin/5": {
+   "intro": "Benjamin argues that goodness changes the people around it: the wicked make peace, the greedy give away what they hoarded, and even unclean spirits run. He adds that a righteous person who is betrayed may be brought low for a while but rises again, and once more his example is Joseph.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-benjamin/6": {
+   "intro": "This chapter is about singleness of heart. The good mind, Benjamin says, does not chase wealth or pleasure and does not speak with \"two tongues,\" blessing one moment and cursing the next. Its last line sets up the contrast the book keeps returning to: every work of Beliar is double, while goodness has one face.",
+   "description": "Benjamin on singleness of heart: the good mind has one tongue, while every work of Beliar is double.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-benjamin/7": {
+   "intro": "Benjamin warns that evil hands its followers a sword, and that the sword gives birth to seven evils, from envy to desolation. He ties this to Cain and the sevenfold vengeance of Genesis 4, working out a curious chronology in which Cain suffers one plague every hundred years until the flood. Lamech's \"seventy times seven\" appears at the end.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-benjamin/8": {
+   "intro": "One of the shortest chapters in the testament, and one of the most quoted. Benjamin urges his sons away from envy and toward love, then gives a memorable image: the sun shines on dung and mire without being dirtied, and a pure mind can live among the world's filth the same way.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-benjamin/9": {
+   "intro": "Benjamin claims to know from \"the words of the righteous Enoch\" that his descendants will go astray, though the temple will still be built in their territory. The chapter then moves into a detailed description of a figure who is outraged in the temple, lifted up on a tree, and rises from the grave. Readers often point to this as one of the clearest Christian layers in the Testaments.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-benjamin/10": {
+   "intro": "Near death, Benjamin recalls being granted a waking vision of Joseph in Egypt, then hands his sons the only inheritance he cares about: truth, justice and the commandments. He pictures the patriarchs from Enoch to Jacob rising in gladness and a final judgment in which some rise to glory and some to shame.",
+   "places": [
+    {
+     "name": "Egypt",
+     "note": "Joseph's home after he was sold; Benjamin longs to see his face there."
+    }
+   ],
+   "description": "Benjamin recalls a waking vision of Joseph, leaves his sons truth and the commandments, and pictures the last judgment.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-benjamin/11": {
+   "intro": "Jacob's blessing in Genesis 49 called Benjamin \"a ravening wolf.\" Here Benjamin says he will no longer be known by that name, and foretells a descendant who will carry new knowledge to the Gentiles and be written into the holy books. Early Christian readers saw the apostle Paul in this figure, since Paul described himself as being from the tribe of Benjamin.",
+   "updated": "2026-11-22"
+  },
+  "the-testament-of-benjamin/12": {
+   "intro": "The testament closes with Benjamin's burial instructions and his death at one hundred and twenty-five. His family later carries the bones of the fathers secretly up to Hebron and then returns to Egypt, a quiet ending that links the Twelve Patriarchs back to the family tomb of Abraham.",
+   "places": [
+    {
+     "name": "Hebron",
+     "note": "The burial place of Abraham, Isaac and Jacob in the hills south of Jerusalem."
+    },
+    {
+     "name": "Canaan",
+     "note": "The land promised to Abraham's family, where the bones are carried for burial."
+    },
+    {
+     "name": "Egypt",
+     "note": "Where the tribes live until the exodus."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-mathetes-to-diognetus/5": {
+   "intro": "The most quoted chapter of this anonymous letter, which was probably written in the second or third century. It describes Christians as people who live in ordinary cities, speak ordinary languages and follow local customs, yet treat every homeland as foreign and every foreign land as home. The line that they do not abandon their children is a pointed contrast with the Roman practice of exposing unwanted infants.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-polycarp-to-the-philippians/7": {
+   "intro": "One sentence, sharp as a blade. Polycarp, bishop of Smyrna, quotes 1 John's warning that whoever denies Christ came in the flesh is antichrist, and calls anyone who twists the Lord's words to deny resurrection and judgment \"the first-born of Satan.\" Irenaeus later reports Polycarp using that same phrase to Marcion's face.",
+   "description": "Polycarp quotes 1 John against those who deny Christ came in the flesh, and coins the phrase \"first-born of Satan.\"",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-polycarp-to-the-philippians/12": {
+   "intro": "In this edition the chapter is a single sentence in which Polycarp, with characteristic modesty, tells the Philippians he trusts they know the Scriptures well, something he says he has not yet been granted himself. The last chapters of this letter survive only in an old Latin translation, not in the original Greek.",
+   "description": "A single sentence of modesty from Polycarp; the last chapters of this letter survive only in an old Latin translation.",
+   "updated": "2026-11-22"
+  },
+  "fragments-of-papias/10": {
+   "intro": "This fragment sorts out the four women named Mary in the Gospels and explains how James, Judas, Joseph, James and John could be called the Lord's cousins. The editors of this edition note that it comes from a medieval dictionary by a later writer also named Papias, not from the second-century bishop of Hierapolis, so it is best read as a medieval attempt to untangle the family relationships.",
+   "updated": "2026-11-22"
+  },
+  "the-apocalypse-of-peter/1": {
+   "intro": "Seated on the Mount of Olives, Jesus answers the disciples' question about the signs of his coming and of the end, then shows Peter the fate of the dead. The heart of the book is a tour of punishments, each fitted to a sin, such as blasphemers hanged by their tongues, followed by a vision of the righteous and a mountain scene with Moses and Elijah much like the Transfiguration. It is one of the earliest Christian descriptions of hell, part of a tradition that runs through later apocalypses to Dante.",
+   "places": [
+    {
+     "name": "Mount of Olives",
+     "note": "The ridge east of Jerusalem where the conversation is set."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-magnesians/3": {
+   "intro": "Ignatius wrote to the church at Magnesia from Smyrna, after meeting its bishop Damas and others. Their bishop is young, and Ignatius warns the congregation not to take advantage of that. Respect shown to the visible bishop, he argues, is really respect shown to the invisible God.",
+   "places": [
+    {
+     "name": "Magnesia",
+     "note": "Magnesia on the Maeander, an inland city in western Turkey, southeast of Ephesus."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-magnesians/5": {
+   "intro": "A brief chapter built on an everyday image. Just as there are two kinds of coin, each stamped with its own mark, people bear the stamp either of the world or of God. Ignatius says that the life of Christ is in us only if we are ready to share in his death.",
+   "description": "Ignatius compares people to coins: each bears the stamp either of the world or of God.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-magnesians/6": {
+   "intro": "Here Ignatius lays out his picture of a united church: the bishop presiding in the place of God, the presbyters in the place of the apostles' council, and the deacons, whom he calls \"most dear to me.\" He asks the Magnesians to let nothing divide them and to love one another rather than judge by outward things.",
+   "description": "Ignatius's picture of a united church: bishop, presbyters and deacons, and a people who let nothing divide them.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-magnesians/8": {
+   "intro": "Ignatius warns against \"strange doctrines\" and \"old fables,\" and says that living by the Jewish law would mean not having received grace. He claims that the prophets themselves lived \"according to Christ Jesus.\" The last line, calling Christ the Word who did not come forth from silence, may be aimed at teachers who spoke of a primal Silence.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-magnesians/9": {
+   "intro": "Ignatius describes believers from the old order who no longer keep the Sabbath but live by \"the Lord's Day,\" the day of the resurrection. It is one of the earliest texts to set the two days side by side, which is why it comes up so often in discussions of Sunday worship.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-magnesians/10": {
+   "intro": "Ignatius urges the Magnesians to live as disciples and uses Paul's image of old and new leaven. He is the earliest known writer to use the word \"Christianity,\" and it appears here, in a sharply worded contrast with Judaism that reflects the arguments of his own time.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-magnesians/11": {
+   "intro": "Ignatius softens his warnings: he is not accusing anyone, only trying to keep them off \"the hooks of vain doctrine.\" He anchors their faith in events, the birth, suffering and resurrection that took place while Pontius Pilate governed.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-magnesians/12": {
+   "intro": "A few humble lines. Ignatius, the prisoner, says he is not worthy to be compared with any of the free Christians he writes to, and praises their modesty with a proverb: the righteous man is his own accuser.",
+   "description": "The prisoner calls himself unworthy of the free Christians he writes to and praises their modesty.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-magnesians/13": {
+   "intro": "Near the end of the letter Ignatius gathers his themes together. He calls the presbytery a \"well-compacted spiritual crown\" around the bishop and asks for unity both outward and inward, naming the Father, the Son and the Spirit together, as he does in several of his letters.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-trallians/1": {
+   "intro": "Ignatius never visited Tralles, but its bishop Polybius came to see him at Smyrna, and Ignatius says he saw the whole church in that one man. This opening chapter thanks the Trallians for their goodwill and the steadiness of their faith.",
+   "places": [
+    {
+     "name": "Tralles",
+     "note": "A city in the Maeander valley of western Turkey, near modern Aydın."
+    },
+    {
+     "name": "Smyrna",
+     "note": "Modern İzmir, where Ignatius was held when he wrote this letter."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-trallians/2": {
+   "intro": "Ignatius praises the Trallians for being subject to their bishop and urges them to do nothing without him. He says something notable about deacons: they are \"not ministers of meat and drink\" but servants of the church, and so must avoid giving anyone grounds for complaint.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-trallians/3": {
+   "intro": "One of the passages most often quoted about early church order: deacons, the bishop and the presbyters, \"apart from these, there is no Church.\" Ignatius then stops himself, asking whether a condemned man should give orders as though he were an apostle.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-trallians/5": {
+   "intro": "Ignatius says he could write about heavenly mysteries, the ranks of angels and their gatherings, but he holds back in case the Trallians cannot take it in. He admits that, chains and all, he is still a learner himself.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-trallians/6": {
+   "intro": "Ignatius compares false teaching to a deadly drug mixed into sweet wine, which an unsuspecting person drinks with pleasure. He asks the Trallians to take only \"Christian nourishment.\"",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-trallians/7": {
+   "intro": "A short warning built on the image of the altar: whoever is inside it is pure, and whoever acts apart from the bishop, presbyters and deacons is not pure in conscience. Ignatius uses the altar as a figure for the gathered church.",
+   "description": "Ignatius on the altar: whoever acts apart from the bishop, presbyters and deacons is not pure in conscience.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-trallians/8": {
+   "intro": "Ignatius says he has heard of no trouble in Tralles and is only being careful. He gives two memorable pairings, faith as the flesh of the Lord and love as his blood, and asks them not to let a few foolish people bring the whole community into disrepute among outsiders.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-trallians/9": {
+   "intro": "A creed-like summary of the life of Jesus, with the word \"truly\" repeated: truly born, truly persecuted under Pontius Pilate, truly crucified, truly raised. Ignatius wrote these lines against teachers who said Christ only appeared to suffer, and they read like an early statement of faith.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-trallians/10": {
+   "intro": "Four short questions carry Ignatius's whole argument. If Christ only seemed to suffer, why is he in chains, why does he long for the beasts, and is he dying for nothing? The view he answers is usually called Docetism, from a Greek word for \"to seem.\"",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-trallians/11": {
+   "intro": "Ignatius calls false teachers offshoots that bear deadly fruit, not plants the Father planted. True believers, by contrast, appear as \"branches of the cross,\" and the head cannot exist without its members.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-romans/1": {
+   "intro": "Ignatius, bishop of Antioch, is being taken under armed guard to Rome to die, probably in the early second century. He writes ahead to the Christians there with an unusual request: their love for him is exactly what he fears, because they might use their influence to get him spared. This opening sets the tone of the whole letter.",
+   "places": [
+    {
+     "name": "Rome",
+     "note": "The capital of the empire, where Ignatius expects to be executed."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-romans/3": {
+   "intro": "Ignatius asks the Roman church for one thing only, prayers that he will have the strength not just to talk like a Christian but to be one when it counts. He quotes Paul's line that what is seen is temporary and what is unseen is eternal, and adds his own compact saying: a Christian is made not by persuasion but by power.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-romans/4": {
+   "intro": "Probably the best-known chapter Ignatius wrote. He calls himself \"the wheat of God,\" to be ground by the teeth of wild beasts into pure bread, and begs the Romans not to interfere. He also sets himself below Peter and Paul, calling them apostles who gave commands and himself a prisoner, which is one of the earliest texts to link both apostles with the church in Rome.",
+   "places": [
+    {
+     "name": "Rome",
+     "note": "Where Ignatius expects to face the beasts in the arena."
+    }
+   ],
+   "description": "\"I am the wheat of God\": Ignatius begs the Romans not to stop his death and sets himself below Peter and Paul.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-romans/5": {
+   "intro": "Ignatius describes the journey itself: from Syria to Rome, by land and sea, chained to \"ten leopards,\" his name for the soldiers guarding him, who only get worse when treated well. Then comes a fierce list of torments he is ready to face. Readers have long debated how to take this eagerness, but there is no mistaking the intensity.",
+   "places": [
+    {
+     "name": "Syria",
+     "note": "The Roman province around Antioch, where Ignatius was bishop."
+    },
+    {
+     "name": "Rome",
+     "note": "The end of the road for Ignatius and his guards."
+    }
+   ],
+   "description": "Chained to \"ten leopards\" from Syria to Rome, Ignatius describes his journey and the torments he is ready to face.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-romans/6": {
+   "intro": "Echoing the Gospel question about gaining the whole world and losing one's soul, Ignatius says he would rather die for Christ than rule the earth. He turns ordinary language upside down: to stop his death would be to keep him from \"living.\" He asks to be allowed to imitate the suffering of his God.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-romans/7": {
+   "intro": "A chapter of striking images. Ignatius says his earthly love has been crucified and that a living water inside him whispers, \"Come to the Father.\" He wants no ordinary food, only the bread of God, which he identifies with the flesh of Christ, and the drink of his blood, which he calls incorruptible love.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-romans/8": {
+   "intro": "A short plea to be believed. Ignatius says he writes \"according to the will of God,\" not by human impulse, and calls Christ the mouth through which the Father speaks without lies. If the Romans let him suffer, he says, they will have wished him well.",
+   "description": "A short plea to be believed: Ignatius says he writes by God's will and calls Christ the mouth that does not lie.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-romans/9": {
+   "intro": "Ignatius commends his church back home, now without its bishop, to the Romans' prayers, and borrows Paul's phrase \"one born out of due time\" for himself. He notes that churches along his route sent people ahead, city by city, to meet him, a small glimpse of how connected the early congregations were.",
+   "places": [
+    {
+     "name": "Syria",
+     "note": "Home of the church at Antioch that Ignatius left behind."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-philadelphians/1": {
+   "intro": "Unlike most of his letters, this one went to a church Ignatius had actually visited on his way west. He opens with praise for its bishop, whose name he never gives: a quiet man who achieves more by silence than others do by talking, and who is in tune with God's commands \"as the harp is with its strings.\"",
+   "places": [
+    {
+     "name": "Philadelphia",
+     "note": "A city in the Roman province of Asia, modern Alaşehir in western Turkey."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-philadelphians/5": {
+   "intro": "Ignatius admits he is not yet \"perfect\" and asks for prayers. He describes taking refuge in the Gospel \"as in the flesh of Jesus\" and in the apostles as the church's presbytery, and he asks the Philadelphians to love the prophets as well, since they also hoped in Christ.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-philadelphians/6": {
+   "intro": "Ignatius warns against anyone teaching Judaism to the Philadelphians, with a memorable twist: better Christian teaching from a circumcised man than Judaism from an uncircumcised one, which suggests the pressure came from Gentile converts. Teachers who do not speak of Christ, he says, are like tombstones bearing only human names.",
+   "description": "Ignatius warns against teachers of Judaism and likens teachers who never speak of Christ to tombstones.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-philadelphians/7": {
+   "intro": "Ignatius recalls a moment during his visit when he cried out in the assembly, \"Give heed to the bishop, and to the presbytery and deacons.\" Some suspected he had been tipped off about a split in the church. He insists the words came from the Spirit, not from any informant.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-philadelphians/8": {
+   "intro": "This chapter preserves an actual argument from Ignatius's visit. Some said they would not believe anything in the Gospel they could not find in \"the ancient records\"; when Ignatius answered \"It is written,\" they replied, \"That remains to be proved.\" His answer is that for him the cross, death and resurrection of Jesus are the ancient records.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-philadelphians/9": {
+   "intro": "Ignatius honours the priests of the old covenant but calls Christ the greater High Priest and \"the door of the Father,\" through which the patriarchs, prophets, apostles and church all enter. The prophets announced him, he says, and the Gospel completes what they announced.",
+   "description": "Ignatius calls Christ the High Priest and \"the door of the Father\" through which patriarchs, prophets and apostles enter.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-philadelphians/10": {
+   "intro": "With word that the church at Antioch is at peace, Ignatius asks the Philadelphians to send a deacon there as their ambassador. He mentions that nearby churches have already sent bishops, presbyters or deacons, a picture of how the early churches kept in touch with one another.",
+   "places": [
+    {
+     "name": "Antioch",
+     "note": "Antioch in Syria, Ignatius's home church, near modern Antakya in Turkey."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-philadelphians/11": {
+   "intro": "The closing greetings name the companions who caught up with Ignatius: Philo, a deacon from Cilicia, and Rheus Agathopus from Syria. He writes from Troas and sends the letter with Burrhus, and he asks forgiveness for those in Philadelphia who treated his friends badly.",
+   "places": [
+    {
+     "name": "Cilicia",
+     "note": "A region on the southern coast of modern Turkey, around Tarsus."
+    },
+    {
+     "name": "Troas",
+     "note": "The port in northwest Asia Minor where Ignatius wrote this letter."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-smyrnaeans/1": {
+   "intro": "Ignatius wrote to the church at Smyrna from Troas, after the Christians there had cared for him on his way to Rome. He opens with a compact statement of what they believe about Jesus, repeating \"truly\": truly descended from David, truly born, truly crucified under Pontius Pilate and Herod. The repetition is aimed at teachers who said Christ only seemed to have a body.",
+   "places": [
+    {
+     "name": "Smyrna",
+     "note": "A port city on the Aegean coast, modern İzmir in Turkey."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-smyrnaeans/3": {
+   "intro": "Ignatius insists that Christ still had flesh after the resurrection. He quotes a saying, \"handle Me, and see that I am not an incorporeal spirit,\" which is close to Luke 24 but not identical, and whose source has puzzled readers since antiquity. Eating and drinking with the disciples is his further evidence.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-smyrnaeans/5": {
+   "intro": "Turning to the people who deny that Christ had a real body, Ignatius says neither the prophets, the law of Moses nor the Gospel have persuaded them. Praise from someone who denies his Lord a body, he says, is worth nothing to him. He refuses even to write down their names unless they change their minds.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-smyrnaeans/6": {
+   "intro": "Ignatius links belief with behaviour. Those who hold a different view of Christ's grace, he says, show it in how they live: they have no care for the widow, the orphan, the oppressed, the prisoner, the hungry or the thirsty. Faith and love, not rank, are what count.",
+   "description": "Ignatius says false belief shows in conduct: no care for the widow, the orphan, the prisoner or the hungry.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-smyrnaeans/7": {
+   "intro": "Ignatius says his opponents stay away from the Eucharist and from prayer because they do not confess it to be the flesh of Christ. It is one of the earliest surviving Christian texts to speak about the Eucharist in these terms, and it is often cited in later debates about the meaning of the Eucharist.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-smyrnaeans/8": {
+   "intro": "Ignatius tells the Smyrnaeans to follow their bishop, honour the presbyters and respect the deacons, and to hold no Eucharist, baptism or love-feast without the bishop's approval. This chapter contains the oldest surviving use of the phrase \"the Catholic Church,\" meaning the church as a whole: wherever Christ is, he writes, there it is.",
+   "description": "Follow the bishop, Ignatius says, in the letter with the oldest surviving use of the phrase \"the Catholic Church.\"",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-smyrnaeans/9": {
+   "intro": "Ignatius urges repentance while there is still time and repeats his emphasis on honouring the bishop. Then the tone warms: the Smyrnaeans refreshed him in every way and loved him whether he was there or away, and he prays that God will repay them.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-smyrnaeans/11": {
+   "intro": "News has reached Ignatius that the church at Antioch is at peace again. He asks Smyrna to choose a delegate to travel to Syria with a letter of congratulation. This is one of the key clues for dating and placing the letters, since it ties their writing to a troubled period in Antioch's church.",
+   "places": [
+    {
+     "name": "Antioch",
+     "note": "Antioch on the Orontes, near modern Antakya in Turkey, Ignatius's city."
+    },
+    {
+     "name": "Syria",
+     "note": "The Roman province that included Antioch."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-the-smyrnaeans/12": {
+   "intro": "The letter closes with greetings from the believers at Troas, where Ignatius is writing, and praise for Burrhus, a deacon who travelled with him and carried the letter. Ignatius greets the bishop, presbyters and deacons, and ends by joining body and spirit once more in a final blessing.",
+   "places": [
+    {
+     "name": "Troas",
+     "note": "Alexandria Troas, a port on the northwest coast of modern Turkey."
+    }
+   ],
+   "description": "Closing greetings from Troas, praise for the deacon Burrhus, and a final blessing on the church at Smyrna.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-polycarp/1": {
+   "intro": "The only one of Ignatius's seven letters written to a single person. Polycarp was the bishop of Smyrna and would himself be martyred decades later. Ignatius fills this first chapter with short, direct instructions, like a coach to an athlete: bear with everyone, pray without ceasing, speak to each person individually.",
+   "places": [
+    {
+     "name": "Smyrna",
+     "note": "Polycarp's city, modern İzmir on the Aegean coast."
+    }
+   ],
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-polycarp/4": {
+   "intro": "Practical pastoral advice for a bishop: do not neglect widows, gather often and seek out every member by name. Ignatius also addresses enslaved members of the church, telling them not to seek freedom bought with common funds. Readers today often note how this reflects the social world of the second century.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-polycarp/5": {
+   "intro": "Ignatius gives Polycarp advice to pass on about marriage. Wives and husbands should love one another; anyone who chooses celibacy should do it without boasting; and couples should marry with the bishop's approval. It is among the earliest texts to connect Christian marriage with a bishop's blessing.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-polycarp/6": {
+   "intro": "Here Ignatius turns to the whole church at Smyrna. He piles up verbs of shared life, labour, strive, run, suffer, rest and wake together, and borrows soldier's language: baptism as their arms, faith a helmet, love a spear, patience full armour.",
+   "updated": "2026-11-22"
+  },
+  "the-epistle-of-ignatius-to-polycarp/7": {
+   "intro": "Ignatius asks Polycarp to call a council and choose someone to carry the church's greetings to Antioch, now at peace. One line stands out: \"A Christian has not power over himself, but must always be ready for the service of God.\"",
+   "places": [
+    {
+     "name": "Antioch",
+     "note": "Antioch in Syria, where Ignatius had been bishop."
+    }
+   ],
+   "updated": "2026-11-22"
+  }
+ }
+}

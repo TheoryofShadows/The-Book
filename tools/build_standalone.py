@@ -87,6 +87,7 @@ def main() -> int:
 
     page = (
         "<title>The Book in Order</title>\n"
+        '<meta name="robots" content="noindex">\n'
         f'<link rel="icon" href="{href}" type="image/svg+xml">\n'
         f"<style>\n{css}\n</style>\n"
         f"{body}\n"

@@ -479,12 +479,34 @@ def strip_html(work_id, chapters, slugs, current, depth):
 # names, and the threads that pass through it. build() fills this in from the
 # data files the reader already ships, and chapter_page() prints it under the
 # text, so each page carries something only this site says.
-CONTEXT = {"mentions": {}, "places": {}, "threads": {}}
+CONTEXT = {"mentions": {}, "places": {}, "threads": {}, "notes": {}}
+
+# The chapter notes (docs/data/chapter_notes.json) are the other half of that
+# answer: a few sentences written for this site about what happens in a
+# chapter and why it matters, and a line on each place it names. They are
+# hand-written rather than built from source/, so build.sh never touches the
+# file, and they are keyed by the address a reader sees -- <work>/<slug> --
+# so that whoever extends them can read the key off the URL.
+NOTES_FILE = "chapter_notes.json"
+
+# The page URL -> the note's own "updated" date, filled in as chapter pages
+# are written, so the sitemap can date exactly the pages a note changed.
+NOTE_DATES = {}
+
+
+def load_notes(data):
+    try:
+        with open(os.path.join(data, NOTES_FILE), encoding="utf-8") as fh:
+            got = json.load(fh)
+    except (OSError, ValueError):
+        return {}
+    notes = got.get("notes") if isinstance(got, dict) else None
+    return notes if isinstance(notes, dict) else {}
 
 
 def load_context(data):
     import glob
-    ctx = {"mentions": {}, "places": {}, "threads": {}}
+    ctx = {"mentions": {}, "places": {}, "threads": {}, "notes": load_notes(data)}
     try:
         with open(os.path.join(data, "mentions.json"), encoding="utf-8") as fh:
             ctx["mentions"] = json.load(fh)
@@ -524,10 +546,39 @@ def breadcrumb_ld(items):
     }
 
 
-def chapter_context(meta, section, i, slug, depth):
+def chapter_note(meta, slug):
+    """The hand-written note for this chapter, or None."""
+    n = CONTEXT["notes"].get("%s/%s" % (meta["id"], slug))
+    if not isinstance(n, dict) or not str(n.get("intro") or "").strip():
+        return None
+    return n
+
+
+def chapter_intro(note):
+    """The note, printed above the text: what happens here and why it
+    matters, then the places it names with a line on each. Server-rendered,
+    so a crawler reads it without running a script, and a fixed block of text
+    above the chapter rather than anything that arrives late and shifts it."""
+    out = ['<section class="note-block chapter-intro" aria-label="About this chapter">',
+           "<h2>About this chapter</h2>",
+           "<p>%s</p>" % e(" ".join(str(note["intro"]).split()))]
+    places = [p for p in (note.get("places") or [])
+              if isinstance(p, dict) and p.get("name") and p.get("note")]
+    if places:
+        out.append('<h3>Places in this chapter</h3>')
+        out.append('<ul class="place-notes">')
+        for p in places:
+            out.append("<li><strong>%s.</strong> %s</li>" % (e(p["name"]), e(p["note"])))
+        out.append("</ul>")
+    out.append("</section>")
+    return "\n".join(out)
+
+
+def chapter_context(meta, section, i, slug, depth, more=False):
     """The block under a chapter's text: when the work was written, the places
     the chapter names, and the threads that stop here. Empty if there is
-    nothing true to say."""
+    nothing true to say. Headed "More about this chapter" when the note above
+    the text has already taken the plain title."""
     up = "../" * depth
     name = title_case(meta["title"])
     out = []
@@ -570,8 +621,9 @@ def chapter_context(meta, section, i, slug, depth):
                       (" — " + e(why)) if why else ""))
     if not out:
         return ""
-    return ('<section class="note-block chapter-context" aria-label="About this chapter">\n'
-            '<h2>About this chapter</h2>\n' + "\n".join(out) + "\n</section>")
+    label = "More about this chapter" if more else "About this chapter"
+    return ('<section class="note-block chapter-context" aria-label="%s">\n'
+            '<h2>%s</h2>\n' % (label, label) + "\n".join(out) + "\n</section>")
 
 
 def chapter_page(manifest, section, meta, work, chapters, slugs, i, out_dir):
@@ -593,7 +645,22 @@ def chapter_page(manifest, section, meta, work, chapters, slugs, i, out_dir):
         nm = place_label(k)[0]
         if nm not in place_names:
             place_names.append(nm)
+    note = chapter_note(meta, slug)
     description = chapter_description(short, by, opening, place_names)
+    if note:
+        # The note's own opening, which says what the chapter is about in
+        # words found nowhere else, rather than the chapter's first verse,
+        # which is word for word what every other copy of the text says.
+        # A note may carry its own one-line "description" for when its
+        # opening sentence is too long or too short to stand alone.
+        intro = " ".join(str(note.get("description") or note["intro"]).split())
+        lead = whole_sentences(intro, 160 - len(short) - 2)
+        if len(lead) >= 50:
+            description = "%s: %s" % (short, lead)
+        else:
+            lead = whole_sentences(intro, 160)
+            if len(lead) >= 50:
+                description = lead
 
     def near(k):
         return chapter_heading(meta["title"], chapters[k].get("label") or "")
@@ -620,6 +687,10 @@ def chapter_page(manifest, section, meta, work, chapters, slugs, i, out_dir):
         # so say so above the text instead of only at the foot of the page.
         '<p class="listen-cta"><a class="chip primary" href="../../../#/read/%s/%d">'
         '\u25b6 Listen to this chapter</a></p>' % (e(meta["id"]), i),
+    ]
+    if note:
+        body.append(chapter_intro(note))
+    body += [
         '<div class="reader">',
         '<h2 class="chapter-title">%s</h2>' % e(c.get("label") or heading),
     ]
@@ -638,7 +709,7 @@ def chapter_page(manifest, section, meta, work, chapters, slugs, i, out_dir):
                         'public-domain sources this volume is built from.</p>')
 
     body.append("</div>")
-    ctx = chapter_context(meta, section, i, slug, 3)
+    ctx = chapter_context(meta, section, i, slug, 3, more=bool(note))
     if ctx:
         body.append(ctx)
 
@@ -685,7 +756,20 @@ def chapter_page(manifest, section, meta, work, chapters, slugs, i, out_dir):
         footer(3),
     ])
     write(os.path.join(out_dir, "read", meta["id"], slug, "index.html"), page)
+    if note and _is_date(note.get("updated")):
+        NOTE_DATES[url] = note["updated"]
     return url
+
+
+def _is_date(s):
+    if not isinstance(s, str) or len(s) != 10 or s[4] != "-":
+        return False
+    try:
+        import datetime
+        datetime.date.fromisoformat(s)
+        return True
+    except ValueError:
+        return False
 
 
 def work_page(manifest, section, meta, chapters, slugs, prev_work, next_work, out_dir):
@@ -1725,8 +1809,13 @@ def sitemap(out_dir, urls, changed=None):
     out = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
+        # A chapter page with a note moved on the day its note was written
+        # (docs/data/chapter_notes.json says which), and only that page: the
+        # note file is kept out of source_date() so that adding one note does
+        # not re-date all 2,800 pages.
+        stamp = own if u in own_urls else max(changed, NOTE_DATES.get(u, changed))
         out.append("  <url><loc>%s</loc><lastmod>%s</lastmod></url>"
-                   % (e(u), own if u in own_urls else changed))
+                   % (e(u), stamp))
     out.append("</urlset>")
     write(os.path.join(out_dir, "sitemap.xml"), NL.join(out) + NL)
 
@@ -1792,7 +1881,7 @@ def source_date():
     try:
         got = subprocess.run(
             ["git", "-C", root, "log", "-1", "--format=%cs",
-             "--", "source", "docs/data"],
+             "--", "source", "docs/data", ":(exclude)docs/data/" + NOTES_FILE],
             capture_output=True, text=True, encoding="utf-8", timeout=20)
         stamp = (got.stdout or "").strip()
         if len(stamp) == 10 and stamp[4] == "-":
@@ -1810,10 +1899,16 @@ def robots(out_dir):
     """The single-file build is 13 MB of the entire library in one document.
     It is for a reader taking the thing on a plane, not for a crawler, and
     letting one fetch it is both a waste of everybody's bandwidth and a second
-    copy of every chapter competing with the pages written here."""
+    copy of every chapter competing with the pages written here.
+
+    Cloudflare Pages serves docs/the-book.html at /the-book (and 308s
+    /the-book.html there), so both paths have to be disallowed. Disallowing
+    only the .html address left the pretty URL open to crawlers.
+    """
     write(os.path.join(out_dir, "robots.txt"),
           "User-agent: *\n"
           "Allow: /\n"
+          "Disallow: {prefix}/the-book\n"
           "Disallow: {prefix}/the-book.html\n"
           "\n"
           "Sitemap: {base}/sitemap.xml\n".format(prefix=PREFIX, base=BASE))
