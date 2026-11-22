@@ -115,7 +115,16 @@ module.exports = async function crawlable(t, ctx) {
           canonical === 'https://thebookandme.com/read/genesis/1/',
           canonical);
 
-  const ld = await page.locator('script[type="application/ld+json"]').textContent();
+  const lds = page.locator('script[type="application/ld+json"]');
+  const ld = await lds.first().textContent();
+  /* The second block is the breadcrumb trail Google shows in place of the
+     bare address: The Book > Contents > Genesis > Genesis 1. */
+  let crumb = null;
+  try { crumb = JSON.parse(await lds.nth(1).textContent()); } catch (e) { /* reported below */ }
+  t.check('and a breadcrumb trail ending at this chapter',
+          !!crumb && crumb['@type'] === 'BreadcrumbList'
+            && crumb.itemListElement.slice(-1)[0].item === 'https://thebookandme.com/read/genesis/1/',
+          crumb ? crumb['@type'] : 'missing');
   let parsed = null;
   try { parsed = JSON.parse(ld); } catch (e) { /* reported by the check */ }
   t.check('the structured data parses and says what the page is',

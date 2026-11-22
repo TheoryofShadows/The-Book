@@ -9606,8 +9606,10 @@
         return;
       }
     } catch (err) { /* private mode: leave it visible */ }
-    // Hidden until a platform confirms the stream is actually live; links
-    // YouTube first, then whichever of Kick/Twitch is live. Any failure leaves it hidden.
+    // The YouTube stream runs around the clock, so the banner no longer waits
+    // for another platform to vouch for it: YouTube always leads. Kick carries
+    // the same feed and its link is added when Kick's API says it is up; a
+    // failure there only leaves the Kick link off, never the banner.
     banner.hidden = true;
     function get(url, ok) {
       if (!window.fetch) return Promise.resolve(false);
@@ -9616,27 +9618,15 @@
         .catch(function () { return false; });
     }
     // Deferred past first paint so it stays out of the page's load budget.
-    function check() { Promise.all([
+    function check() {
+      banner.hidden = false;
       get("https://kick.com/api/v2/channels/jonesproject", function (r) {
         return r.json().then(function (j) { return !!(j && j.livestream); });
-      }),
-      get("https://decapi.me/twitch/uptime/xtheorx", function (r) {
-        return r.text().then(function (t) { return !/offline|error|not found/i.test(t) && /\d/.test(t); });
-      })
-    ]).then(function (res) {
-      var kick = banner.querySelector('[data-live="kick"]');
-      var twitch = banner.querySelector('[data-live="twitch"]');
-      if (!res[0] && !res[1]) return;
-      if (kick) kick.hidden = !res[0];
-      if (twitch) twitch.hidden = !res[1];
-      // YouTube carries the same feed, so it leads whenever anything is live.
-      [twitch, res[0] ? kick : null].forEach(function (a) {
-        if (a && a.parentNode) a.parentNode.insertBefore(a, a.parentNode.firstChild);
+      }).then(function (live) {
+        var kick = banner.querySelector('[data-live="kick"]');
+        if (kick) kick.hidden = !live;
       });
-      var yt = banner.querySelector('[data-live="youtube"]');
-      if (yt && yt.parentNode) yt.parentNode.insertBefore(yt, yt.parentNode.firstChild);
-      banner.hidden = false;
-    }); }
+    }
     function later() { setTimeout(check, 4000); }
     if (document.readyState === "complete") later();
     else window.addEventListener("load", later);

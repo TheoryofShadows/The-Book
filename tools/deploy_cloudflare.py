@@ -22,7 +22,7 @@ CSP = ("default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'non
        "frame-ancestors 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
        "script-src 'self' https://static.cloudflareinsights.com; worker-src 'self'; manifest-src 'self'; "
        "connect-src 'self' https://cloudflareinsights.com https://archive.org https://*.archive.org "
-       "https://kick.com https://decapi.me; media-src 'self' blob: https://archive.org https://*.archive.org")
+       "https://kick.com; media-src 'self' blob: https://archive.org https://*.archive.org")
 # HSTS: six months, and deliberately NOT includeSubDomains or preload -- send.thebookandme.com
 # and the mail records live on subdomains this file knows nothing about, and preload is not
 # something to turn on by accident. /api/* responses come from the Worker, which sets its own

@@ -60,7 +60,6 @@ class InfoPages(unittest.TestCase):
             self.assertIn("OpenPrints", self.html[slug])
         self.assertEqual(sorted(org["sameAs"]), sorted([
             "https://www.youtube.com/@thebookandme",
-            "https://www.twitch.tv/xtheorx",
             "https://kick.com/jonesproject"]))
 
     def test_no_address_is_published_until_it_is_set(self):
