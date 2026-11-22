@@ -4154,8 +4154,30 @@
       if (t) { e.preventDefault(); startTour(t); }
     });
     if (tourSeen() !== null || !store.set("tour-check", 1)) return;
+    /* On a phone the offer used to arrive on the very first screen and
+       cover most of it -- the first thing a new reader saw was a card in
+       front of the text they came for. There it waits until they have
+       shown they are staying: a scroll down the page, or a second page
+       (another chapter in this visit, or a later visit). Wider screens have
+       room beside the text and keep the old timing. */
+    var narrow = window.matchMedia && window.matchMedia("(max-width: 700px)").matches;
+    var visits = (store.get("tour-views", 0) | 0) + 1;
+    if (narrow) store.set("tour-views", visits);
     // After the intro, if one is playing, so the two never overlap.
-    introDone.then(function () { setTimeout(offerTour, 3000); });
+    introDone.then(function () {
+      if (!narrow || visits > 1) { setTimeout(offerTour, 3000); return; }
+      var armed = true;
+      var go = function () {
+        if (!armed) return;
+        armed = false;
+        window.removeEventListener("scroll", onScroll);
+        window.removeEventListener("hashchange", go);
+        setTimeout(offerTour, 1200);
+      };
+      var onScroll = function () { if (window.scrollY > 300) go(); };
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("hashchange", go);
+    });
     function offerTour() {
       if (tourSeen() !== null || tour || invite) return;
       if (document.querySelector(".lex")) return;

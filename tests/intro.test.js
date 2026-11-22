@@ -33,7 +33,14 @@ module.exports = async function intro(t, ctx) {
     await page.waitForSelector('.intro', { state: 'detached', timeout: 3000 });
     t.check(label + ': it is gone within about two and a half seconds and remembered',
             await page.evaluate(() => localStorage.getItem('thebook:intro')) === '"seen"');
-    await page.waitForSelector('.tour-invite', { timeout: 5000 }).catch(() => null);
+    /* On a phone the offer waits for a scroll, so the first screen is the
+       book and nothing in front of it. */
+    if (label === 'phone') {
+      await page.waitForTimeout(3500);
+      t.check('phone: no tour card on the first screen', !(await page.$('.tour-invite')));
+      await page.evaluate(() => window.scrollTo(0, 900));
+    }
+    await page.waitForSelector('.tour-invite', { timeout: 6000 }).catch(() => null);
     t.check(label + ': the tour offer comes after it', !!(await page.$('.tour-invite')));
     await page.click('.tour-invite .tour-x');
 

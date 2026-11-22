@@ -24,8 +24,13 @@ const fullDisk = () => ({ content: `
     };
     Object.defineProperty(dead, 'length', { get: () => real.length });
     Object.defineProperty(window, 'localStorage', { value: dead, configurable: true });
+    /* And no IndexedDB either -- the site falls back to it when localStorage
+       is full, so a disk refusing everything has to refuse both. */
+    if (!window.__keepIDB) Object.defineProperty(window, 'indexedDB', { get: () => undefined, configurable: true });
   })();
 ` });
+/* localStorage full, IndexedDB still working: the fallback must keep it. */
+const fullLocal = () => ({ content: 'window.__keepIDB = true;' + fullDisk().content });
 
 const seed = (page, key, value) => page.addInitScript({ content:
   `try { localStorage.setItem(${JSON.stringify('thebook:' + key)}, ` +
@@ -85,6 +90,24 @@ module.exports = async function diary(t, ctx) {
             (await page.locator('.warn').count()) > 0);
     t.check('and does not show the entry as saved',
             (await page.locator('.diary-entry').count()) === 0);
+    await page.close();
+  }
+
+  /* localStorage full but IndexedDB working: the entry is kept there, and
+     is still there after a reload. */
+  {
+    const page = await ctx.browser.newPage();
+    await page.addInitScript(fullLocal());
+    await page.goto(ctx.base + '#/diary');
+    const words = 'Written while localStorage was full.';
+    await write(page, { took: words });
+    await page.waitForTimeout(300);
+    t.check('with localStorage full, the entry is kept in IndexedDB instead',
+            (await page.locator('.diary-entry').count()) === 1);
+    await page.reload();
+    await page.waitForSelector('.diary-entry', { timeout: 5000 }).catch(() => null);
+    t.check('and is still there after a reload',
+            (await page.locator('.diary-took').first().textContent().catch(() => '')) === words);
     await page.close();
   }
 
