@@ -14,6 +14,13 @@
 const AXE = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
 async function axeViolations(page) {
+  /* Let the chapter's fade-in finish first. Measured mid-fade, axe blends
+     the text with the page behind it and reports a contrast that no reader
+     ever sees once the page has settled (4.13 at 40% opacity). */
+  await page.evaluate(() => Promise.race([
+    Promise.all(document.getAnimations().map(a => a.finished.catch(() => null))),
+    new Promise(r => setTimeout(r, 3000))
+  ]));
   await page.addScriptTag({ url: new URL('__axe.js', page.url()).href });
   const r = await page.evaluate(async tags => await window.axe.run(
     document, { runOnly: { type: 'tag', values: tags } }), AXE);
