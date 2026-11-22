@@ -56,6 +56,10 @@ BRAND = "The Book and Me"
 # The address of the Enoch reading plan, relative to the site root.
 ENOCH_PLAN = "enoch-reading-plan"
 
+# The last day the generated text pages changed in substance (not merely
+# rebuilt). Bump it only when what a chapter page says changes.
+PAGES_DATE = "2026-11-21"
+
 # The reader's own title, for the pages that are not a single chapter.
 FULL_TITLE = "The Book — Biblical and Related Ancient Texts in Order of Composition"
 
@@ -166,16 +170,63 @@ def page_title(short):
     return "%s – Read Along | %s" % (short, BRAND)
 
 
-def describe(text, limit=155):
-    """The opening of the chapter, cut at a word rather than mid-syllable."""
+_SENTENCE_END = re.compile(r"[.!?][\u201d\u2019\"')\]]*(?=\s|$)")
+
+
+_ABBREV = {"c", "ca", "cf", "ch", "chs", "v", "vv", "vol", "vols", "e.g", "i.e",
+           "st", "mr", "dr", "no", "ed", "eds", "trans", "lit", "viz", "etc"}
+
+
+def whole_sentences(text, limit):
+    """The longest run of whole sentences from the start of text that fits in
+    limit, or "" if not even the first one does."""
+    text = " ".join(str(text).split())
+    if len(text) <= limit and _SENTENCE_END.search(text[-3:] + " "):
+        return text
+    best = ""
+    for m in _SENTENCE_END.finditer(text):
+        if m.end() > limit:
+            break
+        word = text[:m.start()].rsplit(" ", 1)[-1].lower().lstrip("(")
+        if word in _ABBREV or (len(word) == 1 and word.isalpha()):
+            continue            # "c. 590 BCE", "cf. Isaiah", "v. 21": not an end
+        best = text[:m.end()]
+    return best
+
+
+def describe(text, limit=160):
+    """A description that reads as finished: whole sentences where they fit
+    (a snippet that trails off in an ellipsis looks broken in a search result
+    and a link preview), cut at a word only when one sentence is too long."""
     text = " ".join(str(text).split())
     if len(text) <= limit:
         return text
+    whole = whole_sentences(text, limit)
+    if len(whole) >= 20:
+        return whole
     cut = text[:limit]
     space = cut.rfind(" ")
     if space > 40:
         cut = cut[:space]
     return cut.rstrip(" ,;:.—-") + "…"
+
+
+def chapter_description(short, by, opening, places, limit=160):
+    """A chapter's meta description, always complete. The opening sentence(s)
+    when they fit; otherwise a plain account of what is on the page, naming as
+    many of the chapter's places as fit."""
+    lead = "Read %s%s free online: " % (short, by)
+    whole = whole_sentences(opening, limit - len(lead))
+    if len(whole) >= 25:
+        return lead + whole
+    base = "Read %s%s free online, with a note on when it was written" % (short, by)
+    for n in range(min(len(places), 6), 0, -1):
+        names = places[:n]
+        lst = names[0] if n == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+        cand = "%s and the places it names: %s." % (base, lst)
+        if len(cand) <= limit:
+            return cand
+    return base + "."
 
 
 def e(s):
@@ -258,7 +309,10 @@ def head(title, description, canonical, depth, extra_head="", og_type="article")
         '<meta property="og:image:width" content="1200">',
         '<meta property="og:image:height" content="630">',
         '<meta property="og:image:alt" content="The Book and Me: an open book by candlelight under a night sky">',
+        '<meta property="og:locale" content="en_US">',
         '<meta name="twitter:card" content="summary_large_image">',
+        '<meta name="twitter:title" content="%s">' % e(title),
+        '<meta name="twitter:description" content="%s">' % e(description),
         '<meta name="twitter:image" content="%s/assets/og-card.jpg">' % BASE,
         extra_head,
         "</head>",
@@ -303,6 +357,7 @@ def topbar(depth):
 def footer(depth, what="a plain page of one chapter"):
     up = "../" * depth
     return """<footer class="foot">
+  <p class="sleep-yt"><a href="https://www.youtube.com/@thebookandme/live" rel="noopener noreferrer" target="_blank">🌙 Listen live on YouTube</a> — the Bible read aloud, live around the clock.</p>
   <p>
     <strong>The texts are public domain</strong> — the World English Bible with
     Deuterocanon, R. H. Charles's 1917 Enoch and Jubilees, Morfill's 2 Enoch
@@ -415,6 +470,110 @@ def strip_html(work_id, chapters, slugs, current, depth):
     return "\n".join(out)
 
 
+# ---------------------------------------------------------------- chapter context
+#
+# Google crawled the chapter pages and declined to index them ("Crawled -
+# currently not indexed"): a page that is nothing but public-domain text is the
+# same page as on a thousand other sites. What this volume has that they do not
+# is its own apparatus -- when each work was written, the places each chapter
+# names, and the threads that pass through it. build() fills this in from the
+# data files the reader already ships, and chapter_page() prints it under the
+# text, so each page carries something only this site says.
+CONTEXT = {"mentions": {}, "places": {}, "threads": {}}
+
+
+def load_context(data):
+    import glob
+    ctx = {"mentions": {}, "places": {}, "threads": {}}
+    try:
+        with open(os.path.join(data, "mentions.json"), encoding="utf-8") as fh:
+            ctx["mentions"] = json.load(fh)
+    except (OSError, ValueError):
+        pass
+    for f in sorted(glob.glob(os.path.join(data, "places", "*.json"))):
+        try:
+            with open(f, encoding="utf-8") as fh:
+                ctx["places"].update(json.load(fh))
+        except (OSError, ValueError):
+            pass
+    try:
+        with open(os.path.join(data, "threads.json"), encoding="utf-8") as fh:
+            for t in json.load(fh):
+                for stop in t.get("stops") or []:
+                    key = "%s/%s" % (stop.get("work"), stop.get("chapter"))
+                    ctx["threads"].setdefault(key, []).append((t, stop))
+    except (OSError, ValueError):
+        pass
+    CONTEXT.update(ctx)
+
+
+def place_label(key):
+    p = CONTEXT["places"].get(key) or {}
+    name = re.sub(r"\s+\d+$", "", p.get("name") or title_case(key))
+    modern = (p.get("modern") or "").strip()
+    return name, modern
+
+
+def breadcrumb_ld(items):
+    return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": n + 1, "name": name, "item": url}
+            for n, (name, url) in enumerate(items)],
+    }
+
+
+def chapter_context(meta, section, i, slug, depth):
+    """The block under a chapter's text: when the work was written, the places
+    the chapter names, and the threads that stop here. Empty if there is
+    nothing true to say."""
+    up = "../" * depth
+    name = title_case(meta["title"])
+    out = []
+    note = meta.get("note") or []
+    sec = ""
+    if section:
+        sec = ((("Section " + section["roman"] + ", ") if section.get("roman") else "")
+               + title_case(section.get("name") or section.get("title") or "")
+               + ((" (" + section["dates"] + ")") if section.get("dates") else ""))
+    when = []
+    if sec:
+        when.append("In this volume %s sits in %s." % (name, sec))
+    if note:
+        when.append(describe(note[0], 360))
+    if when:
+        out.append('<p><strong>When it was written.</strong> %s '
+                   '<a href="../">More on %s</a> · '
+                   '<a href="%stimeline/">See it on the timeline</a></p>'
+                   % (e(" ".join(when)), e(name), e(up)))
+
+    keys = CONTEXT["mentions"].get("%s/%d" % (meta["id"], i)) or []
+    seen, names = set(), []
+    for k in keys:
+        nm, modern = place_label(k)
+        if nm.lower() in seen:
+            continue
+        seen.add(nm.lower())
+        names.append(e(nm) + ((" <span class=\"muted\">(%s)</span>" % e(modern))
+                              if modern else ""))
+    if names:
+        out.append('<p><strong>Places named in this chapter.</strong> %s. '
+                   '<a href="%s#/read/%s/%d">See them on the map in the reader</a></p>'
+                   % (", ".join(names), e(up), e(meta["id"]), i))
+
+    for t, stop in CONTEXT["threads"].get("%s/%d" % (meta["id"], i)) or []:
+        why = stop.get("why") or ""
+        out.append('<p><strong>A stop on the thread '
+                   '<a href="%sthreads/%s/">%s</a></strong>%s</p>'
+                   % (e(up), e(t["id"]), e(t.get("title") or t["id"]),
+                      (" — " + e(why)) if why else ""))
+    if not out:
+        return ""
+    return ('<section class="note-block chapter-context" aria-label="About this chapter">\n'
+            '<h2>About this chapter</h2>\n' + "\n".join(out) + "\n</section>")
+
+
 def chapter_page(manifest, section, meta, work, chapters, slugs, i, out_dir):
     c = chapters[i]
     slug = slugs[i]
@@ -429,7 +588,12 @@ def chapter_page(manifest, section, meta, work, chapters, slugs, i, out_dir):
     opening = (verses[0]["t"] if verses else (paras[0] if paras else meta["title"]))
     src = (manifest.get("sources") or {}).get(meta.get("source"))
     by = (" (%s)" % src["label"]) if src and meta.get("source") != "web" else ""
-    description = describe("Read %s%s free online: %s" % (short, by, opening))
+    place_names = []
+    for k in CONTEXT["mentions"].get("%s/%d" % (meta["id"], i)) or []:
+        nm = place_label(k)[0]
+        if nm not in place_names:
+            place_names.append(nm)
+    description = chapter_description(short, by, opening, place_names)
 
     def near(k):
         return chapter_heading(meta["title"], chapters[k].get("label") or "")
@@ -469,6 +633,9 @@ def chapter_page(manifest, section, meta, work, chapters, slugs, i, out_dir):
                         'public-domain sources this volume is built from.</p>')
 
     body.append("</div>")
+    ctx = chapter_context(meta, section, i, slug, 3)
+    if ctx:
+        body.append(ctx)
 
     # The reader's hash routes count chapters from zero, so chapter 1 is
     # #/read/genesis/0. That is a fine internal index and a poor public URL,
@@ -502,7 +669,9 @@ def chapter_page(manifest, section, meta, work, chapters, slugs, i, out_dir):
         schema["position"] = c["n"]
 
     page = "\n".join([
-        head(title, description, url, 3, rel_links(prev, nxt) + "\n" + ld(schema)),
+        head(title, description, url, 3, rel_links(prev, nxt) + "\n" + ld(schema) + "\n"
+             + ld(breadcrumb_ld([(SITE, BASE + "/"), ("Contents", BASE + "/contents/"),
+                                 (title_case(meta["title"]), work_url), (short, url)]))),
         "<body>",
         topbar(3),
         '<main id="main">',
@@ -519,8 +688,10 @@ def work_page(manifest, section, meta, chapters, slugs, prev_work, next_work, ou
     name = title_case(meta["title"])
     title = name + " — " + SITE
     note = meta.get("note") or []
-    description = describe(note[0]) if note else describe(
-        "%s, in The Book: the library arranged in the order it was written." % name)
+    description = describe(note[0]) if note else ""
+    if not description or description.endswith("…"):
+        description = describe(
+            "%s, in The Book: the library arranged in the order it was written." % name)
 
     if meta.get("chapters"):
         stats = ("%d %s" % (meta["chapters"],
@@ -582,7 +753,9 @@ def work_page(manifest, section, meta, chapters, slugs, prev_work, next_work, ou
     }
 
     page = "\n".join([
-        head(title, description, url, 2, rel_links(prev, nxt) + "\n" + ld(schema),
+        head(title, description, url, 2, rel_links(prev, nxt) + "\n" + ld(schema) + "\n"
+             + ld(breadcrumb_ld([(SITE, BASE + "/"), ("Contents", BASE + "/contents/"),
+                                 (name, url)])),
              og_type="book"),
         "<body>",
         topbar(2),
@@ -958,13 +1131,12 @@ PUBLISHER = "OpenPrints"
 ORG_ID = BASE + "/#organization"
 CHANNELS = [
     ("YouTube", "https://www.youtube.com/@thebookandme"),
-    ("Twitch", "https://www.twitch.tv/xtheorx"),
     ("Kick", "https://kick.com/jonesproject"),
 ]
 YOUTUBE = CHANNELS[0][1]
 REPO = "https://github.com/TheoryofShadows/The-Book"
 AUDIO_ITEM = "https://archive.org/details/the-book-read-aloud"
-POLICY_DATE = "19 November 2026"
+POLICY_DATE = "21 November 2026"
 
 # Who sends the sign-in email. The privacy page names it, so it must be the
 # service the deployed worker actually uses (see ACCOUNTS.md).
@@ -1131,7 +1303,7 @@ replies can take a few days.</p>
 <ul>
 {mail}
 <li><strong>YouTube:</strong> {yt}. Comment on a video or in the live chat.</li>
-<li><strong>Twitch and Kick:</strong> {tw}, {kick} — stream chat.</li>
+<li><strong>Kick:</strong> {kick} — stream chat.</li>
 <li><strong>Corrections to a text or a date:</strong> open an issue on
 {repo}. Say the work, the chapter and what is wrong; the accuracy report
 explains how checks are done.</li>
@@ -1139,8 +1311,7 @@ explains how checks are done.</li>
 <p class="muted">We will never ask for a password, payment or personal
 details by message. See <a href="../privacy/">Privacy</a>.</p>
 """.format(org=e(ORG), mail=mail, yt=_ext(YOUTUBE, "The Book and Me on YouTube"),
-           tw=_ext(CHANNELS[1][1], "twitch.tv/xtheorx"),
-           kick=_ext(CHANNELS[2][1], "kick.com/jonesproject"),
+           kick=_ext(CHANNELS[1][1], "kick.com/jonesproject"),
            repo=_ext(REPO + "/issues", "the project’s GitHub issues"))
     return _info_page(
         "contact", "Contact — " + ORG,
@@ -1157,7 +1328,7 @@ def privacy_page(manifest):
         "and address only to reply and to fix what you reported. They are not "
         "shared or sold.</li>" if CONTACT_EMAIL else
         "<li><strong>Messages.</strong> If you contact us through YouTube, "
-        "Twitch, Kick or GitHub, that platform’s own privacy policy applies to "
+        "Kick or GitHub, that platform’s own privacy policy applies to "
         "the message.</li>")
     body = """
 <h1>Privacy</h1>
@@ -1241,10 +1412,10 @@ straight away. You can also write to us and we will remove it by hand.</p>
 reading, your browser fetches the audio from there, so it sees your IP address
 and the file requested, under <a href="https://archive.org/about/terms.php"
 rel="noopener noreferrer">its terms</a>.</li>
-<li><strong>Kick and decapi.me</strong> — the front page checks whether our
-streams are live by asking kick.com and decapi.me (a Twitch uptime lookup). Those
-requests carry no cookies from us, but those services see your IP address.</li>
-<li><strong>Links out</strong> — YouTube, Twitch, Kick and GitHub. Once you follow a
+<li><strong>Kick</strong> — the front page checks whether our Kick stream is
+live by asking kick.com. That request carries no cookies from us, but Kick sees
+your IP address.</li>
+<li><strong>Links out</strong> — YouTube, Kick and GitHub. Once you follow a
 link, that site’s policy applies.</li>
 </ul>
 
@@ -1531,7 +1702,11 @@ def sitemap(out_dir, urls, changed=None):
         raise SystemExit("sitemap: %d URLs, %d of them distinct"
                          % (len(urls), len(set(urls))))
     if changed is None:
-        changed = source_date()
+        # The chapter and work pages changed on their own on PAGES_DATE, when
+        # each gained the "About this chapter" block: a real change to what a
+        # crawler reads, so it moves their date once. A rebuild that changes
+        # nothing still moves nothing.
+        changed = max(source_date(), PAGES_DATE)
     # The text pages carry the date the text moved. The home page and the
     # about, contact, privacy and press pages are the site's own writing, which
     # moves on a different clock (privacy says "last updated" on its face), so
@@ -1651,6 +1826,7 @@ def build(out_dir):
 
     with open(os.path.join(data, "threads.json"), encoding="utf-8") as fh:
         threads = json.load(fh)
+    load_context(data)
     slugs_by_work = {w["id"]: (w.get("slugs") or [])
                      for sec in manifest["sections"] for w in sec["works"]}
 

@@ -80,7 +80,9 @@ class TheDate(unittest.TestCase):
         # about, contact, privacy, press), which may only be newer.
         self.assertLessEqual(len(stamps), 2,
                              "got %r" % (sorted(stamps),))
-        text = build_pages.source_date()
+        # The text pages move with the text, or with PAGES_DATE when the
+        # generated pages themselves changed in substance.
+        text = max(build_pages.source_date(), build_pages.PAGES_DATE)
         own = max(text, build_pages.site_date())
         self.assertEqual(stamps, {text, own})
         # Every text page carries the text date, and only the five pages of

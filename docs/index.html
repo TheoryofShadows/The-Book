@@ -49,7 +49,7 @@
      only archive.org itself blocks the chapter index and the recording.
      *.archive.org is that CDN. blob: is the typed copy Firefox plays,
      because the archive labels .opus as application/octet-stream. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' https://static.cloudflareinsights.com; worker-src 'self'; manifest-src 'self'; connect-src 'self' https://cloudflareinsights.com https://archive.org https://*.archive.org https://kick.com https://decapi.me; media-src 'self' blob: https://archive.org https://*.archive.org">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' https://static.cloudflareinsights.com; worker-src 'self'; manifest-src 'self'; connect-src 'self' https://cloudflareinsights.com https://archive.org https://*.archive.org https://kick.com; media-src 'self' blob: https://archive.org https://*.archive.org">
 <!-- Cloudflare Web Analytics: cookieless visit counts. In the head so the
      offline single-file copy, which keeps only the body, does not carry it. -->
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "8f4f21d9a22040fbb72ceb3302ecb4ea"}'></script><!-- End Cloudflare Web Analytics -->
@@ -63,7 +63,10 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="The Book and Me: an open book by candlelight under a night sky">
 <meta property="og:url" content="https://thebookandme.com/">
+<meta property="og:locale" content="en_US">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The Book — the library in the order it was written">
+<meta name="twitter:description" content="174 works, 2,655 chapters, 1.25 million words of the Jewish, Protestant, Catholic, Orthodox and Ethiopian canons, arranged by date of composition. Public domain, searchable, and audited.">
 <meta name="twitter:image" content="https://thebookandme.com/assets/og-card.jpg">
 
 <!-- The 2,843 generated pages under /read/, /contents/, /threads/ and
@@ -88,7 +91,6 @@
     "logo": "https://thebookandme.com/assets/icon-512.png",
     "sameAs": [
       "https://www.youtube.com/@thebookandme",
-      "https://www.twitch.tv/xtheorx",
       "https://kick.com/jonesproject"
     ]
   },
@@ -130,7 +132,6 @@
     </span>
     <span class="live-now-links">
       <a data-live="youtube" class="live-now-primary" href="https://www.youtube.com/@thebookandme/live" rel="noopener noreferrer" target="_blank">Watch live on YouTube</a>
-      <a data-live="twitch" hidden href="https://www.twitch.tv/xtheorx" rel="noopener noreferrer" target="_blank">Twitch</a>
       <a data-live="kick" hidden href="https://kick.com/jonesproject" rel="noopener noreferrer" target="_blank">Kick</a>
       <span class="live-now-stay">or Listen here (<kbd>l</kbd>)</span>
     </span>
@@ -207,6 +208,24 @@
     <a href="/privacy/">Privacy</a> · <a href="/press/">Press and credits</a> ·
     <a href="#/account">Account (optional)</a>
     — read aloud by an AI voice.
+  </p>
+  <!-- Plain addresses a crawler can follow. Every link in the header is a
+       hash route, and a fragment is never sent to a server, so without these
+       the front page -- the one page Google has indexed -- passes nothing on
+       to the 2,800 chapter pages. Each is a real page with the text in it. -->
+  <p class="muted foot-browse">
+    <strong>Browse the library as plain pages:</strong>
+    <a href="/contents/">All 174 works</a> ·
+    <a href="/timeline/">Timeline</a> ·
+    <a href="/threads/">Threads</a> ·
+    <a href="/read/genesis/">Genesis</a> ·
+    <a href="/read/psalms/">Psalms</a> ·
+    <a href="/read/isaiah-1-39-first-isaiah/">Isaiah</a> ·
+    <a href="/read/matthew/">Matthew</a> ·
+    <a href="/read/john/">John</a> ·
+    <a href="/read/revelation/">Revelation</a> ·
+    <a href="/read/1-enoch-the-book-of-the-watchers-chapters-1-36/">1 Enoch</a> ·
+    <a href="/read/jubilees/">Jubilees</a>
   </p>
   <p class="muted">
     <strong>Reading Enoch?</strong>
