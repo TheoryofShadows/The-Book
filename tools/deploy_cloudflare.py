@@ -36,8 +36,10 @@ HEADERS = f"""/*
   Content-Security-Policy: {CSP}
 /the-book
   ! Content-Security-Policy
+  X-Robots-Tag: noindex
 /the-book.html
   ! Content-Security-Policy
+  X-Robots-Tag: noindex
 /sw.js
   Cache-Control: no-cache
 https://thebookandme.pages.dev/*

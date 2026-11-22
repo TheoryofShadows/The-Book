@@ -132,6 +132,9 @@ class TheFile(unittest.TestCase):
         sitemap while disallowing it in robots is the site contradicting
         itself, which is the one thing this project holds itself to."""
         self.assertNotIn("/the-book.html", self.xml)
+        self.assertIsNone(re.search(
+            r"<loc>https://thebookandme.com/the-book(?:\.html)?/?</loc>",
+            self.xml))
 
 
 if __name__ == "__main__":

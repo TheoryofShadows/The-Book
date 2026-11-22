@@ -248,14 +248,17 @@ module.exports = async function crawlable(t, ctx) {
           missing.length === 0, missing.slice(0, 3).join(', '));
 
   const robots = fs.readFileSync(path.join(docs, 'robots.txt'), 'utf8');
+  const robotsPrefix = 'Disallow: ' + new URL(BASE).pathname.replace(/\/$/, '');
   t.check('robots.txt points at the sitemap and keeps crawlers off the 13 MB copy',
           robots.indexOf(BASE + '/sitemap.xml') !== -1 &&
           /* The path the site is served from, which is nothing at all on the
              custom domain and was /The-Book on the project Pages address.
              robots.txt paths are site-relative, so the rule has to follow
-             whatever BASE says rather than name a prefix of its own. */
-          robots.indexOf('Disallow: ' + new URL(BASE).pathname.replace(/\/$/, '') +
-                         '/the-book.html') !== -1);
+             whatever BASE says rather than name a prefix of its own.
+             Pages serves the file at /the-book, so that pretty URL has to
+             be disallowed as well as the .html address. */
+          robots.indexOf(robotsPrefix + '/the-book.html') !== -1 &&
+          robots.indexOf(robotsPrefix + '/the-book\n') !== -1);
 
   t.check('there is a 404 page for the addresses that are not there',
           fs.existsSync(path.join(docs, '404.html')));

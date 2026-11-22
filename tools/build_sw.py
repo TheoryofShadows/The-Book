@@ -113,7 +113,7 @@ self.addEventListener("activate", function (e) {
    one navigation would spend more storage than every chapter somebody will
    ever read. */
 function cacheable(url) {
-  if (url.pathname.indexOf("/the-book.html") !== -1) return false;
+  if (url.pathname === "/the-book" || url.pathname === "/the-book/" || url.pathname.indexOf("/the-book.html") !== -1) return false;
   /* Account calls carry a reader's own data and a session; they are never
      kept, and never answered from a cache when the network is down. */
   if (url.pathname.indexOf("/api/") === 0) return false;

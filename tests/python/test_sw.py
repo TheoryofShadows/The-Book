@@ -167,6 +167,7 @@ class ItStaysNetworkFirst(unittest.TestCase):
         reader will open. robots.txt keeps crawlers off it; this keeps it out
         of a phone."""
         self.assertIn("/the-book.html", self.source)
+        self.assertIn('url.pathname === "/the-book"', self.source)
 
 
 class TheRegistrationIsSafeWhereItRuns(unittest.TestCase):

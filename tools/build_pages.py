@@ -1810,10 +1810,16 @@ def robots(out_dir):
     """The single-file build is 13 MB of the entire library in one document.
     It is for a reader taking the thing on a plane, not for a crawler, and
     letting one fetch it is both a waste of everybody's bandwidth and a second
-    copy of every chapter competing with the pages written here."""
+    copy of every chapter competing with the pages written here.
+
+    Cloudflare Pages serves docs/the-book.html at /the-book (and 308s
+    /the-book.html there), so both paths have to be disallowed. Disallowing
+    only the .html address left the pretty URL open to crawlers.
+    """
     write(os.path.join(out_dir, "robots.txt"),
           "User-agent: *\n"
           "Allow: /\n"
+          "Disallow: {prefix}/the-book\n"
           "Disallow: {prefix}/the-book.html\n"
           "\n"
           "Sitemap: {base}/sitemap.xml\n".format(prefix=PREFIX, base=BASE))
