@@ -1292,7 +1292,9 @@ its own credits on the <a href="../press/">credits page</a>. See
 
 def contact_page(manifest):
     if CONTACT_EMAIL:
-        mail = ('<li><strong>Email:</strong> <a href="mailto:{m}">{m}</a></li>'
+        # email_off: Cloudflare's Email Obfuscation would otherwise rewrite this
+        # into /cdn-cgi/l/email-protection, a link that 404s without JavaScript.
+        mail = ('<li><strong>Email:</strong> <!--email_off--><a href="mailto:{m}">{m}</a><!--/email_off--></li>'
                 .format(m=e(CONTACT_EMAIL)))
     else:
         mail = ""
@@ -1452,7 +1454,7 @@ def press_page(manifest):
              "ancient texts, arranged in the order scholars believe they were "
              "written and read aloud by a synthetic (AI) voice. The texts are "
              "public domain. thebookandme.com" % (ORG, works))
-    contact = ("Email %s, or " % CONTACT_EMAIL) if CONTACT_EMAIL else ""
+    contact = ("Email <!--email_off-->%s<!--/email_off-->, or " % CONTACT_EMAIL) if CONTACT_EMAIL else ""
     body = """
 <h1>Press and credits</h1>
 <p class="lede">Facts, a short description and logo files for anyone writing

@@ -2920,3 +2920,55 @@ body.listening { padding-bottom: calc(var(--player-h, 7.5rem) + 1rem); }
 }
 .intro-skip:focus-visible { outline: 2px solid #fbe8b4; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .intro { display: none; } }
+
+/* ---------------- keeping things: saved indicator, warnings ---------------- */
+
+.diary-status.is-saved,
+.saved-note-status.is-saved { color: var(--accent); }
+.diary-status.is-warn,
+.saved-note-status.is-warn { color: var(--warn); }
+.saved-note-status { display: block; min-height: 1.2em; color: var(--ink-faint); }
+
+.storage-banner {
+  margin: 0;
+  padding: 0.6rem 1rem;
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-bottom: 1px solid var(--warn);
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 150%);
+  max-width: min(92vw, 30rem);
+  padding: 0.55rem 1rem;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.95rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  z-index: 60;
+}
+.toast.is-on { transform: translate(-50%, 0); opacity: 1; }
+.toast.is-warn { background: var(--warn); }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+
+.diary-edit textarea {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0.55rem 0.7rem;
+  margin: 0.5rem 0 0;
+  resize: vertical;
+}
+.diary-entry .linkish + .linkish { margin-left: 1rem; }
+.diary-undo { color: var(--ink-soft); }
