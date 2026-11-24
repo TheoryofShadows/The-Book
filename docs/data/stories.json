@@ -1,0 +1,4655 @@
+{
+  "note": "Stories in the order the events are told, not the order the books were written. The text is the same public-domain library as thebookandme.com.",
+  "eras": [
+    {
+      "id": "beginnings",
+      "label": "Beginnings"
+    },
+    {
+      "id": "ancestors",
+      "label": "The ancestors"
+    },
+    {
+      "id": "egypt",
+      "label": "Egypt and the wilderness"
+    },
+    {
+      "id": "land",
+      "label": "The land"
+    },
+    {
+      "id": "judges",
+      "label": "Judges and Ruth"
+    },
+    {
+      "id": "kingdom",
+      "label": "Saul, David, and Solomon"
+    },
+    {
+      "id": "divided",
+      "label": "Kings and prophets"
+    },
+    {
+      "id": "exile",
+      "label": "Exile and return"
+    },
+    {
+      "id": "maccabees",
+      "label": "The Maccabees"
+    },
+    {
+      "id": "nativity",
+      "label": "The birth of Jesus"
+    },
+    {
+      "id": "ministry",
+      "label": "Jesus' ministry"
+    },
+    {
+      "id": "passion",
+      "label": "The passion and the resurrection"
+    },
+    {
+      "id": "church",
+      "label": "The church"
+    },
+    {
+      "id": "visions",
+      "label": "Visions of the end"
+    }
+  ],
+  "stories": [
+    {
+      "id": "creation",
+      "shelf": "hb",
+      "era": "beginnings",
+      "title": "Creation",
+      "cite": "Genesis 1",
+      "blurb": "The world is spoken into being, and the seventh day is blessed.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "1"
+        }
+      ]
+    },
+    {
+      "id": "the-garden",
+      "shelf": "hb",
+      "era": "beginnings",
+      "title": "The garden",
+      "cite": "Genesis 2",
+      "blurb": "The human is formed from the ground, and the woman from his side.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "2"
+        }
+      ]
+    },
+    {
+      "id": "the-fall",
+      "shelf": "hb",
+      "era": "beginnings",
+      "title": "The fall",
+      "cite": "Genesis 3",
+      "blurb": "The serpent, the fruit, and the way out of the garden.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "3"
+        }
+      ]
+    },
+    {
+      "id": "cain-and-abel",
+      "shelf": "hb",
+      "era": "beginnings",
+      "title": "Cain and Abel",
+      "cite": "Genesis 4",
+      "blurb": "The first brothers, the first murder, and a mark of protection.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "4"
+        }
+      ]
+    },
+    {
+      "id": "the-watchers-come-down",
+      "shelf": "wider",
+      "era": "beginnings",
+      "title": "The watchers come down",
+      "cite": "1 Enoch 6–11",
+      "blurb": "Angels descend for the daughters of men, teach forbidden arts, and are sentenced. A telling older than the New Testament, and quoted by Jude.",
+      "spans": [
+        {
+          "work": "1-enoch-the-book-of-the-watchers-chapters-1-36",
+          "ch": "6"
+        },
+        {
+          "work": "1-enoch-the-book-of-the-watchers-chapters-1-36",
+          "ch": "7"
+        },
+        {
+          "work": "1-enoch-the-book-of-the-watchers-chapters-1-36",
+          "ch": "8"
+        },
+        {
+          "work": "1-enoch-the-book-of-the-watchers-chapters-1-36",
+          "ch": "9"
+        },
+        {
+          "work": "1-enoch-the-book-of-the-watchers-chapters-1-36",
+          "ch": "10"
+        },
+        {
+          "work": "1-enoch-the-book-of-the-watchers-chapters-1-36",
+          "ch": "11"
+        }
+      ]
+    },
+    {
+      "id": "enoch-intercedes",
+      "shelf": "wider",
+      "era": "beginnings",
+      "title": "Enoch intercedes",
+      "cite": "1 Enoch 12–16",
+      "blurb": "Enoch is sent to the fallen watchers with heaven's answer.",
+      "spans": [
+        {
+          "work": "1-enoch-the-book-of-the-watchers-chapters-1-36",
+          "ch": "12"
+        },
+        {
+          "work": "1-enoch-the-book-of-the-watchers-chapters-1-36",
+          "ch": "13"
+        },
+        {
+          "work": "1-enoch-the-book-of-the-watchers-chapters-1-36",
+          "ch": "14"
+        },
+        {
+          "work": "1-enoch-the-book-of-the-watchers-chapters-1-36",
+          "ch": "15"
+        },
+        {
+          "work": "1-enoch-the-book-of-the-watchers-chapters-1-36",
+          "ch": "16"
+        }
+      ]
+    },
+    {
+      "id": "from-adam-to-noah",
+      "shelf": "hb",
+      "era": "beginnings",
+      "title": "From Adam to Noah",
+      "cite": "Genesis 5",
+      "blurb": "The long generations, and Enoch, who walked with God and was not.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "5"
+        }
+      ]
+    },
+    {
+      "id": "the-birth-of-noah",
+      "shelf": "wider",
+      "era": "beginnings",
+      "title": "The birth of Noah",
+      "cite": "1 Enoch 106–107",
+      "blurb": "A child born shining, and a frightened father sent to ask Enoch what it means.",
+      "spans": [
+        {
+          "work": "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108",
+          "ch": "106"
+        },
+        {
+          "work": "1-enoch-dream-visions-and-the-epistle-of-enoch-chapters-83-108",
+          "ch": "107"
+        }
+      ]
+    },
+    {
+      "id": "the-flood",
+      "shelf": "hb",
+      "era": "beginnings",
+      "title": "The flood",
+      "cite": "Genesis 6–9",
+      "blurb": "Noah builds the ark, the waters rise, and the bow is set in the cloud.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "6"
+        },
+        {
+          "work": "genesis",
+          "ch": "7"
+        },
+        {
+          "work": "genesis",
+          "ch": "8"
+        },
+        {
+          "work": "genesis",
+          "ch": "9",
+          "v1": 1,
+          "v2": 17
+        }
+      ]
+    },
+    {
+      "id": "the-flood-as-jubilees-tells-it",
+      "shelf": "wider",
+      "era": "beginnings",
+      "title": "The flood, as Jubilees tells it",
+      "cite": "Jubilees 5",
+      "blurb": "The same waters, told again with the watchers written into the story.",
+      "spans": [
+        {
+          "work": "jubilees",
+          "ch": "5"
+        }
+      ]
+    },
+    {
+      "id": "noah-s-vineyard",
+      "shelf": "hb",
+      "era": "beginnings",
+      "title": "Noah's vineyard",
+      "cite": "Genesis 9:18–29",
+      "blurb": "After the flood, wine, shame, and a word spoken over the sons.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "9",
+          "v1": 18,
+          "v2": 29
+        }
+      ]
+    },
+    {
+      "id": "the-tower-of-babel",
+      "shelf": "hb",
+      "era": "beginnings",
+      "title": "The tower of Babel",
+      "cite": "Genesis 11:1–9",
+      "blurb": "One language, one tower, and the scattering of the peoples.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "11",
+          "v1": 1,
+          "v2": 9
+        }
+      ]
+    },
+    {
+      "id": "the-call-of-abram",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "The call of Abram",
+      "cite": "Genesis 12",
+      "blurb": "Leave your country. A promise of land, a family, and a name.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "12"
+        }
+      ]
+    },
+    {
+      "id": "abram-and-lot-part-ways",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Abram and Lot part ways",
+      "cite": "Genesis 13",
+      "blurb": "The herdsmen quarrel, and Lot chooses the plain of the Jordan.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "13"
+        }
+      ]
+    },
+    {
+      "id": "the-rescue-of-lot",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "The rescue of Lot",
+      "cite": "Genesis 14",
+      "blurb": "Abram brings Lot back from the kings, and Melchizedek brings bread and wine.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "14"
+        }
+      ]
+    },
+    {
+      "id": "the-covenant-of-the-pieces",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "The covenant of the pieces",
+      "cite": "Genesis 15",
+      "blurb": "A smoking torch passes between the cut animals, and the promise is sealed.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "15"
+        }
+      ]
+    },
+    {
+      "id": "hagar-and-ishmael",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Hagar and Ishmael",
+      "cite": "Genesis 16",
+      "blurb": "Sarai gives Hagar to Abram. Hagar flees, and a messenger finds her at a spring.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "16"
+        }
+      ]
+    },
+    {
+      "id": "the-covenant-of-circumcision",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "The covenant of circumcision",
+      "cite": "Genesis 17",
+      "blurb": "Abram becomes Abraham, Sarai becomes Sarah, and the sign is given.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "17"
+        }
+      ]
+    },
+    {
+      "id": "three-visitors",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Three visitors",
+      "cite": "Genesis 18:1–15",
+      "blurb": "Abraham hosts three strangers under the oaks, and Sarah laughs.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "18",
+          "v1": 1,
+          "v2": 15
+        }
+      ]
+    },
+    {
+      "id": "abraham-pleads-for-the-city",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Abraham pleads for the city",
+      "cite": "Genesis 18:16–33",
+      "blurb": "Will you sweep away the righteous with the wicked? He bargains down to ten.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "18",
+          "v1": 16,
+          "v2": 33
+        }
+      ]
+    },
+    {
+      "id": "sodom-and-gomorrah",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Sodom and Gomorrah",
+      "cite": "Genesis 19",
+      "blurb": "Lot's guests, the mob at the door, and a city left behind.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "19"
+        }
+      ]
+    },
+    {
+      "id": "abraham-sarah-and-abimelech",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Abraham, Sarah, and Abimelech",
+      "cite": "Genesis 20",
+      "blurb": "Sarah is taken into a king's house, and a dream gives her back.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "20"
+        }
+      ]
+    },
+    {
+      "id": "isaac-is-born",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Isaac is born",
+      "cite": "Genesis 21:1–21",
+      "blurb": "The child of the promise, and Hagar sent out with Ishmael into the wilderness.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "21",
+          "v1": 1,
+          "v2": 21
+        }
+      ]
+    },
+    {
+      "id": "the-binding-of-isaac",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "The binding of Isaac",
+      "cite": "Genesis 22",
+      "blurb": "Take your son, your only son. A ram is caught in the thicket.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "22"
+        }
+      ]
+    },
+    {
+      "id": "the-binding-as-jubilees-tells-it",
+      "shelf": "wider",
+      "era": "ancestors",
+      "title": "The binding, as Jubilees tells it",
+      "cite": "Jubilees 17–18",
+      "blurb": "The same mountain, with Mastema named as the one who proposed the test.",
+      "spans": [
+        {
+          "work": "jubilees",
+          "ch": "17"
+        },
+        {
+          "work": "jubilees",
+          "ch": "18"
+        }
+      ]
+    },
+    {
+      "id": "a-burial-place",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "A burial place",
+      "cite": "Genesis 23",
+      "blurb": "Sarah dies, and Abraham buys the cave of Machpelah.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "23"
+        }
+      ]
+    },
+    {
+      "id": "a-wife-for-isaac",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "A wife for Isaac",
+      "cite": "Genesis 24",
+      "blurb": "A servant at a well, and Rebekah who says, I will go.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "24"
+        }
+      ]
+    },
+    {
+      "id": "jacob-and-esau-are-born",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Jacob and Esau are born",
+      "cite": "Genesis 25",
+      "blurb": "The birthright sold for a meal of lentils.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "25"
+        }
+      ]
+    },
+    {
+      "id": "isaac-and-the-wells",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Isaac and the wells",
+      "cite": "Genesis 26",
+      "blurb": "Famine, a lie about Rebekah, and wells dug, stopped, and dug again.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "26"
+        }
+      ]
+    },
+    {
+      "id": "jacob-takes-the-blessing",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Jacob takes the blessing",
+      "cite": "Genesis 27",
+      "blurb": "Rebekah's plan, goatskins on his arms, and Esau's cry.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "27"
+        }
+      ]
+    },
+    {
+      "id": "jacob-s-ladder",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Jacob's ladder",
+      "cite": "Genesis 28",
+      "blurb": "A stone for a pillow, a stairway, and a vow at Bethel.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "28"
+        }
+      ]
+    },
+    {
+      "id": "leah-rachel-and-the-years-with-laban",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Leah, Rachel, and the years with Laban",
+      "cite": "Genesis 29–30",
+      "blurb": "Seven years, the wrong bride, and a household of children.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "29"
+        },
+        {
+          "work": "genesis",
+          "ch": "30"
+        }
+      ]
+    },
+    {
+      "id": "jacob-flees-laban",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Jacob flees Laban",
+      "cite": "Genesis 31",
+      "blurb": "The household gods hidden in a saddle, and a heap of stones as a border.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "31"
+        }
+      ]
+    },
+    {
+      "id": "jacob-wrestles",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Jacob wrestles",
+      "cite": "Genesis 32",
+      "blurb": "Alone at the Jabbok, he will not let go until he is blessed. His name becomes Israel.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "32"
+        }
+      ]
+    },
+    {
+      "id": "jacob-and-esau-meet",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Jacob and Esau meet",
+      "cite": "Genesis 33",
+      "blurb": "Esau runs to meet him, and they weep.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "33"
+        }
+      ]
+    },
+    {
+      "id": "dinah",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Dinah",
+      "cite": "Genesis 34",
+      "blurb": "Shechem, a deception, and Simeon and Levi's revenge.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "34"
+        }
+      ]
+    },
+    {
+      "id": "rachel-dies-and-isaac-dies",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Rachel dies, and Isaac dies",
+      "cite": "Genesis 35",
+      "blurb": "Benjamin is born on the road, and Rachel is buried there.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "35"
+        }
+      ]
+    },
+    {
+      "id": "joseph-and-the-pit",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Joseph and the pit",
+      "cite": "Genesis 37",
+      "blurb": "The coat, the dreams, and brothers who sell him on.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "37"
+        }
+      ]
+    },
+    {
+      "id": "judah-and-tamar",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Judah and Tamar",
+      "cite": "Genesis 38",
+      "blurb": "A widow left waiting, and a pledge of seal, cord, and staff.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "38"
+        }
+      ]
+    },
+    {
+      "id": "joseph-in-potiphar-s-house",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Joseph in Potiphar's house",
+      "cite": "Genesis 39",
+      "blurb": "The lie, the prison, and a man the jailer trusts.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "39"
+        }
+      ]
+    },
+    {
+      "id": "the-baker-and-the-cupbearer",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "The baker and the cupbearer",
+      "cite": "Genesis 40",
+      "blurb": "Two dreams in prison, and one man who forgets.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "40"
+        }
+      ]
+    },
+    {
+      "id": "pharaoh-s-dreams",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Pharaoh's dreams",
+      "cite": "Genesis 41",
+      "blurb": "Seven fat cows, seven thin, and a prisoner made governor.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "41"
+        }
+      ]
+    },
+    {
+      "id": "the-brothers-come-to-egypt",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "The brothers come to Egypt",
+      "cite": "Genesis 42–44",
+      "blurb": "Grain in a famine, a hidden cup, and Judah who offers himself instead.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "42"
+        },
+        {
+          "work": "genesis",
+          "ch": "43"
+        },
+        {
+          "work": "genesis",
+          "ch": "44"
+        }
+      ]
+    },
+    {
+      "id": "joseph-tells-them-who-he-is",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Joseph tells them who he is",
+      "cite": "Genesis 45",
+      "blurb": "I am Joseph. Is my father still alive?",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "45"
+        }
+      ]
+    },
+    {
+      "id": "israel-comes-to-egypt",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Israel comes to Egypt",
+      "cite": "Genesis 46–47",
+      "blurb": "The family settles in Goshen, and Jacob blesses Pharaoh.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "46"
+        },
+        {
+          "work": "genesis",
+          "ch": "47"
+        }
+      ]
+    },
+    {
+      "id": "jacob-blesses-his-sons",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Jacob blesses his sons",
+      "cite": "Genesis 48–49",
+      "blurb": "The younger grandson set ahead, and a word for each of the twelve.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "48"
+        },
+        {
+          "work": "genesis",
+          "ch": "49"
+        }
+      ]
+    },
+    {
+      "id": "the-deaths-of-jacob-and-joseph",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "The deaths of Jacob and Joseph",
+      "cite": "Genesis 50",
+      "blurb": "Carried back to the cave, and Joseph's bones left for the promise.",
+      "spans": [
+        {
+          "work": "genesis",
+          "ch": "50"
+        }
+      ]
+    },
+    {
+      "id": "job-is-tested",
+      "shelf": "hb",
+      "era": "ancestors",
+      "title": "Job is tested",
+      "cite": "Job 1–2 and 42",
+      "blurb": "A blameless man, a wager in the heavenly court, and everything taken. The poems sit between these chapters. The story itself is the frame.",
+      "spans": [
+        {
+          "work": "job",
+          "ch": "1"
+        },
+        {
+          "work": "job",
+          "ch": "2"
+        },
+        {
+          "work": "job",
+          "ch": "42"
+        }
+      ]
+    },
+    {
+      "id": "oppressed-in-egypt",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "Oppressed in Egypt",
+      "cite": "Exodus 1",
+      "blurb": "A new king who did not know Joseph, and an order against the boys.",
+      "spans": [
+        {
+          "work": "exodus",
+          "ch": "1"
+        }
+      ]
+    },
+    {
+      "id": "moses-is-born-and-flees",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "Moses is born and flees",
+      "cite": "Exodus 2",
+      "blurb": "A basket in the reeds, a prince, a killing, and a well in Midian.",
+      "spans": [
+        {
+          "work": "exodus",
+          "ch": "2"
+        }
+      ]
+    },
+    {
+      "id": "the-burning-bush",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "The burning bush",
+      "cite": "Exodus 3–4",
+      "blurb": "I AM WHO I AM, and a staff that becomes a snake.",
+      "spans": [
+        {
+          "work": "exodus",
+          "ch": "3"
+        },
+        {
+          "work": "exodus",
+          "ch": "4"
+        }
+      ]
+    },
+    {
+      "id": "bricks-without-straw",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "Bricks without straw",
+      "cite": "Exodus 5",
+      "blurb": "Pharaoh makes the work harder, and the people turn on Moses.",
+      "spans": [
+        {
+          "work": "exodus",
+          "ch": "5"
+        }
+      ]
+    },
+    {
+      "id": "the-plagues",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "The plagues",
+      "cite": "Exodus 7–11",
+      "blurb": "Blood, frogs, gnats, flies, livestock, boils, hail, locusts, darkness, and the warning of the last.",
+      "spans": [
+        {
+          "work": "exodus",
+          "ch": "7",
+          "v1": 14,
+          "v2": 25
+        },
+        {
+          "work": "exodus",
+          "ch": "8"
+        },
+        {
+          "work": "exodus",
+          "ch": "9"
+        },
+        {
+          "work": "exodus",
+          "ch": "10"
+        },
+        {
+          "work": "exodus",
+          "ch": "11"
+        }
+      ]
+    },
+    {
+      "id": "the-plagues-as-jubilees-tells-them",
+      "shelf": "wider",
+      "era": "egypt",
+      "title": "The plagues, as Jubilees tells them",
+      "cite": "Jubilees 48",
+      "blurb": "Mastema standing against Moses, and the night the firstborn die.",
+      "spans": [
+        {
+          "work": "jubilees",
+          "ch": "48"
+        }
+      ]
+    },
+    {
+      "id": "the-passover",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "The Passover",
+      "cite": "Exodus 12–13",
+      "blurb": "Blood on the doorposts, unleavened bread, and a people walking out.",
+      "spans": [
+        {
+          "work": "exodus",
+          "ch": "12"
+        },
+        {
+          "work": "exodus",
+          "ch": "13"
+        }
+      ]
+    },
+    {
+      "id": "the-sea",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "The sea",
+      "cite": "Exodus 14",
+      "blurb": "The water stands up, the army follows, and the water returns.",
+      "spans": [
+        {
+          "work": "exodus",
+          "ch": "14"
+        }
+      ]
+    },
+    {
+      "id": "the-song-of-the-sea",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "The song of the sea",
+      "cite": "Exodus 15:1–21",
+      "blurb": "Miriam takes a tambourine. The oldest poem in the collection is this one.",
+      "spans": [
+        {
+          "work": "exodus",
+          "ch": "15",
+          "v1": 1,
+          "v2": 21
+        }
+      ]
+    },
+    {
+      "id": "manna-water-and-amalek",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "Manna, water, and Amalek",
+      "cite": "Exodus 15:22–17",
+      "blurb": "Bitter water made sweet, bread on the ground, a rock struck, and hands held up in a battle.",
+      "spans": [
+        {
+          "work": "exodus",
+          "ch": "15",
+          "v1": 22,
+          "v2": 27
+        },
+        {
+          "work": "exodus",
+          "ch": "16"
+        },
+        {
+          "work": "exodus",
+          "ch": "17"
+        }
+      ]
+    },
+    {
+      "id": "jethro-s-advice",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "Jethro's advice",
+      "cite": "Exodus 18",
+      "blurb": "Moses' father-in-law watches him wear himself out, and tells him to share the work.",
+      "spans": [
+        {
+          "work": "exodus",
+          "ch": "18"
+        }
+      ]
+    },
+    {
+      "id": "sinai-and-the-ten-words",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "Sinai and the ten words",
+      "cite": "Exodus 19–20",
+      "blurb": "The mountain smokes, and the commandments are spoken.",
+      "spans": [
+        {
+          "work": "exodus",
+          "ch": "19"
+        },
+        {
+          "work": "exodus",
+          "ch": "20"
+        }
+      ]
+    },
+    {
+      "id": "the-golden-calf",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "The golden calf",
+      "cite": "Exodus 32",
+      "blurb": "A god made of earrings, tablets shattered, and Moses standing in the breach.",
+      "spans": [
+        {
+          "work": "exodus",
+          "ch": "32"
+        }
+      ]
+    },
+    {
+      "id": "show-me-your-glory",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "Show me your glory",
+      "cite": "Exodus 33–34",
+      "blurb": "Moses asks to see God, and new tablets are written.",
+      "spans": [
+        {
+          "work": "exodus",
+          "ch": "33"
+        },
+        {
+          "work": "exodus",
+          "ch": "34"
+        }
+      ]
+    },
+    {
+      "id": "the-tabernacle-is-set-up",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "The tabernacle is set up",
+      "cite": "Exodus 40",
+      "blurb": "The cloud covers the tent, and the glory fills it.",
+      "spans": [
+        {
+          "work": "exodus",
+          "ch": "40"
+        }
+      ]
+    },
+    {
+      "id": "nadab-and-abihu",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "Nadab and Abihu",
+      "cite": "Leviticus 10",
+      "blurb": "Strange fire, and two priests who die before the Lord.",
+      "spans": [
+        {
+          "work": "leviticus",
+          "ch": "10"
+        }
+      ]
+    },
+    {
+      "id": "the-spies",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "The spies",
+      "cite": "Numbers 13–14",
+      "blurb": "A land of milk and honey, a bad report, and forty years in the wilderness.",
+      "spans": [
+        {
+          "work": "numbers",
+          "ch": "13"
+        },
+        {
+          "work": "numbers",
+          "ch": "14"
+        }
+      ]
+    },
+    {
+      "id": "korah-s-rebellion",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "Korah's rebellion",
+      "cite": "Numbers 16",
+      "blurb": "The ground opens, and fire comes out.",
+      "spans": [
+        {
+          "work": "numbers",
+          "ch": "16"
+        }
+      ]
+    },
+    {
+      "id": "the-rock-and-the-death-of-aaron",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "The rock, and the death of Aaron",
+      "cite": "Numbers 20",
+      "blurb": "Moses strikes the rock he was told to speak to. Aaron dies on Mount Hor.",
+      "spans": [
+        {
+          "work": "numbers",
+          "ch": "20"
+        }
+      ]
+    },
+    {
+      "id": "the-bronze-serpent",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "The bronze serpent",
+      "cite": "Numbers 21:4–9",
+      "blurb": "Serpents in the camp, and a bronze one lifted up.",
+      "spans": [
+        {
+          "work": "numbers",
+          "ch": "21",
+          "v1": 4,
+          "v2": 9
+        }
+      ]
+    },
+    {
+      "id": "balaam-and-the-donkey",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "Balaam and the donkey",
+      "cite": "Numbers 22–24",
+      "blurb": "A prophet hired to curse Israel blesses them instead. The donkey sees the angel first.",
+      "spans": [
+        {
+          "work": "numbers",
+          "ch": "22"
+        },
+        {
+          "work": "numbers",
+          "ch": "23"
+        },
+        {
+          "work": "numbers",
+          "ch": "24"
+        }
+      ]
+    },
+    {
+      "id": "baal-of-peor",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "Baal of Peor",
+      "cite": "Numbers 25",
+      "blurb": "The camp joins itself to another god, and Phinehas acts.",
+      "spans": [
+        {
+          "work": "numbers",
+          "ch": "25"
+        }
+      ]
+    },
+    {
+      "id": "the-daughters-of-zelophehad",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "The daughters of Zelophehad",
+      "cite": "Numbers 27:1–11",
+      "blurb": "Five sisters stand before Moses and ask for their father's inheritance.",
+      "spans": [
+        {
+          "work": "numbers",
+          "ch": "27",
+          "v1": 1,
+          "v2": 11
+        }
+      ]
+    },
+    {
+      "id": "the-song-of-moses",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "The song of Moses",
+      "cite": "Deuteronomy 32",
+      "blurb": "Give ear, heavens, and I will speak. A song taught to the people before he dies.",
+      "spans": [
+        {
+          "work": "deuteronomy",
+          "ch": "32"
+        }
+      ]
+    },
+    {
+      "id": "the-death-of-moses",
+      "shelf": "hb",
+      "era": "egypt",
+      "title": "The death of Moses",
+      "cite": "Deuteronomy 34",
+      "blurb": "He sees the land, and he does not cross into it. No one knows his grave.",
+      "spans": [
+        {
+          "work": "deuteronomy",
+          "ch": "34"
+        }
+      ]
+    },
+    {
+      "id": "rahab-and-the-spies",
+      "shelf": "hb",
+      "era": "land",
+      "title": "Rahab and the spies",
+      "cite": "Joshua 2",
+      "blurb": "A scarlet cord in the window of a house on the wall.",
+      "spans": [
+        {
+          "work": "joshua",
+          "ch": "2"
+        }
+      ]
+    },
+    {
+      "id": "crossing-the-jordan",
+      "shelf": "hb",
+      "era": "land",
+      "title": "Crossing the Jordan",
+      "cite": "Joshua 3–4",
+      "blurb": "The priests stand in the river, and twelve stones are carried out.",
+      "spans": [
+        {
+          "work": "joshua",
+          "ch": "3"
+        },
+        {
+          "work": "joshua",
+          "ch": "4"
+        }
+      ]
+    },
+    {
+      "id": "the-commander-of-the-lord-s-army",
+      "shelf": "hb",
+      "era": "land",
+      "title": "The commander of the Lord's army",
+      "cite": "Joshua 5:13–15",
+      "blurb": "A man with a drawn sword, and Joshua told to take off his sandals.",
+      "spans": [
+        {
+          "work": "joshua",
+          "ch": "5",
+          "v1": 13,
+          "v2": 15
+        }
+      ]
+    },
+    {
+      "id": "jericho",
+      "shelf": "hb",
+      "era": "land",
+      "title": "Jericho",
+      "cite": "Joshua 6",
+      "blurb": "Seven days of trumpets, and the wall falls down flat.",
+      "spans": [
+        {
+          "work": "joshua",
+          "ch": "6"
+        }
+      ]
+    },
+    {
+      "id": "achan-and-ai",
+      "shelf": "hb",
+      "era": "land",
+      "title": "Achan and Ai",
+      "cite": "Joshua 7–8",
+      "blurb": "A hidden robe and a wedge of gold, a defeat, and a second assault.",
+      "spans": [
+        {
+          "work": "joshua",
+          "ch": "7"
+        },
+        {
+          "work": "joshua",
+          "ch": "8"
+        }
+      ]
+    },
+    {
+      "id": "the-gibeonites",
+      "shelf": "hb",
+      "era": "land",
+      "title": "The Gibeonites",
+      "cite": "Joshua 9",
+      "blurb": "Worn-out sacks and moldy bread, and a treaty made by a trick.",
+      "spans": [
+        {
+          "work": "joshua",
+          "ch": "9"
+        }
+      ]
+    },
+    {
+      "id": "the-sun-stands-still",
+      "shelf": "hb",
+      "era": "land",
+      "title": "The sun stands still",
+      "cite": "Joshua 10",
+      "blurb": "Five kings in a cave, and a day that does not end on schedule.",
+      "spans": [
+        {
+          "work": "joshua",
+          "ch": "10"
+        }
+      ]
+    },
+    {
+      "id": "caleb-asks-for-the-hill-country",
+      "shelf": "hb",
+      "era": "land",
+      "title": "Caleb asks for the hill country",
+      "cite": "Joshua 14",
+      "blurb": "Forty-five years later, he is still as strong, and he wants Hebron.",
+      "spans": [
+        {
+          "work": "joshua",
+          "ch": "14"
+        }
+      ]
+    },
+    {
+      "id": "joshua-s-farewell",
+      "shelf": "hb",
+      "era": "land",
+      "title": "Joshua's farewell",
+      "cite": "Joshua 23–24",
+      "blurb": "Choose this day whom you will serve. As for me and my house, we will serve the Lord.",
+      "spans": [
+        {
+          "work": "joshua",
+          "ch": "23"
+        },
+        {
+          "work": "joshua",
+          "ch": "24"
+        }
+      ]
+    },
+    {
+      "id": "ehud",
+      "shelf": "hb",
+      "era": "judges",
+      "title": "Ehud",
+      "cite": "Judges 3:12–30",
+      "blurb": "A left-handed man, a hidden sword, and a king left alone in his cool roof chamber.",
+      "spans": [
+        {
+          "work": "judges",
+          "ch": "3",
+          "v1": 12,
+          "v2": 30
+        }
+      ]
+    },
+    {
+      "id": "deborah-barak-and-jael",
+      "shelf": "hb",
+      "era": "judges",
+      "title": "Deborah, Barak, and Jael",
+      "cite": "Judges 4–5",
+      "blurb": "A prophet who judges Israel, a general who will not go without her, and a tent peg.",
+      "spans": [
+        {
+          "work": "judges",
+          "ch": "4"
+        },
+        {
+          "work": "judges",
+          "ch": "5"
+        }
+      ]
+    },
+    {
+      "id": "gideon",
+      "shelf": "hb",
+      "era": "judges",
+      "title": "Gideon",
+      "cite": "Judges 6–8",
+      "blurb": "A fleece, three hundred men, and torches in jars.",
+      "spans": [
+        {
+          "work": "judges",
+          "ch": "6"
+        },
+        {
+          "work": "judges",
+          "ch": "7"
+        },
+        {
+          "work": "judges",
+          "ch": "8"
+        }
+      ]
+    },
+    {
+      "id": "abimelech",
+      "shelf": "hb",
+      "era": "judges",
+      "title": "Abimelech",
+      "cite": "Judges 9",
+      "blurb": "A bramble king, a curse from Jotham, and a millstone from a tower.",
+      "spans": [
+        {
+          "work": "judges",
+          "ch": "9"
+        }
+      ]
+    },
+    {
+      "id": "jephthah",
+      "shelf": "hb",
+      "era": "judges",
+      "title": "Jephthah",
+      "cite": "Judges 11–12",
+      "blurb": "An outcast called back to lead, a rash vow, and his daughter.",
+      "spans": [
+        {
+          "work": "judges",
+          "ch": "11"
+        },
+        {
+          "work": "judges",
+          "ch": "12"
+        }
+      ]
+    },
+    {
+      "id": "the-birth-of-samson",
+      "shelf": "hb",
+      "era": "judges",
+      "title": "The birth of Samson",
+      "cite": "Judges 13",
+      "blurb": "A woman who had borne no child, and a messenger who will not give his name.",
+      "spans": [
+        {
+          "work": "judges",
+          "ch": "13"
+        }
+      ]
+    },
+    {
+      "id": "samson-s-riddle",
+      "shelf": "hb",
+      "era": "judges",
+      "title": "Samson's riddle",
+      "cite": "Judges 14",
+      "blurb": "A lion, honey in the carcass, and a riddle at a wedding.",
+      "spans": [
+        {
+          "work": "judges",
+          "ch": "14"
+        }
+      ]
+    },
+    {
+      "id": "the-jawbone",
+      "shelf": "hb",
+      "era": "judges",
+      "title": "The jawbone",
+      "cite": "Judges 15",
+      "blurb": "Foxes and torches, and a thousand with the jawbone of a donkey.",
+      "spans": [
+        {
+          "work": "judges",
+          "ch": "15"
+        }
+      ]
+    },
+    {
+      "id": "samson-and-delilah",
+      "shelf": "hb",
+      "era": "judges",
+      "title": "Samson and Delilah",
+      "cite": "Judges 16",
+      "blurb": "The secret of his hair, the pillars of the temple, and the end of it.",
+      "spans": [
+        {
+          "work": "judges",
+          "ch": "16"
+        }
+      ]
+    },
+    {
+      "id": "micah-s-idol",
+      "shelf": "hb",
+      "era": "judges",
+      "title": "Micah's idol",
+      "cite": "Judges 17–18",
+      "blurb": "A hired priest, a stolen shrine, and the tribe of Dan looking for a home.",
+      "spans": [
+        {
+          "work": "judges",
+          "ch": "17"
+        },
+        {
+          "work": "judges",
+          "ch": "18"
+        }
+      ]
+    },
+    {
+      "id": "the-levite-s-concubine",
+      "shelf": "hb",
+      "era": "judges",
+      "title": "The Levite's concubine",
+      "cite": "Judges 19–21",
+      "blurb": "A night in Gibeah, a body sent out in pieces, and a war inside Israel. One of the darkest stories in the book.",
+      "spans": [
+        {
+          "work": "judges",
+          "ch": "19"
+        },
+        {
+          "work": "judges",
+          "ch": "20"
+        },
+        {
+          "work": "judges",
+          "ch": "21"
+        }
+      ]
+    },
+    {
+      "id": "ruth",
+      "shelf": "hb",
+      "era": "judges",
+      "title": "Ruth",
+      "cite": "Ruth",
+      "blurb": "A widow who will not go back, a field, a kinsman, and a child who will be David's grandfather.",
+      "spans": [
+        {
+          "work": "ruth",
+          "ch": "1"
+        },
+        {
+          "work": "ruth",
+          "ch": "2"
+        },
+        {
+          "work": "ruth",
+          "ch": "3"
+        },
+        {
+          "work": "ruth",
+          "ch": "4"
+        }
+      ]
+    },
+    {
+      "id": "hannah-s-prayer",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "Hannah's prayer",
+      "cite": "1 Samuel 1–2",
+      "blurb": "A woman weeping at the shrine, a child lent to the Lord, and a song.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "1"
+        },
+        {
+          "work": "1-samuel",
+          "ch": "2"
+        }
+      ]
+    },
+    {
+      "id": "the-lord-calls-samuel",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "The Lord calls Samuel",
+      "cite": "1 Samuel 3",
+      "blurb": "A boy who thinks it is Eli, until Eli tells him to answer.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "3"
+        }
+      ]
+    },
+    {
+      "id": "the-ark-is-captured",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "The ark is captured",
+      "cite": "1 Samuel 4–6",
+      "blurb": "Ichabod, the glory departed, and a god who topples Dagon in his own temple.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "4"
+        },
+        {
+          "work": "1-samuel",
+          "ch": "5"
+        },
+        {
+          "work": "1-samuel",
+          "ch": "6"
+        }
+      ]
+    },
+    {
+      "id": "israel-asks-for-a-king",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "Israel asks for a king",
+      "cite": "1 Samuel 8",
+      "blurb": "They want to be like the other nations. Samuel warns them what a king will take.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "8"
+        }
+      ]
+    },
+    {
+      "id": "saul-is-anointed",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "Saul is anointed",
+      "cite": "1 Samuel 9–10",
+      "blurb": "Lost donkeys, a seer, and a shy man who hides among the baggage.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "9"
+        },
+        {
+          "work": "1-samuel",
+          "ch": "10"
+        }
+      ]
+    },
+    {
+      "id": "saul-s-first-victory",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "Saul's first victory",
+      "cite": "1 Samuel 11",
+      "blurb": "Ammon threatens Jabesh, and Saul cuts a yoke of oxen into pieces.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "11"
+        }
+      ]
+    },
+    {
+      "id": "saul-is-rejected",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "Saul is rejected",
+      "cite": "1 Samuel 13 and 15",
+      "blurb": "A sacrifice he was not to offer, and a king of Amalek he was told to spare and did not.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "13"
+        },
+        {
+          "work": "1-samuel",
+          "ch": "15"
+        }
+      ]
+    },
+    {
+      "id": "david-is-anointed",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "David is anointed",
+      "cite": "1 Samuel 16",
+      "blurb": "The youngest son, kept out with the sheep, and a spirit that comes on him.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "16"
+        }
+      ]
+    },
+    {
+      "id": "david-and-goliath",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "David and Goliath",
+      "cite": "1 Samuel 17",
+      "blurb": "Five stones, a sling, and a giant who has defied the armies of Israel.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "17"
+        }
+      ]
+    },
+    {
+      "id": "david-and-jonathan",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "David and Jonathan",
+      "cite": "1 Samuel 18–20",
+      "blurb": "A covenant between them, a spear thrown, and arrows shot as a signal.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "18"
+        },
+        {
+          "work": "1-samuel",
+          "ch": "19"
+        },
+        {
+          "work": "1-samuel",
+          "ch": "20"
+        }
+      ]
+    },
+    {
+      "id": "david-on-the-run",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "David on the run",
+      "cite": "1 Samuel 21–22",
+      "blurb": "Holy bread, a feigned madness, and the priests of Nob killed for helping him.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "21"
+        },
+        {
+          "work": "1-samuel",
+          "ch": "22"
+        }
+      ]
+    },
+    {
+      "id": "david-spares-saul-in-the-cave",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "David spares Saul in the cave",
+      "cite": "1 Samuel 24",
+      "blurb": "Saul comes in to relieve himself. David cuts the corner of his robe and will not strike.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "24"
+        }
+      ]
+    },
+    {
+      "id": "abigail",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "Abigail",
+      "cite": "1 Samuel 25",
+      "blurb": "A foolish husband, a wise wife with loaves and wine, and David talked back from bloodshed.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "25"
+        }
+      ]
+    },
+    {
+      "id": "david-spares-saul-again",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "David spares Saul again",
+      "cite": "1 Samuel 26",
+      "blurb": "He takes the spear and the water jug from beside the sleeping king.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "26"
+        }
+      ]
+    },
+    {
+      "id": "the-medium-of-endor",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "The medium of Endor",
+      "cite": "1 Samuel 28",
+      "blurb": "Saul, forbidden his own oracles, asks a woman to call Samuel up.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "28"
+        }
+      ]
+    },
+    {
+      "id": "david-among-the-philistines",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "David among the Philistines",
+      "cite": "1 Samuel 27 and 29–30",
+      "blurb": "He lives in Ziklag, is refused the battle, and comes home to a town burned.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "27"
+        },
+        {
+          "work": "1-samuel",
+          "ch": "29"
+        },
+        {
+          "work": "1-samuel",
+          "ch": "30"
+        }
+      ]
+    },
+    {
+      "id": "the-death-of-saul",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "The death of Saul",
+      "cite": "1 Samuel 31",
+      "blurb": "The battle on Gilboa, and Saul falls on his own sword.",
+      "spans": [
+        {
+          "work": "1-samuel",
+          "ch": "31"
+        }
+      ]
+    },
+    {
+      "id": "david-s-lament",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "David's lament",
+      "cite": "2 Samuel 1",
+      "blurb": "How the mighty have fallen. He kills the man who claimed to have finished Saul.",
+      "spans": [
+        {
+          "work": "2-samuel",
+          "ch": "1"
+        }
+      ]
+    },
+    {
+      "id": "david-becomes-king",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "David becomes king",
+      "cite": "2 Samuel 2–5",
+      "blurb": "First over Judah, then over all Israel, and Jerusalem taken.",
+      "spans": [
+        {
+          "work": "2-samuel",
+          "ch": "2"
+        },
+        {
+          "work": "2-samuel",
+          "ch": "3"
+        },
+        {
+          "work": "2-samuel",
+          "ch": "4"
+        },
+        {
+          "work": "2-samuel",
+          "ch": "5"
+        }
+      ]
+    },
+    {
+      "id": "the-ark-comes-to-jerusalem",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "The ark comes to Jerusalem",
+      "cite": "2 Samuel 6",
+      "blurb": "Uzzah dies for steadying it. David dances, and Michal despises him.",
+      "spans": [
+        {
+          "work": "2-samuel",
+          "ch": "6"
+        }
+      ]
+    },
+    {
+      "id": "god-s-promise-to-david",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "God's promise to David",
+      "cite": "2 Samuel 7",
+      "blurb": "You will not build me a house. I will build you one, a throne that lasts.",
+      "spans": [
+        {
+          "work": "2-samuel",
+          "ch": "7"
+        }
+      ]
+    },
+    {
+      "id": "mephibosheth",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "Mephibosheth",
+      "cite": "2 Samuel 9",
+      "blurb": "Jonathan's son, lame in both feet, is given a place at the king's table.",
+      "spans": [
+        {
+          "work": "2-samuel",
+          "ch": "9"
+        }
+      ]
+    },
+    {
+      "id": "david-and-bathsheba",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "David and Bathsheba",
+      "cite": "2 Samuel 11–12",
+      "blurb": "A woman seen from a roof, a husband sent to his death, and Nathan's story of a lamb.",
+      "spans": [
+        {
+          "work": "2-samuel",
+          "ch": "11"
+        },
+        {
+          "work": "2-samuel",
+          "ch": "12"
+        }
+      ]
+    },
+    {
+      "id": "amnon-and-tamar",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "Amnon and Tamar",
+      "cite": "2 Samuel 13",
+      "blurb": "A brother's violence, and Absalom's silence that lasts two years.",
+      "spans": [
+        {
+          "work": "2-samuel",
+          "ch": "13"
+        }
+      ]
+    },
+    {
+      "id": "absalom-s-rebellion",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "Absalom's rebellion",
+      "cite": "2 Samuel 15–18",
+      "blurb": "A prince who steals the hearts of Israel, a king walking barefoot out of his city, and a death in an oak.",
+      "spans": [
+        {
+          "work": "2-samuel",
+          "ch": "15"
+        },
+        {
+          "work": "2-samuel",
+          "ch": "16"
+        },
+        {
+          "work": "2-samuel",
+          "ch": "17"
+        },
+        {
+          "work": "2-samuel",
+          "ch": "18"
+        }
+      ]
+    },
+    {
+      "id": "david-returns",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "David returns",
+      "cite": "2 Samuel 19",
+      "blurb": "The king who cannot stop grieving, and a kingdom he has to win back gently.",
+      "spans": [
+        {
+          "work": "2-samuel",
+          "ch": "19"
+        }
+      ]
+    },
+    {
+      "id": "the-census",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "The census",
+      "cite": "2 Samuel 24",
+      "blurb": "David numbers the people, a plague follows, and he buys a threshing floor.",
+      "spans": [
+        {
+          "work": "2-samuel",
+          "ch": "24"
+        }
+      ]
+    },
+    {
+      "id": "solomon-asks-for-wisdom",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "Solomon asks for wisdom",
+      "cite": "1 Kings 1–3",
+      "blurb": "An old king's last days, a rival son, and a young king who asks for a hearing heart.",
+      "spans": [
+        {
+          "work": "1-kings",
+          "ch": "1"
+        },
+        {
+          "work": "1-kings",
+          "ch": "2"
+        },
+        {
+          "work": "1-kings",
+          "ch": "3"
+        }
+      ]
+    },
+    {
+      "id": "the-temple",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "The temple",
+      "cite": "1 Kings 6–8",
+      "blurb": "Cedar and gold, the ark carried in, and a cloud so thick the priests cannot stand.",
+      "spans": [
+        {
+          "work": "1-kings",
+          "ch": "6"
+        },
+        {
+          "work": "1-kings",
+          "ch": "7"
+        },
+        {
+          "work": "1-kings",
+          "ch": "8"
+        }
+      ]
+    },
+    {
+      "id": "the-queen-of-sheba",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "The queen of Sheba",
+      "cite": "1 Kings 10:1–13",
+      "blurb": "She comes with hard questions and leaves with no more spirit in her.",
+      "spans": [
+        {
+          "work": "1-kings",
+          "ch": "10",
+          "v1": 1,
+          "v2": 13
+        }
+      ]
+    },
+    {
+      "id": "the-kingdom-tears",
+      "shelf": "hb",
+      "era": "kingdom",
+      "title": "The kingdom tears",
+      "cite": "1 Kings 11–12",
+      "blurb": "Solomon's heart turns. A prophet tears a cloak into twelve pieces, and the north walks away.",
+      "spans": [
+        {
+          "work": "1-kings",
+          "ch": "11"
+        },
+        {
+          "work": "1-kings",
+          "ch": "12"
+        }
+      ]
+    },
+    {
+      "id": "the-man-of-god-from-judah",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "The man of God from Judah",
+      "cite": "1 Kings 13",
+      "blurb": "A prophet who denounces Jeroboam's altar, and then believes the wrong old man.",
+      "spans": [
+        {
+          "work": "1-kings",
+          "ch": "13"
+        }
+      ]
+    },
+    {
+      "id": "elijah-and-the-widow",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "Elijah and the widow",
+      "cite": "1 Kings 17",
+      "blurb": "Ravens, a jar of meal that does not fail, and a dead boy given back.",
+      "spans": [
+        {
+          "work": "1-kings",
+          "ch": "17"
+        }
+      ]
+    },
+    {
+      "id": "elijah-on-carmel",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "Elijah on Carmel",
+      "cite": "1 Kings 18",
+      "blurb": "Four hundred and fifty prophets of Baal, a trench of water, and fire.",
+      "spans": [
+        {
+          "work": "1-kings",
+          "ch": "18"
+        }
+      ]
+    },
+    {
+      "id": "elijah-at-horeb",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "Elijah at Horeb",
+      "cite": "1 Kings 19",
+      "blurb": "He asks to die under a broom tree. On the mountain, the Lord is not in the wind, the earthquake, or the fire.",
+      "spans": [
+        {
+          "work": "1-kings",
+          "ch": "19"
+        }
+      ]
+    },
+    {
+      "id": "naboth-s-vineyard",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "Naboth's vineyard",
+      "cite": "1 Kings 21",
+      "blurb": "A king who pouts, a queen who forges letters, and Elijah in the vineyard.",
+      "spans": [
+        {
+          "work": "1-kings",
+          "ch": "21"
+        }
+      ]
+    },
+    {
+      "id": "the-death-of-ahab",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "The death of Ahab",
+      "cite": "1 Kings 22",
+      "blurb": "Four hundred prophets say go up. One says he saw a lying spirit. A random arrow finds the king.",
+      "spans": [
+        {
+          "work": "1-kings",
+          "ch": "22"
+        }
+      ]
+    },
+    {
+      "id": "elijah-is-taken-up",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "Elijah is taken up",
+      "cite": "2 Kings 2",
+      "blurb": "A chariot of fire, a cloak that parts the river, and boys who mock Elisha's baldness.",
+      "spans": [
+        {
+          "work": "2-kings",
+          "ch": "2"
+        }
+      ]
+    },
+    {
+      "id": "elisha-s-wonders",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "Elisha's wonders",
+      "cite": "2 Kings 4",
+      "blurb": "The widow's oil, the Shunammite's son, death in the pot, and twenty loaves for a hundred men.",
+      "spans": [
+        {
+          "work": "2-kings",
+          "ch": "4"
+        }
+      ]
+    },
+    {
+      "id": "naaman",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "Naaman",
+      "cite": "2 Kings 5",
+      "blurb": "A Syrian general, a servant girl, and a river he almost refuses to wash in.",
+      "spans": [
+        {
+          "work": "2-kings",
+          "ch": "5"
+        }
+      ]
+    },
+    {
+      "id": "the-axe-head-and-the-blinded-army",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "The axe head and the blinded army",
+      "cite": "2 Kings 6:1–23",
+      "blurb": "Iron floats. An army surrounding the prophet is led, eyes opened later, into Samaria and fed.",
+      "spans": [
+        {
+          "work": "2-kings",
+          "ch": "6",
+          "v1": 1,
+          "v2": 23
+        }
+      ]
+    },
+    {
+      "id": "the-siege-and-the-four-lepers",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "The siege and the four lepers",
+      "cite": "2 Kings 6:24–7",
+      "blurb": "A city eating its desperation, and four lepers who find the enemy camp empty.",
+      "spans": [
+        {
+          "work": "2-kings",
+          "ch": "6",
+          "v1": 24,
+          "v2": 33
+        },
+        {
+          "work": "2-kings",
+          "ch": "7"
+        }
+      ]
+    },
+    {
+      "id": "jehu",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "Jehu",
+      "cite": "2 Kings 9–10",
+      "blurb": "A furious ride, Jezebel at the window, and a purge that does not stop where it should.",
+      "spans": [
+        {
+          "work": "2-kings",
+          "ch": "9"
+        },
+        {
+          "work": "2-kings",
+          "ch": "10"
+        }
+      ]
+    },
+    {
+      "id": "athaliah-and-joash",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "Athaliah and Joash",
+      "cite": "2 Kings 11",
+      "blurb": "A queen who kills the royal children, one boy hidden in the temple, and a crown six years later.",
+      "spans": [
+        {
+          "work": "2-kings",
+          "ch": "11"
+        }
+      ]
+    },
+    {
+      "id": "jonah",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "Jonah",
+      "cite": "Jonah",
+      "blurb": "A prophet who runs, a fish, a city that repents, and a man angry that God is merciful.",
+      "spans": [
+        {
+          "work": "jonah",
+          "ch": "1"
+        },
+        {
+          "work": "jonah",
+          "ch": "2"
+        },
+        {
+          "work": "jonah",
+          "ch": "3"
+        },
+        {
+          "work": "jonah",
+          "ch": "4"
+        }
+      ]
+    },
+    {
+      "id": "the-fall-of-samaria",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "The fall of Samaria",
+      "cite": "2 Kings 17",
+      "blurb": "The northern kingdom ends. The writer says why.",
+      "spans": [
+        {
+          "work": "2-kings",
+          "ch": "17"
+        }
+      ]
+    },
+    {
+      "id": "hezekiah-and-sennacherib",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "Hezekiah and Sennacherib",
+      "cite": "2 Kings 18–19",
+      "blurb": "The Assyrian envoy shouts at the wall. Isaiah sends a word. The army does not take the city.",
+      "spans": [
+        {
+          "work": "2-kings",
+          "ch": "18"
+        },
+        {
+          "work": "2-kings",
+          "ch": "19"
+        }
+      ]
+    },
+    {
+      "id": "hezekiah-s-illness",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "Hezekiah's illness",
+      "cite": "2 Kings 20",
+      "blurb": "Fifteen years more, a shadow that steps backward, and envoys from Babylon shown the treasury.",
+      "spans": [
+        {
+          "work": "2-kings",
+          "ch": "20"
+        }
+      ]
+    },
+    {
+      "id": "josiah-finds-the-book",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "Josiah finds the book",
+      "cite": "2 Kings 22–23",
+      "blurb": "Workmen in the temple turn up a scroll. The young king tears his clothes.",
+      "spans": [
+        {
+          "work": "2-kings",
+          "ch": "22"
+        },
+        {
+          "work": "2-kings",
+          "ch": "23"
+        }
+      ]
+    },
+    {
+      "id": "jerusalem-falls",
+      "shelf": "hb",
+      "era": "divided",
+      "title": "Jerusalem falls",
+      "cite": "2 Kings 24–25",
+      "blurb": "The city is burned, the temple stripped, and a king eats at a foreign table.",
+      "spans": [
+        {
+          "work": "2-kings",
+          "ch": "24"
+        },
+        {
+          "work": "2-kings",
+          "ch": "25"
+        }
+      ]
+    },
+    {
+      "id": "daniel-at-the-king-s-table",
+      "shelf": "hb",
+      "era": "exile",
+      "title": "Daniel at the king's table",
+      "cite": "Daniel 1",
+      "blurb": "Four young men refuse the royal food and are found wiser than the magicians.",
+      "spans": [
+        {
+          "work": "daniel",
+          "ch": "1"
+        }
+      ]
+    },
+    {
+      "id": "the-fiery-furnace",
+      "shelf": "hb",
+      "era": "exile",
+      "title": "The fiery furnace",
+      "cite": "Daniel 3",
+      "blurb": "A statue, a furnace heated seven times hotter, and a fourth figure in the fire.",
+      "spans": [
+        {
+          "work": "daniel",
+          "ch": "3"
+        }
+      ]
+    },
+    {
+      "id": "the-prayer-in-the-furnace",
+      "shelf": "wider",
+      "era": "exile",
+      "title": "The prayer in the furnace",
+      "cite": "Greek Daniel 3",
+      "blurb": "The song Azariah and his companions sing in the fire, kept in the Greek Daniel and not in the Hebrew.",
+      "spans": [
+        {
+          "work": "the-prayer-of-azariah-and-the-song-of-the-three-greek-daniel-3-24-90",
+          "ch": "3"
+        }
+      ]
+    },
+    {
+      "id": "the-writing-on-the-wall",
+      "shelf": "hb",
+      "era": "exile",
+      "title": "The writing on the wall",
+      "cite": "Daniel 5",
+      "blurb": "Belshazzar's feast, a hand, and MENE, MENE, TEKEL, PARSIN.",
+      "spans": [
+        {
+          "work": "daniel",
+          "ch": "5"
+        }
+      ]
+    },
+    {
+      "id": "the-lions-den",
+      "shelf": "hb",
+      "era": "exile",
+      "title": "The lions' den",
+      "cite": "Daniel 6",
+      "blurb": "A law about prayer, a sealed stone, and a king who cannot sleep.",
+      "spans": [
+        {
+          "work": "daniel",
+          "ch": "6"
+        }
+      ]
+    },
+    {
+      "id": "susanna",
+      "shelf": "wider",
+      "era": "exile",
+      "title": "Susanna",
+      "cite": "Greek Daniel 13",
+      "blurb": "Two elders, a garden, and a young Daniel who asks each of them which tree.",
+      "spans": [
+        {
+          "work": "susanna-greek-daniel-13",
+          "ch": "13"
+        }
+      ]
+    },
+    {
+      "id": "bel-and-the-dragon",
+      "shelf": "wider",
+      "era": "exile",
+      "title": "Bel and the dragon",
+      "cite": "Greek Daniel 14",
+      "blurb": "Daniel exposes a priestly trick, kills a dragon, and is thrown to the lions a second time.",
+      "spans": [
+        {
+          "work": "bel-and-the-dragon-greek-daniel-14",
+          "ch": "14"
+        }
+      ]
+    },
+    {
+      "id": "tobit-s-blindness",
+      "shelf": "wider",
+      "era": "exile",
+      "title": "Tobit's blindness",
+      "cite": "Tobit 1–3",
+      "blurb": "A man who buries the dead goes blind. In another city, Sarah prays on the same day.",
+      "spans": [
+        {
+          "work": "tobit",
+          "ch": "1"
+        },
+        {
+          "work": "tobit",
+          "ch": "2"
+        },
+        {
+          "work": "tobit",
+          "ch": "3"
+        }
+      ]
+    },
+    {
+      "id": "tobias-the-fish-and-sarah",
+      "shelf": "wider",
+      "era": "exile",
+      "title": "Tobias, the fish, and Sarah",
+      "cite": "Tobit 4–8",
+      "blurb": "An angel who gives a false name, a fish in the Tigris, and a demon driven off.",
+      "spans": [
+        {
+          "work": "tobit",
+          "ch": "4"
+        },
+        {
+          "work": "tobit",
+          "ch": "5"
+        },
+        {
+          "work": "tobit",
+          "ch": "6"
+        },
+        {
+          "work": "tobit",
+          "ch": "7"
+        },
+        {
+          "work": "tobit",
+          "ch": "8"
+        }
+      ]
+    },
+    {
+      "id": "tobit-sees-again",
+      "shelf": "wider",
+      "era": "exile",
+      "title": "Tobit sees again",
+      "cite": "Tobit 9–14",
+      "blurb": "The gall of the fish, a father's sight, and the angel who finally says who he is.",
+      "spans": [
+        {
+          "work": "tobit",
+          "ch": "9"
+        },
+        {
+          "work": "tobit",
+          "ch": "10"
+        },
+        {
+          "work": "tobit",
+          "ch": "11"
+        },
+        {
+          "work": "tobit",
+          "ch": "12"
+        },
+        {
+          "work": "tobit",
+          "ch": "13"
+        },
+        {
+          "work": "tobit",
+          "ch": "14"
+        }
+      ]
+    },
+    {
+      "id": "judith",
+      "shelf": "wider",
+      "era": "exile",
+      "title": "Judith",
+      "cite": "Judith 8–16",
+      "blurb": "A widow walks into the enemy camp, and Holofernes does not walk out.",
+      "spans": [
+        {
+          "work": "judith",
+          "ch": "8"
+        },
+        {
+          "work": "judith",
+          "ch": "9"
+        },
+        {
+          "work": "judith",
+          "ch": "10"
+        },
+        {
+          "work": "judith",
+          "ch": "11"
+        },
+        {
+          "work": "judith",
+          "ch": "12"
+        },
+        {
+          "work": "judith",
+          "ch": "13"
+        },
+        {
+          "work": "judith",
+          "ch": "14"
+        },
+        {
+          "work": "judith",
+          "ch": "15"
+        },
+        {
+          "work": "judith",
+          "ch": "16"
+        }
+      ]
+    },
+    {
+      "id": "esther-becomes-queen",
+      "shelf": "hb",
+      "era": "exile",
+      "title": "Esther becomes queen",
+      "cite": "Esther 1–2",
+      "blurb": "Vashti refuses the king. A Jewish orphan is chosen in her place, and her cousin uncovers a plot.",
+      "spans": [
+        {
+          "work": "esther-hebrew",
+          "ch": "1"
+        },
+        {
+          "work": "esther-hebrew",
+          "ch": "2"
+        }
+      ]
+    },
+    {
+      "id": "haman-s-plot",
+      "shelf": "hb",
+      "era": "exile",
+      "title": "Haman's plot",
+      "cite": "Esther 3–5",
+      "blurb": "A decree against a people, sackcloth in the street, and a queen who invites the king to a banquet.",
+      "spans": [
+        {
+          "work": "esther-hebrew",
+          "ch": "3"
+        },
+        {
+          "work": "esther-hebrew",
+          "ch": "4"
+        },
+        {
+          "work": "esther-hebrew",
+          "ch": "5"
+        }
+      ]
+    },
+    {
+      "id": "the-tables-turn",
+      "shelf": "hb",
+      "era": "exile",
+      "title": "The tables turn",
+      "cite": "Esther 6–10",
+      "blurb": "A sleepless king, a gallows built for the wrong man, and a day rewritten.",
+      "spans": [
+        {
+          "work": "esther-hebrew",
+          "ch": "6"
+        },
+        {
+          "work": "esther-hebrew",
+          "ch": "7"
+        },
+        {
+          "work": "esther-hebrew",
+          "ch": "8"
+        },
+        {
+          "work": "esther-hebrew",
+          "ch": "9"
+        },
+        {
+          "work": "esther-hebrew",
+          "ch": "10"
+        }
+      ]
+    },
+    {
+      "id": "esther-the-greek-telling",
+      "shelf": "wider",
+      "era": "exile",
+      "title": "Esther, the Greek telling",
+      "cite": "Greek Esther",
+      "blurb": "The same story with the prayers the Hebrew text leaves out, and with God's name spoken.",
+      "spans": [
+        {
+          "work": "esther-greek-version",
+          "ch": "1"
+        },
+        {
+          "work": "esther-greek-version",
+          "ch": "2"
+        },
+        {
+          "work": "esther-greek-version",
+          "ch": "3"
+        },
+        {
+          "work": "esther-greek-version",
+          "ch": "4"
+        },
+        {
+          "work": "esther-greek-version",
+          "ch": "5"
+        },
+        {
+          "work": "esther-greek-version",
+          "ch": "6"
+        },
+        {
+          "work": "esther-greek-version",
+          "ch": "7"
+        },
+        {
+          "work": "esther-greek-version",
+          "ch": "8"
+        },
+        {
+          "work": "esther-greek-version",
+          "ch": "9"
+        },
+        {
+          "work": "esther-greek-version",
+          "ch": "10"
+        }
+      ]
+    },
+    {
+      "id": "the-return",
+      "shelf": "hb",
+      "era": "exile",
+      "title": "The return",
+      "cite": "Ezra 1–3",
+      "blurb": "Cyrus lets them go. The altar is rebuilt, and the old men weep when the foundation is laid.",
+      "spans": [
+        {
+          "work": "ezra",
+          "ch": "1"
+        },
+        {
+          "work": "ezra",
+          "ch": "2"
+        },
+        {
+          "work": "ezra",
+          "ch": "3"
+        }
+      ]
+    },
+    {
+      "id": "ezra-reads-the-law",
+      "shelf": "hb",
+      "era": "exile",
+      "title": "Ezra reads the law",
+      "cite": "Ezra 7–10",
+      "blurb": "A scribe arrives with a commission, and the community faces what the book requires of their marriages.",
+      "spans": [
+        {
+          "work": "ezra",
+          "ch": "7"
+        },
+        {
+          "work": "ezra",
+          "ch": "8"
+        },
+        {
+          "work": "ezra",
+          "ch": "9"
+        },
+        {
+          "work": "ezra",
+          "ch": "10"
+        }
+      ]
+    },
+    {
+      "id": "nehemiah-rebuilds-the-wall",
+      "shelf": "hb",
+      "era": "exile",
+      "title": "Nehemiah rebuilds the wall",
+      "cite": "Nehemiah 1–6",
+      "blurb": "A cupbearer hears the wall is broken, asks the king, and builds with a tool in one hand.",
+      "spans": [
+        {
+          "work": "nehemiah",
+          "ch": "1"
+        },
+        {
+          "work": "nehemiah",
+          "ch": "2"
+        },
+        {
+          "work": "nehemiah",
+          "ch": "3"
+        },
+        {
+          "work": "nehemiah",
+          "ch": "4"
+        },
+        {
+          "work": "nehemiah",
+          "ch": "5"
+        },
+        {
+          "work": "nehemiah",
+          "ch": "6"
+        }
+      ]
+    },
+    {
+      "id": "the-law-is-read-aloud",
+      "shelf": "hb",
+      "era": "exile",
+      "title": "The law is read aloud",
+      "cite": "Nehemiah 8",
+      "blurb": "From early morning until midday, and the people weep, and are told to go and eat what is rich.",
+      "spans": [
+        {
+          "work": "nehemiah",
+          "ch": "8"
+        }
+      ]
+    },
+    {
+      "id": "antiochus-and-the-desecration",
+      "shelf": "wider",
+      "era": "maccabees",
+      "title": "Antiochus and the desecration",
+      "cite": "1 Maccabees 1",
+      "blurb": "A Greek king puts a statue in the temple and forbids the law.",
+      "spans": [
+        {
+          "work": "1-maccabees",
+          "ch": "1"
+        }
+      ]
+    },
+    {
+      "id": "mattathias",
+      "shelf": "wider",
+      "era": "maccabees",
+      "title": "Mattathias",
+      "cite": "1 Maccabees 2",
+      "blurb": "An old priest kills the king's officer at the altar in Modein and takes to the hills.",
+      "spans": [
+        {
+          "work": "1-maccabees",
+          "ch": "2"
+        }
+      ]
+    },
+    {
+      "id": "judas-and-the-temple-cleansed",
+      "shelf": "wider",
+      "era": "maccabees",
+      "title": "Judas and the temple cleansed",
+      "cite": "1 Maccabees 3–4",
+      "blurb": "The hammer of the Maccabees, and the lamps lit again in a defiled temple. This is the story behind Hanukkah.",
+      "spans": [
+        {
+          "work": "1-maccabees",
+          "ch": "3"
+        },
+        {
+          "work": "1-maccabees",
+          "ch": "4"
+        }
+      ]
+    },
+    {
+      "id": "the-mother-and-her-seven-sons",
+      "shelf": "wider",
+      "era": "maccabees",
+      "title": "The mother and her seven sons",
+      "cite": "2 Maccabees 7",
+      "blurb": "Seven brothers and their mother refuse the king's pork, one after another.",
+      "spans": [
+        {
+          "work": "2-maccabees",
+          "ch": "7"
+        }
+      ]
+    },
+    {
+      "id": "the-death-of-judas",
+      "shelf": "wider",
+      "era": "maccabees",
+      "title": "The death of Judas",
+      "cite": "1 Maccabees 9",
+      "blurb": "Outnumbered, he fights anyway. How the mighty have fallen, the book says again.",
+      "spans": [
+        {
+          "work": "1-maccabees",
+          "ch": "9"
+        }
+      ]
+    },
+    {
+      "id": "the-elephants",
+      "shelf": "wider",
+      "era": "maccabees",
+      "title": "The elephants",
+      "cite": "3 Maccabees 5–6",
+      "blurb": "Jews of Alexandria are herded to be trampled. The elephants turn. A later, legendary telling of deliverance.",
+      "spans": [
+        {
+          "work": "3-maccabees",
+          "ch": "5"
+        },
+        {
+          "work": "3-maccabees",
+          "ch": "6"
+        }
+      ]
+    },
+    {
+      "id": "the-birth-of-mary",
+      "shelf": "wider",
+      "era": "nativity",
+      "title": "The birth of Mary",
+      "cite": "Protevangelium of James 1–8",
+      "blurb": "A later telling, not in the New Testament: Joachim and Anna, and the child Mary brought up in the temple.",
+      "spans": [
+        {
+          "work": "the-protevangelium-of-james",
+          "ch": "1"
+        },
+        {
+          "work": "the-protevangelium-of-james",
+          "ch": "2"
+        },
+        {
+          "work": "the-protevangelium-of-james",
+          "ch": "3"
+        },
+        {
+          "work": "the-protevangelium-of-james",
+          "ch": "4"
+        },
+        {
+          "work": "the-protevangelium-of-james",
+          "ch": "5"
+        },
+        {
+          "work": "the-protevangelium-of-james",
+          "ch": "6"
+        },
+        {
+          "work": "the-protevangelium-of-james",
+          "ch": "7"
+        },
+        {
+          "work": "the-protevangelium-of-james",
+          "ch": "8"
+        }
+      ]
+    },
+    {
+      "id": "zechariah-is-struck-silent",
+      "shelf": "nt",
+      "era": "nativity",
+      "title": "Zechariah is struck silent",
+      "cite": "Luke 1:5–25",
+      "blurb": "An old priest in the sanctuary, and a son promised. He asks for a sign and loses his speech.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "1",
+          "v1": 5,
+          "v2": 25
+        }
+      ]
+    },
+    {
+      "id": "the-annunciation",
+      "shelf": "nt",
+      "era": "nativity",
+      "title": "The annunciation",
+      "cite": "Luke 1:26–38",
+      "blurb": "Gabriel comes to Mary in Nazareth. Let it be to me according to your word.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "1",
+          "v1": 26,
+          "v2": 38
+        }
+      ]
+    },
+    {
+      "id": "mary-visits-elizabeth",
+      "shelf": "nt",
+      "era": "nativity",
+      "title": "Mary visits Elizabeth",
+      "cite": "Luke 1:39–56",
+      "blurb": "The child leaps. Mary sings the Magnificat.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "1",
+          "v1": 39,
+          "v2": 56
+        }
+      ]
+    },
+    {
+      "id": "the-birth-of-john",
+      "shelf": "nt",
+      "era": "nativity",
+      "title": "The birth of John",
+      "cite": "Luke 1:57–80",
+      "blurb": "His name is John. Zechariah's mouth is opened, and he prophesies.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "1",
+          "v1": 57,
+          "v2": 80
+        }
+      ]
+    },
+    {
+      "id": "joseph-s-dream",
+      "shelf": "nt",
+      "era": "nativity",
+      "title": "Joseph's dream",
+      "cite": "Matthew 1:18–25",
+      "blurb": "He resolves to dismiss her quietly. A dream tells him not to be afraid to take Mary as his wife.",
+      "spans": [
+        {
+          "work": "matthew",
+          "ch": "1",
+          "v1": 18,
+          "v2": 25
+        }
+      ]
+    },
+    {
+      "id": "the-birth-in-bethlehem",
+      "shelf": "nt",
+      "era": "nativity",
+      "title": "The birth in Bethlehem",
+      "cite": "Luke 2:1–20",
+      "blurb": "No room, a manger, and shepherds told first.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "2",
+          "v1": 1,
+          "v2": 20
+        }
+      ]
+    },
+    {
+      "id": "the-midwife-and-salome",
+      "shelf": "wider",
+      "era": "nativity",
+      "title": "The midwife and Salome",
+      "cite": "Protevangelium of James 17–20",
+      "blurb": "A later telling of the birth in a cave, and Salome, whose hand is withered and healed.",
+      "spans": [
+        {
+          "work": "the-protevangelium-of-james",
+          "ch": "17"
+        },
+        {
+          "work": "the-protevangelium-of-james",
+          "ch": "18"
+        },
+        {
+          "work": "the-protevangelium-of-james",
+          "ch": "19"
+        },
+        {
+          "work": "the-protevangelium-of-james",
+          "ch": "20"
+        }
+      ]
+    },
+    {
+      "id": "simeon-and-anna",
+      "shelf": "nt",
+      "era": "nativity",
+      "title": "Simeon and Anna",
+      "cite": "Luke 2:21–40",
+      "blurb": "In the temple, an old man takes the child and says he can depart in peace.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "2",
+          "v1": 21,
+          "v2": 40
+        }
+      ]
+    },
+    {
+      "id": "the-magi-and-the-flight",
+      "shelf": "nt",
+      "era": "nativity",
+      "title": "The magi and the flight",
+      "cite": "Matthew 2",
+      "blurb": "A star, gifts, a jealous king, a road to Egypt, and the children of Bethlehem.",
+      "spans": [
+        {
+          "work": "matthew",
+          "ch": "2"
+        }
+      ]
+    },
+    {
+      "id": "the-boy-in-the-temple",
+      "shelf": "nt",
+      "era": "nativity",
+      "title": "The boy in the temple",
+      "cite": "Luke 2:41–52",
+      "blurb": "They lose him for three days and find him among the teachers.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "2",
+          "v1": 41,
+          "v2": 52
+        }
+      ]
+    },
+    {
+      "id": "childhood-wonders",
+      "shelf": "wider",
+      "era": "nativity",
+      "title": "Childhood wonders",
+      "cite": "Infancy Gospel of Thomas",
+      "blurb": "A later, unsettling telling: a child who makes sparrows of clay and strikes, and heals, and grows. Not in the New Testament.",
+      "spans": [
+        {
+          "work": "the-gospel-of-thomas-infancy-first-greek-form",
+          "ch": "1"
+        },
+        {
+          "work": "the-gospel-of-thomas-infancy-first-greek-form",
+          "ch": "2"
+        },
+        {
+          "work": "the-gospel-of-thomas-infancy-first-greek-form",
+          "ch": "3"
+        },
+        {
+          "work": "the-gospel-of-thomas-infancy-first-greek-form",
+          "ch": "4"
+        },
+        {
+          "work": "the-gospel-of-thomas-infancy-first-greek-form",
+          "ch": "5"
+        }
+      ]
+    },
+    {
+      "id": "john-the-baptist",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "John the Baptist",
+      "cite": "Mark 1:1–8",
+      "blurb": "A voice in the wilderness, a coat of camel's hair, and a baptism of repentance.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "1",
+          "v1": 1,
+          "v2": 8
+        }
+      ]
+    },
+    {
+      "id": "the-baptism",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The baptism",
+      "cite": "Mark 1:9–11",
+      "blurb": "Jesus comes up out of the water, and a voice speaks.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "1",
+          "v1": 9,
+          "v2": 11
+        }
+      ]
+    },
+    {
+      "id": "the-temptation",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The temptation",
+      "cite": "Matthew 4:1–11",
+      "blurb": "Forty days, three offers, and angels afterward.",
+      "spans": [
+        {
+          "work": "matthew",
+          "ch": "4",
+          "v1": 1,
+          "v2": 11
+        }
+      ]
+    },
+    {
+      "id": "the-first-disciples",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The first disciples",
+      "cite": "Mark 1:14–20",
+      "blurb": "Follow me, and two sets of brothers leave their nets.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "1",
+          "v1": 14,
+          "v2": 20
+        }
+      ]
+    },
+    {
+      "id": "a-day-in-capernaum",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "A day in Capernaum",
+      "cite": "Mark 1:21–39",
+      "blurb": "A synagogue, a fever, a door crowded after sunset, and a departure before dawn.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "1",
+          "v1": 21,
+          "v2": 39
+        }
+      ]
+    },
+    {
+      "id": "the-catch-of-fish",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The catch of fish",
+      "cite": "Luke 5:1–11",
+      "blurb": "They have worked all night and caught nothing. The nets start to break.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "5",
+          "v1": 1,
+          "v2": 11
+        }
+      ]
+    },
+    {
+      "id": "the-leper",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The leper",
+      "cite": "Mark 1:40–45",
+      "blurb": "If you are willing, you can make me clean. He touches him.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "1",
+          "v1": 40,
+          "v2": 45
+        }
+      ]
+    },
+    {
+      "id": "the-man-let-down-through-the-roof",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The man let down through the roof",
+      "cite": "Mark 2:1–12",
+      "blurb": "Four friends, a hole in the tiles, and which is easier to say.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "2",
+          "v1": 1,
+          "v2": 12
+        }
+      ]
+    },
+    {
+      "id": "the-call-of-levi",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The call of Levi",
+      "cite": "Mark 2:13–17",
+      "blurb": "A tax collector at his booth, and a dinner with the wrong people.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "2",
+          "v1": 13,
+          "v2": 17
+        }
+      ]
+    },
+    {
+      "id": "the-wedding-at-cana",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The wedding at Cana",
+      "cite": "John 2:1–12",
+      "blurb": "They have no wine. The servants fill the jars with water.",
+      "spans": [
+        {
+          "work": "john",
+          "ch": "2",
+          "v1": 1,
+          "v2": 12
+        }
+      ]
+    },
+    {
+      "id": "nicodemus",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "Nicodemus",
+      "cite": "John 3:1–21",
+      "blurb": "A ruler who comes by night, and a word about being born from above.",
+      "spans": [
+        {
+          "work": "john",
+          "ch": "3",
+          "v1": 1,
+          "v2": 21
+        }
+      ]
+    },
+    {
+      "id": "the-woman-at-the-well",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The woman at the well",
+      "cite": "John 4:1–42",
+      "blurb": "A Samaritan woman, five husbands, and a town that comes out to see.",
+      "spans": [
+        {
+          "work": "john",
+          "ch": "4",
+          "v1": 1,
+          "v2": 42
+        }
+      ]
+    },
+    {
+      "id": "the-official-s-son",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The official's son",
+      "cite": "John 4:46–54",
+      "blurb": "Go, your son will live. He meets his servants on the road.",
+      "spans": [
+        {
+          "work": "john",
+          "ch": "4",
+          "v1": 46,
+          "v2": 54
+        }
+      ]
+    },
+    {
+      "id": "rejected-at-nazareth",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "Rejected at Nazareth",
+      "cite": "Luke 4:16–30",
+      "blurb": "He reads Isaiah in the synagogue where he grew up. They try to throw him off the hill.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "4",
+          "v1": 16,
+          "v2": 30
+        }
+      ]
+    },
+    {
+      "id": "the-withered-hand",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The withered hand",
+      "cite": "Mark 3:1–6",
+      "blurb": "Is it lawful to do good on the Sabbath? He tells the man to stretch out his hand.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "3",
+          "v1": 1,
+          "v2": 6
+        }
+      ]
+    },
+    {
+      "id": "the-twelve",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The twelve",
+      "cite": "Mark 3:13–19",
+      "blurb": "He appoints twelve to be with him and to be sent out.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "3",
+          "v1": 13,
+          "v2": 19
+        }
+      ]
+    },
+    {
+      "id": "the-sower",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The sower",
+      "cite": "Mark 4:1–20",
+      "blurb": "A parable. Seed on the path, the rock, the thorns, and the good soil.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "4",
+          "v1": 1,
+          "v2": 20
+        }
+      ]
+    },
+    {
+      "id": "the-storm",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The storm",
+      "cite": "Mark 4:35–41",
+      "blurb": "Asleep on a cushion. Peace. Be still. Who then is this?",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "4",
+          "v1": 35,
+          "v2": 41
+        }
+      ]
+    },
+    {
+      "id": "the-man-among-the-tombs",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The man among the tombs",
+      "cite": "Mark 5:1–20",
+      "blurb": "A legion, a herd of pigs, and a man sent home to tell what happened.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "5",
+          "v1": 1,
+          "v2": 20
+        }
+      ]
+    },
+    {
+      "id": "jairus-and-the-woman-in-the-crowd",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "Jairus and the woman in the crowd",
+      "cite": "Mark 5:21–43",
+      "blurb": "Twelve years of bleeding, a touch of the hem, and a girl told to get up.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "5",
+          "v1": 21,
+          "v2": 43
+        }
+      ]
+    },
+    {
+      "id": "the-centurion-s-servant",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The centurion's servant",
+      "cite": "Luke 7:1–10",
+      "blurb": "I am not worthy that you should come under my roof. Only say the word.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "7",
+          "v1": 1,
+          "v2": 10
+        }
+      ]
+    },
+    {
+      "id": "the-widow-of-nain",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The widow of Nain",
+      "cite": "Luke 7:11–17",
+      "blurb": "A funeral meets him at the gate. Young man, I tell you, get up.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "7",
+          "v1": 11,
+          "v2": 17
+        }
+      ]
+    },
+    {
+      "id": "the-woman-with-the-ointment",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The woman with the ointment",
+      "cite": "Luke 7:36–50",
+      "blurb": "She weeps on his feet at a Pharisee's table. Her many sins are forgiven, for she loved much.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "7",
+          "v1": 36,
+          "v2": 50
+        }
+      ]
+    },
+    {
+      "id": "the-woman-accused",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The woman accused",
+      "cite": "John 7:53–8:11",
+      "blurb": "Let him who is without sin throw the first stone.",
+      "spans": [
+        {
+          "work": "john",
+          "ch": "7",
+          "v1": 53,
+          "v2": 53
+        },
+        {
+          "work": "john",
+          "ch": "8",
+          "v1": 1,
+          "v2": 11
+        }
+      ]
+    },
+    {
+      "id": "the-feeding-of-the-five-thousand",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The feeding of the five thousand",
+      "cite": "Mark 6:30–44",
+      "blurb": "Five loaves, two fish, and twelve baskets left over.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "6",
+          "v1": 30,
+          "v2": 44
+        }
+      ]
+    },
+    {
+      "id": "walking-on-the-water",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "Walking on the water",
+      "cite": "Mark 6:45–52",
+      "blurb": "He meant to pass by them. Take courage. It is I.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "6",
+          "v1": 45,
+          "v2": 52
+        }
+      ]
+    },
+    {
+      "id": "the-syrophoenician-woman",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The Syrophoenician woman",
+      "cite": "Mark 7:24–30",
+      "blurb": "Even the dogs under the table eat the children's crumbs. For that saying, her daughter is freed.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "7",
+          "v1": 24,
+          "v2": 30
+        }
+      ]
+    },
+    {
+      "id": "the-deaf-man",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The deaf man",
+      "cite": "Mark 7:31–37",
+      "blurb": "Ephphatha. Be opened.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "7",
+          "v1": 31,
+          "v2": 37
+        }
+      ]
+    },
+    {
+      "id": "peter-s-confession",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "Peter's confession",
+      "cite": "Mark 8:27–38",
+      "blurb": "Who do you say that I am? You are the Christ. Then he begins to speak of the cross.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "8",
+          "v1": 27,
+          "v2": 38
+        }
+      ]
+    },
+    {
+      "id": "the-transfiguration",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The transfiguration",
+      "cite": "Mark 9:2–13",
+      "blurb": "Moses and Elijah, a cloud, and a voice. Peter offers to build three shelters.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "9",
+          "v1": 2,
+          "v2": 13
+        }
+      ]
+    },
+    {
+      "id": "the-boy-with-a-spirit",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The boy with a spirit",
+      "cite": "Mark 9:14–29",
+      "blurb": "I believe. Help my unbelief.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "9",
+          "v1": 14,
+          "v2": 29
+        }
+      ]
+    },
+    {
+      "id": "the-man-born-blind",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The man born blind",
+      "cite": "John 9",
+      "blurb": "Mud and the pool of Siloam, and a man the authorities would rather stayed blind.",
+      "spans": [
+        {
+          "work": "john",
+          "ch": "9"
+        }
+      ]
+    },
+    {
+      "id": "the-good-samaritan",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The good Samaritan",
+      "cite": "Luke 10:25–37",
+      "blurb": "A parable. A priest and a Levite pass by. A Samaritan does not.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "10",
+          "v1": 25,
+          "v2": 37
+        }
+      ]
+    },
+    {
+      "id": "martha-and-mary",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "Martha and Mary",
+      "cite": "Luke 10:38–42",
+      "blurb": "One sister is distracted with much serving. The other has chosen the better part.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "10",
+          "v1": 38,
+          "v2": 42
+        }
+      ]
+    },
+    {
+      "id": "the-rich-fool",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The rich fool",
+      "cite": "Luke 12:13–21",
+      "blurb": "A parable. Bigger barns, and a soul required that night.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "12",
+          "v1": 13,
+          "v2": 21
+        }
+      ]
+    },
+    {
+      "id": "the-woman-bent-double",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The woman bent double",
+      "cite": "Luke 13:10–17",
+      "blurb": "Eighteen years. He sets her free on the Sabbath, and the ruler of the synagogue is indignant.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "13",
+          "v1": 10,
+          "v2": 17
+        }
+      ]
+    },
+    {
+      "id": "the-lost-sheep-the-coin-and-the-son",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The lost sheep, the coin, and the son",
+      "cite": "Luke 15",
+      "blurb": "Three parables of something lost and found, and a father who runs.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "15"
+        }
+      ]
+    },
+    {
+      "id": "the-rich-man-and-lazarus",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The rich man and Lazarus",
+      "cite": "Luke 16:19–31",
+      "blurb": "A parable. A gate, a beggar, and a gulf that cannot be crossed.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "16",
+          "v1": 19,
+          "v2": 31
+        }
+      ]
+    },
+    {
+      "id": "ten-lepers",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "Ten lepers",
+      "cite": "Luke 17:11–19",
+      "blurb": "All ten are cleansed. One comes back, and he is a Samaritan.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "17",
+          "v1": 11,
+          "v2": 19
+        }
+      ]
+    },
+    {
+      "id": "the-pharisee-and-the-tax-collector",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The Pharisee and the tax collector",
+      "cite": "Luke 18:9–14",
+      "blurb": "A parable. One thanks God he is not like other people. The other will not lift his eyes.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "18",
+          "v1": 9,
+          "v2": 14
+        }
+      ]
+    },
+    {
+      "id": "the-unforgiving-servant",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The unforgiving servant",
+      "cite": "Matthew 18:21–35",
+      "blurb": "A parable. A debt of millions forgiven, and a few dollars demanded of a fellow servant.",
+      "spans": [
+        {
+          "work": "matthew",
+          "ch": "18",
+          "v1": 21,
+          "v2": 35
+        }
+      ]
+    },
+    {
+      "id": "the-workers-in-the-vineyard",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "The workers in the vineyard",
+      "cite": "Matthew 20:1–16",
+      "blurb": "A parable. The last hired are paid the same as the first, and the first are angry.",
+      "spans": [
+        {
+          "work": "matthew",
+          "ch": "20",
+          "v1": 1,
+          "v2": 16
+        }
+      ]
+    },
+    {
+      "id": "zacchaeus",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "Zacchaeus",
+      "cite": "Luke 19:1–10",
+      "blurb": "A short man in a sycamore tree. Today I must stay at your house.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "19",
+          "v1": 1,
+          "v2": 10
+        }
+      ]
+    },
+    {
+      "id": "blind-bartimaeus",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "Blind Bartimaeus",
+      "cite": "Mark 10:46–52",
+      "blurb": "He will not be silenced on the roadside. What do you want me to do for you?",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "10",
+          "v1": 46,
+          "v2": 52
+        }
+      ]
+    },
+    {
+      "id": "lazarus",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "Lazarus",
+      "cite": "John 11",
+      "blurb": "Four days in the tomb. Jesus weeps. Lazarus, come out.",
+      "spans": [
+        {
+          "work": "john",
+          "ch": "11"
+        }
+      ]
+    },
+    {
+      "id": "mary-anoints-jesus",
+      "shelf": "nt",
+      "era": "ministry",
+      "title": "Mary anoints Jesus",
+      "cite": "John 12:1–8",
+      "blurb": "A pound of perfume, the house filled with the fragrance, and a complaint about the poor.",
+      "spans": [
+        {
+          "work": "john",
+          "ch": "12",
+          "v1": 1,
+          "v2": 8
+        }
+      ]
+    },
+    {
+      "id": "the-entry-into-jerusalem",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "The entry into Jerusalem",
+      "cite": "Mark 11:1–11",
+      "blurb": "A colt that has never been ridden, and cloaks on the road.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "11",
+          "v1": 1,
+          "v2": 11
+        }
+      ]
+    },
+    {
+      "id": "the-temple-cleared",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "The temple cleared",
+      "cite": "Mark 11:15–19",
+      "blurb": "He overturns the tables. My house shall be called a house of prayer.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "11",
+          "v1": 15,
+          "v2": 19
+        }
+      ]
+    },
+    {
+      "id": "the-widow-s-coins",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "The widow's coins",
+      "cite": "Mark 12:41–44",
+      "blurb": "She puts in two small copper coins, which is everything she has.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "12",
+          "v1": 41,
+          "v2": 44
+        }
+      ]
+    },
+    {
+      "id": "the-last-supper",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "The last supper",
+      "cite": "Mark 14:12–26",
+      "blurb": "This is my body. This is my blood. They sing, and go out to the mountain.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "14",
+          "v1": 12,
+          "v2": 26
+        }
+      ]
+    },
+    {
+      "id": "he-washes-their-feet",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "He washes their feet",
+      "cite": "John 13:1–30",
+      "blurb": "The teacher takes a towel. One of them goes out into the night.",
+      "spans": [
+        {
+          "work": "john",
+          "ch": "13",
+          "v1": 1,
+          "v2": 30
+        }
+      ]
+    },
+    {
+      "id": "gethsemane",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "Gethsemane",
+      "cite": "Mark 14:32–42",
+      "blurb": "Abba, Father. Not what I want, but what you want. They cannot stay awake.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "14",
+          "v1": 32,
+          "v2": 42
+        }
+      ]
+    },
+    {
+      "id": "the-arrest",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "The arrest",
+      "cite": "Mark 14:43–52",
+      "blurb": "A kiss, a sword, a servant's ear, and a young man who runs away naked.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "14",
+          "v1": 43,
+          "v2": 52
+        }
+      ]
+    },
+    {
+      "id": "the-trial-and-peter-s-denial",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "The trial and Peter's denial",
+      "cite": "Mark 14:53–72",
+      "blurb": "False witnesses, a cockcrow, and Peter weeping.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "14",
+          "v1": 53,
+          "v2": 72
+        }
+      ]
+    },
+    {
+      "id": "before-pilate",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "Before Pilate",
+      "cite": "Mark 15:1–15",
+      "blurb": "Are you the king of the Jews? Barabbas is released. Jesus is flogged.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "15",
+          "v1": 1,
+          "v2": 15
+        }
+      ]
+    },
+    {
+      "id": "the-crucifixion",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "The crucifixion",
+      "cite": "Mark 15:16–41",
+      "blurb": "A purple cloak, a crown of thorns, the place of a skull, and a darkness at noon.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "15",
+          "v1": 16,
+          "v2": 41
+        }
+      ]
+    },
+    {
+      "id": "the-burial",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "The burial",
+      "cite": "Mark 15:42–47",
+      "blurb": "Joseph of Arimathea asks for the body and lays it in a tomb cut from rock.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "15",
+          "v1": 42,
+          "v2": 47
+        }
+      ]
+    },
+    {
+      "id": "the-empty-tomb",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "The empty tomb",
+      "cite": "Mark 16:1–8",
+      "blurb": "The stone is rolled back. He is not here. The oldest ending of Mark stops on their fear.",
+      "spans": [
+        {
+          "work": "mark",
+          "ch": "16",
+          "v1": 1,
+          "v2": 8
+        }
+      ]
+    },
+    {
+      "id": "mary-magdalene",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "Mary Magdalene",
+      "cite": "John 20:1–18",
+      "blurb": "She thinks he is the gardener, until he says her name.",
+      "spans": [
+        {
+          "work": "john",
+          "ch": "20",
+          "v1": 1,
+          "v2": 18
+        }
+      ]
+    },
+    {
+      "id": "the-road-to-emmaus",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "The road to Emmaus",
+      "cite": "Luke 24:13–35",
+      "blurb": "Two of them walk, and a stranger explains the scriptures, and they know him in the breaking of the bread.",
+      "spans": [
+        {
+          "work": "luke",
+          "ch": "24",
+          "v1": 13,
+          "v2": 35
+        }
+      ]
+    },
+    {
+      "id": "thomas",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "Thomas",
+      "cite": "John 20:19–29",
+      "blurb": "Unless I see the mark of the nails. A week later he is invited to touch.",
+      "spans": [
+        {
+          "work": "john",
+          "ch": "20",
+          "v1": 19,
+          "v2": 29
+        }
+      ]
+    },
+    {
+      "id": "breakfast-by-the-sea",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "Breakfast by the sea",
+      "cite": "John 21",
+      "blurb": "A fire of coals, a hundred and fifty-three fish, and Peter asked three times.",
+      "spans": [
+        {
+          "work": "john",
+          "ch": "21"
+        }
+      ]
+    },
+    {
+      "id": "the-ascension",
+      "shelf": "nt",
+      "era": "passion",
+      "title": "The ascension",
+      "cite": "Acts 1:1–11",
+      "blurb": "He is taken up, and they are told not to stand staring at the sky.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "1",
+          "v1": 1,
+          "v2": 11
+        }
+      ]
+    },
+    {
+      "id": "pentecost",
+      "shelf": "nt",
+      "era": "church",
+      "title": "Pentecost",
+      "cite": "Acts 2",
+      "blurb": "A sound like a violent wind, languages, and Peter's sermon.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "2"
+        }
+      ]
+    },
+    {
+      "id": "the-lame-man-at-the-gate",
+      "shelf": "nt",
+      "era": "church",
+      "title": "The lame man at the gate",
+      "cite": "Acts 3",
+      "blurb": "Silver and gold I do not have. What I have I give you. Walk.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "3"
+        }
+      ]
+    },
+    {
+      "id": "ananias-and-sapphira",
+      "shelf": "nt",
+      "era": "church",
+      "title": "Ananias and Sapphira",
+      "cite": "Acts 5:1–11",
+      "blurb": "They keep back part of the price and say they have given it all.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "5",
+          "v1": 1,
+          "v2": 11
+        }
+      ]
+    },
+    {
+      "id": "stephen",
+      "shelf": "nt",
+      "era": "church",
+      "title": "Stephen",
+      "cite": "Acts 6–7",
+      "blurb": "The first to be killed for the name, and a young man named Saul watching the coats.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "6"
+        },
+        {
+          "work": "acts",
+          "ch": "7"
+        }
+      ]
+    },
+    {
+      "id": "philip-and-the-ethiopian",
+      "shelf": "nt",
+      "era": "church",
+      "title": "Philip and the Ethiopian",
+      "cite": "Acts 8:26–40",
+      "blurb": "A chariot, Isaiah open on the lap, and water by the road.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "8",
+          "v1": 26,
+          "v2": 40
+        }
+      ]
+    },
+    {
+      "id": "the-road-to-damascus",
+      "shelf": "nt",
+      "era": "church",
+      "title": "The road to Damascus",
+      "cite": "Acts 9:1–31",
+      "blurb": "A light, a voice, three days of blindness, and Ananias sent to the enemy.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "9",
+          "v1": 1,
+          "v2": 31
+        }
+      ]
+    },
+    {
+      "id": "peter-and-cornelius",
+      "shelf": "nt",
+      "era": "church",
+      "title": "Peter and Cornelius",
+      "cite": "Acts 10",
+      "blurb": "A sheet of animals, and a Gentile household receiving the Spirit before they are baptized.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "10"
+        }
+      ]
+    },
+    {
+      "id": "peter-walks-out-of-prison",
+      "shelf": "nt",
+      "era": "church",
+      "title": "Peter walks out of prison",
+      "cite": "Acts 12:1–19",
+      "blurb": "James is killed. Peter, chained between two soldiers, is woken by an angel. Rhoda leaves him knocking.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "12",
+          "v1": 1,
+          "v2": 19
+        }
+      ]
+    },
+    {
+      "id": "paul-and-barnabas-on-cyprus-and-beyond",
+      "shelf": "nt",
+      "era": "church",
+      "title": "Paul and Barnabas on Cyprus and beyond",
+      "cite": "Acts 13–14",
+      "blurb": "A magician, a sermon in a synagogue, and a crowd that wants to sacrifice to them and then stones them.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "13"
+        },
+        {
+          "work": "acts",
+          "ch": "14"
+        }
+      ]
+    },
+    {
+      "id": "the-council-in-jerusalem",
+      "shelf": "nt",
+      "era": "church",
+      "title": "The council in Jerusalem",
+      "cite": "Acts 15",
+      "blurb": "Must Gentile believers be circumcised? The apostles say no, and write a letter.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "15"
+        }
+      ]
+    },
+    {
+      "id": "thecla",
+      "shelf": "wider",
+      "era": "church",
+      "title": "Thecla",
+      "cite": "Acts of Paul and Thecla",
+      "blurb": "A later telling: a woman who hears Paul, refuses a marriage, and survives the beasts. Not in the New Testament.",
+      "spans": [
+        {
+          "work": "the-acts-of-paul-and-thecla",
+          "ch": "1"
+        },
+        {
+          "work": "the-acts-of-paul-and-thecla",
+          "ch": "2"
+        },
+        {
+          "work": "the-acts-of-paul-and-thecla",
+          "ch": "3"
+        },
+        {
+          "work": "the-acts-of-paul-and-thecla",
+          "ch": "4"
+        },
+        {
+          "work": "the-acts-of-paul-and-thecla",
+          "ch": "5"
+        },
+        {
+          "work": "the-acts-of-paul-and-thecla",
+          "ch": "6"
+        }
+      ]
+    },
+    {
+      "id": "the-jailer-at-philippi",
+      "shelf": "nt",
+      "era": "church",
+      "title": "The jailer at Philippi",
+      "cite": "Acts 16:16–40",
+      "blurb": "A slave girl, an earthquake, and a jailer who almost kills himself.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "16",
+          "v1": 16,
+          "v2": 40
+        }
+      ]
+    },
+    {
+      "id": "paul-in-athens",
+      "shelf": "nt",
+      "era": "church",
+      "title": "Paul in Athens",
+      "cite": "Acts 17:16–34",
+      "blurb": "An altar to an unknown god, and a speech on the Areopagus.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "17",
+          "v1": 16,
+          "v2": 34
+        }
+      ]
+    },
+    {
+      "id": "the-riot-in-ephesus",
+      "shelf": "nt",
+      "era": "church",
+      "title": "The riot in Ephesus",
+      "cite": "Acts 19",
+      "blurb": "Silversmiths who make shrines of Artemis, and a crowd that shouts for two hours.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "19"
+        }
+      ]
+    },
+    {
+      "id": "eutychus",
+      "shelf": "nt",
+      "era": "church",
+      "title": "Eutychus",
+      "cite": "Acts 20:7–12",
+      "blurb": "A young man falls asleep in a window during a long sermon, falls three floors, and is taken up alive.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "20",
+          "v1": 7,
+          "v2": 12
+        }
+      ]
+    },
+    {
+      "id": "paul-is-seized-in-jerusalem",
+      "shelf": "nt",
+      "era": "church",
+      "title": "Paul is seized in Jerusalem",
+      "cite": "Acts 21–23",
+      "blurb": "A vow, a riot in the temple, a Roman rescue, and a plot of forty men.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "21"
+        },
+        {
+          "work": "acts",
+          "ch": "22"
+        },
+        {
+          "work": "acts",
+          "ch": "23"
+        }
+      ]
+    },
+    {
+      "id": "the-shipwreck",
+      "shelf": "nt",
+      "era": "church",
+      "title": "The shipwreck",
+      "cite": "Acts 27–28",
+      "blurb": "Fourteen days of storm, a beach on Malta, a viper in the firewood, and at last Rome.",
+      "spans": [
+        {
+          "work": "acts",
+          "ch": "27"
+        },
+        {
+          "work": "acts",
+          "ch": "28"
+        }
+      ]
+    },
+    {
+      "id": "the-martyrdom-of-polycarp",
+      "shelf": "wider",
+      "era": "church",
+      "title": "The martyrdom of Polycarp",
+      "cite": "Martyrdom of Polycarp",
+      "blurb": "An old bishop of Smyrna refuses to curse Christ. The fire will not do its work, and they use a dagger.",
+      "spans": [
+        {
+          "work": "the-martyrdom-of-polycarp",
+          "ch": "1"
+        },
+        {
+          "work": "the-martyrdom-of-polycarp",
+          "ch": "2"
+        },
+        {
+          "work": "the-martyrdom-of-polycarp",
+          "ch": "3"
+        },
+        {
+          "work": "the-martyrdom-of-polycarp",
+          "ch": "4"
+        },
+        {
+          "work": "the-martyrdom-of-polycarp",
+          "ch": "5"
+        },
+        {
+          "work": "the-martyrdom-of-polycarp",
+          "ch": "6"
+        },
+        {
+          "work": "the-martyrdom-of-polycarp",
+          "ch": "7"
+        },
+        {
+          "work": "the-martyrdom-of-polycarp",
+          "ch": "8"
+        },
+        {
+          "work": "the-martyrdom-of-polycarp",
+          "ch": "9"
+        },
+        {
+          "work": "the-martyrdom-of-polycarp",
+          "ch": "10"
+        },
+        {
+          "work": "the-martyrdom-of-polycarp",
+          "ch": "11"
+        },
+        {
+          "work": "the-martyrdom-of-polycarp",
+          "ch": "12"
+        },
+        {
+          "work": "the-martyrdom-of-polycarp",
+          "ch": "13"
+        },
+        {
+          "work": "the-martyrdom-of-polycarp",
+          "ch": "14"
+        },
+        {
+          "work": "the-martyrdom-of-polycarp",
+          "ch": "15"
+        },
+        {
+          "work": "the-martyrdom-of-polycarp",
+          "ch": "16"
+        }
+      ]
+    },
+    {
+      "id": "the-throne-and-the-lamb",
+      "shelf": "nt",
+      "era": "visions",
+      "title": "The throne and the lamb",
+      "cite": "Revelation 4–5",
+      "blurb": "A door standing open in heaven, and a lamb that looks slain, worthy to open the scroll.",
+      "spans": [
+        {
+          "work": "revelation",
+          "ch": "4"
+        },
+        {
+          "work": "revelation",
+          "ch": "5"
+        }
+      ]
+    },
+    {
+      "id": "the-woman-the-dragon-and-the-child",
+      "shelf": "nt",
+      "era": "visions",
+      "title": "The woman, the dragon, and the child",
+      "cite": "Revelation 12",
+      "blurb": "A woman clothed with the sun, a dragon waiting to devour, and a child caught up.",
+      "spans": [
+        {
+          "work": "revelation",
+          "ch": "12"
+        }
+      ]
+    },
+    {
+      "id": "babylon-falls",
+      "shelf": "nt",
+      "era": "visions",
+      "title": "Babylon falls",
+      "cite": "Revelation 17–18",
+      "blurb": "The great city, drunk with the blood of the saints, and the merchants weeping at a distance.",
+      "spans": [
+        {
+          "work": "revelation",
+          "ch": "17"
+        },
+        {
+          "work": "revelation",
+          "ch": "18"
+        }
+      ]
+    },
+    {
+      "id": "the-new-heaven-and-the-new-earth",
+      "shelf": "nt",
+      "era": "visions",
+      "title": "The new heaven and the new earth",
+      "cite": "Revelation 21–22",
+      "blurb": "No temple, because the Lord is its light, and the leaves of the tree are for the healing of the nations.",
+      "spans": [
+        {
+          "work": "revelation",
+          "ch": "21"
+        },
+        {
+          "work": "revelation",
+          "ch": "22"
+        }
+      ]
+    },
+    {
+      "id": "ezra-s-vision-of-the-mourning-woman",
+      "shelf": "wider",
+      "era": "visions",
+      "title": "Ezra's vision of the mourning woman",
+      "cite": "2 Esdras 9–10",
+      "blurb": "A woman weeping for her only son becomes the city of Zion. From the book also called 4 Ezra.",
+      "spans": [
+        {
+          "work": "2-esdras-4-ezra",
+          "ch": "9"
+        },
+        {
+          "work": "2-esdras-4-ezra",
+          "ch": "10"
+        }
+      ]
+    }
+  ]
+}
