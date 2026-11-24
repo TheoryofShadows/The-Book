@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stories — The Book</title>
+<meta name="description" content="Every story in the library, in the order it happened. Choose any one.">
+<link rel="stylesheet" href="/assets/app.css">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://thebookandme.com/stories/">
+<meta name="theme-color" content="#12295f">
+<style>
+  .stories-page { max-width: 42rem; margin: 0 auto; padding: 1.25rem 1rem 4rem; }
+  .stories-page h1 { font-family: var(--serif); font-size: 1.8rem; line-height: 1.2; margin: .4rem 0; }
+  .story-search { width: 100%; font: inherit; font-size: 1rem; padding: .7rem .9rem; border: 1px solid var(--rule); border-radius: 999px; background: var(--raised); color: var(--ink); }
+  .shelf-row { display: flex; gap: .4rem; overflow-x: auto; margin: .7rem 0; }
+  .shelf-row button { font: inherit; font-size: .85rem; border: 1px solid var(--rule); background: var(--raised); color: var(--ink-soft); border-radius: 999px; padding: .45rem .85rem; min-height: 2.5rem; }
+  .shelf-row button[aria-pressed="true"] { background: var(--accent-bg); color: var(--ink); border-color: var(--accent); }
+  .era-name { font-family: var(--serif); color: var(--rubric); font-size: 1.25rem; margin: 1.6rem 0 .4rem; }
+  .story-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--rule); border-radius: 1rem; background: var(--raised); overflow: hidden; }
+  .story-list li + li { border-top: 1px solid var(--rule); }
+  .story-list a { display: grid; grid-template-columns: 2.2rem 1fr; gap: .6rem; padding: .75rem .9rem; color: inherit; text-decoration: none; }
+  .story-list a:hover { background: var(--paper-2); }
+  .story-n { font-family: var(--serif); color: var(--rubric); text-align: right; }
+  .story-list strong { font-family: var(--serif); font-weight: 600; }
+  .story-cite, .count { color: var(--ink-faint); font-size: .85rem; }
+  .blurb { color: var(--ink-soft); font-size: .92rem; margin: .2rem 0 0; }
+  .passage { font-family: var(--serif); font-size: 1.12rem; line-height: 1.65; }
+  .passage sup { font-family: var(--sans); color: var(--rubric); font-size: .65em; margin-right: .2rem; }
+  .back { color: var(--accent); }
+  .note { border-left: 2px solid var(--gilt); padding-left: .8rem; color: var(--ink-soft); }
+  .row-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin: .8rem 0 1rem; }
+  .row-actions a, .row-actions button { font: inherit; font-size: .9rem; min-height: 2.75rem; border-radius: 999px; padding: .4rem .9rem; border: 1px solid var(--rule); background: var(--raised); color: var(--ink); text-decoration: none; display: inline-flex; align-items: center; }
+  .row-actions .go { background: var(--accent); color: var(--raised); border-color: var(--accent); }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<main id="main" class="stories-page">
+  <p class="muted"><a href="/">The Book</a> · stories, in the order they happened</p>
+  <div id="app"><p class="muted">Loading the stories…</p></div>
+</main>
+<script>
+(function () {
+  var app = document.getElementById("app");
+  var catalog, index, shelf = "all", query = "";
+  var cache = {};
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&", "<": "<", ">": ">", '"': """, "'": "&#39;" }[c];
+    });
+  }
+
+  function load() {
+    return fetch("/data/stories.json").then(function (r) {
+      if (!r.ok) throw new Error("stories");
+      return r.json();
+    }).then(function (data) {
+      catalog = data;
+      route();
+    });
+  }
+
+  function works() {
+    if (index) return Promise.resolve(index);
+    return fetch("/data/manifest.json").then(function (r) { return r.json(); }).then(function (m) {
+      index = {};
+      m.sections.forEach(function (s) {
+        (s.works || []).forEach(function (w) {
+          if (w.id && w.slugs) index[w.id] = w.slugs;
+        });
+      });
+      return index;
+    });
+  }
+
+  function workFile(id) {
+    if (!cache[id]) {
+      cache[id] = fetch("/data/works/" + id + ".json").then(function (r) {
+        if (!r.ok) throw new Error("text");
+        return r.json();
+      });
+    }
+    return cache[id];
+  }
+
+  function storyById(id) {
+    for (var i = 0; i < catalog.stories.length; i++) {
+      if (catalog.stories[i].id === id) return { story: catalog.stories[i], n: i };
+    }
+    return null;
+  }
+
+  function route() {
+    var hash = location.hash.replace(/^#\/?/, "");
+    if (hash.indexOf("s/") === 0) show(hash.slice(2));
+    else list();
+  }
+
+  function list() {
+    document.title = "Stories — The Book";
+    var needle = query.trim().toLowerCase();
+    var html = "<h1>" + catalog.stories.length + " stories. Pick any one.</h1>";
+    html += "<p>This is the order the events are told, not the order the books were written. The words are the same public-domain text as the rest of <a href=\"/\">The Book</a>. Pieces from outside the Hebrew Bible and the New Testament are marked Wider library.</p>";
+    html += "<input class=\"story-search\" id=\"q\" placeholder=\"Search a name, a book, a line\" value=\"" + esc(query) + "\" aria-label=\"Search stories\">";
+    html += "<div class=\"shelf-row\" role=\"tablist\">";
+    [["all", "All"], ["hb", "Hebrew Bible"], ["nt", "New Testament"], ["wider", "Wider library"]].forEach(function (pair) {
+      html += "<button type=\"button\" data-shelf=\"" + pair[0] + "\" aria-pressed=\"" + (shelf === pair[0]) + "\">" + pair[1] + "</button>";
+    });
+    html += "</div>";
+    var shown = 0;
+    catalog.eras.forEach(function (era) {
+      var items = catalog.stories.filter(function (s, i) {
+        s._n = i + 1;
+        if (s.era !== era.id) return false;
+        if (shelf !== "all" && s.shelf !== shelf) return false;
+        if (!needle) return true;
+        return (s.title + " " + s.cite + " " + s.blurb).toLowerCase().indexOf(needle) !== -1;
+      });
+      if (!items.length) return;
+      shown += items.length;
+      html += "<h2 class=\"era-name\">" + esc(era.label) + "</h2><ol class=\"story-list\">";
+      items.forEach(function (s) {
+        html += "<li><a href=\"#/s/" + s.id + "\"><span class=\"story-n\">" + s._n + "</span><span><strong>" + esc(s.title) + "</strong><div class=\"story-cite\">" + esc(s.cite) + "</div><p class=\"blurb\">" + esc(s.blurb) + "</p></span></a></li>";
+      });
+      html += "</ol>";
+    });
+    if (!shown) html += "<p>Nothing under that name.</p>";
+    app.innerHTML = html;
+    var input = document.getElementById("q");
+    input.addEventListener("input", function () { query = input.value; list(); document.getElementById("q").focus(); });
+    app.querySelectorAll("[data-shelf]").forEach(function (btn) {
+      btn.addEventListener("click", function () { shelf = btn.getAttribute("data-shelf"); list(); });
+    });
+    var q = document.getElementById("q");
+    if (needle) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+  }
+
+  function show(id) {
+    var found = storyById(id);
+    if (!found) { app.innerHTML = "<p>No such story.</p><p><a class=\"back\" href=\"#/\">All stories</a></p>"; return; }
+    var story = found.story;
+    document.title = story.title + " — Stories";
+    app.innerHTML = "<p><a class=\"back\" href=\"#/\">All " + catalog.stories.length + " stories</a></p><h1>" + esc(story.title) + "</h1><p class=\"story-cite\">" + (found.n + 1) + " · " + esc(story.cite) + (story.shelf === "wider" ? " · Wider library" : "") + "</p><p class=\"note\">" + esc(story.blurb) + "</p><div class=\"row-actions\"><button type=\"button\" id=\"listen\" class=\"go\">Listen</button><a id=\"book\" href=\"/\">Open in The Book</a></div><div id=\"text\"><p class=\"muted\">Opening the passage…</p></div><p id=\"nav\"></p>";
+    var prev = catalog.stories[found.n - 1];
+    var next = catalog.stories[found.n + 1];
+    var nav = "";
+    if (prev) nav += "<a class=\"back\" href=\"#/s/" + prev.id + "\">← " + esc(prev.title) + "</a> ";
+    if (next) nav += "<a class=\"back\" href=\"#/s/" + next.id + "\">" + esc(next.title) + " →</a>";
+    document.getElementById("nav").innerHTML = nav;
+    works().then(function () {
+      return Promise.all(story.spans.map(function (span) {
+        var slugs = index[span.work] || [];
+        var idx = slugs.indexOf(String(span.ch));
+        return workFile(span.work).then(function (work) {
+          var chapter = work.chapters[idx];
+          var verses = (chapter.verses || []).filter(function (v) {
+            if (span.v1 != null && v.v < span.v1) return false;
+            if (span.v2 != null && v.v > span.v2) return false;
+            return true;
+          });
+          return { label: chapter.label || ("Chapter " + span.ch), verses: verses, href: "/#/read/" + span.work + "/" + idx + (span.v1 ? "/v" + span.v1 : "") };
+        });
+      }));
+    }).then(function (blocks) {
+      var book = document.getElementById("book");
+      if (book && blocks[0]) book.href = blocks[0].href;
+      var html = "";
+      blocks.forEach(function (b) {
+        html += "<h2 class=\"era-name\"><a href=\"" + b.href + "\">" + esc(b.label) + "</a></h2><p class=\"passage\">";
+        b.verses.forEach(function (v) { html += "<sup>" + v.v + "</sup>" + esc(v.t) + " "; });
+        html += "</p>";
+      });
+      document.getElementById("text").innerHTML = html;
+      document.getElementById("listen").onclick = function () {
+        var synth = window.speechSynthesis;
+        if (!synth) return;
+        if (synth.speaking) { synth.cancel(); return; }
+        var text = blocks.map(function (b) { return b.verses.map(function (v) { return v.t; }).join(" "); }).join(" ");
+        var u = new SpeechSynthesisUtterance(text.slice(0, 4000));
+        u.rate = 0.92;
+        synth.speak(u);
+      };
+    }).catch(function () {
+      document.getElementById("text").innerHTML = "<p>The passage did not load. Open it in The Book instead.</p>";
+    });
+    window.scrollTo(0, 0);
+  }
+
+  window.addEventListener("hashchange", route);
+  load().catch(function () {
+    app.innerHTML = "<h1>Stories</h1><p>The list did not load. <a href=\"/\">Return to The Book</a>.</p>";
+  });
+})();
+</script>
+</body>
+</html>
